@@ -1,0 +1,45 @@
+---
+title: "R Programmer track 1"
+author: "Hwiwon Lee"
+date: '`r format(Sys.time(), "%d\\. %B %Y")`'
+output: 
+  pdf_document : 
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE, cache=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars, cache=TRUE}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE, cache=TRUE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+## Course 1 : Introduction to R
+&nbsp;&nbsp;&nbsp;&nbsp;Learned about some basics in R, vectors, matrices, factors, data frames, lists. so, not difficult yet. PASS
+
+###Contents
+####1. Basics, 2. Vectors, 3. Matrices, 4. Lists, 5. Data frames
+
+## Course 2 : Intermediate R
+&nbsp;&nbsp;&nbsp;&nbsp;In this part, also not difficult part for me. but In 4. The apply family and 5. Utillities, used few chances. especially grepl, grep and sub, gsub in 5. Utillities are not skilled to me.  
+####1. Conditionals and Control Flow
+####2. Loops
+
+```{r cache=TRUE}
