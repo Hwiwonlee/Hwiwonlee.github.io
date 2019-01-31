@@ -4,7 +4,7 @@ date: 2019-01-29 13:40:28 -0400
 categories: jekyll update
 ---
 
-이 문서는 https://dreamgonfly.github.io/2018/01/27/jekyll-remote-theme.html 에서 가져왔습니다. 
+이 문서는 [쉽고 빠르게 수준 급의 GitHub 블로그 만들기 - jekyll remote theme으로] 에서 가져왔습니다. 
 
 You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run `jekyll serve`, which launches a web server and auto-regenerates your site when a file is updated.
 
@@ -20,6 +20,8 @@ print_hi('Tom')
 
 Check out the [Jekyll docs][jekyll-docs] for more info on how to get the most out of Jekyll. File all bugs/feature requests at [Jekyll’s GitHub repo][jekyll-gh]. If you have questions, you can ask them on [Jekyll Talk][jekyll-talk].
 
+
+[쉽고 빠르게 수준 급의 GitHub 블로그 만들기 - jekyll remote theme으로]: https://dreamgonfly.github.io/2018/01/27/jekyll-remote-theme.html
 [jekyll-docs]: https://jekyllrb.com/docs/home
 [jekyll-gh]:   https://github.com/jekyll/jekyll
 [jekyll-talk]: https://talk.jekyllrb.com/
