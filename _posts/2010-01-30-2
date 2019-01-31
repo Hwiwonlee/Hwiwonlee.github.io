@@ -1,0 +1,9 @@
+---
+title: "첫 번째 시행착오 기록"
+date: 2019-01-31 17:42:00 -0400
+categories: jekyll mistake Rmarkdown
+---
+
+30일, 막연히 R markdown 파일을 repository에 넣어도 될 줄 알았더니 당연히 안됨. 
+그제서야 부랴부랴 찾아봤지만 명확한 해결 방법이 보이지 않음. 
+repository를 다시 만들어야 하는 걸까? 
