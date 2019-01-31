@@ -4,7 +4,7 @@ date: 2019-01-29 13:40:28 -0400
 categories: jekyll update
 ---
 
-이 문서는 https://dreamgonfly.github.io/2018/01/27/jekyll-remote-theme.html에서 가져왔습니다. 
+이 문서는 https://dreamgonfly.github.io/2018/01/27/jekyll-remote-theme.html 에서 가져왔습니다. 
 
 You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run `jekyll serve`, which launches a web server and auto-regenerates your site when a file is updated.
 
