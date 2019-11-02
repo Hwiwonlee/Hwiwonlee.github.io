@@ -317,7 +317,7 @@ report_status(ID = "Vizicsacsi", Champ = "Poppy", Position = "TOP", Team = "SPLY
 ## 2.4 Bringing it all together
 마찬가지로 tweet.csv를 이용한 예제. 적당한 csv를 구하자.
 
-```pyhon
+```python
 # Define count_entries()
 def count_entries(df, col_name = 'lang'):
     """Return a dictionary with counts of
@@ -390,4 +390,196 @@ result2 = count_entries(tweets_df, 'lang', 'source')
 # Print result1 and result2
 print(result1)
 print(result2)
+```
+
+# 3. Lambda functions and error-handling
+## 3.1 Lambda functions
+Keyword, Lambda를 이용한 Lambda function은 간단한 계산이 필요한 function을 정의할 때 사용하기 좋다. 그러나 복잡한 과정이 필요한 function을 Lambda function으로 정의하면 코드의 가독성이 떨어질 뿐 아니라 앞서 본 Nested function이 더욱 효과적이므로 보편적으로 사용하는 방법은 아니다. 그러나 무엇이든 알아두면 좋은 법. Lambda function에 대해 알아보자.
+
+```python
+# Define echo_str as a lambda function: echo_str
+echo_str = (lambda str1, echo : str1 + ('~' * echo))
+## lambda par 1, ..., par n : expression
+
+result = echo_str('Hi', 5) ## Call echo_str: result
+print(result)
+
+# Map() and lambda functions
+force = ["Horde", "Alliance", "Forsaken", "Burning legion"]
+
+# Use map() to apply a lambda function over force: For_the
+For_the = map(lambda a : 'For the ' + a + '!!!', force)
+## map(function to apply, list of inputs)
+
+force_list = list(For_the) ## Convert For_the to a list: force_list
+force_tuple = tuple(For_the) ## Convert For_the to a list: force_list
+## map() function을 사용하면 object가 'map' class로 return되기 때문에 자료형으로 바꿔줘야 한다. 
+print(force_list)
+print(force_tuple)
+
+# Filter() and lambda functions
+Noxus = ['Darius', 'Draven', 'Katarina', 'Talon', 'Sion']
+
+# Use filter() to apply a lambda function over Noxus: result
+## Noxus list에서 다섯 글자 이상의 value만 filter class로 return
+result = filter(lambda member : len(member) > 5, Noxus)
+## filter(function to apply, list of inputs)
+
+result_list = list(result) ## Convert result to a list: result_list
+reulst_tuple = tuple(result)
+## filter() function을 사용하면 object가 'filter' class로 return되기 때문에 자료형으로 바꿔줘야 한다. 
+print(result_list)
+print(result_tuple)
+## Q. Tuple로 바꿔보려고 했는데 type은 바뀌지만 value가 다르다. 왜 이렇지?
+
+# Reduce() and lambda functions
+from functools import reduce ## reduce()는 functools에 있다. 
+Noxus = ['Darius', 'Draven', 'Katarina', 'Talon', 'Sion']
+
+# Use reduce() to apply a lambda function over Noxus: result
+result = reduce(lambda str1, str2 : str1 + str2 , Noxus)
+## result(function to apply, list of inputs)
+
+print(result)
+```
+reduce()는 무엇을 'reduce'할까 map()과 filter()의 결과와 비교해보면 답을 찾을 수 있다. reduce() 결과의 개수를 reduce한다. 즉, list로 들어간 value를 정의된 function에 따라 하나의 값으로 연산하는 과정을 하는 것이 reduce()이다. map()과 filter()에 대한 추가적인 설명도 아래의 링크를 참고하자.
+https://codepractice.tistory.com/86
+https://wayhome25.github.io/cs/2017/04/03/cs-03/
+
+## 3.2 Introduction to error handling
+programming language를 사용하는 대다수 부분의 경우, 한 번 이상의 error를 본다. 사실 모든 programer들은 한 번 이상의 error를 보게되고 해결방법을 찾아 헤맨다. error message를 보고 해결할 수 있는 단순한 형태의 error부터 구글링을 통해 비슷한 사례를 찾고 문제를 해결해야 하는 복잡한 error까지, python에서 마주하게 될 error의 형태는 무궁무진하다. 이번 챕터에서는 python에서 발생할 수 있는 error의 가장 기초적인 형태에 대해 알아보고 error를 해결하는 방법을 알아보도록 하겠다.
+
+```python
+# Error handling with try-except
+def shout_echo(str1, echo=1):
+    """Concatenate echo copies of str1 and three
+    exclamation marks at the end of the string."""
+
+    # Initialize empty strings: echo_str, shout_str
+    echo_str = ""
+    shout_str = ""
+
+    # Add exception handling with try-except
+    ## try해보고 안되면 except로 이동, 정의된 error message를 print out
+    try:
+        # Concatenate ('~'* echo) copies of str1 using *: echo_str
+        echo_str = str1 + ('~'* echo)
+
+        # Concatenate '!!!' to echo_str: shout_str
+        shout_str = echo_str + '!!!'    
+    except:
+        # Print error message
+        print("str1 must be a string and echo must be an integer.")
+
+    # Return shout_words
+    return shout_str
+
+# Call shout_echo
+shout_echo("Demacia", echo="accelerator")
+
+# Error handling by raising an error
+def shout_echo(str1, echo=1):
+    """Concatenate echo copies of str1 and three
+    exclamation marks at the end of the string."""
+    
+    # Raise an error with raise
+    if echo < 0 :
+        raise ValueError('echo must be greater than 0')
+    
+    # Concatenate ('~'* echo) copies of str1 using *: echo_str
+    echo_str = str1 + ('~'* echo)
+
+    # Concatenate '!!!' to echo_str: shout_str
+    shout_str = echo_str + '!!!' 
+    
+    # Return shout_words
+    return shout_str        
+
+shout_echo("Demacia", echo=5)
+shout_echo("Demacia", echo=-1) ## check the error
+```
+
+## 3.3 Bringing it all together
+tweet.csv를 이용한 예제
+
+```python
+# Select retweets from the Twitter DataFrame: result
+result = filter(lambda x : x[0:2] == 'RT', tweets_df['text'])
+
+# Create list from filter object result: res_list
+res_list = list(result)
+
+# Print all retweets in res_list
+for tweet in res_list:
+    print(tweet)
+
+# Define count_entries()
+def count_entries(df, col_name='lang'):
+    """Return a dictionary with counts of
+    occurrences as value for each key."""
+
+    # Initialize an empty dictionary: cols_count
+    cols_count = {}
+
+    # Add try block
+    try:
+        # Extract column from DataFrame: col
+        col = df[col_name]
+        
+        # Iterate over the column in dataframe
+        for entry in col:
+    
+            # If entry is in cols_count, add 1
+            if entry in cols_count.keys():
+                cols_count[entry] += 1
+            # Else add the entry to cols_count, set the value to 1
+            else:
+                cols_count[entry] = 1
+    
+        # Return the cols_count dictionary
+        return cols_count
+
+    # Add except block
+    except:
+        print('The DataFrame does not have a ' + col_name + ' column.')
+
+# Call count_entries(): result1
+result1 = count_entries(tweets_df, 'lang')
+
+# Print result1
+print(result1)
+
+# Define count_entries()
+def count_entries(df, col_name='lang'):
+    """Return a dictionary with counts of
+    occurrences as value for each key."""
+    
+    # Raise a ValueError if col_name is NOT in DataFrame
+    if col_name not in df.columns:
+        raise ValueError('The DataFrame does not have a ' + col_name + ' column.')
+
+    # Initialize an empty dictionary: cols_count
+    cols_count = {}
+    
+    # Extract column from DataFrame: col
+    col = df[col_name]
+    
+    # Iterate over the column in DataFrame
+    for entry in col:
+
+        # If entry is in cols_count, add 1
+        if entry in cols_count.keys():
+            cols_count[entry] += 1
+            # Else add the entry to cols_count, set the value to 1
+        else:
+            cols_count[entry] = 1
+        
+        # Return the cols_count dictionary
+    return cols_count
+
+# Call count_entries(): result1
+result1 = count_entries(tweets_df)
+
+# Print result1
+print(result1)
 ```
