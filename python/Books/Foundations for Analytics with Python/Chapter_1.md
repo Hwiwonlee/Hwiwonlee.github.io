@@ -24,6 +24,7 @@ print("output #2 : {0}, {1}, {2}".format(a,b,c))
 print("output #3 : ",a,",",b,",",c) ## format없이 똑같은 결과를 내기 위한 code
 ```
 https://docs.python.org/ko/3.8/tutorial/inputoutput.html
+
 Print()를 이용할 때 str.format() method를 이용하는 것이 눈에 띈다. Data camp나 Jump to Python의 방법과는 또 다르다. 위의 링크와 구글링을 통해 확인한 바, f-string이 나옴으로 인해 str.format()이 구버전이 되었지만 복잡한 문자열을 처리할 때 오타를 방지한다는 측면은 꽤 괜찮은 장점으로 보인다. 그러나 여전히 문자열의 길이가 늘어나고 문자열 안에 포함될 변수들이 많아지는 경우 이용이 복잡하다는 단점은 존재하는 것 같다. 
 
 ## 1.4 파이썬 기본 구성 요소
@@ -149,6 +150,7 @@ print("Output #35: {:s}".format(today.strftime('%b %D %Y')))
 ```
 예제 코드에서 사용한 %m, %d, %y 등은 format specifier(형식 지정자 혹은 서식 지정자)로 formatting에서 사용되는 방법이다. '%'뒤에 어떤 문자가 오고 경우에 따라선 대소문자에 따라 기능의 차이가 있기 때문에(%y와 %Y의 결과를 보면 알 수 있다.) 모든 format specifier를 외우는 것은 조금 피곤한 일이다. 그러므로 format specifier를 이용한 formatting이 있다는 사실과 대략적인 개념만 알아두자. datetime module에서 사용할 수 있는 format specifier에 궁금하다면 아래의 링크를 참고하자. 
 https://docs.python.org/3/library/datetime.html
+
 
 ### 1.4.5 List
 List는 python에서 자주 등장하는 자료형 중 하나다. 실제로 데이터 분석에서도 빈번하게 마주칠 수 있다니 잘 익혀두는 것이 좋을 것이다. 기본적인 개념은 제외한 책의 예제 몇가지를 보자. 
