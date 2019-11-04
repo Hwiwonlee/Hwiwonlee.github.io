@@ -40,11 +40,20 @@ kaggle과 같은 경연 사이트들은 경연참가자들의 data science model
 
 > 당신에게 타이타닉 침몰 사건에서 생존하거나 사망한 승객의 명단 표본이 training dataset으로, 생존하거나 사망했다는 정보가 없는 명단이 test  dataset으로 주어졌습니다. training dataset으로 학습시킨 당신의 model로 test dataset에 속한 사람들의 생존 혹은 사망 여부를 예측하시는 것이 이번 경연의 문제입니다. 
 
-We may also want to develop some early understanding about the domain of our problem. This is described on the Kaggle competition description page here. Here are the highlights to note.
+위의 문제를 이해하고 model을 만드는데 참고할만한 정보가 있다. 아래의 정보들은 [여기에서 확인](https://www.kaggle.com/c/titanic)할 수 있으며 주요 내용만 정리해보았다.
 
+- 1912년 4월 15일, 타이타닉의 첫 출항 중, 타이타닉은 빙산에 부딪혀 가라앉았고 탑승객과 선원을 포함한 2224명 중 1502명이 사망했다. 다시 말해, 전체 탑승자 중 32% 만이 살아남았다. 
+- 타이타닉의 난파 후 탑승자들의 생존률을 떨어트린 요인 중 하나는 타이타닉에 충분한 수의 구명선이 없었다는 것이다.
+- 운에 의한 여러가지 요소를 제외하더라도 생존자들에겐 유사한 경향성이 나타나는데 여성이거나 어린아이거나 높은 등급의 객실을 이용했다는 것 등이다. 
 
+### 1.3 Workflow goals
+Data science를 통한 문제 해결 방법은 7가지의 중요한 목표를 달성하는 과정으로 이해할 수 있다. 
+
+1. **분류**. 자료를 항목에 맞게 분류하거나 구분하는 작업이다. 자료를 목적에 부합하도록 각 범주로 분류시킬 수 있다면 범주 사이의 상관 관계나 특성에 대한 연구를 해볼 수 있다. 
+1. **상관관계 찾기**. training dataset의 자료가 갖는 변수<sup>[[2]](#footnote_2)</sup>들을 이용해 문제에 접근할 수 있는 방법 중 하나다. dataset이 갖는 변수 중 어떤 것이 문제 해결을 위한 핵심인가? 통계적으로 dataset의 어떤 변수가 문제해결과 [상관관계](https://en.wikiversity.org/wiki/Correlation)가 있다고 말할 수 있는가? 변수 안의 값들을 변화시켰을 때 model의 결과값이 어떻게 바뀌는가? 변수와 model의 결과값이 같은 방향성을 갖는가? 아니면 정 반대의 방향성을 갖는가? 변수와 결과값의 상관관계 분석은 숫자 자료형뿐 아니라 명목 자료형에서도 사용할 수 있으므로 주어진 dataset을 이용한 대표적인 검정이다. 만약 상관관계를 찾는다면 이후의 단계 진행을 좀 더 쉽게 할 수 있을 것이다. 
 
 
 
 
 <a name="footnote_1">[1]</a> Data Science Solutions의 저자와 notebook Titanic Data Science Solutions의 저자가 같다
+<a name="footnote_2">[2]</a> Feature를 '변수'(Variable)로 번역했다. 
