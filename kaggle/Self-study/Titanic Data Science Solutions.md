@@ -34,6 +34,13 @@ data science 경연에서 제출할 보고서를 작성할 때, 아래의 7개�
 - 전체 과정에서 한 단계를 여러번 반복하는 경우. 시각화 단계가 여러번 반복되는 경우.
 - 한 단계를 모두 제외시키는 경우. 경연 결과에서 해당 단계를 보이지 않아도 된다고 판단한 경우.
 
+### 1.2 Question and problem definition
+
+kaggle과 같은 경연 사이트들은 경연참가자들의 data science model을 훈련시키고 검증 dataset을 통해 검증하는 일련의 작업을 지원하기 위해 dataset을 제공한다. 따라서 경연에 참가하는 팀들은 목적에 부합하는 문제 해결 방법을 제시해야하며 요구하는 문제를 이해하는 과정을 반드시 거쳐야 한다. Titanic Survival competition에서 해결해야 할 문제는 [kaggle에 이미 제시되어 있다.](https://www.kaggle.com/c/titanic)  
+
+당신에게 타이타닉 침몰 사건에서 생존하거나 사망한 승객의 명단 표본이 training dataset으로, 생존하거나 사망했다는 정보가 없는 명단이 test  dataset으로 주어졌습니다. training dataset으로 학습시킨 당신의 model로 test dataset에 속한 사람들의 생존 혹은 사망 여부를 예측하시는 것이 이번 경연의 문제입니다. 
+
+
 
 
 
