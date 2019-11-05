@@ -58,6 +58,7 @@ Data science를 통한 문제 해결 방법은 7가지의 중요한 목표를 �
 1. **결과보고**. 최고의 결과를 적절한 도구를 통해 드러내는 것은 경쟁에 참여하는 모든 참가자가 해내야할 목표다. 알맞은 시각화와 표, 분명한 문장으로 결과를 제시하자.
 
 <a name="footnote_1">[1]</a> Data Science Solutions의 저자와 notebook Titanic Data Science Solutions의 저자가 같다
+
 <a name="footnote_2">[2]</a> Feature를 '변수'(Variable)로 번역했다. 
 
 
