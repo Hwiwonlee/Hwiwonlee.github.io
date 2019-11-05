@@ -91,16 +91,124 @@ from sklearn.tree import DecisionTreeClassifier
 파이썬의 Pandas module을 이용하면 손쉽게 csv 확장자로 저장된 dataset을 불러올 수 있다. Titanic 경연에서 제공되는 training dataset과 test dataset은 csv확장자이므로 Pandas를 이용해 불러와보자. EDA를 진행하기 위해 train dataset과 test dataset을 하나의 dataset으로 합칠 것이다. 사실 하나의 dataset에서 EDA 후, train, test set으로 나눠 모형의 정확성 검증하는 것이 일반적인 데이터 분석의 순서이므로 EDA를 하기 위해 train set과 test set을 합치는 것은 매우 당연한 일이다.
 
 ```python
-train_df = pd.read_csv(directory of train dataset)
-test_df = pd.read_csv(directory of test dataset)
+train_df = pd.read_csv(directory_train)
+test_df = pd.read_csv(directory_test)
 combine = [train_df, test_df]
 ```
 
 ### 2.2 dataset이 가진 변수와 관측값 파악하기
 이 과정은 EDA의 기초면서 데이터 분석의 토대를 다지는 일이다. 명확히 내용과 과정을 전달하기 위해 문답형식을 이용했다. 마찬가지로 Pandas module의 함수를 이용해 진행할 것이다. 
+**Q1. Dataset에 어떤 변수를 포함하고 있는가?**
+
+변수를 다루기 위해 변수 이름을 아는 것은 중요한 일이다. 변수 이름이 무엇을 의미하는지는 [kaggle의 data page](https://www.kaggle.com/c/titanic/data)를 참고하면 된다.
 
 ```python
+print(train_df.columns.values) ## train_df의 열 이름 출력
+```
 
+
+**Q2. 어떤 변수가 범주형 변수(categorical variable)인가?**
+
+데이터 분석에 사용되는 변수는 크게 숫자형 변수와 범주형 변수로 나뉜다. 각 변수마다 사용할 수 있는 분석 방법이 다르기 때문에 어떤 변수가 어떤 형태를 갖고 있는지 반드시 알아야 한다. 비슷한 성질의 변수끼리 묶어두는 것도 좋다. 범주형 변수의 예로 순서가 없는 명목형(nominal), 순서가 있는 서열형(ordinal), 항목에 대한 전체 비율로 표현되는 비율형(ratio), 구간에 기반해서 얻은 등간형(interval) 등이 있다. 
+
+- 명목형 변수 : Survived, Sex, and Embarked. 서열형 변수 : Pclass.
+
+
+**Q3. 어떤 변수가 숫자형 변수(Numerical variable)인가?**
+
+숫자형 변수의 예로는 이산형(discrete), 연속형(continuous), 시계열(time-serise) 등이 있으며 마찬가지로 변수의 형태에 따른 최적의 분석 방법과 시각화 방법이 다르므로 반드시 구분해야 한다. 
+
+- 연속형 변수 : Age, Fare. 이산형 변수: SibSp, Parch.
+
+> 보통 나이는 이산형 변수로 두는데 연속형 변수로 두는 이유가 있을까?
+
+```python
+train_df.loc[(train_df['Age'] < 10), : ]
+## PassengerId = 832의 승객의 나이가 0.83임을 확인. 이 값이 만약 이상치가 아니라면 연속형 변수로 정의하는 것이 옳다
+```
+
+```python
+# preview the data
+train_df.head() # .head(int) : 선언된 dataframe의 index 0:5까지의 자료를 출력. 선언된 int만큼의 자료를 출력한다. 
+```
+
+
+**Q4. 어떤 변수가 혼합형 변수(mixed variable)인가?**
+
+동일한 변수 안에 숫자형, 문자형 값들이 존재하는 경우는 생각보다 굉장히 흔하다. 간단한 예를 들면 '주소'부터 그런 형식이다. '문자형'으로 정의해서 변수를 정리할 수도 있지만 편집이 필요한 경우도 있으니 혼합형 변수를 확인해야 한다. 
+- Ticket 변수가 숫자와 영어의 혼합형을 값으로 갖는 변수이다. Cabin 또한 같은 형태이다. 
+
+
+**Q5. 잘못된 값이나 오타를 포함한 변수가 있는가?**
+
+많은 변수와 관측값을 포함한 dataset에서 곧바로 오타나 잘못된 값을 찾아내기는 어렵지만, 우리가 다루고 있는 titanic dataset처럼 작은 dataset에서는 비교적 쉽게 찾아낼 수 있다.
+- Name은 이름을 표현하는 많은 방법들이 있기 때문에 이 방법들을 수정해야할 값들로 볼 수 있다. 가령, 이름에 큰따옴표를 쓰는 경우를 예로 들 수 있다.
+
+```python
+train_df.tail() ## PassengerId : 889의 승객이름에 큰따옴표를 볼 수 있다.
+```
+
+
+**Q6. 관측값에 공백이나 값없음(null) 혹은 결측치(missing value)가 포함되어 있는가?**
+
+앞서 말했지만 대부분의 통계 분석 과정에서 '값이 존재하지 않는 경우'는 '결과의 정확성'에 악영향을 미치기 때문에 가능하다면 다른 값으로 대체하거나 수정해야만 한다. 
+> [결측치 처리에 대한 괜찮은 링크](https://eda-ai-lab.tistory.com/14)를 첨부한다. 
+
+- train dataset에서 Cabin > Age > Embarked의 순으로 null값이 포함되어 있다.
+- test dataset에서 Cabin > Age의 순으로 null값이 포함되어 있다. 
+
+```python
+# .isnull()과 .sum()을 이용한 결측치 탐색
+train_df.isnull().sum() ## Cabin : 687, Age : 177, Embarked : 2
+test_df.isnull().sum() ## Cabin : 327, Age : 86
+```
+
+
+**Q7. 관측값이 어떤 형식을 갖고 있는가?**
+
+앞서 변수가 범주형인가 숫자형인가를 따졌다면 이젠 관측값이 어떤 형태로 저장되어있는지를 알아봐야 한다. 
+- train dataset에서는 7개의 변수가 정수나 부동소수점형태의 자료이고 test dataset에서는 6개의 변수가 그렇다. 
+- dataset에 상관없이 5개의 변수의 자료가 문자형을 갖는다. 
+
+> train dataset과 test dataset에서 numerical value를 갖는 변수가 각각 7개와 6개로 차이나는 이유는 test dataset이 Survived를 포함하고 있지 않기 때문이다. 
+
+```python
+train_df.info()
+print('_'*40) ## 미관을 위한 경계선을 추가한 것. 
+test_df.info()
+```
+
+
+**Q8. dataset에서 숫자형 변수들은 어떤 분포를 갖는가?**
+
+통계분석에서 관측값이 갖는 '분포(distribution)'를 알아보는 것은 매우 중요하다. 분포에 대해 조사해봄으로써 작게는 변수 안에서 관측값들이 갖는 개략적인 모습을 파악할 수 있고 크게는 모수적 방법(parametric method)과 비모수적 방법(non-parametric method)을 이용해 분석을 할 것인지에 대한 의사결정을 내리는 근거가 될 수 있기 때문이다. 모델 적합에 이용할 train dataset을 이용해 분포를 알아보자. 
+
+- train testset에 포함된 것은 전체 승객 2,224명 중 40%에 해당하는 891명에 대한 자료들이다.
+- Survived는 범주형 변수로 0과 1의 값을 갖으며 각각 사망, 생존을 의미한다. 
+- train testset을 기준으로 38%의 생존률을 갖지만 실제 생존률은 32%이다. 
+- 75% 이상의, 대부분의 승객들은 부모나 아이없이 타이타닉에 승선했다. 
+- 약 30%의 승객들은 형제자매와/또는 배우자와 함께 승선했다.
+- 1% 미만의 승객들은 $512 이상의 값을 지불하고 승선했다.
+- 65-80살의 승객들은 1% 미만이다. 
+
+```python
+train_df.describe()
+# Review survived rate using percentiles=[.61, .62] knowing our problem description mentions 38% survival rate.
+# Review Parch distribution using percentiles=[.75, .8]
+# SibSp distribution [.68, .69]
+# Age and Fare [.1, .2, .3, .4, .5, .6, .7, .8, .9, .99]
+```
+
+**Q9. dataset에서 범주형 변수들은 어떤 분포를 갖는가?**
+- Name 변수에서 중목되는 이름은 없다. 
+- Sex는 두 개의 범주를 가지며 탑승객의 65%가 남성이다.
+- Cabin은 dataset 전반에 걸쳐 중복되는 경우가 있다. 이는 여러 승객들이 한 객실을 사용했음을 의미한다.
+- Embarked는 세 개의 범주를 가지며 'S' 항수를 이용한 탑승객이 제일 많았다.
+- Ticket에서 22%의 관측값에서 중복값을 발견했다.
+
+```python
+train_df.describe(include=['O']) ## 'O' : Strings object에 대한 decribe를 요청하는 arg
+## https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.describe.html 참고 
 ```
 
 
