@@ -216,8 +216,8 @@ train_df.describe(include=['O']) ## 'O' : Strings object에 대한 decribe를 �
 
 
 **상관성**
-1.) 생존여부와 나이가 관계 있다고 가정하고 만족하는지 확인.
-2.) 승선지점이 생존이나 다른 변수과 관계가 있다고 가정하고 만족하는지 확인.
+1. ) 생존여부와 나이가 관계 있다고 가정하고 만족하는지 확인.
+2. ) 승선지점이 생존이나 다른 변수과 관계가 있다고 가정하고 만족하는지 확인.
 
 **Correcting.**
 Ticket feature may be dropped from our analysis as it contains high ratio of duplicates (22%) and there may not be a correlation between Ticket and survival.
