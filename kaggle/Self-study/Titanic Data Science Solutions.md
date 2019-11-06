@@ -216,14 +216,31 @@ train_df.describe(include=['O']) ## 'O' : Strings object에 대한 decribe를 �
 
 
 **상관성**
-1. ) 생존여부와 나이가 관계 있다고 가정하고 만족하는지 확인.
-2. ) 승선지점이 생존이나 다른 변수과 관계가 있다고 가정하고 만족하는지 확인.
+1) 'Survived'와 'Age'가 관계 있다고 가정하고 만족하는지 확인.
+2) 'Embarked'가 'Survived'나 다른 변수과 관계가 있다고 가정하고 만족하는지 확인.
 
-**Correcting.**
-Ticket feature may be dropped from our analysis as it contains high ratio of duplicates (22%) and there may not be a correlation between Ticket and survival.
-Cabin feature may be dropped as it is highly incomplete or contains many null values both in training and test dataset.
-PassengerId may be dropped from training dataset as it does not contribute to survival.
-Name feature is relatively non-standard, may not contribute directly to survival, so maybe dropped.
 
+**변수 제거(Correcting)**
+1) 'Ticket'은 지나치게 높은 중복도(22%)를 갖고 있어 생존여부와의 상관성이 떨어진다고 추정, 이후의 분석에서 제외한다. 
+1) 'Cabin'은 train dataset과 test dataset, 두 dataset에서 공통적으로 너무 많은 결측치를 갖고 있으므로 제외한다.
+1) 임의로 매긴 PassengerId도 생존여부와 관련없으므로 제외한다.
+1) 'Name' 또한 생존여부와 관계없으므로 제외한다. 
+
+
+**변수 생성(Creating)**
+1) 부모-자녀나 형제-자매 혹은 배우자와 함께 승선한 승객들이 많으므로 이를 표현하기 위해 'Family' 변수를 추가한다.
+1) 'Name'을 조작하여 'Title'이라는 새로운 변수를 만들 것이다.
+1) 연속형 변수인 'Age'를 편집해 서열척도 기반의 'Age band'를 추가할 것이다.
+1) 분석을 위해 'Fare range'를 추가할 것이다. 
+
+> '나이'나 '운임'등의 연속형 혹은 이산형 자료를 범주형으로 바꾸면 범주형 분석 도구를 사용해 분석할 수 있으므로 분석과정이 편해진다. 
+
+
+**세분화(Classifying)**
+앞서 설명한 문제에 대해 가정을 추가할 수 있다.
+
+1) 여성의 생존률이 더 높을 것이다.
+1) 아이의 생존률이 더 높을 것이다.
+1) 상류층 승객의 생존률이 더 높을 것이다. 
 
 
