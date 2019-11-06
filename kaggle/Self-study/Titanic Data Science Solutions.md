@@ -211,6 +211,11 @@ train_df.describe(include=['O']) ## 'O' : Strings object에 대한 decribe를 �
 ## https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.describe.html 참고 
 ```
 
+### 2.3 데이터 분석에 근거한 가정
+아래는 이후의 데이터 분석에서 근거할 가정들이다. 실제 분석을 하기 전 이 가정들을 만족하는지 확인해볼 것이다. 
+
+**Correlating**
+1). 
 
 
 
