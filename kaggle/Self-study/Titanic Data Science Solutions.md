@@ -214,8 +214,16 @@ train_df.describe(include=['O']) ## 'O' : Strings object에 대한 decribe를 �
 ### 2.3 데이터 분석에 근거한 가정
 아래는 이후의 데이터 분석에서 근거할 가정들이다. 실제 분석을 하기 전 이 가정들을 만족하는지 확인해볼 것이다. 
 
-**Correlating**
-1). 
+
+**상관성**
+1.) 생존여부와 나이가 관계 있다고 가정하고 만족하는지 확인.
+2.) 승선지점이 생존이나 다른 변수과 관계가 있다고 가정하고 만족하는지 확인.
+
+**Correcting.**
+Ticket feature may be dropped from our analysis as it contains high ratio of duplicates (22%) and there may not be a correlation between Ticket and survival.
+Cabin feature may be dropped as it is highly incomplete or contains many null values both in training and test dataset.
+PassengerId may be dropped from training dataset as it does not contribute to survival.
+Name feature is relatively non-standard, may not contribute directly to survival, so maybe dropped.
 
 
 
