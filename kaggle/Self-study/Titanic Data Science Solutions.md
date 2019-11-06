@@ -215,7 +215,7 @@ train_df.describe(include=['O']) ## 'O' : Strings object에 대한 decribe를 �
 아래는 이후의 데이터 분석에서 근거할 가정들이다. 실제 분석을 하기 전 이 가정들을 만족하는지 확인해볼 것이다. 
 
 
-**상관성**
+**상관성<sup>[[3]](#footnote_3)</sup>** 
 1) 'Survived'와 'Age'가 관계 있다고 가정하고 만족하는지 확인.
 2) 'Embarked'가 'Survived'나 다른 변수과 관계가 있다고 가정하고 만족하는지 확인.
 
@@ -227,7 +227,7 @@ train_df.describe(include=['O']) ## 'O' : Strings object에 대한 decribe를 �
 1) 'Name' 또한 생존여부와 관계없으므로 제외한다. 
 
 
-**변수 생성(Creating)**
+**변수 생성**
 1) 부모-자녀나 형제-자매 혹은 배우자와 함께 승선한 승객들이 많으므로 이를 표현하기 위해 'Family' 변수를 추가한다.
 1) 'Name'을 조작하여 'Title'이라는 새로운 변수를 만들 것이다.
 1) 연속형 변수인 'Age'를 편집해 서열척도 기반의 'Age band'를 추가할 것이다.
@@ -236,11 +236,37 @@ train_df.describe(include=['O']) ## 'O' : Strings object에 대한 decribe를 �
 > '나이'나 '운임'등의 연속형 혹은 이산형 자료를 범주형으로 바꾸면 범주형 분석 도구를 사용해 분석할 수 있으므로 분석과정이 편해진다. 
 
 
-**세분화(Classifying)**
+**개략적인 가설설정(Classifying)**
+
 앞서 설명한 문제에 대해 가정을 추가할 수 있다.
 
 1) 여성의 생존률이 더 높을 것이다.
 1) 아이의 생존률이 더 높을 것이다.
 1) 상류층 승객의 생존률이 더 높을 것이다. 
 
+
+<a name="footnote_3">[3]</a> 상관계수를 이용한 상관관계 판단이 아닌 "그냥 A와 B가 관계가 있지 않을까?" 수준의 가정이다.
+
+
+### 2.4 주축 변수를 이용한 기초 분석
+
+가정들을 확인하기 위해 가정의 주축되는 변수들 간의 상관관계를 간략하게 살펴볼 필요가 있다. 아직 전처리 단계 전이므로 결측치나 이상치에 대한 조작없이 시행해야 할 것이기 때문에 이 과정에서 결측치를 포함한 관측값들은 제외될 것이다. 대상이 되는 변수들은 범주형(Sex), 서열형(Pclass) 혹은 이산형(SibSp, Parch) 등이다. 
+
+- *Pclass* '개략적인 가설설정' 단계에서 가정한 3번째 가정인 '상류층 승객의 생존률이 더 높을 것이다.'가 어느 정도 사실로로 보인다. 따라서 'Pclass'를 model에 포함시켜 model을 만들어보겠다.
+- *Sex* '개략적인 가설설정' 단계에서 가정한 1번째 가정인 '여성의 생존률이 더 높을 것이다.'가 사실(여성의 74%가 생존)로 보인다.
+- *SibSp* and *Parch* 결측값을 제외한 자료들을 이용했을 때, 이 변수들과 생존여부는 큰 관계가 없어보인다. 관계를 알아내는 것보다 이렇게 특정 변수로 묶어내는 것이 최선의 결과일 수도 있다.
+
+```python
+train_df[['Pclass', 'Survived']].groupby(['Pclass'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+train_df[["Sex", "Survived"]].groupby(['Sex'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+train_df[["SibSp", "Survived"]].groupby(['SibSp'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+train_df[["Parch", "Survived"]].groupby(['Parch'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+## train_df[["A", "B"]].groupby(['A'], as_index=False).mean().sort_values(by='B', ascending=False)
+## df에서 "A"와 "B" column 선택 / "A" 컬럼의 value를 기준으로 묶고 / 평균을 계산 / 계산 결과를 'B' column에 대하여 내림차순 정렬
+## pd.groupby(, as_index = boolean) : 그룹화한 결과를 종합해서 객체로 반환할 때 index에 의한 정렬을 할 것인가? as_index=False 이 효과적인  “SQL-style”의 결과물임.
+https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.groupby.html 참고
+```
+
+### 2.5 시각화를 이용한 기초 분석
+시각화 방법을 이용해서 위에서 설정한 가정의 만족 여부를 알아보자. 
 
