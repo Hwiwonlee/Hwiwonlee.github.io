@@ -149,3 +149,178 @@ print(df.head())
 ```
 
 ## 2.3 Importing HDF5 files
+HDF5 files이란 Hierarchical Data Format version 5을 말한다. 대용량의 numerical data를 저장하기 위한 file이며 이때의 '대용량'이란 hundreds of gigabytes나 terabytes 수준에 달한다. HDF5는 최대 exabytes의 수준까지 저장가능하다고 하니 정말로 '대용량'인 셈이다. 
+```python
+# Using h5py to import HDF5 files
+import numpy as np
+import h5py
+
+file = 'LIGO_data.hdf5' ## LIGO : Laser Interferometer Gravitational-Wave Observatory
+## 추가적인 정보는 아래의 링크에서 확인해볼 수 있다.
+## https://ko.wikipedia.org/wiki/%EB%A0%88%EC%9D%B4%EC%A0%80_%EA%B0%84%EC%84%AD%EA%B3%84_%EC%A4%91%EB%A0%A5%ED%8C%8C_%EA%B4%80%EC%B8%A1%EC%86%8C
+## https://www.gw-openscience.org/events/GW150914/
+
+data = h5py.File(file, 'r') ## 'r' is 'read only'
+
+# Print the datatype of the loaded file
+print(type(data))
+
+# Print the keys of the file
+for key in data.keys():
+    print(key)
+
+# Extracting data from your HDF5 file
+group = data['strain']
+
+for key in group.keys():
+    print(key)
+
+strain = data['strain']['Strain'].value
+num_samples = 10000
+time = np.arange(0, 1, 1/num_samples)
+
+plt.plot(time, strain[:num_samples])
+plt.xlabel('GPS Time (s)')
+plt.ylabel('strain')
+plt.show()
+```
+
+## 2.4Importing MATLAB files
+```python
+# Loading .mat files
+import scipy.io
+mat = scipy.io.loadmat('albeck_gene_expression.mat')
+print(type(mat)) ## dict 형태로 load됨 
+
+# The structure of .mat in Python
+print(mat.keys())
+print(type(mat['CYratioCyt']))
+print(np.shape(mat['CYratioCyt']))
+
+data = mat['CYratioCyt'][25, 5:]
+fig = plt.figure()
+plt.plot(data)
+plt.xlabel('time (min.)')
+plt.ylabel('normalized fluorescence (measure of expression)')
+plt.show()
+```
+
+# 3. Working with relational databases in Python
+relational databases, 그러니까 ['관계형 데이터베이스'](https://ko.wikipedia.org/wiki/%EA%B4%80%EA%B3%84%ED%98%95_%EB%8D%B0%EC%9D%B4%ED%84%B0%EB%B2%A0%EC%9D%B4%EC%8A%A4)는 이름이나 개념, 용어가 생소할 뿐이지 사실 쉽게 찾아볼 수 있는 형태이다. '관계형'이라는 이름이 붙은 이유는 data를 저장하고 있는 여러 테이블들이 '관계'를 맺고 있기 때문인데 가령 테이블 '주문 목록', '고객 목록', '직원 목록'의 테이블 3개가 관계형 데이터베이스 형태로 저장되어 있다고 하자. 이 때, '주문 번호', '고객 ID', '직원 ID'을 정의하는 고유 키(primary key)가 존재하고 고유 키로 row(관계형 데이터베이스 하에서는 튜플 또는 레코드)가 구분된다. 따라서, '주문 목록' 테이블는 '주문 번호'가 고유 키가 되어 주문(row)을 식별할 수 있도록 하며 '주문'에 관련된 column이 외래 키로 추가되어 테이블을 이룬다. [목적에 맞게 table을 편집해 비교적 간략하게 볼 수 있으며 유지보수가 간편하다는 장점이 있지만 추가적인 연산이나 저장공간이 필요하므로 더 많은 자원이 활용되어 시스템의 부하가 높다는 단점 또한 존재한다.](https://m.blog.naver.com/PostView.nhn?blogId=acornedu&logNo=221040291485&proxyReferer=https%3A%2F%2Fwww.google.com%2F) 흔히 볼 수 있는 SQL(Structure Query Language)를 이용한 데이터베이스가 관계형 데이터베이스의 대표적인 예다. 
+
+## 3.1 Creating a database engine in Python
+파이썬을 이용해 데이터 베이스 엔진을 만들 수도 있다. SQL를 기반으로한 데이터베이스 엔진은 여러 종류가 있지만 빠르고 간단하게 실습할 수 있는 SQLite를 사용할 것이다. 파이썬에서는 SQL을 사용할 수 있는 여러개의 module이 존재하는데 그 중 데이터 베이스 관리에 많이 사용되는 SQLAlchemy를 사용해 데이터 베이스 엔진을 만들어도록 하겠다. 
+
+```python
+# Creating a database engine
+from sqlalchemy import create_engine
+engine = create_engine('sqlite:///Chinook.sqlite')
+## Chinook에 대한 추가적인 정보는 아래의 링크를 참고하자.
+## https://github.com/lerocha/chinook-database
+
+# What are the tables in the database?
+table_names = engine.table_names()
+print(table_names)
+```
+
+## 3.2 Querying relational databases in Python
+SQL기반의 데이터베이스를 다루는 일이므로 당연히, query를 통해 데이터베이스에서 data를 가져올 수 있게 되어 있다. 이 과정을 파이썬으로 실습해보자. 과정의 순서는 아래와 같다. 
+- Import packages and functions
+- Create the database engine
+- Connect to the engine
+- Query the database
+- Save query results to a DataFrame
+- Close the connection
+
+```python
+# The Hello World of SQL Queries!
+from sqlalchemy import create_engine
+import pandas as pd
+engine = create_engine('sqlite:///Chinook.sqlite') ## 1.import package and creat engine
+
+con = engine.connect() ## 2. connect to the engine
+
+rs = con.execute('SELECT * FROM album') ## 3. query the db
+## 'SELECT * FROM album' : SQL 쿼리, album table의 모든(*) column을 선택(SELECT)함. 
+
+df = pd.DataFrame(rs.fetchall()) ## 4. save query results to a df
+## query.fetchall() : 모든 row를 가져올 것. 
+
+con.close() ## 5. close connection
+print(df.head())
+
+# Customizing the Hello World of SQL Queries
+## 1단계는 미리 진행해뒀다고 가정
+## with을 이용한 진행으로 SQL 쿼리의 중요한 부분에 대한 가독성을 높일 수 있음 
+with engine.connect() as con:
+    rs = con.execute("SELECT LastName, Title FROM Employee")
+    df = pd.DataFrame(rs.fetchmany(3)) ## query.fetchmany(int) : int만큼의 row를 가져옴 
+    df.columns = rs.keys() ## db에서는 'column'을 key라 한다. 
+print(len(df))
+
+# Filtering your database records using SQL's WHERE
+engine = create_engine('sqlite:///Chinook.sqlite')
+
+with engine.connect() as con:
+    rs = con.execute('SELECT * FROM Employee WHERE EmployeeId >= 6') ## WHERE condtion : SQL 쿼리에서의 filtering에 사용, 
+    df = pd.DataFrame(rs.fetchall())
+    df.columns = rs.keys()
+print(df.head())
+
+# Ordering your SQL records with ORDER BY
+engine = create_engine('sqlite:///Chinook.sqlite')
+
+with engine.connect() as con:
+    rs = con.execute('SELECT * FROM Employee ORDER BY BirthDate') ## ORDER BY key : SQL 쿼리에서의 Ordering에 사용 
+    df = pd.DataFrame(rs.fetchall())
+    df.columns = rs.keys()
+print(df.head())
+```
+
+## 3.3 Querying relational databases directly with pandas
+3.2에서 실습해본 내용은 SQL db에 접근, 쿼리를 통해 data를 가져오는 정석적인 과정이다. 이미 우리가 알고 있는 Pandas package로 이 과정을 조금 더 간편하게 해볼 수 있다. 
+
+```python
+# Pandas and The Hello World of SQL Queries!
+from sqlalchemy import create_engine
+import pandas as pd
+
+engine = create_engine('sqlite:///Chinook.sqlite')
+
+df = pd.read_sql_query("SELECT * FROM Album", engine) ## Pandas.read_sql_query("QUERY", engine)
+print(df.head())
+
+with engine.connect() as con:
+    rs = con.execute("SELECT * FROM Album")
+    df1 = pd.DataFrame(rs.fetchall())
+    df1.columns = rs.keys()
+
+print(df.equals(df1)) ## pandas를 이용한 방법과 3.2의 방법이 같은가? 같음. 
+
+# Pandas for more complex querying
+from sqlalchemy import create_engine
+import pandas as pd
+
+engine = create_engine("sqlite:///Chinook.sqlite")
+df = pd.read_sql_query("SELECT * FROM Employee WHERE EmployeeID >= 6 ORDER BY BirthDate", engine)
+## 쿼리 부분이 길면 따로 저장해서 해도 됨
+query = "SELECT * FROM Employee WHERE EmployeeID >= 6 ORDER BY BirthDate"
+df1 = pd.read_sql_query(query, engine)
+print(df.head())
+print(df1.head())
+```
+
+## 3.4 Advanced querying: exploiting table relationships
+```python
+# The power of SQL lies in relationships between tables: INNER JOIN
+with engine.connect() as con:
+    rs = con.execute("SELECT Title, Name FROM Album INNER JOIN Artist on Album.ArtistID = Artist.ArtistID")
+    ## title과 Name을 선택 / Album table과 Artist table로부터 "INNER JOIN하는 것만"/ "INNER JOIN의 조건은 Album table의 ArtistID와 Artist table의 AristID가 같아야 함.   
+    df = pd.DataFrame(rs.fetchall())
+    df.columns = rs.keys()
+print(df.head())
+
+# Filtering your INNER JOIN
+df = pd.read_sql_query("SELECT * FROM PlaylistTrack INNER JOIN Track on PlaylistTrack.TrackId = Track.TrackId WHERE Milliseconds < 250000", engine)
+print(df.head())
+```
