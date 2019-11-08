@@ -136,3 +136,62 @@ ax1.yaxis.set_ticks_position('left')
 
 plt.savefig('pandas_plots.png', dpi = 400, bbox_inches = 'tight')
 ```
+
+```python
+from ggplot import *
+
+print(mtcars.head())
+
+plt1 = ggplot(aes(x = 'mpg'), data = mtcars) + geom_histogram(fill = 'darkblue', binwidth = 2) +
+      xlim(10, 35) + ylim(0, 10) + xlab('MPG') + ylab('Frequency') + ggtitle("Histogram of MPG")
+print(plt1)
+
+print(meat.head())
+plt2 = ggplot(aes(x = 'date', y = 'beef'), data = meat) + geom_line(color = 'purple', size = 1.5, alpha = 0.75)+
+      stat_smooth(colur = 'blue', size = 2, span = 0.15) + 
+      xlab('Year') + ylab('Head of Cattle Slaughtered') + 
+      ggtitle('Beef Consumption Over Time')
+print(plt2)
+
+print(diamonds.head())
+plt3 = ggplot(aes(x = 'carat', y = 'price', colour = 'cut'), data = diamonds) + geom_point(alpha = 0.5) + 
+        scale_color_gradient(low = '#05D9F6', high = '#5011D1') + 
+        xlim(0, 6) + ylim(0, 20000) + 
+        ggtitle('Diamond Price by Carat adn Cut') + 
+        theme_gray()
+print(plt3)
+
+plt3.save("ggplot_plots.png")
+```
+
+```python
+import seaborn as sns
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+sns.set(color_codes = True)
+
+x = np.random.normal(size = 1000)
+sns.distplot(x , bins = 20, kde = False, rug = True, label = "Histogram w/o Destiny")
+sns.utils.axlabel("Value", "Frequency")
+plt.title("Histogram of Random Sample of Normal Distribution")
+plt.legend()
+plt.show()
+
+mean, cov = [5, 10], [(1, 0.5), (0.5, 1)]
+data = np.random.multivariate_normal(mean, cov, 200)
+data_frame = pd.DataFrame(data, columns = ["x", "y"])
+sns.jointplot(x="x", y="y", data = data_frame, kind = "reg").set_axis_labels("x", "y")
+plt.subtitle("Joint Plot of Two Variables with Bivariate and Univariate Graphs")
+plt.show()
+
+iris = sns.load_dataset("iris")
+sns.pairplot(iris)
+plt.show()
+
+tips = sns.load_dataset("tips")
+
+sns.factorplot(x = "time", y = "total_bill", hue = "smoker", col = "dat", data = tips, kind = "box", size = 4, aspect = 0.5)
+plt.show()
+```
