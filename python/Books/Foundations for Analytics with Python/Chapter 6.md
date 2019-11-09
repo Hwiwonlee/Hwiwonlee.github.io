@@ -151,9 +151,11 @@ print(plt3)
 ```
 ### plotnine과 ggplot
 **문제 1** dataset을 불러오기 위한 from ggplot import * 가 안됨
+
 **[해결 1](https://stackoverflow.com/questions/28417293/sample-datasets-in-pandas)** 차선책으로 pydataset 모듈을 이용해 data를 가져옴. 그러나 mtcars와 diamonds만 존재. meat data는 가져올 수 없었음. R에서 직접 가져오는 방법도 있긴 하지만 일단 pass
 
 **문제 2** diamonds data를 이용한 plot이 print가 안됨. Error: Discrete value supplied to continuous scale
+
 **해결 2** 아직 진행 중. (11.09). scale_color_gradient(low = '#05D9F6', high = '#5011D1')이 문제였음. 일단 빼보니까 문제없이 돌아감.  
 p9.scales.scale_color_gradient()의 [help](https://plotnine.readthedocs.io/en/stable/generated/plotnine.scales.scale_color_gradient.html#plotnine.scales.scale_color_gradient) 를 봐도 문제가 없어보이는데 이유를 아직 모르겠음. 
 
