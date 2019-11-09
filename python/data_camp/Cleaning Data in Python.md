@@ -118,9 +118,7 @@ print(airquality_pivot_reset.head())
 # Pivoting duplicate values
 airquality_pivot = airquality_dup.pivot_table(index=['Month', 'Day'], columns='measurement', values='reading', aggfunc=np.mean)
 ```
-> # Pivoting duplicate values 는 잘 모르겠다. aggfunce의 default가 mean이어서 그런가? np.sum을 해보니 확실히 바뀌는 게 있다. 
-
-[출처](https://rfriend.tistory.com/275)
+> Pivoting duplicate values 는 잘 모르겠다. aggfunce의 default가 mean이어서 그런가? np.sum을 해보니 확실히 바뀌는 게 있다. [출처](https://rfriend.tistory.com/275)
 
 ```python
 import pandas as pd
