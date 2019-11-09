@@ -148,8 +148,7 @@ plt3 = p9.ggplot(aes(x = 'carat', y = 'price', colour = 'cut'), data = diamonds)
         + geom_point(alpha = 0.5) \
         + xlim(0, 6) + ylim(0, 20000) + xlab("Carat") + ylab("Price") + ggtitle('Diamond Price by Carat adn Cut') + theme_gray()
 print(plt3)
-
-
+```
 ### plotnine과 ggplot
 **문제 1** dataset을 불러오기 위한 from ggplot import * 가 안됨
 **[해결 1](https://stackoverflow.com/questions/28417293/sample-datasets-in-pandas)** 차선책으로 pydataset 모듈을 이용해 data를 가져옴. 그러나 mtcars와 diamonds만 존재. meat data는 가져올 수 없었음. R에서 직접 가져오는 방법도 있긴 하지만 일단 pass
