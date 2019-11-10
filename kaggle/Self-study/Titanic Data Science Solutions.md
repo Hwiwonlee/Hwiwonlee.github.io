@@ -351,3 +351,21 @@ grid = sns.FacetGrid(train_df, row='Embarked', col='Survived', size=2.2, aspect=
 grid.map(sns.barplot, 'Sex', 'Fare', alpha=.5, ci=None)
 grid.add_legend()
 ```
+
+## 3. 전처리 과정(Wrangle data)
+지금까지 우리는 가지고 있는 dataset으로 문제해결을 위한 여러 가정과 그에 맞는 의사결정을 했다. 이 과정에서 아직까지 실제 dataset을 조작한 일은 없다. 이제 dataset을 조작해 변수를 편집하고 새로운 변수를 만들어보자. 
+
+### 3.1 변수 제거
+정리정돈의 시작은 무엇을 버릴지에서 시작한다. 쓸모없는 변수를 제거하면 dataset의 크기가 줄어들어 분석 시간과 복잡도에서 이점을 갖게 된다. 지금까지의 가정과 의사결정으로 우리는 'Cabin'(correcting #2)과 'Ticket'(correcting #1)을 제거하기로 했다. 당연한 이야기지만 제거하기로 한 변수가 있다면 train set과 test set 둘 다 제거해주어야 한다. 
+
+```python
+print("Before", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
+
+train_df = train_df.drop(['Ticket', 'Cabin'], axis=1)
+test_df = test_df.drop(['Ticket', 'Cabin'], axis=1)
+combine = [train_df, test_df]
+
+print("After", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
+```
+> 왜 combine[0].shape, combine[1].shape을 넣었는지는 모르겠다. train, test 둘 다 감소된 걸 보이고 싶었나?
+
