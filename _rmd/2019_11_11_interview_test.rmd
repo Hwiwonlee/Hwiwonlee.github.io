@@ -1,0 +1,77 @@
+```{r}
+library(reshape2)
+library(dplyr)
+library(tidyr)
+
+# read csv files 
+gj_2002 <- read.csv("Nhis_heals_gj_2002.csv")
+gj_2003 <- read.csv("Nhis_heals_gj_2003.csv")
+
+gy_2002 <- read.csv("Nhis_heals_gy20_t1_2002.csv")
+gy_2003 <- read.csv("Nhis_heals_gy20_t1_2003.csv")
+
+jk_2002 <- read.csv("Nhis_heals_jk_2002.csv")
+jk_2003 <- read.csv("Nhis_heals_jk_2003.csv")
+
+
+str(gj_2002)
+str(gj_2003)
+
+head(gy_2002)
+head(gy_2003)
+
+str(jk_2002)
+str(jk_2003)
+
+# Q1.
+nrow(gj_2002) + nrow(gj_2003) ## 294729 + 310210 = total 검진 횟수 604939
+m_gj <- merge(gj_2002, gj_2003, by = "PERSON_ID") ## 중복 ID 체크 
+nrow(m_gj) ## 중복 ID 90144명
+
+
+# Q2.
+gj_1 <- (nrow(gj_2002) + nrow(gj_2003)) - nrow(m_gj)
+gj_2 <- nrow(m_gj)
+mean_gj <- ((1*gj_1) + (2*gj_2)) / 2  ## 평균 
+sd_gj <- sqrt((((gj_1-mean_gj)^2) + ((gj_2-mean_gj)^2)) / 2) ## 표준편차 
+An2 <- mean_gj + sd_gj
+
+
+# Q3.
+str(jk_2002)
+sum(is.na(jk_2002$DTH_MDY)) ## 02년의 경우 사망일자가 모두 NA
+
+str(jk_2003)
+sum(is.na(jk_2003$DTH_MDY)) ## 03년의 경우 514531 - 513211 = 1320명의 사망자 존재. 
+
+DTH_jk_2003 <- na.omit(jk_2003)
+str(DTH_jk_2003)
+
+m_jk <- merge(jk_2002, jk_2003, by = "PERSON_ID")
+str(m_jk)
+
+total_jk = nrow(jk_2002) + nrow(jk_2003) - nrow(m_jk) ## jk dataset 기준 중복을 제외한 총 obs 수
+D_percent = nrow(DTH_jk_2003) / total_jk ## jk dataset 기준 사망자 비율 
+
+
+m_D_jk03_gj02 <- merge(DTH_jk_2003, gj_2002, by = "PERSON_ID")
+m_D_jk03_gj03 <- merge(DTH_jk_2003, gj_2003, by = "PERSON_ID")
+
+str(m_D_jk03_gj02) ## 1047명 
+str(m_D_jk03_gj03) ## 319명, 사망자 총합 1320명을 초과한다. 
+
+m_D_find_overlap <- merge(m_D_jk03_gj02, m_D_jk03_gj03, by = "PERSON_ID")
+str(m_D_find_overlap) ## 46명, 02, 03년에 검진받고 03년에 사망한 환자로 보임. 
+
+head(m_D_jk03_gj02)
+
+mean(as.Date(as.character(m_D_jk03_gj02$DTH_MDY), "%Y%m%d") - as.Date(as.character(m_D_jk03_gj02$HME_DT), "%Y%m%d") + 
+       as.Date(as.character(m_D_jk03_gj03$DTH_MDY), "%Y%m%d") - as.Date(as.character(m_D_jk03_gj03$HME_DT), "%Y%m%d"))
+sd(as.Date(as.character(m_D_jk03_gj02$DTH_MDY), "%Y%m%d") - as.Date(as.character(m_D_jk03_gj02$HME_DT), "%Y%m%d") + 
+       as.Date(as.character(m_D_jk03_gj03$DTH_MDY), "%Y%m%d") - as.Date(as.character(m_D_jk03_gj03$HME_DT), "%Y%m%d"))
+
+
+# Q4. 
+
+
+```
