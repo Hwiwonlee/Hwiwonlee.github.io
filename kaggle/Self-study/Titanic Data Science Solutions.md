@@ -355,7 +355,10 @@ grid.add_legend()
 ## 3. 전처리 과정(Wrangle data)
 지금까지 우리는 가지고 있는 dataset으로 문제해결을 위한 여러 가정과 그에 맞는 의사결정을 했다. 이 과정에서 아직까지 실제 dataset을 조작한 일은 없다. 이제 dataset을 조작해 변수를 편집하고 새로운 변수를 만들어보자. 
 
-### 3.1 변수 제거
+### 3.1 변수 편집
+변수 편집을 변수 제거와 변수 수정의 두 과정으로 나눌 수 있다. 3.2 변수 생성까지 이 과정으로 포함할 수도, 굳이 '변수 편집'이라는 항목으로 묶지 않아도 된다. 이렇게 구분한 것은 항목 수준을 맞춰주기 위함일 뿐 특별한 의미는 없다. 
+
+#### 3.1.1 변수 제거
 정리정돈의 시작은 무엇을 버릴지에서 시작한다. 쓸모없는 변수를 제거하면 dataset의 크기가 줄어들어 분석 시간과 복잡도에서 이점을 갖게 된다. 지금까지의 가정과 의사결정으로 우리는 'Cabin'(correcting #2)과 'Ticket'(correcting #1)을 제거하기로 했다. 당연한 이야기지만 제거하기로 한 변수가 있다면 train set과 test set 둘 다 제거해주어야 한다. 
 
 ```python
@@ -368,4 +371,244 @@ combine = [train_df, test_df]
 print("After", train_df.shape, test_df.shape, combine[0].shape, combine[1].shape)
 ```
 > 왜 combine[0].shape, combine[1].shape을 넣었는지는 모르겠다. train, test 둘 다 감소된 걸 보이고 싶었나?
+
+#### 3.1.2 이미 가지고 있는 변수를 추출해 새로운 변수 만들기 - Title
+'Name'과 'PassengerId'를 버리기 전에, 'Name'에 포함된 호칭(title)을 추출해 호칭과 생존 간의 관계가 있는지 알아보자. 
+
+호칭을 추출하기 위한 아래의 코드는 정규표현식을 이용했다. 정규표현식 패턴, (\W+\.)는 'Name'변수에 있는 'W'로 시작하고 '.'으로 끝나는 문자열을 추출하기 위한 것이다. expand = False는 결과를 데이터프레임으로 받기 위해 추가했다. 
+
+**분석결과**
+
+호칭, 나이, 생존률을 고려했을 때 아래의 결과를 얻었다.
+- 대부분의 호칭은 나이대와 높은 관련성이 있었다. 예를 들어 'Master'는 평균 연령 5살이었다. (정확히는 6살에 가깝다. 5.99)
+- 나이대와 호칭의 생존률 사이에는 약간의 차이가 있다.
+- 확실히 생존률이 높은 호칭은(Mme, Lady, Sir)이었고 낮은 호칭은(Don, REv, Jonkheer)이었다.
+
+**의사결정**
+
+우리는 model training을 위해 새로운 'Title'변수를 계속 유지하기로 결정했다.
+
+```python
+for dataset in combine:
+    dataset['Title'] = dataset.Name.str.extract(' ([A-Za-z]+)\.', expand=False)
+
+pd.crosstab(train_df['Title'], train_df['Sex'])
+(train_df.Age[train_df['Title'] == 'Master'].mean() + test_df.Age[test_df['Title'] == 'Master'].mean())/2 ## 5.99
+```
+```python
+title_mapping = {"Mr": 1, "Miss": 2, "Mrs": 3, "Master": 4, "Rare": 5}
+for dataset in combine:
+    dataset['Title'] = dataset['Title'].map(title_mapping)
+    dataset['Title'] = dataset['Title'].fillna(0)
+
+train_df.head()
+```
+
+이제 쓸모없는 'Name'와 PassengerId'를 training set과 test set에서 버릴 때가 됐다. 
+
+```python
+train_df = train_df.drop(['Name', 'PassengerId'], axis=1)
+test_df = test_df.drop(['Name'], axis=1)
+combine = [train_df, test_df]
+train_df.shape, test_df.shape
+```
+
+#### 3.1.3 변수 수정 - 범주형 변수
+이제 문자열을 갖고 있는 범주형 변수의 값을 숫자로 바꿔줄 것이다. 이 과정은 대부분의 수리적 모델 알고리즘이 '숫자'를 기반으로 만들어졌기 때문에 숫자형태의 범주 표현을 쓰는 것이 좋기 때문에 필요하다. 
+'Sex'를 성별에 따라 여성 = 1, 남성 = 0의 값을 갖도록 바꾸자. 
+
+```python
+## combine에서 dataset을 반복하기 
+for dataset in combine: 
+    dataset['Sex'] = dataset['Sex'].map( {'female': 1, 'male': 0} ).astype(int)
+## map() 함수는 built-in 함수로 list 나 dictionary 와 같은 iterable 한 데이터를 인자로 받아 
+## list 안의 개별 item을 함수의 인자로 전달하여 결과를 list로 형태로 반환해 주는 함수이다.
+## astype() 함수는 해당 값의 type을 바꿔주는 함수. 
+
+
+train_df.head() ## combine을 대상으로 for문을 실행해도 combine의 대상이었던 train, test set 모두 다 바뀐다. 
+```
+
+#### 3.1.4 숫자형 연속 변수 수정
+결측값 또는 Null값을 이미 갖고 있는 값들에 근거해서 추정해 채워넣어주어야 한다. 먼저 'Age'를 대상으로 해보자. 
+
+결측값 또는 Null의 숫자형 연속 변수를 채워넣는 방법에는 대표적인 세 가지가 있다. 
+1. 갖고 있는 관측값의 평균과 표준편차를 이용해 채워넣는 방법.
+1. 결측값 또는 Null이 속한 변수와 다른 변수와의 관련성을 이용하는 방법. 우리가 지금 사용하고 있는 Titanic data set의 경우, 'Age', 'Gender', 'Pclass' 사이의 관련성이 존재한다. 'Age'의 결측값 또는 Null을 추정하기 위해 'Plass'와 'Gender'의 조합 세트를(combination set) 통해 'Age'의 중앙값을 이용한다. 가령 Pclass=1과 Gender=0에서의 'Age'의 중앙값, Pclass=1과 Gender=0에서의 'Age'의 중앙값을 구하는 식이다. 
+1. 앞선 두 방법을 혼합한 방법. 두 번째 방법에서 중앙값을 사용해 추정했다면 이 방법에서는 평균과 표준쳔차를 이용해 분포를 정의하고 분포 안에서 난수를 뽑아 결측치 또는 Null을 채워넣는다. 
+
+방법 1과 3은 분포를 이용한 난수를 기반하고 있으므로 model에 대한 오차를 수반할 수 밖에 없다. 그러므로 여러 번의 실행마다 다른 값이 나올 확률이 존재하기 때문에 우리는 방법 2를 사용하겠다. 
+
+```python
+# grid = sns.FacetGrid(train_df, col='Pclass', hue='Gender')
+grid = sns.FacetGrid(train_df, row='Pclass', col='Sex', size=2.2, aspect=1.6)
+grid.map(plt.hist, 'Age', alpha=.5, bins=20)
+grid.add_legend()
+```
+이제 'Pclass'와 'Gender'를 이용해 'Age'의 빈 값들을 채워보자. 
+
+```python
+guess_ages = np.zeros((2,3))
+guess_ages
+```
+
+성별이 두 개의 수준을 갖고 객실이 세 개의 수준을 가지므로 'Age'의 결측값을 채울 수 있는 두 변수의 경우의 수는 총 6개이다. 
+
+```python
+for dataset in combine:
+    for i in range(0, 2):
+        for j in range(0, 3):
+            guess_df = dataset[(dataset['Sex'] == i) & \
+                                  (dataset['Pclass'] == j+1)]['Age'].dropna()
+
+            # age_mean = guess_df.mean()
+            # age_std = guess_df.std()
+            # age_guess = rnd.uniform(age_mean - age_std, age_mean + age_std)
+
+            age_guess = guess_df.median()
+
+            # Convert random age float to nearest .5 age
+            guess_ages[i,j] = int( age_guess/0.5 + 0.5 ) * 0.5
+            
+    for i in range(0, 2):
+        for j in range(0, 3):
+            dataset.loc[ (dataset.Age.isnull()) & (dataset.Sex == i) & (dataset.Pclass == j+1),\
+                    'Age'] = guess_ages[i,j]
+
+    dataset['Age'] = dataset['Age'].astype(int)
+
+train_df.head()
+```
+
+#### 3.1.5 숫자형 연속 변수 생성 - 나이대
+3.1.4에서 'Age'의 결측값을 추정해 채워넣었다. 이제 'Age'를 'Age bands'로 바꿔보자. 
+
+```python
+train_df['AgeBand'] = pd.cut(train_df['Age'], 5)
+train_df[['AgeBand', 'Survived']].groupby(['AgeBand'], as_index=False).mean().sort_values(by='AgeBand', ascending=True)
+
+## Age band를 숫자형 범주로 바꿔 'Age'로 대체시키기 
+for dataset in combine:    
+    dataset.loc[ dataset['Age'] <= 16, 'Age'] = 0
+    dataset.loc[(dataset['Age'] > 16) & (dataset['Age'] <= 32), 'Age'] = 1
+    dataset.loc[(dataset['Age'] > 32) & (dataset['Age'] <= 48), 'Age'] = 2
+    dataset.loc[(dataset['Age'] > 48) & (dataset['Age'] <= 64), 'Age'] = 3
+    dataset.loc[ dataset['Age'] > 64, 'Age']
+train_df.head()
+
+## AgeBand 정리 
+train_df = train_df.drop(['AgeBand'], axis=1)
+combine = [train_df, test_df]
+train_df.head()
+```
+
+#### 3.1.6 이미 가지고 있는 변수를 추출해 새로운 변수 만들기 - IsAlone
+'Parch'와 'SibSp'를 이용해 'FamilySize'를 만들고 'FamilySize'를 이용해 승객이 Titanic에 가족과 함께 탔는지 아닌지를 알 수 있도록 해보자. 두 변수를 의미가 같은 하나의 변수로 줄인다면 변수 규모를 줄일 수 있어 모형 적합에 긍정적인 효과를 기대할 수 있다.  
+
+```python
+for dataset in combine:
+    dataset['FamilySize'] = dataset['SibSp'] + dataset['Parch'] + 1
+
+train_df[['FamilySize', 'Survived']].groupby(['FamilySize'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+```
+만든 'FamilySize'를 이용하면 Titanic에 혼자 탑승 했는지, 가족과 함께 탑승했는지 알 수 있게 되므로 새로운 변수, 'IsAlone'를 만들 수 있다. 
+
+```python
+for dataset in combine:
+    dataset['IsAlone'] = 0
+    dataset.loc[dataset['FamilySize'] == 1, 'IsAlone'] = 1
+
+train_df[['IsAlone', 'Survived']].groupby(['IsAlone'], as_index=False).mean()
+
+## 'Parch', 'SibSp', 'FamilySize' 제거 
+train_df = train_df.drop(['Parch', 'SibSp', 'FamilySize'], axis=1)
+test_df = test_df.drop(['Parch', 'SibSp', 'FamilySize'], axis=1)
+combine = [train_df, test_df]
+
+train_df.head()
+```
+
+Pclass와 Age를 이용한 새로운 변수, 'Age x Pcalss'를 만들었다. 
+
+```python
+for dataset in combine:
+    dataset['Age*Class'] = dataset.Age * dataset.Pclass
+
+train_df.loc[:, ['Age*Class', 'Age', 'Pclass']].head(10)
+```
+
+#### 3.1.7 범주형 변수 수정 
+'Embarked'에 속한 S, Q, C의 값은 정박했던 항구에 기인한 값들이다. 우리가 갖고 있는 training set에는 2개의 결측값이 존재하는데 결측값을 간단한 방법을 이용해 채워보자. 
+
+```python
+freq_port = train_df.Embarked.dropna().mode()[0] 
+freq_port # 'S' : S, Q, C 중 S의 값이 가장 많음. 
+## .dropna() method : na를 모두 버림
+## .mode() : 최빈값
+
+
+for dataset in combine:
+    dataset['Embarked'] = dataset['Embarked'].fillna(freq_port) 
+    ## na를 최빈값인 'S'로 채움
+    
+train_df[['Embarked', 'Survived']].groupby(['Embarked'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+```
+
+채워진 'Embarked'의 값 S, Q, C를 숫자형태로 바꾸자. 
+
+```python
+for dataset in combine:
+    dataset['Embarked'] = dataset['Embarked'].map( {'S': 0, 'C': 1, 'Q': 2} ).astype(int)
+
+train_df.head()
+```
+#### 3.1.8 숫자형 변수 수정 - 빠르게 바꾸는 방법
+'Fare'에는 단 하나의 결측값이 존재한다. 3.1.7에서 본 것 같이 전체 관측값에 비해 압도적으로 적은 개수의 결측값은 '최빈값'을 이용해 채우는 것이 타당하다. 단 한 줄의 코드로 'Fare'의 결측값을 최빈값으로 채워보자. 
+
+```python
+test_df['Fare'].fillna(test_df['Fare'].dropna().median(), inplace=True)
+test_df.head()
+```
+
+이 때, 단 하나의 값만 채워넣는 것이므로 3.1.4에서 본 것처럼 복잡한 과정은 필요없다. 'Fare'를 구간으로 나눈 'FareBand'를 만들어보자.
+
+```python
+train_df['FareBand'] = pd.qcut(train_df['Fare'], 4)
+train_df[['FareBand', 'Survived']].groupby(['FareBand'], as_index=False).mean().sort_values(by='FareBand', ascending=True)
+```
+
+'FareBand'를 기준으로 'Fare'의 값을 대체하자. 
+
+```python
+for dataset in combine:
+    dataset.loc[ dataset['Fare'] <= 7.91, 'Fare'] = 0
+    dataset.loc[(dataset['Fare'] > 7.91) & (dataset['Fare'] <= 14.454), 'Fare'] = 1
+    dataset.loc[(dataset['Fare'] > 14.454) & (dataset['Fare'] <= 31), 'Fare']   = 2
+    dataset.loc[ dataset['Fare'] > 31, 'Fare'] = 3
+    dataset['Fare'] = dataset['Fare'].astype(int)
+
+train_df = train_df.drop(['FareBand'], axis=1)
+combine = [train_df, test_df]
+    
+train_df.head(10)
+```
+
+아래의 dataset이 최종적인 test data set의 형태이다.
+
+```python
+test_df.head(10)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
