@@ -118,7 +118,9 @@ print(airquality_pivot_reset.head())
 # Pivoting duplicate values
 airquality_pivot = airquality_dup.pivot_table(index=['Month', 'Day'], columns='measurement', values='reading', aggfunc=np.mean)
 ```
-> Pivoting duplicate values 는 잘 모르겠다. aggfunce의 default가 mean이어서 그런가? np.sum을 해보니 확실히 바뀌는 게 있다. [출처](https://rfriend.tistory.com/275)
+> # Pivoting duplicate values 는 잘 모르겠다. aggfunce의 default가 mean이어서 그런가? np.sum을 해보니 확실히 바뀌는 게 있다. 
+
+[출처](https://rfriend.tistory.com/275)
 
 ```python
 import pandas as pd
@@ -173,3 +175,138 @@ ebola_melt['country'] = ebola_melt.str_split.str.get(1)
 print(ebola_melt.head())
 
 ```
+
+# 3. Concatenating data
+data의 사이즈가 커질 수록 단 하나의 파일에 모든 것을 저장하는 것은 비효율적이다. 대부분의 대용량 dataset은 몇 개의 파일로 나눠져 있으며 그 조차도 전부를 불러오는 경우는 거의 없고 필요한 부분만 추출해서 보는 것이 보통이다. 이번에는 나눠져 있는 dataset을 합치는 Concatenating에 대해서 배워보자. 
+
+## 3.1 Concatenating data
+
+```python
+# Combining rows of data
+## 사용할 data는 Uber data로 탑승 날짜와 지역, 위도와 경도에 대한 data이다.
+import pandas as pd
+uber1 = pd.read_csv("C:/Users/twingster/Learning_Py/Data/Uber_2014/uber-raw-data-apr14.csv")
+uber2 = pd.read_csv("C:/Users/twingster/Learning_Py/Data/Uber_2014/uber-raw-data-janjune14.csv")
+uber3 = pd.read_csv("C:/Users/twingster/Learning_Py/Data/Uber_2014/uber-raw-data-jul14.csv")
+row_concat = pd.concat([uber1, uber2, uber3]) ## pd.concat([list]) : list로 묶어서 arg로 선언한다. 
+print(row_concat.shape)
+print(row_concat.head())
+
+## 사용한 data는 ebloa data다
+ebola_tidy = pd.concat([ebola_melt, status_country], axis = 1) 
+## pd.concat(..., axis = 1) : Concatenating by columns. default axis = 0 : by row wise 
+print(ebola_tidy.shape)
+print(ebola_tidy.head())
+```
+
+## 3.2 Finding and concatenating data
+한 두 개의 파일을 concatenating 하는 거라면 파일명을 직접 찾아가며 해도 되겠지만 이 방법으로 10개, 100개, 1000개의 파일을 concatenating을 하는 건 너무 비효율적이다. 이번엔 여러 파일을 손쉽게 concatenating하는 방법에 대해 알아보자. 
+
+```python
+# Finding files that match a pattern
+import pandas as pd
+import glob
+
+pattern = '*.csv' ## '*'는 모든 숫자 및 문자에 해당하는 일종의 'wild card'다. 
+csv_files = glob.glob('*.csv') 
+## glob.glob("file name") : 해당 directory에서 "file name"과 같은 file name을 모아서 list로 반환한다.
+## concatenating을 하는 게 아니라 해당 패턴 혹은 이름과 같은 파일 이름을 하나로 모아주는 역할을 한다. 
+
+print(csv_files)
+
+csv2 = pd.read_csv(csv_files[1]) ## csv_files의 2번째 파일을 dataframe으로 읽어오기
+print(csv2.head())
+
+# Iterating and concatenating all matches
+frames = [] ## list로 저장하기 위한 공간 설정 
+
+##  Iterate over csv_files
+for csv in csv_files:
+    df = pd.read_csv(csv) ##  Read csv into a DataFrame: df
+    frames.append(df) ## Append df to frames
+
+uber = pd.concat(frames) ## frames list를 이용해 하나의 dataframe으로 concat 시킴 
+## frames이 이미 list이기 때문에 []를 해주지 않아도 된다. 
+
+print(uber.shape)
+print(uber.head())
+```
+
+## 3.3 Merge data
+data를 합치는 방법엔 concatenating만 있는 것이 아니다. concatenating은 value의 순서에 영향을 받는데, value가 다른 dataset 두 개를 column-wise하게 concat하려고 하면 에러가 나는 것을 볼 수 있다. data combining에 또 다른 방법은 'merge'다. merge는 dataset들을 합치는 기준인 'key'를 가지며 합쳐지는 대상이 되는 data들에서 'key'가 일치하는 row만 합쳐지는 특징을 갖는다. 이번엔 merge에 대해 알아보자. [참고](https://nittaku.tistory.com/121)
+
+```python
+# 1-to-1 data merge
+## https://github.com/swcarpentry/sql-novice-survey/의 data를 이용했다. 
+o2o = pd.merge(left=site, right=visited, left_on='name', right_on='site') 
+## '왼쪽'에 site df, '오른쪽'에 visited df를 놓고 site 기준 'name', right_on 기준 'site'가 일치하는 것만 합친다. 
+print(o2o)
+
+# Many-to-1 data merge
+m2o = pd.merge(left=site, right=visited, left_on = 'name', right_on = 'site')
+print(m2o)
+## 이게 다대일(혹은 일대다)인 이유는 site가 3x3이고 visited가 8x3이므로 결과값이 8x3이 됐기 때문이다. 즉, 'name'과 'site'가 일치하는 값들 중 site의 값이 5번 반복된 결과다.
+
+# Many-to-many data merge
+m2m = pd.merge(left=site, right=visited, left_on='name', right_on='site')
+m2m = pd.merge(left=m2m, right=survey, left_on='ident', right_on='taken')
+
+print(m2m.head(20))
+```
+
+# 4. Cleaning data for analysis
+## 4.1 Data types
+```python
+## tips data를 사용했다. 
+# .astype()를 이용해 data type 바꾸기 
+tips.sex = tips.sex.astype('category')
+tips.smoker = tips.smoker.astype('category') ##.astype('some arg') : 해당 arg로 data type을 바꿔줌
+
+print(tips.info())
+
+# pd.to_numeric를 이용해 data type을 바꾸기 
+tips['total_bill'] = pd.to_numeric(tips['total_bill'], errors='coerce') 
+tips['tip'] = pd.to_numeric(tips['tip'], errors='corece')
+## errors='coerce' : errors, 그러니까 null이나 missing value와 같이 numeric으로 바꿀 수 없는 경우 NaN 값으로 return
+## 예제의 data의 경우 missing value가 'missing'의 string으로 되어 있었다. 
+
+print(tips.info())
+```
+
+## 4.2 Using regular expressions to clean strings
+Regular expressions(regex), 즉 정규표현식은 특정 패턴을 이용해 문자열을 추출, 정리할 때 유용하게 사용할 수 있는 도구다. 다만 사용 방법이 조금 복잡한 것이 흠인데 익숙해지면 작업 효율을 높일 수 있으므로 배워두는 것이 좋다.
+
+```python
+# String parsing with regular expressions
+import re ## regular module
+
+prog = re.compile('\d{3}-\d{3}-\d{4}') ## Compile the pattern: prog
+
+result = prog.match('123-456-7890') ## See if the pattern matches
+print(bool(result))
+
+result2 = prog.match('1123-456-7890') ## See if the pattern matches
+print(bool(result2))
+
+
+#Extracting numerical values from strings
+import re
+
+matches = re.findall('\d+', 'the recipe calls for 10 strawberries and 1 banana') ## Find the numeric values: matches
+## \d+ : '연속한 숫자'd+를 출력하라. 만약, \d 였으면 1, 0, 1이 출력된다.  
+
+print(matches)
+
+# Pattern matching
+pattern1 = bool(re.match(pattern='\d{3}-\d{3}-\d{4}', string='123-456-7890'))
+print(pattern1)
+
+pattern2 = bool(re.match(pattern='\$\d*.\d{2}', string='$123.45'))
+print(pattern2)
+
+pattern3 = bool(re.match(pattern='\w*', string='Australia')) ## \w* : w, 글자, * wild card
+print(pattern3)
+```
+
+## 4.3 Using functions to clean data
+
