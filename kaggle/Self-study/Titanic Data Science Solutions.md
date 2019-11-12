@@ -98,6 +98,7 @@ combine = [train_df, test_df]
 
 ### 2.2 dataset이 가진 변수와 관측값 파악하기
 이 과정은 EDA의 기초면서 데이터 분석의 토대를 다지는 일이다. 명확히 내용과 과정을 전달하기 위해 문답형식을 이용했다. 마찬가지로 Pandas module의 함수를 이용해 진행할 것이다. 
+
 **Q1. Dataset에 어떤 변수를 포함하고 있는가?**
 
 변수를 다루기 위해 변수 이름을 아는 것은 중요한 일이다. 변수 이름이 무엇을 의미하는지는 [kaggle의 data page](https://www.kaggle.com/c/titanic/data)를 참고하면 된다.
