@@ -309,4 +309,171 @@ print(pattern3)
 ```
 
 ## 4.3 Using functions to clean data
+Cleaning data를 할 때 단 한번의 과정만으로 끝나는 경우는 거의 없다. 결측치를 찾는 것도, 이상치를 찾는 것도, data frame을 합치는 것도 여러 단계가 필요한 경우가 더 많다. 이 때 가독성과 효율을 위해 함수 사용을 권장한다. 
 
+```python
+# Custom functions to clean data
+def recode_gender(gender):
+
+    # Return 0 if gender is 'Female'
+    if gender == 'Female':
+        return 0
+    
+    # Return 1 if gender is 'Male'    
+    elif gender == 'Male':
+        return 1
+    
+    # Return np.nan    
+    else:
+        return np.nan
+
+tips['recode'] = tips.sex.apply(recode_gender)
+print(tips.head())
+```
+
+
+```python
+# lambda functions
+tips['total_dollar_replace'] = tips.total_dollar.apply(lambda x: x.replace('$', '')) # $
+tips['total_dollar_re'] = tips.total_dollar.apply(lambda x: re.findall('\d+\.\d+', x)[0])
+
+print(tips.head())
+```
+
+
+## 4.4 Duplicate and missing data
+
+
+```python
+# Dropping duplicate data
+## billboard dataset을 이용함. 
+tracks = billboard[['year', 'artist', 'track','time']] ## 기존의 df, billboard에서 'year', 'artist', 'track','time'의 columns만 뽑기
+print(tracks.info())
+
+tracks_no_duplicates = tracks.drop_duplicates() ## tracks에서 중복 obs 제거 
+print(tracks_no_duplicates.info())
+
+# Filling missing data
+## airquality dataset을 이용함.
+oz_mean = airquality.Ozone.mean()
+print(airquality.info())
+
+airquality['Ozone'] = airquality.Ozone.fillna(oz_mean)
+print(airquality.info())
+```
+
+
+## 4.5 Testing with asserts
+
+```python
+# Testing your data with asserts
+## Using ebola dataset
+
+assert ebola.notnull().all().all() ## Assert that there are no missing values
+assert (ebola >= 0).all().all() ## Assert that all values are >= 0
+```
+
+# 5 Case study
+## 5.1 Putting it all together
+
+```python
+# Visualizing your data
+import matplotlib.pyplot as plt
+
+g1800s.plot(kind='scatter', x='1800', y='1899') ## Create the scatter plot
+
+plt.xlabel('Life Expectancy by Country in 1800') ## Specify x axis labels
+plt.ylabel('Life Expectancy by Country in 1899') ## Specify x axis labels
+
+plt.xlim(20, 55) ## Specify x axis limits
+plt.ylim(20, 55) ## Specify y axis limits
+
+plt.show() ## Display the plot
+
+
+# Thinking about the question at hand
+def check_null_or_valid(row_data):
+    """Function that takes a row of data,
+    drops all missing values,
+    and checks if all remaining values are greater than or equal to 0
+    """
+    no_na = row_data.dropna()
+    numeric = pd.to_numeric(no_na)
+    ge0 = numeric >= 0
+    return ge0
+
+assert g1800s.columns[0] == 'Life expectancy' ## Check whether the first column is 'Life expectancy'
+assert g1800s.iloc[:, 1:].apply(check_null_or_valid, axis=1).all().all() ## Check whether the values in the row are valid
+assert g1800s['Life expectancy'].value_counts()[0] == 1 ## Check that there is only one instance of each country
+
+# Assembling your data
+gapminder = pd.concat([g1800s, g1900s, g2000s], axis = 1) ## Concatenate the DataFrames column-wise
+
+print(gapminder.shape)
+print(gapminder.head())
+
+```
+
+## 5.2 Initial impressions of the data
+```python
+# Reshaping your data
+import pandas as pd
+
+gapminder_melt = pd.melt(gapminder, id_vars = 'Life expectancy') ## Melt gapminder: gapminder_melt
+gapminder_melt.columns = ['country', 'year', 'life_expectancy'] ## Rename the columns
+
+print(gapminder_melt.head())
+
+# Checking the data types
+gapminder.year = pd.to_numeric(gapminder.year)
+
+assert gapminder.country.dtypes == np.object ## Test if country is of type object
+assert gapminder.year.dtypes == np.int64 ## Test if year is of type int64 
+assert gapminder.life_expectancy.dtypes == np.float64 ## Test if life_expectancy is of type float64
+
+# Looking at country spellings
+countries = gapminder.country ## Create the series of countries: countries
+countries = countries.drop_duplicates() ## Drop all the duplicates from countries
+ 
+pattern = '^[\.A-Za-z\s]*$' ## Write the regular expression: pattern $
+## \. to match periods, and \s to match whitespace between words.
+                                                                           
+mask = countries.str.contains(pattern) ## Create the Boolean vector: mask 
+mask_inverse = ~mask ## Invert the mask: mask_inverse
+
+invalid_countries = countries.loc[mask_inverse] ## Subset countries using mask_inverse: invalid_countries
+print(invalid_countries)
+                                                                           
+# More data cleaning and processing
+assert pd.notnull(gapminder.country).all() ## Assert that country does not contain any missing values
+assert pd.notnull(gapminder.year).all() ## Assert that year does not contain any missing values
+
+gapminder = gapminder.dropna() ## Drop the missing values
+
+print(gapminder.shape)
+
+# Wrapping up
+plt.subplot(2, 1, 1) ## Add first subplot
+
+gapminder.life_expectancy.plot(kind='hist') ## Create a histogram of life_expectancy
+
+gapminder_agg = gapminder.groupby('year')['life_expectancy'].mean() ## Group gapminder: gapminder_agg
+
+print(gapminder_agg.head()) ## Print the head of gapminder_agg
+print(gapminder_agg.tail()) ## Print the tail of gapminder_agg
+
+plt.subplot(2, 1, 2) ## Add second subplot
+
+gapminder_agg.plot() ## Create a line plot of life expectancy per year
+
+plt.title('Life expectancy over the years')
+plt.ylabel('Life expectancy')
+plt.xlabel('Year') ## Add title and specify axis labels
+
+plt.tight_layout()
+plt.show() ## Display the plots
+
+
+gapminder.to_csv('gapminder.csv')
+gapminder_agg.to_csv('gapminder_agg.csv') ## Save both DataFrames to csv files
+```
