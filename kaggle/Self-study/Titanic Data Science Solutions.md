@@ -601,15 +601,202 @@ test_df.head(10)
 
 ```
 
+## 4. Model과 예측, 그리고 문제해결
+여기까지 왔다면 모델을 훈련시킬 준비가 끝난 것이고 훈련된 모델로 예측한 결과를 문제에 대한 '우리의 답변'으로 제출할 수 있다. 많이 쓰이는 60개 이상의 예측 모델 알고리즘 중에서 적절한 모델을 선택하면 된다. 문제의 유형과 필요한 문제해결 방향을 명확히 숙지해야만 알맞은 모델을 선택할 수 있다. Titanic dataset을 주면서 제시한 문제는 'Survived'와 상관관계가 있는 변수를 찾아내는 것이었다. 이 문제를 해결하기 위해 지도학습(supervied learning) 중 분류화(classification) 혹은 회귀모형(regression)가 가능한 모델을 선택했다. 사용할 모델은 아래와 같다. 
+
+- Logistic Regression
+- KNN or k-Nearest Neighbors
+- Support Vector Machines
+- Naive Bayes classifier
+- Decision Tree
+- Random Forrest
+- Perceptron
+- Artificial neural network
+- RVM or Relevance Vector Machine
+```python
+
+# data setting 
+X_train = train_df.drop("Survived", axis=1)
+Y_train = train_df["Survived"]
+X_test  = test_df.drop("PassengerId", axis=1).copy()
+X_train.shape, Y_train.shape, X_test.shape
+```
 
 
+### 4.1 Logistic Regression
+Logistic Regression는 사실 workflow 초기에 시행하기 좋은 모델이다. Logistic Regression은 범주형 변수 간의 상관관계를 측정하는 모델로 누적 로지스틱 분포와 로지스틱 함수를 이용해 확률을 추정하기 때문에 Logistic Regression이라 부른다. 개략적인 내용은 [위키피디아](https://en.wikipedia.org/wiki/Logistic_regression)를 참조하자.
+
+다음은 training dataset에 근거해 Logreg 모델을 사용했을 때의 confidence score이다. 
+
+```python
+# Logistic Regression
+
+logreg = LogisticRegression()
+logreg.fit(X_train, Y_train)
+Y_pred = logreg.predict(X_test)
+acc_log = round(logreg.score(X_train, Y_train) * 100, 2)
+acc_log
+```
+
+> Q. confidence score란? 자세한 내용은 [logreg.score()](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)의 도움말을 찾아보자. arg X_train는 test sample, Y_train는 x의 label로 선언, 이 둘을 이용해 평균 정확도를 계산한 것이다. 근데 의문인 건, model을 training data로 만들었으면 CS를 test dataset으로 평가해야하는 것 아닌가?
+
+Log reg로 계수를 계산할 수 있고 계수의 크기와 부호에 따라 결과를 해석해야 한다. 양의 계수는 결과의 log-odds를 증가시키고(즉, 확률이 커짐을 의미한다) 음의 계수는 결과의 log-odds를 감소시킨다.(즉, 확률이 작아짐을 의미한다)
+
+- 'Sex'는 가장 큰 양의 계수를 갖는다. 즉 Sex = 1일 때 Survied=1일 확률이 커진다. 
+- 'Pclass'는 가장 작은 음의 계수를 갖는다. 즉, Pclass가 커지면 Survied = 1일 확률이 작아진다. (Survivied가 커질 확률이 작아진다 혹은 작아질 확률이 커진다로 이해해도 된다.)
+- 임의로 만든 'Age x Class'는 두번째로 작은 음의 계수를 갖는다.
+- 'Title'은 두번째로 큰 양의 계수를 갖는다.
+
+```python
+coeff_df = pd.DataFrame(train_df.columns.delete(0))
+coeff_df.columns = ['Feature']
+coeff_df["Correlation"] = pd.Series(logreg.coef_[0])
+
+coeff_df.sort_values(by='Correlation', ascending=False)
+```
+
+### 4.2 Support Vector Machines or SVM
+Support Vector Machines는 지도학습모델의 대표적인 예로 분류와 회귀분석을 통해 자료를 분석하고 모델에 학습시킨다. 두 카테고리 중 어느 하나에 속한 데이터의 집합이 주어졌을 때, 이를 바탕으로 하여 새로운 데이터가 어느 카테고리에 속할지 판단하는 비 확률적 이진 선형 분류 모델(non-probabilistic binary linear classifier)을 만들어 데이터가 사상(mapping)된 공간에서 경계로 표현 되는데 이중 가장 큰 폭을 가진 경계를 찾는 방법이다. [위키피디아](https://en.wikipedia.org/wiki/Support-vector_machine)를 참조하자.
+
+> Q. SVM이 비 확률적 이진 선형 분류모델이다? non-PBLC가 뭐지?
+
+다음은 SVM 모델 사용했을 때의 confidence score로 Logreg보다 높은 것을 볼 수 있다.
+
+```python
+# Support Vector Machines
+
+svc = SVC()
+svc.fit(X_train, Y_train)
+Y_pred = svc.predict(X_test)
+acc_svc = round(svc.score(X_train, Y_train) * 100, 2)
+acc_svc
+```
+
+### 4.3 k-Nearest Neighbors algorithm or k-NN
+패턴 인식 중 대표적인 방법은 k-Nearest Neighbors algorithm 혹은 KNN이라 불리는 방법이다. KNN은 비모수적 방법(non-parametric method)을 기반으로 분류와 회귀모형을 이용한다. dataset의 표본은 이웃의 과반수 투표에 의해 분류되며, 표본은 가장 가까운 k 이웃들 사이에서 가장 일반적인 범주에 할당된다. 만약 k=1이라면 가장 가까운 근접 표본 하나만을 취해 범주로 포함시킨다. [위키피디아](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm) 를 참고하자.
+
+KNN으로 구한 CS는 Logreg보단 크지만 SVM보단 작다. 
+```python
+knn = KNeighborsClassifier(n_neighbors = 3)
+knn.fit(X_train, Y_train)
+Y_pred = knn.predict(X_test)
+acc_knn = round(knn.score(X_train, Y_train) * 100, 2)
+acc_knn
+```
+
+### 4.4 Naive Bayes classifier
+머신 러닝의 영역에서 naive Bayes classifier는 변수간 강한 독립성(=naive, 순진한, 순진해 빠진)을 가정한 베이즈 이론을 적용시킨 모델로 비교적 간단한 확률적 분류(probabilistic classifiers) 모델이다. Naive Bayes classifiers는 높은 확장성을 갖지만 학습 문제의 많은 변수에 선형적인 다수의 모수가 필요한 제한점 또한 갖는다. 
+
+> 변수간 독립을 가정하는 걸 'naive'하다고 표현한 게 재밌네. 맞는 말이긴 하네. 
+
+> Q. Naive Bayes classifiers are highly scalable, requiring a number of parameters linear in the number of variables (features) in a learning problem. 을 알아보자. 
+
+Naive Bayes classifier를 이용한 model의 CS는 지금까지의 model 중 가장 낮다. 
+
+```python
+# Gaussian Naive Bayes
+gaussian = GaussianNB()
+gaussian.fit(X_train, Y_train)
+Y_pred = gaussian.predict(X_test)
+acc_gaussian = round(gaussian.score(X_train, Y_train) * 100, 2)
+acc_gaussian
+```
+
+### 4.5 Perceptron
+perceptron은 이진 분류 모델의 지도학습 알고리즘(일종의 함수로, vector of numbers로 대표되는 input이 어떠한 특정 class에 속하는지 여부를 결정한다.)이다. perceptron은 선형 분류의 일종으로 변수 벡터를 포함하는 일련의 가중치를 결합한 선형 predictor 함수에 기반해 분류 알고리즘이 짜여있다. 이 때의 알고리즘은 한 번에 하나씩 training set의 elements를 처리한다는 점에서 온라인 학습을 가능하게 한다. [위키피디아](https://en.wikipedia.org/wiki/Perceptron)를 참고하자.
 
 
+> Q. Perceptron에 대해 알아보자. 
+
+```python
+# Perceptron
+perceptron = Perceptron()
+perceptron.fit(X_train, Y_train)
+Y_pred = perceptron.predict(X_test)
+acc_perceptron = round(perceptron.score(X_train, Y_train) * 100, 2)
+acc_perceptron
+```
+
+### 4.6 Linear Support Vector Classification(SVC) and Stochastic Gradient Descent
+```python
+# Linear SVC
+
+linear_svc = LinearSVC()
+linear_svc.fit(X_train, Y_train)
+Y_pred = linear_svc.predict(X_test)
+acc_linear_svc = round(linear_svc.score(X_train, Y_train) * 100, 2)
+acc_linear_svc
+```
+
+```python
+# Stochastic Gradient Descent
+
+sgd = SGDClassifier()
+sgd.fit(X_train, Y_train)
+Y_pred = sgd.predict(X_test)
+acc_sgd = round(sgd.score(X_train, Y_train) * 100, 2)
+acc_sgd
+```
+
+> Q. Linear SVC? 
+
+> Q. Stochastic Gradient Descent?
 
 
+### 4.7 Decision Tree
+Decision Tree란 변수(나무 가지)를 목표값(target value)에 대한 결론에 매핑하는 예측 모델이다. 목표 변수(target variable)이 유한한 집합을 취할 수 있을 때의 Tree model를 classification tree라 한다. 이러한 tree 구조에서, 잎은 class label을 의미하고 가지는 해당 class label을 유도하는 변수의 결합을 나타낸다. 목표 변수가 연속적인 값(일반적인 실수)를 취할 수 있는 decision tree model을 regression tree model이라 한다. [위키피디아](https://en.wikipedia.org/wiki/Decision_tree_learning)를 참고하자.
+
+Decision tree를 이용한 CS가 가장 높다.
+
+```python
+# Decision Tree
+decision_tree = DecisionTreeClassifier()
+decision_tree.fit(X_train, Y_train)
+Y_pred = decision_tree.predict(X_test)
+acc_decision_tree = round(decision_tree.score(X_train, Y_train) * 100, 2)
+acc_decision_tree
+```
+> Q. Decision tree? Tree model? 
+
+### 4.8 Random Forest
+Random Forest는 많이 쓰이는 model중 하나다.기계 학습에서의 random forest는 분류, 회귀 분석 등에 사용되는 앙상블 학습 방법(ensemble learning method)의 일종으로, 훈련 과정에서 구성한 다수의 결정 트리로부터 class(classification) 또는 평균 예측치(regression)를 출력한다. [위키피디아](https://en.wikipedia.org/wiki/Random_forest)
+
+Random Forest의 CS가 가장 높다. 따라서 RF를 model로 예측 결과를 제시해보겠다.
+
+```python
+
+# Random Forest
+random_forest = RandomForestClassifier(n_estimators=100)
+random_forest.fit(X_train, Y_train)
+Y_pred = random_forest.predict(X_test)
+random_forest.score(X_train, Y_train)
+acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 2)
+acc_random_forest
+```
+
+> Q. Random forest란? 
 
 
+## 5. model evaluation
+4장의 과정을 지나왔다면 문제해결을 위한 예측 모델으로 무엇을 써야하는지 판단할 수 있을 것이다. confidence score 상으로 decision tree와 random forest가 같은 값을 갖지만 decision tree가 갖는 과적합(overfitting)을 우려해 random forest로 예측 모델을 결정했다. 
 
+```python
+models = pd.DataFrame({
+    'Model': ['Support Vector Machines', 'KNN', 'Logistic Regression', 
+              'Random Forest', 'Naive Bayes', 'Perceptron', 
+              'Stochastic Gradient Decent', 'Linear SVC', 
+              'Decision Tree'],
+    'Score': [acc_svc, acc_knn, acc_log, 
+              acc_random_forest, acc_gaussian, acc_perceptron, 
+              acc_sgd, acc_linear_svc, acc_decision_tree]})
+models.sort_values(by='Score', ascending=False)
+```
+```python
+submission = pd.DataFrame({
+        "PassengerId": test_df["PassengerId"],
+        "Survived": Y_pred
+    })
+# submission.to_csv('../output/submission.csv', index=False
+```
 
-
-
+> 번역이 좀 지루했다. 한글로 완전히 옮길 수 없는 부분도 있고 초반 내용 자체가 너무 개론 수준이라 넘기고 싶었는데 kaggle study 처음이라 끝까지 다 해봤다. model 부분은 대략적으로는 알고 있는데 자세히 어떤 구조로 돌아가는지 모른다고 판단해 나중을 위한 과제로 남겨뒀다. 모델을 구성하는 수리적 알고리즘을 알아보자. 다음부터는 요약해서 번역하자.
