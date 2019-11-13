@@ -102,7 +102,7 @@ y_columns = ['AAPL', 'IBM']
 df.plot(x='Month', y=y_columns) ## Generate a line plot
 
 plt.title('Monthly stock prices')
-plt.ylabel('Price ($US)')$
+plt.ylabel('Price ($US)')
 
 plt.show()
 
