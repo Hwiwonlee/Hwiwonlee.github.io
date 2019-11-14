@@ -197,8 +197,8 @@ titanic.loc[titanic['pclass'] == 3].plot(ax=axes[2], y='fare', kind='box')
 plt.show()
 
 ```
-# 4. Time series in pandas
-## 4.1 Indexing time series
+# 3. Time series in pandas
+## 3.1 Indexing time series
 Dataset에 '시간'이 기록되어 있는 것은 흔히 볼 수 있다. 시간을 하나의 변수로 보고 model에 포함시킬 수도 있지만 시간을 index로 정의해 data를 분류할 수도 있다. 이번엔 시간을 index로 놓고 data frame을 분석하는 방법에 대해 알아보자. 
 
 ```python
@@ -232,7 +232,7 @@ sum13 = ts1 + ts3
 sum14 = ts1 + ts4
 ```
 
-## 4.2 Resampling time series data
+## 3.2 Resampling time series data
 '시간'을 index로 사용하는 시계열 자료의 특징은 '얼마만큼의 시간을 하나의 단위로 정의하느냐'에 따라 summary statistics의 값이 달라질 수 있다는 것이다. 즉 시간 단위, 일 단위, 주 단위, 연 단위 등의 주관적인 기준에 따라 summary statistics의 값이 달라질 수 있다. python에서는 이를 손쉽게 해결해줄 방법을 제공하고 있다. 더불어 python에서 정말 자주 볼 수 있고 실제로도 유용한 method chaining에 대해서도 간단히 알아보자. 
 ```python
 # Resampling and frequency
@@ -273,8 +273,7 @@ daily_highs_smoothed = daily_highs.rolling(window = 7).mean()
 print(daily_highs_smoothed)
 ```
 
-## 4.3 Manipulating time series data
-
+## 3.3 Manipulating time series data
 
 ```python
 # Method chaining and filtering
@@ -315,7 +314,7 @@ times_tz_central = times_tz_none.dt.tz_localize('US/Central') ## Localize the ti
 times_tz_pacific = times_tz_central.dt.tz_convert('US/Pacific') ## Convert the datetimes from US/Central to US/Pacific
 ```
 
-## 4.4 Time series visualization
+## 3.4 Time series visualization
 모든 데이터 분석의 결과가 그렇지만 간단하고 명확하게 보여주기 위해 시각화(visualizaiton)을 선호하는 편이다. 시계열 분석은 특히 시각화 방법을 쉽게 접할 수 있는 분야 중 하난데, 증권시장을 생각해보면 바로 이해할 수 있을 것이다. 
 
 ```python
@@ -341,8 +340,8 @@ plt.show()
 plt.clf() ## Plot the one week data
 ```
 
-# 5. Case Study - Sunlight in Austin
-## 5.1 Reading and cleaning the data
+# 4. Case Study - Sunlight in Austin
+## 4.1 Reading and cleaning the data
 
 ```python
 # Reading in a data file
@@ -386,7 +385,7 @@ df_clean['wind_speed'] = pd.to_numeric(df_clean['wind_speed'], errors='coerce')
 df_clean['dew_point_faren'] = pd.to_numeric(df_clean['dew_point_faren'], errors='coerce') ## Convert the wind_speed and dew_point_faren columns to numeric values
 ```
 
-## 5.2 Statistical exploratory data analysis
+## 4.2 Statistical exploratory data analysis
 
 ```python
 # Signal min, max, median
@@ -424,7 +423,7 @@ overcast_daily_max_mean = overcast_daily_max.mean()
 print(sunny_daily_max_mean - overcast_daily_max_mean)
 ```
 
-## 5.3 Visual exploratory data analysis
+## 4.3 Visual exploratory data analysis
 
 ```python
 # Weekly average temperature and visibility
