@@ -173,3 +173,110 @@ CA_TX_month2 = sales.loc[(('CA', 'TX'), 2), : ] ## Look up data for CA and TX in
 all_month2 = sales.loc[(('NY', 'CA', 'TX'), 2), : ] ## Access the inner month index and look up data for all states in month 2: all_month2
 
 ```
+
+# 3. Rearranging and reshaping data
+## 3.1 Pivoting DataFrames
+Pivoting이란 DF가 갖는 column을 '주축'으로 정의한 후 정의된 '주축'을 중심으로 obs을 넣어 새로운 형태의 DF를 만드는 방법이다. 이 때 사용하는 방법은 Pandas.pivot(index, columns, values)으로 index가 rows, columns가 columns, values가 obs으로 들어가게 된다.
+```python
+# Pivoting a single variable
+visitors_pivot = users.pivot(index = 'weekday', columns = 'city', values = 'visitors') ## Pivot the users DataFrame: visitors_pivot
+print(visitors_pivot) 
+
+
+# Pivoting all variables
+signups_pivot = users.pivot(index = 'weekday', columns = 'city', values = 'signups') ## Pivot users with signups indexed by weekday and city: signups_pivot
+
+print(signups_pivot)
+
+pivot = users.pivot(index = 'weekday', columns = 'city') ## Pivot users pivoted by both signups and visitors: pivot
+pivot = users.pivot(index = 'weekday', columns = 'city', values = ['visitors', 'signups']) ## same result 
+## 같은 결과가 나오는 이유는 users DF에서 index, columns를 빼면 남는 column이 2개 밖에 없기 때문. 
+
+# Print the pivoted DataFrame
+print(pivot)
+```
+
+## 3.2 Stacking & unstacking DataFrames
+
+```python
+# Stacking & unstacking I
+byweekday = users.unstack(level = 'weekday') ## Unstack users by 'weekday': byweekday
+print(byweekday)
+
+print(byweekday.stack(level = 'weekday')) ## Stack byweekday by 'weekday' and print it
+
+# Stacking & unstacking II
+bycity = users.unstack(level = 'city') ## Unstack users by 'city': bycity
+
+print(bycity)
+
+print(bycity.stack(level = 'city')) ## Stack bycity by 'city' and print it
+```
+> Q. 왜 I과 II의 차이가 생기는 걸까? /n 답이 바로 뒤에 나오네.
+
+```python
+# Restoring the index order
+newusers = bycity.stack(level = 'city') ## Stack 'city' back into the index of bycity: newusers
+
+newusers = newusers.swaplevel(0, 1) ## Swap the levels of the index of newusers: newusers
+## row 수준에서 multindex의 순서를 바꿔버림 
+ 
+print(newusers) ## Print newusers and verify that the index is not sorted
+
+newusers = newusers.sort_index() ## Sort the index of newusers: newusers, 순서 정렬 
+
+print(newusers) ## Print newusers and verify that the index is now sorted
+print(newusers.equals(users)) ## Verify that the new DataFrame is equal to the original
+
+```
+
+# 3.4 Melting DataFrames
+Melting이란 DF에서 column형태로 있던 변수를 row level로 만들어 새로운 변수 안에 포함시키는 것이다. 쉽게 예를 들면 임상시험에서 처치 A, 처치 B, 처치 C 등 각 처치를 변수로 정의하고 그 안에 '효과'등의 observation을 넣은 경우, melt의 대상을 처치 A, B, C의 변수로 하고 해당 변수들을 '처치'로 묶어 '처치'변수 안에 row level의 처치 A, 처치 B, 처치 C로 변환하는 것이 melt이다. melitng이 필요한 이유는 알고리즘과 함수와 같은 computing 과정에서 사람이 읽기 편한 wide-wise보다 컴퓨터가 연산하기 좋은 long-wise의 형태가 더 좋기 때문이다. 
+
+```python
+# Adding names for readability
+visitors_by_city_weekday = visitors_by_city_weekday.reset_index() ## Reset the index: visitors_by_city_weekday
+print(visitors_by_city_weekday)
+
+visitors = pd.melt(visitors_by_city_weekday, id_vars=['weekday'], value_name='visitors') ## Melt visitors_by_city_weekday: visitors
+print(visitors)
+
+# Going from wide to long
+skinny = pd.melt(users, id_vars=['weekday', 'city']) ## Melt users: skinny
+print(skinny)
+
+
+# Obtaining key-value pairs with melt()
+users_idx = users.set_index(['city', 'weekday']) ## Set the new index: users_idx
+print(users_idx)
+
+kv_pairs = pd.melt(users_idx, col_level = 0) ## Obtain the key-value pairs: kv_pairs
+print(kv_pairs)
+
+```
+
+## 3.5 Pivot tables
+```python
+# Setting up a pivot table
+by_city_day = users.pivot_table(index = 'weekday', columns = 'city') ## Create the DataFrame with the appropriate pivot table: by_city_day
+print(by_city_day)
+
+# Using other aggregations in pivot tables
+count_by_weekday1 = users.pivot_table(index = 'weekday', aggfunc = 'count') ## Use a pivot table to display the count of each column: count_by_weekday1
+
+print(count_by_weekday1)
+
+count_by_weekday2 = users.pivot_table(index = 'weekday', aggfunc = len) ## Replace 'aggfunc='count'' with 'aggfunc=len': count_by_weekday2
+
+print('==========================================')
+print(count_by_weekday1.equals(count_by_weekday2))
+
+# Using margins in pivot tables
+signups_and_visitors = users.pivot_table(index = 'weekday', aggfunc = sum) ## Create the DataFrame with the appropriate pivot table: signups_and_visitors
+
+print(signups_and_visitors)
+
+signups_and_visitors_total = users.pivot_table(index = 'weekday', aggfunc = sum, margins = True) ## Add in the margins: signups_and_visitors_total 
+
+print(signups_and_visitors_total)
+```
