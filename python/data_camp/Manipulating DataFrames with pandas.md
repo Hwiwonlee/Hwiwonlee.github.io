@@ -212,7 +212,7 @@ print(bycity)
 
 print(bycity.stack(level = 'city')) ## Stack bycity by 'city' and print it
 ```
-> Q. 왜 I과 II의 차이가 생기는 걸까?<br>답이 바로 뒤에 나오네.
+> Q. 왜 I과 II의 차이가 생기는 걸까?  답이 바로 뒤에 나오네.
 
 ```python
 # Restoring the index order
@@ -279,4 +279,253 @@ print(signups_and_visitors)
 signups_and_visitors_total = users.pivot_table(index = 'weekday', aggfunc = sum, margins = True) ## Add in the margins: signups_and_visitors_total 
 
 print(signups_and_visitors_total)
+```
+
+# 4. Grouping data
+## 4.1 Categoricals and groupby
+
+```python
+# Grouping by multiple columns
+by_class = titanic.groupby('pclass') ## Group titanic by 'pclass'
+count_by_class = by_class['survived'].count() ## Aggregate 'survived' column of by_class by count
+print(count_by_class)
+
+
+by_mult = titanic.groupby(['embarked', 'pclass']) ## Group titanic by 'embarked' and 'pclass'
+count_mult = by_mult['survived'].count() ## Aggregate 'survived' column of by_mult by count
+print(count_mult)
+```
+
+```python
+# Grouping by another series
+life = pd.read_csv(life_fname, index_col='Country') ## Read life_fname into a DataFrame: life
+regions = pd.read_csv(regions_fname, index_col='Country') ## Read regions_fname into a DataFrame: regions
+
+life_by_region = life.groupby((regions['region'])) ## Group life by regions['region']: life_by_region
+
+print(life_by_region['2010'].mean())
+```
+> Q. 이게 어떻게 groupby가 되는거지?
+> A. 같은 index를 갖고 있었구나. 
+
+## 4.2 Groupby and aggregation
+
+```python
+# Computing multiple aggregates of multiple columns
+by_class = titanic.groupby('pclass') ## Group titanic by 'pclass': by_class
+by_class_sub = by_class[['age','fare']] ## Select 'age' and 'fare'
+
+aggregated = by_class_sub.agg(['max', 'median']) ## Aggregate by_class_sub by 'max' and 'median': aggregated
+## by_class[['age','fare']]의 결과로 얻은 pclass x age, fare를 obs의 max와 median 담은 df로 aggregation
+
+print(aggregated.loc[:, ('age','max')])
+print(aggregated.loc[:, ('fare','median')])
+
+# Aggregating on index levels/fields
+gapminder = pd.read_csv('gapminder.csv', index_col = ['Year','region','Country']).sort_index()
+gapminder.head() ## multindex
+
+by_year_region = gapminder.groupby(level = ['Year', 'region']) ## Group gapminder by 'Year' and 'region': by_year_region
+## multindex 상황에서 index level을 arg로 주고 groupby를 실행함.
+
+## Define the function to compute spread: spread
+def spread(series):
+    return series.max() - series.min()
+aggregator = {'population':'sum', 'child_mortality':'mean', 'gdp':spread} ## Create the dictionary: aggregator
+
+aggregated = by_year_region.agg(aggregator) ## Aggregate by_year_region using the dictionary: aggregated
+## function과 dict을 agg의 arg로 선언할 수도 있다. 
+
+print(aggregated.tail(6))
+
+# Grouping on a function of the index
+sales = pd.read_csv('sales.csv', index_col = 'Date', parse_dates = True)
+by_day = sales.groupby(sales.index.strftime('%a')) ## Create a groupby object: by_day
+
+
+units_sum = by_day['Units'].sum()
+print(units_sum)
+```
+.strftime('%a')에 대한 [정보](https://datascienceschool.net/view-notebook/465066ac92ef4da3b0aba32f76d9750a/)는 해당 링크에서 찾았다. .strftime(format)은 날짜와 시간 정보를 문자열로 바꿔주는 method로 위에 선언된 '%a'는 영어로된 요일 문자열로 바꾸라는 의미다.
+
+## 4.3 Groupby and transformation
+
+```python
+# Detecting outliers with Z-Scores
+from scipy.stats import zscore ## Import zscore
+
+standardized = gapminder_2010.groupby('region')['life','fertility'].transform(zscore) ## Group gapminder_2010: standardized
+## DF를 'region'으로 groupby하고 ['life','fertility'] column을 뽑아 해당 값들을 zscore로 바꾼 DF를 standardized에 저장 
+
+outliers = (standardized['life'] < -3) | (standardized['fertility'] > 3) ## Construct a Boolean Series to identify outliers: outliers
+## 이상치 판별기 
+
+gm_outliers = gapminder_2010.loc[outliers] ## Filter gapminder_2010 by the outliers: gm_outliers
+## 이상치 판별기를 이용해 gapminder_2010에서 이상치를 제외시켰다. 
+
+print(gm_outliers)
+
+# Filling missing data (imputation) by group
+by_sex_class = titanic.groupby(['sex','pclass']) ## Create a groupby object: by_sex_class
+
+## Write a function that imputes median
+def impute_median(series):
+    return series.fillna(series.median())
+
+titanic.age = by_sex_class.age.transform(impute_median) ## Impute age and assign to titanic['age']
+## 위에서 만든 impute_median 함수를 이용해 age column을 대상으로 transform을 시행함. 
+
+print(titanic.tail(10))
+
+# Other transformations with .apply
+regional = gapminder_2010.groupby('region') ## Group gapminder_2010 by 'region': regional
+reg_disp = regional.apply(disparity) ## Apply the disparity function on regional: reg_disp
+## 미리 정의해둔 disparity함수를 이용함. 
+
+print(reg_disp.loc[['United States','United Kingdom','China'], :]) ## Print the disparity of 'United States', 'United Kingdom', and 'China'
+````
+
+## 4.4 Groupby and filtering
+
+```python
+# Grouping and filtering with .apply()
+by_sex = titanic.groupby('sex') ## Create a groupby object using titanic over the 'sex' column: by_sex
+
+## c_deck_survival
+def c_deck_survival(gr):
+
+    c_passengers = gr['cabin'].str.startswith('C').fillna(False)
+
+    return gr.loc[c_passengers, 'survived'].mean()
+
+c_surv_by_sex = by_sex.apply(c_deck_survival) ## Call by_sex.apply with the function c_deck_survival
+
+print(c_surv_by_sex)
+
+# Grouping and filtering with .filter()
+sales = pd.read_csv('sales.csv', index_col='Date', parse_dates=True) ## Read the CSV file into a DataFrame: sales
+by_company = sales.groupby('Company') ## Group sales by 'Company': by_company
+
+by_com_sum = by_company.Units.sum() ## Compute the sum of the 'Units' of by_company: by_com_sum
+print(by_com_sum)
+
+by_com_filt = by_company.filter(lambda g : g['Units'].sum() > 35) ## Filter 'Units' where the sum is > 35: by_com_filt
+print(by_com_filt)
+
+# Filtering and grouping with .map()
+under10 = (titanic['age'] < 10).map({True:'under 10', False:'over 10'}) ## Create the Boolean Series: under10
+## 타이타닉 승선객의 나이 10살을 기준으로 10살 미만이면 under 10, 10살 이상이면 over 10으로 'age'를 변경 
+
+survived_mean_1 = titanic.groupby(under10)['survived'].mean() ## Group by under10 and compute the survival rate
+## titanic과 under10이 같은 index를 가지므로 under10에 의해 groupby 시행 가능. 
+print(survived_mean_1)
+
+survived_mean_2 = titanic.groupby([under10, 'pclass'])['survived'].mean() ## Group by under10 and pclass and compute the survival rate
+print(survived_mean_2)
+```
+
+# 5. Bring it all together
+
+```python
+# Using .pivot_table() to count medals by type
+counted = medals.pivot_table(index = 'NOC', values = 'Athlete', columns = 'Medal', aggfunc = 'count') ## Construct the pivot table: counted 
+
+counted['totals'] = counted.sum(axis='columns') ## Create the new column: counted['totals']
+counted = counted.sort_values('totals', ascending=False) ## Sort counted by the 'totals' column
+
+print(counted.head(15))
+```
+> counted의 totals column은 counted에서 열 방향으로 sum을 시행하는 것이므로 axis='columns'를 붙여준다. (x)  
+> 찾아보니 default가 columns이다. interger로 arg를 써도 되는데 0 : col, 1 : row다.   
+> 아무리 생각해도 이상해서 (왜냐면 orginal dataset의 columns은 ['bronze', 'silver', 'gold', 'total']이었다) 실행해서 살펴보니 axis='columns'으로 실행하면 row 기준으로 덧셈이 된다. 그러니까 axis='columns' = 1, axis='rows' = 0과 같다. 왜 이렇지? 
+
+```python
+# Applying .drop_duplicates()
+ev_gen = medals[['Event_gender', 'Gender']] ## Select columns: ev_gen
+ev_gen_uniques = ev_gen.drop_duplicates() ## Drop duplicate pairs: ev_gen_uniques, 중복값을 모두 drop해버리는 method 
+
+print(ev_gen_uniques)
+
+# Finding possible errors with .groupby()
+medals_by_gender = medals.groupby(['Event_gender', 'Gender']) ## Group medals by the two columns: medals_by_gender
+medal_count_by_gender = medals_by_gender.count() ## Create a DataFrame with a group count: medal_count_by_gender
+
+print(medal_count_by_gender)
+```
+```python
+# Locating suspicious data
+sus = (medals.Event_gender == 'W') & (medals.Gender == 'Men') ## Create the Boolean Series: sus
+suspect = medals[sus]  ## Create a DataFrame with the suspicious row: suspect
+
+print(suspect)
+```
+> Boolean Series를 만들 때 조건문에 ()를 쳐춰야 한다. 위의 경우 and로 연결되어 있지만 각 조건문마다 ()를 쳐줘야 실행된다. 
+
+```python
+# Using .nunique() to rank by distinct sports
+country_grouped = medals.groupby('NOC') ## Group medals by 'NOC': country_grouped
+Nsports = country_grouped.Sport.nunique() ## Compute the number of distinct sports in which each country won medals: Nsports
+## .nunique() method는 categorical.nunique()로 쓰이며 유일한 categorical의 개수를 센다. 
+
+
+Nsports = Nsports.sort_values(ascending=False) ## Sort the values of Nsports in descending order
+
+print(Nsports.head(15))
+
+# Counting USA vs. USSR Cold War Olympic Sports
+during_cold_war = (medals['Edition'] >= 1952) & (medals['Edition'] <= 1988) ## Create a Boolean Series that is True when 'Edition' is between 1952 and 1988: during_cold_war
+
+is_usa_urs = medals.NOC.isin(['USA','URS']) ## Extract rows for which 'NOC' is either 'USA' or 'URS': is_usa_urs
+## list 안에 같이 쓰면 default로 'or' 조건문이 실행된다. 
+
+cold_war_medals = medals.loc[during_cold_war & is_usa_urs] ## Use during_cold_war and is_usa_urs to create the DataFrame: cold_war_medals
+ 
+country_grouped = cold_war_medals.groupby('NOC')
+
+Nsports = country_grouped.Sport.nunique().sort_values(ascending=False) ## Create Nsports
+
+print(Nsports)
+
+# Counting USA vs. USSR Cold War Olympic Medals
+medals_won_by_country = medals.pivot_table(index = 'Edition', columns = 'NOC', values = 'Athlete', aggfunc = 'count') ## Create the pivot table: medals_won_by_country
+
+cold_war_usa_urs_medals = medals_won_by_country.loc[1952:1988, ['USA','URS']] ## Slice medals_won_by_country: cold_war_usa_urs_medals
+
+most_medals = cold_war_usa_urs_medals.idxmax(axis = 'columns') ## Create most_medals 
+## .idxmax(axis) : 선언된 axis에 따라 기준을 잡고 기준에서의 최대값을 return한다. 
+## axis = 'rows'(=0)이면 '열'을 기준으로 각 열이 갖는 최대값이 속한 index를 return한다. 
+## axis = 'columns'(=1)이면 '행'을 기준으로 각 행이 갖는 최대값이 속한 열을 reutrn한다. 
+
+
+print(most_medals.value_counts())
+
+
+# Visualizing USA Medal Counts by Edition: Line Plot
+## Create the DataFrame: usa
+usa = medals[medals['NOC'] == 'USA']
+
+usa_medals_by_year = usa.groupby(['Edition', 'Medal'])['Athlete'].count() ## Group usa by ['Edition', 'Medal'] and aggregate over 'Athlete'
+usa_medals_by_year = usa_medals_by_year.unstack(level = 'Medal') ## Reshape usa_medals_by_year by unstacking
+## unstack을 해주는 이유? 위에 groupby에서 ['Edition', 'Medal']로 multindex가 돼서 x, y축이 없어졌고 이 때문에 plot을 그릴 수가 없음
+## 따라서 .unstack(level = 'Medal')를 실행, index로 'Edition'을 갖고 columns으로 'Medal'을 갖는 DF로 reshaping 해줌. 
+
+usa_medals_by_year.plot() ## Plot the DataFrame usa_medals_by_year
+plt.show()
+plt.clf()
+
+usa_medals_by_year.plot.area() ## Create an area plot of usa_medals_by_year
+plt.show()
+plt.clf()
+
+# Visualizing USA Medal Counts by Edition: Area Plot with Ordered Medals
+
+medals.Medal = pd.Categorical(values = medals.Medal, categories=['Bronze', 'Silver', 'Gold'], ordered=True) ## Redefine 'Medal' as an ordered categorical
+medals.info() ## Medal : category 확인 
+
+usa = medals[medals.NOC == 'USA']
+usa_medals_by_year = usa.groupby(['Edition', 'Medal'])['Athlete'].count()
+usa_medals_by_year = usa_medals_by_year.unstack(level='Medal')
+usa_medals_by_year.plot.area()
+plt.show()
+
 ```
