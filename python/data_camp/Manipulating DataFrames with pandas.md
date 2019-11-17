@@ -212,7 +212,7 @@ print(bycity)
 
 print(bycity.stack(level = 'city')) ## Stack bycity by 'city' and print it
 ```
-> Q. 왜 I과 II의 차이가 생기는 걸까? /n 답이 바로 뒤에 나오네.
+> Q. 왜 I과 II의 차이가 생기는 걸까?<br>답이 바로 뒤에 나오네.
 
 ```python
 # Restoring the index order
