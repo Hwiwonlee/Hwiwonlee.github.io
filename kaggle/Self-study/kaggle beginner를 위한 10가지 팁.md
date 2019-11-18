@@ -13,7 +13,7 @@
 # 2. 이미 많이 사용된 test dataset으로 연습하자.
 &nbsp;&nbsp;&nbsp;&nbsp;code를 이용한 data analysis에서 실력을 가장 빠르게 키울 수 있는 방법은 raw dataset을 하나 잡고 실제로 분석을 해보는 것이다. 이 때, raw dataset을 선택할 때 이미 많이 분석된 dataset을 고르는 것이 좋다. 누군가 가르쳐주는 것이 아닌 self study로 data analysis를 시작하는 경우 자신이 낸 결과와 **비교해볼 다른 사람의 결과**가 꼭 필요하다. 비교해볼 다른 사람의 결과는 beginner들에게 답안지와 같다. 때문에 beginner들의 답안지가 차고 넘치는 titanic dataset을 많은 사람들이 Kaggle beginner에게 를 추천하는 이유다. 
 &nbsp;&nbsp;&nbsp;&nbsp;Kaggle에서 제공하는 raw dataset이 대부분 그렇지만 kaggle에서 많이 사용된 test dataset은 실제로 data analysis의 대상이 되는 raw dataset과 유사한 형태다. 유사한 형태라함은 raw dataset이라는 말 그대로 '날 것' 그 자체여서 가공없이는 분석이 어려운 형태를 의미한다. data analysis의 대부분이 data handling이라는 것이 이미 많이 알려져 있으므로 이를 연습하려면 'raw dataset'이 최고다. 
-- raw dataset을 구할 수 있는 웹사이트는 생각보다 많다. Kaggle에서도 구할 수 있고 (UCI Machine Learning Repository)[https://archive.ics.uci.edu/ml/datasets.html]와 같은 Repository, 혹은 Data Camp처럼 data analysis를 배울 수 있는 사이트에서도 raw dataset에 대한 소스를 얻을 수 있다. 
+- raw dataset을 구할 수 있는 웹사이트는 생각보다 많다. Kaggle에서도 구할 수 있고 [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets.html)와 같은 Repository, 혹은 Data Camp처럼 data analysis를 배울 수 있는 사이트에서도 raw dataset에 대한 소스를 얻을 수 있다. 
 - 물론 이렇게 돌아다니는 raw dataset은 '대용량'은 아니다. 근데 몇 기가, 몇 테라짜리 dataset이나 몇 메가 짜리 dataset이나 algorithm은 똑같으니 섭섭해 하지 말자. 
 
 # 3. data를 레고처럼 여러 형태로 만들어 갖고 놀자. (Preprocessing 1/2)
