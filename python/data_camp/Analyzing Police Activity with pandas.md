@@ -107,8 +107,7 @@ print(ri.groupby('driver_gender').search_conducted.mean()) ## 위의 결과를 �
 print(ri.groupby(['driver_gender', 'violation']).search_conducted.mean()) ## Calculate the search rate for each combination of gender and violation
 print(ri.groupby(['violation', 'driver_gender']).search_conducted.mean()) ## Reverse the ordering to group by violation before gender
 ```
-> Q. column의 순서를 바꾸는 것이 아니라 저 안에서 order를 바꿀 수는 없을까?
-> A. 
+> Q. column의 순서를 바꾸는 것이 아니라 저 안에서 order를 바꿀 수는 없을까?  <br> A. 
 
 ## 2.4 Does gender affect who is frisked during a search?
 
