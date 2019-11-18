@@ -17,20 +17,20 @@
 - 물론 이렇게 돌아다니는 raw dataset은 '대용량'은 아니다. 근데 몇 기가, 몇 테라짜리 dataset이나 몇 메가 짜리 dataset이나 algorithm은 똑같으니 섭섭해 하지 말자. 
 
 # 3. data를 레고처럼 여러 형태로 만들어 갖고 놀자. (Preprocessing 1/2)
-Data transformation, 그러니까 data wrangling, data munging, data handling 등등, 용어와 쓰임이 명확하게 정의되지 않았지만 결론은 하나다. **data의 형태를 목적에 따라 바꾸는 것.** Preprocessing 즉 전처리 과정을 두 개로 나눈다면 아마 이 과정이 첫 번째일 것이다. 여러 개의 dataset를 합치고 나누고 조건에따라거르기도 하고 버리기도 하며 outliers와 missing values를 찾고 어떻게 다룰 것인지 결정하는 일련의 모든 과정이 여기에 속한다. data transformation은 상당히 긴 시간을 잡아먹는 과정이므로 능숙하게 할 수 있도록 연습해야 한다. 
+&nbsp;&nbsp;&nbsp;&nbsp;Data transformation, 그러니까 data wrangling, data munging, data handling 등등, 용어와 쓰임이 명확하게 정의되지 않았지만 결론은 하나다. **data의 형태를 목적에 따라 바꾸는 것.** Preprocessing 즉 전처리 과정을 두 개로 나눈다면 아마 이 과정이 첫 번째일 것이다. 여러 개의 dataset를 합치고 나누고 조건에따라거르기도 하고 버리기도 하며 outliers와 missing values를 찾고 어떻게 다룰 것인지 결정하는 일련의 모든 과정이 여기에 속한다. data transformation은 상당히 긴 시간을 잡아먹는 과정이므로 능숙하게 할 수 있도록 연습해야 한다. 
 
 # 4. Preprocessing의 꽃은 변수 조작이다. (Preprocessing 2/2)
-Kaggle competition의 입상자들과 입상하지 못한 다른 사람들의 방법론적 차이는 거의 없다. 그도 그럴게, 이미 존재하는 입상 여부와 관계없이 보통 Python에 이미 존재하는 model을 사용하기 때문에 model이나 algorithm에서 오는 차이는 별로 없는게 맞다. 차이는 **변수 조작**에서 온다. data analysis에서 변수 조작은 매우 중요하다. 변수 조작은 model fitting 전의 **변수 변환**과 model fitting 후의 **변수 선택**으로 나뉜다. 분석의 목적과 변수의 종류에 따라 쓸 수 있는 model이 달라지고 model에 변수의 개수도 model fitting에 영향을 미친다. 따라서 model에 쓸 수 있는 상태의 dataset을 만들었다면 변수 변환을 해야한다. 변수 변환이란 변수들이 갖고 있는 정보를 최대한 놓치지 않은 선에서 변수를 합치거나 쓸모없는 변수를 버리거나 하는 등의 작업이다. 변수 선택은 model fitting 후 model에 속한 변수를 솎아주는 작업이다. 이 두 과정을 거치면 더 좋은 결과를 만들 수 있을 것이다. 
+&nbsp;&nbsp;&nbsp;&nbsp;Kaggle competition의 입상자들과 입상하지 못한 다른 사람들의 방법론적 차이는 거의 없다. 그도 그럴게, 이미 존재하는 입상 여부와 관계없이 보통 Python에 이미 존재하는 model을 사용하기 때문에 model이나 algorithm에서 오는 차이는 별로 없는게 맞다. 차이는 **변수 조작**에서 온다. data analysis에서 변수 조작은 매우 중요하다. 변수 조작은 model fitting 전의 **변수 변환**과 model fitting 후의 **변수 선택**으로 나뉜다. 분석의 목적과 변수의 종류에 따라 쓸 수 있는 model이 달라지고 model에 변수의 개수도 model fitting에 영향을 미친다. 따라서 model에 쓸 수 있는 상태의 dataset을 만들었다면 변수 변환을 해야한다. 변수 변환이란 변수들이 갖고 있는 정보를 최대한 놓치지 않은 선에서 변수를 합치거나 쓸모없는 변수를 버리거나 하는 등의 작업이다. 변수 선택은 model fitting 후 model에 속한 변수를 솎아주는 작업이다. 이 두 과정을 거치면 더 좋은 결과를 만들 수 있을 것이다. 
 
 - 3.과 4.를 합쳐서 data '블라블라'(요즘은 data wrangling 이나 data munging으로 말하는 추세인 듯 하다.)로 말하는 경우도 있고 아닌 경우도 있고 각자의 맘이다. 분리해서 보는 경우가 더 많은 것 같기는 하지만 이게 학계에서 합의된 사항인지는 잘 모르겠다. 사실 변수 조작이라고 번역하는 것도 좀 이상하긴 한데 마땅한 단어가 생각이 안난다. 
 
 - Feature engineering를 나는 **변수 조작**이라 번역했다. 이유는 딴 게 없고 kaggle에서 많이 보이는 feature라는 말이 dataset의 column을 의미하고 이를 '변수'로 더 많이 불렀기 때문이다. engineering인 이유는 이 과정이 알고리즘에 근거한 수치에 근거하는 부분이 커서 공학적인 느낌이 있어서가 아닐까? 
 
 # 5. Ensemble method를 어떻게 써야하는지 배우자.
-Ensemble learning 혹은 Ensemble method는 머신러닝에서 여러개의 모델을 학습시켜 그 모델들의 예측결과들을 이용해 하나의 모델보다 더 나은 값을 예측하는 방법이다. 많이 쓰이는 Ensemble method는 Random forest, Bagging, Boosting, Stacking 등이 있다. 이 방법들을 사용해 kaggle에서 우승한 사례가 많다고 하고 실제로 learning에서 많이 사용하기도 하니 익혀두면 두고두고 쓸데가 있을 것이다.
+&nbsp;&nbsp;&nbsp;&nbsp;Ensemble learning 혹은 Ensemble method는 머신러닝에서 여러개의 모델을 학습시켜 그 모델들의 예측결과들을 이용해 하나의 모델보다 더 나은 값을 예측하는 방법이다. 많이 쓰이는 Ensemble method는 Random forest, Bagging, Boosting, Stacking 등이 있다. 이 방법들을 사용해 kaggle에서 우승한 사례가 많다고 하고 실제로 learning에서 많이 사용하기도 하니 익혀두면 두고두고 쓸데가 있을 것이다.
 
 # 6. overfitting을 어떻게 해결해야 하는지 배우자.
-overfitting이란 training dataset에서는 well-prediction model이 testing dataset에서 bad-prediction model이 되는, 즉 model이 training dataset에 '과적합'되는 현상을 말한다. train, test dataset으로 나누는 learning method에서 overfitting은 어쩌면 필연적일지 모르겠다. 그만큼 자주(어쩌면 항상) 발생하는 문제이므로 반드시 해결 방법에 대해 알아두어야 한다. 다행인 것은 이미 많은 overfitting 완화 방법들이 Python 내에서 제공되고 있으므로 어떻게 대처해야 하는지 꼭 배워두자. 
+&nbsp;&nbsp;&nbsp;&nbsp;overfitting이란 training dataset에서는 well-prediction model이 testing dataset에서 bad-prediction model이 되는, 즉 model이 training dataset에 '과적합'되는 현상을 말한다. train, test dataset으로 나누는 learning method에서 overfitting은 어쩌면 필연적일지 모르겠다. 그만큼 자주(어쩌면 항상) 발생하는 문제이므로 반드시 해결 방법에 대해 알아두어야 한다. 다행인 것은 이미 많은 overfitting 완화 방법들이 Python 내에서 제공되고 있으므로 어떻게 대처해야 하는지 꼭 배워두자. 
 
 - Python에서 방법들을 제공한다고 했지 그 방법들로 overfitting을 해결할 수 있다고는 안했다. overfitting는 learning분야에서 활발하게 연구되고 있는 분야다. 
 
