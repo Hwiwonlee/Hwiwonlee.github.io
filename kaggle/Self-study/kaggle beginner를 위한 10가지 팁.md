@@ -34,4 +34,17 @@
 
 - Python에서 방법들을 제공한다고 했지 그 방법들로 overfitting을 해결할 수 있다고는 안했다. overfitting는 learning분야에서 활발하게 연구되고 있는 분야다. 
 
+# 7. Forum을 사용하자. 
+&nbsp;&nbsp;&nbsp;&nbsp;대부분의 coding 작업이 그렇듯 혼자서 한 번에 뚝딱뚝딱 완성하기는 매우 힘들다. 더욱이 data analysis는 조건만 갖추면 function이 돌아가버리니 이게 맞는지 틀린지 제대로 됐는지 안 됐는지 확인할 방법이 없다. 다행히 이미 많은 data analysis 관련 forum들이 세계적으로 존재하고 한국에도 몇 개 있어 통계적 방법론이나 코딩에 대해 묻고 답을 얻을 수 있다. 뿐만 아니라 해당 분야에 대한 insight도 넓힐 수 있으니 kaggle beginner들은 꼭 2-3개 씩의 포럼을 즐겨찾기 해놓자. 
+- 한국의 경우 facebook page가 활성화 되어 있다. 대표적으로 통계에 대한 대부분의 것을 주제로 하는 [통계마당](https://www.facebook.com/groups/632755063474501/?hc_ref=ARS8oVhiEzHntxlb2eWsiIRlS_6_losEDe9w8R_jFsx9zSGdcXg6yNm_5rAhLsQNlAs&__tn__=C-R), Python programing 중심의 [Python Korea](https://www.facebook.com/groups/pythonkorea/?ref=nf_target&fref=nf), kaggle 중심의 [캐글 코리아](https://www.facebook.com/groups/KaggleKoreaOpenGroup/?hc_ref=ARRmYPL19nJaYyOPDXqIH54nx6KPvUaVW6P8DhF3QwR9ct7_h3n9u8E1fxsjI3xJpRk) 정도가 있다.
 
+# 8. 자신만의 kaggle toolbox를 만들자. 
+&nbsp;&nbsp;&nbsp;&nbsp;dataset을 이용해 data analysis를 진행하면 고정적으로 진행하는 작업들이 있기 마련이다. (가령 .info()를 확인한다던가 하는 것들) 이 작업들을 사용자 정의 함수로 묶어서 자신만의 함수를 만들어보는 건 coding 실력의 향상 뿐 아니라 work flow를 익힐 수 있는 좋은 기회일 것이다. 더 나아가 load부터 transform, model fitting까지의 과정을 data pipeline으로 구축한다면 오타로 인한 실수는 줄이고 작업 효율은 늘릴 수 있는 일석이조의 경험이 될 것이다. 
+
+# 9. 과거의 kaggle competition으로 연습하라.
+&nbsp;&nbsp;&nbsp;&nbsp;기출문제를 푸는 공부 방법은 시험을 준비하는 데 있어서 정말 좋은 방법이다. 물론 Kaggle competition에 완전히 같은 문제가 나오진 않겠지만 data analysis의 work-flow는 비슷비슷하다. 즉, 과거의 competition으로 연습하는 것은 기출문제로 문제 해결의 과정을 연습하는 것과 같다. 이 방법의 더욱 좋은 점은 상위 순위에 rank되어 있는 참가자들의 해결 방법들을 볼 수 있다는 데에 있다. 그들의 방법을 베끼는 것이 아니라 **어떤 문제에서 어떤 방법론을 왜, 어떻게 사용했는지** 궁리하며 공부해야 한다. 보고 생각하고 commit해라. 그러다보면 언젠가 상위 10% 안에 들 수 있을 것이다. 
+- 10 Tips to Get Started with Kaggle에서 추천하는 링크, [Seven Python Kernels from Kaggle You Need to See Right Now](https://opendatascience.com/seven-python-kernels-from-kaggle-you-need-to-see-right-now/), 다. 
+- 생각해보니 10 Tips to Get Started with Kaggle가 적힌 [opendatascience](https://opendatascience.com/)도 매우 좋은 사이트가 같다. 저장해야지. 
+
+# 10. 지금 바로 시작하기.
+&nbsp;&nbsp;&nbsp;&nbsp;대부분의 자기개발서 등의, Tip을 논하는 글이나 책의 항상 마지막은 이런 식이지만 틀린 말은 아니다. '공부'만 하려고 kaggle을 시작한 사람은 kaggle을 반만 이용하는 것이다. kaggle은 수 많은 경연이 열리는 공간이다. 경연의 상품은 당연히 돈이다! (심지어 생각보다 많다.) 그러니 이제 시작하자. 맘에 드는 dataset이든, 맘에 드는 회사의 competition이든 그것도 아니라면 그냥 상금이 많든, 일단 참가부터 하자. 참가하고 dataset 받고 dataset 앞에서 고민해야 성과가 나온다. 
