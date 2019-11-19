@@ -33,7 +33,7 @@ train과 test을 알아보기 위해 overview에 쓰이는 대표적인 attrtibu
 
 > 여기까지 쓰는데 kernel이 두 번 다운됐다. 이거 써도 되는건가? github로 쓰고 옮기는게 낫겠다는 생각이 들었다. 괜히 competition high-position들이 결과만 sharing하고 github 주소를 다는 게 아닌 것 같다. 꽤 불편하다.
 
-* 가령, Name이나 Ticket 같은 다루기 어려운 변수들이 몇 개 보인다. 꽤 고민을 해봐야할 것 같다. 
+* Name이나 Ticket 같은 다루기 어려운 변수들이 몇 개 보인다. 꽤 고민을 해봐야할 것 같다. 
   * Name이나 Ticket의 obs가 갖는 의미를 찾는다면 사용방법을 찾는데 많은 도움이 될 것이다. 
 * Age나 Fare는 변수를 구간화시켜 명목변수로 바꿔(binning)도 좋을 것 같다. 
   * Age는 10대 이하, 10대, 20대, 30대...로 Fare는 10미만, 20미만, 30미만 등으로 나눠 변수를 새로 정의해줄 수 있다.
