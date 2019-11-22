@@ -41,3 +41,54 @@ train과 test을 알아보기 위해 overview에 쓰이는 대표적인 attrtibu
 * **Sibsp**는 # of siblings / spouses aboard the Titanic, **Parch**는 # of parents / children aboard the Titanic이다. kaggle의 [data dictionary](https://www.kaggle.com/c/titanic/data)에서 찾았다.
   * 해석 안되는 변수 명들은 보통 이렇게 설명이 되어 있다. 혼자 고생하지 말고 꼼꼼히 살펴보자. 
   * 누군가의 자식이면 누군가의 부모도 있다는 것 아닌가? 예를 들어 A와 B가 부모 자식 사이면 Parch는 같은 값을 갖을 것이다. Name으로 이걸 구분할 수 있을까? 
+  
+# 3. Preprocessing(1) : data transformation
+&nbsp;&nbsp;&nbsp;&nbsp;Preprocessing, 전처리의 첫 번째 단계는 dataset의 형태를 바꾸는 것이다. data transformation는 아래의 과정을 포함하고 있다. 
+* dataset의 통합
+* Missing values를 찾고 해결 방법 결정 후, 시행하기 
+* Outliers찾고 처리 방법 결정 후, 시행하기
+
+이제 하나 하나씩 처리해보자.
+
+## 3.1 Combine dataset
+&nbsp;&nbsp;&nbsp;&nbsp;dataset의 용량이 커지는 추세에 따라 모든 정보를 포함한 대용량의 단일 dataset을 가지고 데이터 분석을 하는 경우는 많이 없어졌다. 더욱이 SQL DB가 보편화 되며 DB에서 조건에 따라 filtering된 data를 추출, 이들을 합친 dataset을 만들어 분석하는 일이 잦아졌고 자연스럽게 dataset을 합치는 일 또한 많아졌다. 
+&nbsp;&nbsp;&nbsp;&nbsp;Pandas module에서 dataset을 합치는 대표적인 방법은 (1) pandas.concat() (2) pandas.merge() 다. arg와 dataset에 따라 방법에 상관없이 같은 결과를 낼 수도 있지만 기본적으로 pandas.concat()은 **동일한 index나 column에 따른 연속적 연결에 의한 병합**을, pandas.merge()는 **공통된 열이나 행을 기준(key)으로 설정한 후, 기준 안에서 중복되는 값을 중심으로한 병합**을 시행한다. 따라서 pandas.concat()은 dataset의 비교적 단순한 통합을, pandas.merge()는 기준으로 선언된 key안에 존재하는 중복값을 통한 통합을 하고자 할 때 사용된다. 자세한 내용은 [pandas document](https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html)를 참고하자.
+&nbsp;&nbsp;&nbsp;&nbsp;Titanic competition에서 제공하는 train & test dataset은 survived column의 유무를 제외한다면 모든 column의 이름과 data type이 같기 때문에 index에 따라 '이어 붙여주기'만 하면 되는 것으로 보인다. 따라서 dataset을 병합하기 위한 방법으로 pandas.concat()을 사용했다.
+
+```python
+# pandas.concat을 이용한 dataset combination
+com_df = pd.concat([train, test], ignore_index=True, sort = True)
+print(com_df.info()) ## column순서가 바뀜
+
+"""
+제대로 combination 됐나 확인
+missing values of Age col : 1309 - 1046 = 263 = 177 + 86
+missing values of Cabin col : 1309 - 295 = 1014 = 687 + 327
+missing values of Embarked col : 1309 - 1307 = 2 = 2 + 0
+missing values of Fare col : 1309 - 1308 = 1 = 0 + 1
+missing values of Survived col : 1309 - 891 = 418 = 0 + 418
+
+print(com_df.isnull().sum())
+print(train.isnull().sum())
+print(test.isnull().sum())
+"""
+train.columns ## columns 순서 및 이름 확인
+com_df = com_df[['PassengerId', 'Survived', 'Pclass', 'Name', 'Sex', 'Age', 'SibSp',
+       'Parch', 'Ticket', 'Fare', 'Cabin', 'Embarked']]
+print(com_df.info()) ## train dataset과 같은 column 순서임을 확인
+```
+## 3.2 Dealing with missing values 
+&nbsp;&nbsp;&nbsp;&nbsp;Missing value, 결측값은 전처리 과정에서 반드시 짚고 넘어가야할 중요한 문제다. 결측값이 존재하기만 해도 modeling 과정에서 algorithm이 실행되지 않는 경우가 대부분이고 설사 실행된다한들 full-filled dataset보다 accuracy가 떨어지는 경우가 부기지수다. 그러므로 결측값을 어떻게든 채워넣어야 하는데 그 방법 또한 여러 개라 가장 적절한 방법이 무엇인지 판단하고 해당 방법을 통해 pseudo-observation을 만들어 dataset에 넣어야 한다. 이제 우리가 갖고 있는 combined dataset으로 missing values를 다루는 방법들을 천천히 알아보자.
+
+### 3.2.1 Are there missing values?
+&nbsp;&nbsp;&nbsp;&nbsp;사실 위의 과정을 성실히 거쳐왔다면 이미 missing values가 포함된 columns을 알고 있을 것이다.
+
+```python
+print(com_df.info())
+print("\n","혹은 이 방법으로도 알 수 있다","\n",com_df.isnull().sum())
+```
+.info()를 overview에 유용하게 사용할 수 있는 이유 중 하나는 위와 같이 null value(=missing value)를 보여주기 때문이다. missing value의 개수만 알고 싶다면 bulit-in function인 .isnull()과 .sum()을 이용해 column 단위의 missing value 개수를 볼 수도 있다. 위의 결과로 총 5개의 column에 missing values가 있음을 알 수 있으며 missing value의 크기 순으로 보면 Cabin > Survived > Age > Embarked > Fare이다. 이 중, 418개의 missing values를 갖고 있는 Survived는 test dataset으로 나눠지며 삭제된 값으로 우리가 model fitting 및 prediction으로 채워야할 것들이므로 채워넣어야할 대상으로 고려하지 않을 것이다.
+
+### 3.2.2. Fill missing values with pseudo-observations
+
+
