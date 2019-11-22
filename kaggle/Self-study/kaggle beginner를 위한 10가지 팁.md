@@ -17,7 +17,7 @@
 - 물론 이렇게 돌아다니는 raw dataset은 '대용량'은 아니다. 근데 몇 기가, 몇 테라짜리 dataset이나 몇 메가 짜리 dataset이나 algorithm은 똑같으니 섭섭해 하지 말자. 
 
 # 3. data를 레고처럼 여러 형태로 만들어 갖고 놀자. (Preprocessing 1/2)
-&nbsp;&nbsp;&nbsp;&nbsp;Data transformation, 그러니까 data wrangling, data munging, data handling 등등, 용어와 쓰임이 명확하게 정의되지 않았지만 결론은 하나다. **data의 형태를 목적에 따라 바꾸는 것.** Preprocessing 즉 전처리 과정을 두 개로 나눈다면 아마 이 과정이 첫 번째일 것이다. 여러 개의 dataset를 합치고 나누고 조건에따라거르기도 하고 버리기도 하며 outliers와 missing values를 찾고 어떻게 다룰 것인지 결정하는 일련의 모든 과정이 여기에 속한다. data transformation은 상당히 긴 시간을 잡아먹는 과정이므로 능숙하게 할 수 있도록 연습해야 한다. 
+&nbsp;&nbsp;&nbsp;&nbsp;Data transformation, 그러니까 data wrangling, data munging, data handling 등등, 용어와 쓰임이 명확하게 정의되지 않았지만 결론은 하나다. **data의 형태를 목적에 따라 바꾸는 것.** Preprocessing 즉 전처리 과정을 두 개로 나눈다면 아마 이 과정이 첫 번째일 것이다. 여러 개의 dataset를 합치고 나누고 조건에따라 거르기도 하고 버리기도 하며 outliers와 missing values를 찾고 어떻게 다룰 것인지 결정하는 일련의 모든 과정이 여기에 속한다. data transformation은 상당히 긴 시간을 잡아먹는 과정이므로 능숙하게 할 수 있도록 연습해야 한다. 
 
 # 4. Preprocessing의 꽃은 변수 조작이다. (Preprocessing 2/2)
 &nbsp;&nbsp;&nbsp;&nbsp;Kaggle competition의 입상자들과 입상하지 못한 다른 사람들의 방법론적 차이는 거의 없다. 그도 그럴게, 입상 여부와 관계없이 보통 Python에 이미 존재하는 model을 사용하기 때문에 model이나 algorithm에서 오는 차이는 별로 없는게 맞다. 차이는 **변수 조작**에서 온다. data analysis에서 변수 조작은 매우 중요하다. 변수 조작은 model fitting 전의 **변수 변환**과 model fitting 후의 **변수 선택**으로 나뉜다. 분석의 목적과 변수의 종류에 따라 쓸 수 있는 model이 달라지고 model에 변수의 개수도 model fitting에 영향을 미친다. 따라서 model에 쓸 수 있는 상태의 dataset을 만들었다면 변수 변환을 해야한다. 변수 변환이란 변수들이 갖고 있는 정보를 최대한 놓치지 않은 선에서 변수를 합치거나 쓸모없는 변수를 버리거나 하는 등의 작업이다. 변수 선택은 model fitting 후 model에 속한 변수를 솎아주는 작업이다. 이 두 과정을 거치면 더 좋은 결과를 만들 수 있을 것이다. 
