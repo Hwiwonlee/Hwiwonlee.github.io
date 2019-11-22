@@ -1,12 +1,12 @@
 ## 들어가기 전에
-남들 다 하는 Kaggle을 시작하기 위해 그나마 가장 익숙한 [titanic dataset](https://www.kaggle.com/c/titanic)을 골랐다. Python을 이용해 작성하는 첫 kaggle kernel이라 많이 버벅이겠지만, 그 맛에 공부 하는 거지.
+&nbsp;&nbsp;&nbsp;&nbsp;남들 다 하는 Kaggle을 시작하기 위해 그나마 가장 익숙한 [titanic dataset](https://www.kaggle.com/c/titanic)을 골랐다. Python을 이용해 작성하는 첫 kaggle kernel이라 많이 버벅이겠지만, 그 맛에 공부 하는 거지.
 
 # 1. Introduction of competiton
-titanic dataset은 'isis dataset'과 더불어 굉장히 많이 쓰이는 example dataset이다. titanic dataset을 이용한 kaggle competition의 목적은 **주어진 dataset을 이용해 타이타닉이 가라앉은 상황에서 승객들의 생존여부를 예측하는 것**이다. 생존 혹은 사망의 binary classification이므로 평가 기준은 다음의 [accuracy score](https://en.wikipedia.org/wiki/Accuracy_and_precision#In_binary_classification)이다. kaggle에서 제공하는 raw dataset은 'train'과 'test'으로 실제로 data analysis에 사용되는 raw dataset처럼 missing value 및 outlier도 존재한다. 따라서 competition에 참가하는 참가자들은 preprocessing부터 model fitting까지 차근차근 연습해볼 수 있다.
+&nbsp;&nbsp;&nbsp;&nbsp;titanic dataset은 'isis dataset'과 더불어 굉장히 많이 쓰이는 example dataset이다. titanic dataset을 이용한 kaggle competition의 목적은 **주어진 dataset을 이용해 타이타닉이 가라앉은 상황에서 승객들의 생존여부를 예측하는 것**이다. 생존 혹은 사망의 binary classification이므로 평가 기준은 다음의 [accuracy score](https://en.wikipedia.org/wiki/Accuracy_and_precision#In_binary_classification)이다. kaggle에서 제공하는 raw dataset은 'train'과 'test'으로 실제로 data analysis에 사용되는 raw dataset처럼 missing value 및 outlier도 존재한다. 따라서 competition에 참가하는 참가자들은 preprocessing부터 model fitting까지 차근차근 연습해볼 수 있다.
 
 # 2. Datasets overview
-어떻게 나눌지는 모르겠지만 일단, 쭉쭉 써보자. 
-Train dataset과 Test dataset을 간단하게 살펴보자. 정말 간단하게만.
+&nbsp;&nbsp;&nbsp;&nbsp;어떻게 나눌지는 모르겠지만 일단, 쭉쭉 써보자. 
+&nbsp;&nbsp;&nbsp;&nbsp;Train dataset과 Test dataset을 간단하게 살펴보자. 정말 간단하게만.
 
 ```python
 # Load datasets
