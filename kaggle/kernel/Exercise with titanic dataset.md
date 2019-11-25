@@ -89,6 +89,21 @@ print("\n","혹은 이 방법으로도 알 수 있다","\n",com_df.isnull().sum(
 ```
 .info()를 overview에 유용하게 사용할 수 있는 이유 중 하나는 위와 같이 null value(=missing value)를 보여주기 때문이다. missing value의 개수만 알고 싶다면 bulit-in function인 .isnull()과 .sum()을 이용해 column 단위의 missing value 개수를 볼 수도 있다. 위의 결과로 총 5개의 column에 missing values가 있음을 알 수 있으며 missing value의 크기 순으로 보면 Cabin > Survived > Age > Embarked > Fare이다. 이 중, 418개의 missing values를 갖고 있는 Survived는 test dataset으로 나눠지며 삭제된 값으로 우리가 model fitting 및 prediction으로 채워야할 것들이므로 채워넣어야할 대상으로 고려하지 않을 것이다.
 
+```python
+missing_values = pd.DataFrame(com_df.isnull().sum(), columns = ['The number of missing values'])
+# print(missing_values.iloc[:, 0]) # .iloc를 이용해 1열만 print
+# print(missing_values[missing_values.iloc[:, 0] != 0]) ## masking을 이용해 non-zero만 print
+missing_values[missing_values.iloc[:, 0] != 0].sort_values('The number of missing values', ascending=False).plot(kind = 'bar')
+plt.show()
+# Q. 이 상태의 plot에 value를 표시할 수 있는 방법은 없을까?
+```
+[.sort_values()에 대한 내용](https://eunguru.tistory.com/226)  
+[pd.DataFrame()에 대한 내용](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html)  
+[.loc(), .iloc()와 같은 indexer에 대한 내용](https://datascienceschool.net/view-notebook/704731b41f794b8ea00768f5b0904512/) 
+> To do. plot에 value를 추가할 수 있는 방법 찾기 <br> 
+
+&nbsp;&nbsp;&nbsp;&nbsp;시각화를 이용해서 각 feature에 있는 null-value를 표시할 수도 있다. 
+
 ### 3.2.2. Fill missing values with pseudo-observations
 
 
