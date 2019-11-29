@@ -4,43 +4,66 @@
 # 1. Introduction of competiton
 &nbsp;&nbsp;&nbsp;&nbsp;titanic dataset은 'isis dataset'과 더불어 굉장히 많이 쓰이는 example dataset이다. titanic dataset을 이용한 kaggle competition의 목적은 **주어진 dataset을 이용해 타이타닉이 가라앉은 상황에서 승객들의 생존여부를 예측하는 것**이다. 생존 혹은 사망의 binary classification이므로 평가 기준은 다음의 [accuracy score](https://en.wikipedia.org/wiki/Accuracy_and_precision#In_binary_classification)이다. kaggle에서 제공하는 raw dataset은 'train'과 'test'으로 실제로 data analysis에 사용되는 raw dataset처럼 missing value 및 outlier도 존재한다. 따라서 competition에 참가하는 참가자들은 preprocessing부터 model fitting까지 차근차근 연습해볼 수 있다.
 
-# 2. Datasets overview
-&nbsp;&nbsp;&nbsp;&nbsp;어떻게 나눌지는 모르겠지만 일단, 쭉쭉 써보자. 
-&nbsp;&nbsp;&nbsp;&nbsp;Train dataset과 Test dataset을 간단하게 살펴보자. 정말 간단하게만.
+# 2. Overview of Datasets
+&nbsp;&nbsp;&nbsp;&nbsp;Train dataset과 Test dataset을 간단하게 살펴보는 단계다. 이 과정이 분석에 필요한 이유는 다음과 같다. 
+* 변수의 종류, 개수, 성질을 알아보기 위함
+* 관측값의 종류, 개수, 성질, 분포를 알아보기 위함
+* Missing value 혹은 Null의 유무, 규모와 어떤 변수에 속해있는지 파악하기 위함
+
+&nbsp;&nbsp;&nbsp;&nbsp;이 과정은 가장 기초적이면서 필수적인 과정인 동시에 여러 번 수행하게 될 수도 있는 과정이다. 따라서 과정의 흐름을 분명히 파악하고 실습해보자. 
+
+## 2.1 Just overview using .info()
+&nbsp;&nbsp;&nbsp;&nbsp;Dataset이 갖고 있는 변수와 관측값에 대한 개략적인 정보를 확인할 수 있는 function이나 method는 많지만 보통 .info() method를 이용한 방법을 많이 사용한다. 물론, 변수의 개수가 많을수록 한 눈에 dataset의 정보를 파악하기 어렵다는 단점이 존재하기는 하지만, Titanic dataset의 경우 변수의 개수가 비교적 적은 케이스이므로 사용해도 무방하다. 
 
 ```python
 # Load datasets
 train = pd.read_csv('/kaggle/input/titanic/train.csv')
 test = pd.read_csv('/kaggle/input/titanic/test.csv')
 
-# train dataset overview using .shape and .info()
+# train dataset overview using .shape, .info(), .head() and .tail()
 print(train.shape)
 print(train.info())
 print(train.head())
+print(train.tail())
 
-# test dataset overview using .shape and .info()
+# test dataset overview using .shape and .info(), .head() and .tail()
 print(test.shape)
 print(test.info())
 print(test.head())
+print(test.tail())
 ```
 
-train과 test을 알아보기 위해 overview에 쓰이는 대표적인 attrtibute 및 fucntion인 .shape, .info(), .head()를 이용했다. 눈에 쉽게 보이는 특징 몇 개를 아래에 정리해두었다. 
+&nbsp;&nbsp;&nbsp;&nbsp;train과 test을 알아보기 위해 overview에 쓰이는 대표적인 attrtibute 및 fucntion인 .shape, [.info()](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.info.html), .head(), tail()을 이용했다. 눈에 쉽게 보이는 특징 몇 개를 아래에 정리해두었다. 
 * train은 891x12, test는 418x11의 dataset이다.
-  * train과 test의 column 개수의 차이가 나는 건, test의 'survived' column을 제거했기 때문으로 보인다. 
-  * 사실, 하나의 dataset을 train dataset과 test dataset으로 미리 나눠놓는 건 그렇게 흔한 일은 아니다. 아마 example dataset이기 떄문에 미리 나눈 것으로 보인다. 보통은 analyst가 나누는 method를 정한다. 
+   * train과 test의 column 개수의 차이가 나는 건, test의 'survived' column을 제거했기 때문으로 보인다. 
+   * 사실, 하나의 dataset을 train dataset과 test dataset으로 미리 나눠놓는 건 그렇게 흔한 일은 아니다. 아마 example dataset이기 떄문에 미리 나눈 것으로 보인다. 보통은 analyst가 나누는 method를 정한다. 
 * missing value는 train에는 Cabin > Age > Embarked 순으로 많고 test에는 Cabin > Age > Fare 순으로 많다. 
-  * 아마 뒤에서 다루겠지만 missing value를 처리하는 일은 정말 중요하다. 
+   * 아마 뒤에서 다루겠지만 missing value를 처리하는 일은 정말 중요하다.  
+ * 가령, Name이나 Ticket 같은 다루기 어려운 변수들이 몇 개 보인다. 꽤 고민을 해봐야할 것 같다. 
+   * Name이나 Ticket의 obs가 갖는 의미를 찾는다면 사용방법을 찾는데 많은 도움이 될 것이다. 
+ * Age나 Fare는 변수를 구간화시켜 명목변수로 바꿔(binning)도 좋을 것 같다. 
+   * Age는 10대 이하, 10대, 20대, 30대...로 Fare는 10미만, 20미만, 30미만 등으로 나눠 변수를 새로 정의해줄 수 있다.
+   * Binning의 유의사항으로는 너무 많은 구간으로 나누지 않는 것이다. 지나치게 좁은 구간으로 나눠버리면 변수 개수가 늘어나는 것과 마찬가지라 말도 안되게 많은 문제가 생긴다.  
+ * **Sibsp**는 # of siblings / spouses aboard the Titanic, **Parch**는 # of parents / children aboard the Titanic이다. kaggle의 [data dictionary](https://www.kaggle.com/c/titanic/data)에서 찾았다.
+   * 해석 안되는 변수 명들은 보통 이렇게 설명이 되어 있다. 혼자 고생하지 말고 꼼꼼히 살펴보자. 
+   * 누군가의 자식이면 누군가의 부모도 있다는 것 아닌가? 예를 들어 A와 B가 부모 자식 사이면 Parch는 같은 값을 갖을 것이다. Name으로 이걸 구분할 수 있을까?
+   
+## 2.2 Overview of variables 
+&nbsp;&nbsp;&nbsp;&nbsp;변수의 종류, 개수, 성질에 대한 이해는 데이터 분석의 기초이다. 위의 2.1에서 봤던 내용을 기반으로 변수에 대해 정리해보자. 
+* 변수의 개수는 총 12개이다. 
+* 12개의 변수 중 numerical variable은 int64 type의 PassengerId, Pclass, SibSp, Parch와 float64 type의 Age, Fare로 총 6개다. 
+* 12개의 변수 중 categorical variable은 Survived, Sex, Embarked로 총 3개다. 
+* 12개의 변수 중 mixed variable은 Ticket과 Cabin이다. 
+* 12개의 변수 중 Name은 string variable이다. 
+* 12개의 변수 중 PassengerId는 indexing을 위한 변수이다. 
+&nbsp;&nbsp;&nbsp;&nbsp;'변수'에 대해 알고 있다면 위의 내용이 틀렸다는 사실을 금방 눈치챌 수 있을 것이다. 사실 Pclass, SibSp, Parch의 세 변수는 categorical variable이며 특별히 Pclass는 서열형 명목 변수(Ordinal)이다. 그럼에도 위 처럼 정리한 것은 Dataset에 대해 아무것도 모르는 상태에서 매우 큰 dataset을 다루고 있음을 가정했기 때문이다. 변수의 숫자가 많아지면 하나하나 변수의 성질을 살피기 어렵게 되고 결국 Overview 단계에서는 .info()의 결과에 의해 출력되는 'dtypes'에 의존할 수 밖에 없게 된다. 잘 못 정리된 변수들은 뒤에서 올바르게 고칠 것이다. 
 
-> 여기까지 쓰는데 kernel이 두 번 다운됐다. 이거 써도 되는건가? github로 쓰고 옮기는게 낫겠다는 생각이 들었다. 괜히 competition high-position들이 결과만 sharing하고 github 주소를 다는 게 아닌 것 같다. 꽤 불편하다.
+> dtypes 별로 column name을 return하는 함수가 있나? 있겠지? 찾아보자. 
 
-* Name이나 Ticket 같은 다루기 어려운 변수들이 몇 개 보인다. 꽤 고민을 해봐야할 것 같다. 
-  * Name이나 Ticket의 obs가 갖는 의미를 찾는다면 사용방법을 찾는데 많은 도움이 될 것이다. 
-* Age나 Fare는 변수를 구간화시켜 명목변수로 바꿔(binning)도 좋을 것 같다. 
-  * Age는 10대 이하, 10대, 20대, 30대...로 Fare는 10미만, 20미만, 30미만 등으로 나눠 변수를 새로 정의해줄 수 있다.
-  * Binning의 유의사항으로는 너무 많은 구간으로 나누지 않는 것이다. 지나치게 좁은 구간으로 나눠버리면 변수 개수가 늘어나는 것과 마찬가지라 말도 안되게 많은 문제가 생긴다.  
-* **Sibsp**는 # of siblings / spouses aboard the Titanic, **Parch**는 # of parents / children aboard the Titanic이다. kaggle의 [data dictionary](https://www.kaggle.com/c/titanic/data)에서 찾았다.
-  * 해석 안되는 변수 명들은 보통 이렇게 설명이 되어 있다. 혼자 고생하지 말고 꼼꼼히 살펴보자. 
-  * 누군가의 자식이면 누군가의 부모도 있다는 것 아닌가? 예를 들어 A와 B가 부모 자식 사이면 Parch는 같은 값을 갖을 것이다. Name으로 이걸 구분할 수 있을까? 
+## 2.3 Overview of observations
+&nbsp;&nbsp;&nbsp;&nbsp;마찬가지로 관측값의 종류, 개수, 성질, 분포에 대한 이해는 데이터 분석의 기초이다. 특별히 관측값의 분포를 확인하는 일은 이 과정의 핵심이다.
+
+
   
 # 3. Preprocessing(1) : data transformation
 &nbsp;&nbsp;&nbsp;&nbsp;Preprocessing, 전처리의 첫 번째 단계는 dataset의 형태를 바꾸는 것이다. data transformation는 아래의 과정을 포함하고 있다. 
