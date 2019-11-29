@@ -94,6 +94,7 @@ missing_values = pd.DataFrame(com_df.isnull().sum(), columns = ['The number of m
 # print(missing_values.iloc[:, 0]) # .iloc를 이용해 1열만 print
 # print(missing_values[missing_values.iloc[:, 0] != 0]) ## masking을 이용해 non-zero만 print
 missing_values[missing_values.iloc[:, 0] != 0].sort_values('The number of missing values', ascending=False).plot(kind = 'bar')
+plt.xticks(rotation=45)
 plt.show()
 # Q. 이 상태의 plot에 value를 표시할 수 있는 방법은 없을까?
 ```
