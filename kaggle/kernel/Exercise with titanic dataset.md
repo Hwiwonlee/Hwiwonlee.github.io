@@ -61,10 +61,132 @@ print(test.tail())
 > dtypes 별로 column name을 return하는 함수가 있나? 있겠지? 찾아보자. 
 
 ## 2.3 Overview of observations
-&nbsp;&nbsp;&nbsp;&nbsp;마찬가지로 관측값의 종류, 개수, 성질, 분포에 대한 이해는 데이터 분석의 기초이다. 특별히 관측값의 분포를 확인하는 일은 이 과정의 핵심이다.
+&nbsp;&nbsp;&nbsp;&nbsp;마찬가지로 관측값의 종류, 개수, 성질, 분포에 대한 이해는 데이터 분석의 기초이다. 특별히 이 과정에서 관측값의 분포를 확인하고 missing value의 개수와 속한 변수를 찾는 일이 핵심이다. 먼저 .describe()를 이용해 summary stat을 살펴보자. 
+
+```python
+print(train.describe())
+print(test.describe())
+```
+
+&nbsp;&nbsp;&nbsp;&nbsp;.describe()는 dataframe의 변수 기준으로 numerical value를 갖는 observation들의 summary statistics을 보여주는 method다. .describe()로도 많은 정보를 알 수 있고 이를 통해 다음 단계에서 해야할 일의 순서를 정할 수 있다. 내가 .describe()로 알아낸 것은 아래와 같다.
+
+* train과 test 모두 Age에 missing value가 있으며 test에는 Fare에도 하나의 missing value가 존재한다.
+* Pclass의 사분위수가 정수로 떨어지는 것으로 보아 Pclass는 categorical variable로 정리하는 것이 옳다고 보이므로 이후로는 Pclass를 categorical variable로 다루겠다. 
+* train과 test 모두 Sibsp의 max 값이 8이다. 이전의 사분위 값과 큰 차이를 보이므로 Sibsp를 대상으로 한 이상치 판별이 필요하다. 
+* Parch의 경우 train의 max는 6, test의 max는 9로 이전의 사분위수와 큰 차이를 보인다. 따라서 Parch를 대상으로 한 이상치 판별이 필요하다. 
+* Age, Fare 모두 사분위수와 min, max값이 큰 차이를 보인다. 구간 값으로 나눠서 두 변수를 정리하는 것이 분석에 좀 더 도움이 될 것으로 보인다. 
+
+사분위수(qualtile)과 min, max는 numerical variable의 분포를 알 수 있는 중요한 단서이며 이상치를 판별에도 도움을 주니 .describe()를 통한 분석을 하는 것이 전체적인 분석 과정에서도 도움이 된다. 사분위수(qualtile)과 min, max을 이용한 시긱화인 box plot을 이용할 수도 있다. 
+
+```python
+# Multiple box plots on one Axes
+fig, ax = plt.subplots(figsize = (10,5))
+ax.boxplot([train['Age'].dropna(), train['SibSp'], train['Parch'], train['Fare'],
+           test['Age'].dropna(), test['SibSp'], test['Parch'], test['Fare'].dropna()],
+           sym="r*")
+## plot function의 대상에 na가 있으면 plot이 그려지지 않는다. 따라서 train['Age'].dropna()로 na를 일단 제외하고 plot을 그렸다. 
+plt.title('Multiple box plots of dataset on one Axes')
+plt.xticks([1,2,3,4,5,6,7,8],
+           ['train.Age', 'train.SibSp', 'train.Parch', 'train.Fare',
+            'test.Age', 'test.SibSp', 'test.Parch', 'test.Fare'],
+          rotation = 45)
+
+plt.show()
+```
+
+```python
+# Draw boxplot with features in train set using subplot()
+fig = plt.figure(figsize=(8, 8)) 
+age = plt.subplot(2,2,1)
+sibsp = plt.subplot(2,2,2)
+parch = plt.subplot(2,2,3)
+fare = plt.subplot(2,2,4)
+age.boxplot(train['Age'].dropna(), sym='r*')
+sibsp.boxplot(train['SibSp'], sym='r*')
+parch.boxplot(train['Parch'], sym='r*')
+fare.boxplot(train['Fare'], sym='r*')
+age.set_xticklabels(['Age'])
+sibsp.set_xticklabels(['SibSp'])
+parch.set_xticklabels(['Parch'])
+fare.set_xticklabels(['Fare'])
+
+fig.suptitle('boxplot with features in train set', fontsize=16)
+
+plt.show()
+```
+
+```python
+
+fig = plt.figure(figsize=(8, 8)) 
+age = plt.subplot(2,2,1)
+sibsp = plt.subplot(2,2,2)
+parch = plt.subplot(2,2,3)
+fare = plt.subplot(2,2,4)
+age.boxplot(test['Age'].dropna(), sym='r*')
+sibsp.boxplot(test['SibSp'], sym='r*')
+parch.boxplot(test['Parch'], sym='r*')
+fare.boxplot(test['Fare'].dropna(), sym='r*')
+age.set_xticklabels(['Age'])
+sibsp.set_xticklabels(['SibSp'])
+parch.set_xticklabels(['Parch'])
+fare.set_xticklabels(['Fare'])
+
+fig.suptitle('boxplot with features in test set', fontsize=16)
+
+plt.show()
+```
+
+&nbsp;&nbsp;&nbsp;&nbsp;Box plot([boxplot 그리기](https://rfriend.tistory.com/410), [set_xticklabels](https://nittaku.tistory.com/117), [subtitle](https://matplotlib.org/3.1.1/gallery/subplots_axes_and_figures/figure_title.html), [figsize](https://financedata.github.io/posts/faq_matplotlib_default_chart_size.html))을 통해 알아본 결과, 몇 가지 사실을 추가로 알 수 있었다. 지금 단계에서의 plot은 missing value에 대한 imputation이 이뤄지지 않았으므로 결측치를 제외하고 그린 값이므로 dataset을 정확히 표현하지 못함을 명심하자. 
+
+* 60대 중반 이후의 Age가 이상치로 보인다. 즉, 대부분의 탑승객들은 60대 중반 이하이다. 
+* SibSp는 3 이상부터 이상치로 보인다. 즉, 대부분의 탑승객들은 2 이하의 값을 갖는다.
+* Parch는 0이 정상치다. 즉, 1이상의 값은 모두 이상치로 보인다.
+* Fare의 경우 탑승객의 대다수가 100미만의 돈을 지불했음을 알 수 있다. 따라서 100이상의 요금은 모두 이상치로 판정보인다. 
+
+이상치로 보이는 값들을 찾아냈지만 이상치(outlier)가 모두 error는 아니라는 것에 주의하자. 어느 수준의 이상치를 error로 볼 것인지, 이상치와 error를 대체할 것인지, 변수 변환을 통해 이상치와 error를 다룰 것인지는 지금 단계에서 결정할 수 없다. numerical variable 중 continous variable에 한하여 분포를 알아보기 위한 시각화 방법으로 histogram을 이용할 수도 있다. Titanic dataset에서 continous variable은 Fare와 Age, 단 두 개이다. 
+
+```python
+f, axes = plt.subplots(1, 2, figsize=(12, 6))
+tr_age = sns.distplot(train['Age'].dropna(), color="blue", label='Train.age', ax=axes[0])
+te_age = sns.distplot(test['Age'].dropna(), color="red", label='Test.age', ax=axes[0])
+
+tr_fare = sns.distplot(train['Fare'].dropna(), color="blue", label='Train.fare', ax=axes[1])
+te_fare = sns.distplot(test['Fare'].dropna(), color="red", label='Test.fare', ax=axes[1])
+
+f.suptitle("Histogram with Age and Fare in dataset", fontsize = 16)
+
+axes[0].set_title("Histogram with Age and Fare in train set")
+axes[1].set_title("Histogram with Age and Fare in test set")
+
+axes[0].legend(loc='upper right', frameon=False)
+axes[1].legend(loc='upper right', frameon=False)
+
+plt.show()
+
+"""Old version 
+# Draw histogram with Age and Fare in train set
+fig = plt.figure(figsize=(10,4))
+age = plt.subplot(2,1,1)
+fare = plt.subplot(2,1,2)
+age.hist(train['Age'], bins = 20)
+fare.hist(train['Fare'], bins = 20)
+plt.show()
+
+# Draw histogram with Age and Fare in test set
+fig = plt.figure(figsize=(10,4))
+age = plt.subplot(2,1,1)
+fare = plt.subplot(2,1,2)
+age.hist(test['Age'], bins = 20)
+fare.hist(test['Fare'], bins = 20)
+plt.show()"""
+```
+
+&nbsp;&nbsp;&nbsp;&nbsp;Histogram([hist 그리기](https://rfriend.tistory.com/408), [hist 그리기 2](https://rfriend.tistory.com/409), [hist 그리기 3](https://stackoverflow.com/questions/41384040/subplot-for-seaborn-boxplot), [범례 편집](https://jakevdp.github.io/PythonDataScienceHandbook/04.06-customizing-legends.html))으로 확인해본 결과 train과 test의 Age, Fare는 유사한 분포를 갖고 있는 것으로 보인다. Fare가 normal dist를 가정할 수 없는 비대칭형 분포를 띄고, Age 또한 normal dist을 가정하는 경우 추가적인 error를 갖게 될 것이므로 다른 분포를 가정하는 등의 방법을 찾아야 할 것으로 보인다.  
+
+&nbsp;&nbsp;&nbsp;&nbsp;이제 categorical variable의 분포에 대해 알아보자. categorical variable은 연속형 공간을 갖지 못하므로 빈도수로만 분포를 알아볼 수 있으므로 각 항목에 대한 빈도 수를 시각화하는 것이 좋다. Titanic dataset에서 categorical variable은 Survived, Pclass, Sex, Embarked로 총 4개이다.
 
 
-  
+
 # 3. Preprocessing(1) : data transformation
 &nbsp;&nbsp;&nbsp;&nbsp;Preprocessing, 전처리의 첫 번째 단계는 dataset의 형태를 바꾸는 것이다. data transformation는 아래의 과정을 포함하고 있다. 
 * dataset의 통합
