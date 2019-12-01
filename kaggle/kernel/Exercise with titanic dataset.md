@@ -185,6 +185,86 @@ plt.show()"""
 
 &nbsp;&nbsp;&nbsp;&nbsp;이제 categorical variable의 분포에 대해 알아보자. categorical variable은 연속형 공간을 갖지 못하므로 빈도수로만 분포를 알아볼 수 있으므로 각 항목에 대한 빈도 수를 시각화하는 것이 좋다. Titanic dataset에서 categorical variable은 Survived, Pclass, Sex, Embarked로 총 4개이다.
 
+```python
+plt.clf()
+freq_sur = pd.value_counts(train['Survived'].values, sort=False)
+freq_sex = pd.value_counts(train['Sex'].values, sort=False)
+freq_pcl = pd.value_counts(train['Pclass'].values, sort=False)
+freq_emb = pd.value_counts(train['Embarked'].values, sort=False)
+
+f, axes = plt.subplots(1, 4, figsize=(16, 8))
+tr_sur = sns.barplot(x=freq_sur.index, y=freq_sur, label='Train.survived', ax=axes[0])
+tr_sex = sns.barplot(x=freq_sex.index, y=freq_sex, label='Train.sex', ax=axes[1])
+tr_pcl = sns.barplot(x=freq_pcl.index, y=freq_pcl, label='Train.pclass', ax=axes[2])
+tr_emb = sns.barplot(x=freq_emb.index, y=freq_emb, label='Train.embarked', ax=axes[3])
+
+f.suptitle("Barplot with categorical variables in train set", fontsize = 16)
+
+axes[0].set_title("Frequency of Survieved's value")
+axes[1].set_title("Frequency of Sex's value")
+axes[2].set_title("Frequency of Pclass's value")
+axes[3].set_title("Frequency of Embarked's value")
+
+plt.show()
+```
+```python
+plt.clf()
+freq_sex = pd.value_counts(test['Sex'].values, sort=False)
+freq_pcl = pd.value_counts(test['Pclass'].values, sort=False)
+freq_emb = pd.value_counts(test['Embarked'].values, sort=False)
+
+f, axes = plt.subplots(1, 3, figsize=(12, 6))
+te_sex = sns.barplot(x=freq_sex.index, y=freq_sex, label='Train.sex', ax=axes[0])
+te_pcl = sns.barplot(x=freq_pcl.index, y=freq_pcl, label='Train.pclass', ax=axes[1])
+te_emb = sns.barplot(x=freq_emb.index, y=freq_emb, label='Train.embarked', ax=axes[2])
+
+f.suptitle("Barplot with categorical variables in test set", fontsize = 16)
+
+axes[0].set_title("Frequency of Sex's value")
+axes[1].set_title("Frequency of Pclass's value")
+axes[2].set_title("Frequency of Embarked's value")
+
+plt.show()
+```
+> To do. plt.subplots(2,2)로 주면 error가 나는데, (1,4)로 주면 에러가 나지 않는다. 왜 그럴까? 
+
+> To do. plot안에 value값을 표시할 수는 없을까? 
+
+Survived variable이 없는 것을 제외한다면 categorical variable의 빈도수 또한 train set과 test set이 유사한 경향을 보임을 볼 수 있다. 
+* train set의 Survived로 생존자보단 사망자가 많음을 알 수 있다.
+* train set과 test set에 근거해 titanic엔 여성보다 남성이 많이 탑승했다고 말할 수 있다.
+* train set과 test set에 근거해 titanic의 탑승객들의 사용 객실을 규모로 정리해보면 3등석 > 1등석 > 2등석 순이다.
+* train set과 test set에 근거해 titanic의 탑승객들이 승선한 항구를 승선규모로 정리해보면 S > C > Q이다. 
+
+&nbsp;&nbsp;&nbsp;&nbsp;이제 missing value의 규모와 어느 변수에 missing value가 많은지 알아보자. 
+
+```python
+# List comprehension을 이용한 filtering 
+print(train.isna().sum()[[n for n in range(len(train.isna().sum())) if train.isna().sum()[n] != 0]].sort_values())
+print(test.isna().sum()[[n for n in range(len(test.isna().sum())) if test.isna().sum()[n] != 0]].sort_values())
+```
+```python
+plt.clf()
+tr_NaN = train.isna().sum()[[n for n in range(len(train.isna().sum())) if train.isna().sum()[n] != 0]].sort_values()
+te_NaN = test.isna().sum()[[n for n in range(len(test.isna().sum())) if test.isna().sum()[n] != 0]].sort_values()
+
+f, axes = plt.subplots(1, 2, figsize=(12, 6))
+tr_NaN_bar = sns.barplot(x=tr_NaN.index, y=tr_NaN, label='Train.NaN', ax=axes[0])
+te_NaN_bar = sns.barplot(x=te_NaN.index, y=te_NaN, label='Test.NaN', ax=axes[1])
+
+f.suptitle("Barplot with missing values in dataset", fontsize = 16)
+
+axes[0].set_title("Missing values in train set")
+axes[1].set_title("Missing values in test set")
+
+plt.show()
+```
+List comprehension과 barplot를 이용해 train set과 test set에 있는 missing value에 대해 다음과 같은 사실들을 알 수 있었다.
+* train set과 test set 모두 Age과 Cabin variable에 적지 않은 수의 missing value가 있다.
+    * 특히, Cabin은 과반수 이상의 observation을 missing value로 갖고 있어 imputation이 쉽지 않아 보인다.
+* train set은 Embarked에서 2개의 missing value가, test set은 Fare에서 1개의 missing value가 발견되었다. 
+
+
 
 
 # 3. Preprocessing(1) : data transformation
