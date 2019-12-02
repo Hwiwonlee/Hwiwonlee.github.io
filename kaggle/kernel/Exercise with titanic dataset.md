@@ -39,12 +39,12 @@ print(test.tail())
    * 사실, 하나의 dataset을 train dataset과 test dataset으로 미리 나눠놓는 건 그렇게 흔한 일은 아니다. 아마 example dataset이기 떄문에 미리 나눈 것으로 보인다. 보통은 analyst가 나누는 method를 정한다. 
 * missing value는 train에는 Cabin > Age > Embarked 순으로 많고 test에는 Cabin > Age > Fare 순으로 많다. 
    * 아마 뒤에서 다루겠지만 missing value를 처리하는 일은 정말 중요하다.  
- * 가령, Name이나 Ticket 같은 다루기 어려운 변수들이 몇 개 보인다. 꽤 고민을 해봐야할 것 같다. 
+* Name이나 Ticket 같은 다루기 어려운 변수들이 몇 개 보인다. 꽤 고민을 해봐야할 것 같다. 
    * Name이나 Ticket의 obs가 갖는 의미를 찾는다면 사용방법을 찾는데 많은 도움이 될 것이다. 
- * Age나 Fare는 변수를 구간화시켜 명목변수로 바꿔(binning)도 좋을 것 같다. 
+* Age나 Fare는 변수를 구간화시켜 명목변수로 바꿔(binning)도 좋을 것 같다. 
    * Age는 10대 이하, 10대, 20대, 30대...로 Fare는 10미만, 20미만, 30미만 등으로 나눠 변수를 새로 정의해줄 수 있다.
    * Binning의 유의사항으로는 너무 많은 구간으로 나누지 않는 것이다. 지나치게 좁은 구간으로 나눠버리면 변수 개수가 늘어나는 것과 마찬가지라 말도 안되게 많은 문제가 생긴다.  
- * **Sibsp**는 # of siblings / spouses aboard the Titanic, **Parch**는 # of parents / children aboard the Titanic이다. kaggle의 [data dictionary](https://www.kaggle.com/c/titanic/data)에서 찾았다.
+* **Sibsp**는 # of siblings / spouses aboard the Titanic, **Parch**는 # of parents / children aboard the Titanic이다. kaggle의 [data dictionary](https://www.kaggle.com/c/titanic/data)에서 찾았다.
    * 해석 안되는 변수 명들은 보통 이렇게 설명이 되어 있다. 혼자 고생하지 말고 꼼꼼히 살펴보자. 
    * 누군가의 자식이면 누군가의 부모도 있다는 것 아닌가? 예를 들어 A와 B가 부모 자식 사이면 Parch는 같은 값을 갖을 것이다. Name으로 이걸 구분할 수 있을까?
    
