@@ -264,6 +264,90 @@ List comprehension과 barplot를 이용해 train set과 test set에 있는 missi
     * 특히, Cabin은 과반수 이상의 observation을 missing value로 갖고 있어 imputation이 쉽지 않아 보인다.
 * train set은 Embarked에서 2개의 missing value가, test set은 Fare에서 1개의 missing value가 발견되었다. 
 
+&nbsp;&nbsp;&nbsp;&nbsp;variable부터 observation까지 간단하게 살펴보았다. 이제 test set을 중심으로 Survived와 관련이 있는 변수가 있는지 알아보도록 하자. 
+
+## 2.4 Exploratory Data Analysis (1) : 기초적 분석
+&nbsp;&nbsp;&nbsp;&nbsp;EDA, Exploratory Data Analysis, 는 데이터 분석이라는 과정 안에서 굉장히 넓게 사용할 수 있는 말이다. 흔히 쓰는 Preprocessing이나 data wragling조차도 EDA의 하나의 과정일수도 아닐수도 있다. 그래서 되도록이면 EDA라는 단어를 쓰고 싶지 않았는데, 많이 쓰는데는 그 이유가 있나보다. 마땅한 단어가 없다. overview 단계에서의 EDA는 test set에 포함된 예측 대상이 되는 변수, 즉 Survived와 다른 변수들 사이에 어떤 관계가 있는지 알아보는데 중심을 둔다. 현재로써는 imputation이나 변수변환같은 변수에 대한 직접적인 조작을 하지 않은 상태이므로 지금 알아보는 이 관계가 최선의 관계는 아니다. 그럼에도 불구하고 이 과정이 권장되는 것은 다음의 이유들 때문이다. 
+
+* Data analysis의 목적이 되는 변수와 다른 변수 사이의 대략적인 관계를 알아볼 수 있다. 
+* variable handling, 그러니까 Preprocessing 이전에 handling이 필요한 변수를 찾아낼 수 있다.
+
+이제 Survived와 Pclass, Sex, Age, SibSp, Parch, Fare, Embarked 사이의 관계를 수치와 시각화로 알아보자. 
+
+```python
+train[['Pclass', 'Survived']].groupby(['Pclass'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+train[["Sex", "Survived"]].groupby(['Sex'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+train[["SibSp", "Survived"]].groupby(['SibSp'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+train[["Parch", "Survived"]].groupby(['Parch'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+```
+```python
+plt.clf()
+rel_pcl = train[['Pclass', 'Survived']].groupby(['Pclass'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+rel_sex = train[["Sex", "Survived"]].groupby(['Sex'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+rel_sib = train[["SibSp", "Survived"]].groupby(['SibSp'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+rel_par = train[["Parch", "Survived"]].groupby(['Parch'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+rel_emb = train[["Embarked", "Survived"]].dropna().groupby(['Embarked'], as_index=False).mean().sort_values(by='Survived', ascending=False)
+
+f, axes = plt.subplots(1, 5, figsize=(16, 8))
+rel_pcl_bar = sns.barplot(x=rel_pcl['Pclass'], y=rel_pcl['Survived'], label='Rel.pclass', ax=axes[0])
+rel_sex_bar = sns.barplot(x=rel_sex['Sex'], y=rel_sex['Survived'], label='Rel.Sex', ax=axes[1])
+rel_sib_bar = sns.barplot(x=rel_sib['SibSp'], y=rel_sib['Survived'], label='Rel.SibSp', ax=axes[2])
+rel_par_bar = sns.barplot(x=rel_par['Parch'], y=rel_par['Survived'], label='Rel.Parch', ax=axes[3])
+rel_emb_bar = sns.barplot(x=rel_emb['Embarked'], y=rel_emb['Survived'], label='Rel.Parch', ax=axes[4])
+
+f.suptitle("Barplot with relation between Survived and categorical variables in train set", fontsize = 16)
+
+axes[0].set_title("Relation between Survived and Pclass")
+axes[1].set_title("Relation between Survived and Sex")
+axes[2].set_title("Relation between Survived and SibSp")
+axes[3].set_title("Relation between Survived and Parch")
+axes[4].set_title("Relation between Survived and Embarked")
+
+plt.show()
+```
+
+```python
+f, axes = plt.subplots(1, 2, figsize=(20, 8))
+sns.distplot(train[train['Survived'] == 0]['Age'], color = 'red', bins = 20, ax=axes[0])
+sns.distplot(train[train['Survived'] == 1]['Age'], color = 'blue', bins = 20, ax=axes[1])
+
+axes[0].set_xlim(train[train['Survived'] == 0]['Age'].min()-3, train[train['Survived'] == 0]['Age'].max()+3)
+axes[1].set_xlim(train[train['Survived'] == 1]['Age'].min()-3, train[train['Survived'] == 1]['Age'].max()+3)
+
+f.suptitle("Histogram with relation between Survived and Age in train set", fontsize = 16)
+axes[0].set_title("Relation between Survived = 0 and Age")
+axes[1].set_title("Relation between Survived = 1 and Age")
+```
+
+```python
+f, axes = plt.subplots(1, 2, figsize=(20, 8))
+sns.distplot(train[train['Survived'] == 0]['Fare'], color = 'red', bins = 20, ax=axes[0])
+sns.distplot(train[train['Survived'] == 1]['Fare'], color = 'blue', bins = 20, ax=axes[1])
+
+axes[0].set_xlim(train[train['Survived'] == 0]['Fare'].min()-10, train[train['Survived'] == 0]['Fare'].max()+10)
+axes[1].set_xlim(train[train['Survived'] == 1]['Fare'].min()-10, train[train['Survived'] == 1]['Fare'].max()+10)
+
+f.suptitle("Histogram with relation between Survived and Fare in train set", fontsize = 16)
+axes[0].set_title("Relation between Survived = 0 and Fare")
+axes[1].set_title("Relation between Survived = 1 and Fare")
+```
+
+Survived와 categorical variable들은 barplot으로 Survived와 numerical variable들은 histogram으로 시각화해보았다. 말 그대로 raw data인 상태의 분석 결과라 뚜렷한 경향성을 찾기는 어렵지만 그래도 성과가 없지는 않다.
+* 1등석에 탑승한 승객의 생존률은 무려 60%가 넘는다. 3등석에 탑승한 승객의 생존률이 30%가 되지 않는 것으로 볼 때 상당히 큰 차이로 보인다. 
+* 남성의 생존률이 20%가 되지 않는 반면, 여성의 생존률은 70%가 넘는다.
+* 형제, 자매나 가족간의 탑승 여부 및 숫자는 survived와 큰 상관이 없는 것으로 보인다. 변수 변환으로 의미있게 만들어볼 수 있을까?
+* 탑승한 항구가 'C'인 경우 생존률이 50% 이상이다. 탑승한 항구가 특별한 의미가 있는 것일까?
+* Age나 Fare와 Survived 사이에 전체적인 경향은 찾아보기 힘들었다.
+* 다만 Age의 경우 10대 미만의 영유아의 생존률이 유의미하게 높아보인다. 
+
+&nbsp;&nbsp;&nbsp;&nbsp;지금까지 data analysis의 overview 단계를 진행해보았다. 내가 진행한 overview를 크게 두 단계로 나누면 dataset의 구성 분석 + EDA : 기초분석 정도 될 것이다. 앞서도 말했지만 변수변환과 같은 변수조작이 이뤄지지 않은 상태의 dataset을 대상으로 한 분석이라 그 결과가 만족스럽지 않을 수 있지만 향후 data handling에 있어 꼭 필요한 단계들이었다고 생각한다. 마지막으로 2장에서 본 내용들을 간단히 되짚어보고 3장으로 넘어가자. 
+
+* numerical variable과 categorical variable을 구분해 정의했다. 
+* string variable인 name과 ticket은 아직 분석하지 않았다.
+* numerical variable과 categorical variable의 분포를 보아 test set과 train set은 비교적 잘 나눠진 것 같다. 
+* 변수가 가진 missing value의 개수를 알아보았다. 
+* EDA : 기초분석으로 Survived와 변수 간 관계를 알아보았다. 
+
 
 
 
