@@ -1,7 +1,5 @@
 ```{r}
-library(reshape2)
-library(dplyr)
-library(tidyr)
+library(tidyverse)
 
 # read csv files 
 gj_2002 <- read.csv("Nhis_heals_gj_2002.csv")
