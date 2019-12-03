@@ -351,22 +351,26 @@ Survived와 categorical variable들은 barplot으로 Survived와 numerical varia
 
 
 
-# 3. Preprocessing(1) : data transformation
-&nbsp;&nbsp;&nbsp;&nbsp;Preprocessing, 전처리의 첫 번째 단계는 dataset의 형태를 바꾸는 것이다. data transformation는 아래의 과정을 포함하고 있다. 
+# 3. Preprocessing(Data wrangling, Data munging or Data handling)
+&nbsp;&nbsp;&nbsp;&nbsp;Preprocessing, 전처리는 model fitting 전 dataset을 model에 적절하게 만들어주는 모든 작업을 아우른다. model에 따라 필요한 dataset의 형태가 다를 수 있기 때문에, 혹은 prediction의 성능을 높히기 위해 전처리는 여러 번 반복될 수 있다. 이 과정을 prepocessing이라는 말 외에도 data wrangling, munging, handling이라고 하는데 변수를 포함한 dataset을 조작한다는 큰 틀은 벗어나지 않으며 아래의 과정이 대표적인 전처리 과정들이다.
+
 * dataset의 통합
 * Missing values를 찾고 해결 방법 결정 후, 시행하기 
 * Outliers찾고 처리 방법 결정 후, 시행하기
 
 이제 하나 하나씩 처리해보자.
 
+> To do. 생각해보니 '전처리'는 handling 이전의 단계를 말하는 것 아닐까? 전처리는 최소한의 handling이 가능하게끔 만들어주는 단계이고. fitting을 하고 다시 전처리를 한다고 써놓고 보니 좀 이상하네. 
+
+
 ## 3.1 Combine dataset
 &nbsp;&nbsp;&nbsp;&nbsp;dataset의 용량이 커지는 추세에 따라 모든 정보를 포함한 대용량의 단일 dataset을 가지고 데이터 분석을 하는 경우는 많이 없어졌다. 더욱이 SQL DB가 보편화 되며 DB에서 조건에 따라 filtering된 data를 추출, 이들을 합친 dataset을 만들어 분석하는 일이 잦아졌고 자연스럽게 dataset을 합치는 일 또한 많아졌다. 
 &nbsp;&nbsp;&nbsp;&nbsp;Pandas module에서 dataset을 합치는 대표적인 방법은 (1) pandas.concat() (2) pandas.merge() 다. arg와 dataset에 따라 방법에 상관없이 같은 결과를 낼 수도 있지만 기본적으로 pandas.concat()은 **동일한 index나 column에 따른 연속적 연결에 의한 병합**을, pandas.merge()는 **공통된 열이나 행을 기준(key)으로 설정한 후, 기준 안에서 중복되는 값을 중심으로한 병합**을 시행한다. 따라서 pandas.concat()은 dataset의 비교적 단순한 통합을, pandas.merge()는 기준으로 선언된 key안에 존재하는 중복값을 통한 통합을 하고자 할 때 사용된다. 자세한 내용은 [pandas document](https://pandas.pydata.org/pandas-docs/stable/user_guide/merging.html)를 참고하자.
-&nbsp;&nbsp;&nbsp;&nbsp;Titanic competition에서 제공하는 train & test dataset은 survived column의 유무를 제외한다면 모든 column의 이름과 data type이 같기 때문에 index에 따라 '이어 붙여주기'만 하면 되는 것으로 보인다. 따라서 dataset을 병합하기 위한 방법으로 pandas.concat()을 사용했다.
+&nbsp;&nbsp;&nbsp;&nbsp;Titanic competition에서 제공하는 train & test dataset은 survived column의 유무를 제외한다면 모든 column의 이름과 data type이 같기 때문에 index에 따라 '이어 붙여주기'만 하면 되는 것으로 보인다. 따라서 train set에서 Survived column을 제외한 후 test set과 병합하기 위해 pandas.concat()을 사용했다.
 
 ```python
 # pandas.concat을 이용한 dataset combination
-com_df = pd.concat([train, test], ignore_index=True, sort = True)
+com_df = pd.concat([train.drop(['Survived'], 1), test], ignore_index=True, sort = True)
 print(com_df.info()) ## column순서가 바뀜
 
 """
@@ -382,12 +386,37 @@ print(train.isnull().sum())
 print(test.isnull().sum())
 """
 train.columns ## columns 순서 및 이름 확인
-com_df = com_df[['PassengerId', 'Survived', 'Pclass', 'Name', 'Sex', 'Age', 'SibSp',
+com_df = com_df[['PassengerId', 'Pclass', 'Name', 'Sex', 'Age', 'SibSp',
        'Parch', 'Ticket', 'Fare', 'Cabin', 'Embarked']]
 print(com_df.info()) ## train dataset과 같은 column 순서임을 확인
 ```
-## 3.2 Dealing with missing values 
-&nbsp;&nbsp;&nbsp;&nbsp;Missing value, 결측값은 전처리 과정에서 반드시 짚고 넘어가야할 중요한 문제다. 결측값이 존재하기만 해도 modeling 과정에서 algorithm이 실행되지 않는 경우가 대부분이고 설사 실행된다한들 full-filled dataset보다 accuracy가 떨어지는 경우가 부기지수다. 그러므로 결측값을 어떻게든 채워넣어야 하는데 그 방법 또한 여러 개라 가장 적절한 방법이 무엇인지 판단하고 해당 방법을 통해 pseudo-observation을 만들어 dataset에 넣어야 한다. 이제 우리가 갖고 있는 combined dataset으로 missing values를 다루는 방법들을 천천히 알아보자.
+
+## 3.2 Variable handling
+&nbsp;&nbsp;&nbsp;&nbsp;Variable handling, machine 혹은 Deep learning 분야에서는 Feature engineering이라 부르는 이 과정은 dataset의 변수를 분석하고 model에 적합하게 변환하고 조작하는 과정이다. Variable handling의 과정은 data analysis의 핵심이라고 볼 수 있는데, variable이 갖고 있는 정보를 최대한 보존시키며 분석에 적절한 형태로 변환한 variable를 이용한 fitting & prediction과 그렇지 않은 variable을 이용한 fitting & prediction의 accuracy차이가 상당하기 때문이다. Variable handling의 범위는 작게는 변수 안의 data type을 바꾸는 것부터 크게는 n개의 변수를 r개의 변수로 합치거나 변수를 dataset에서 삭제하는 것까지 다양하다. variable handling의 방법이 다양한 만큼 analyst의 올바른 의사결정이나 variable에 대한 insight에 크게 의존하므로 analyst, 본인의 역량을 드러낼 수 있는 좋은 기회다. 
+
+&nbsp;&nbsp;&nbsp;&nbsp;Tatinic dataset에서는 12개의 변수가 주어졌으며 이 중 Survived는 test에서 제외된 상태이므로 11개의 변수를 handling하는 것이 이번 단계에서의 주된 과제다. 11개의 변수 중 numerical variable은 PassengerId, Age, SibSp. Parch, Fare 등 총 5개이며 categorical variable은 Pclass, Sex, Embarked 등 총 3개이고 String variable은 Name, Ticket, Cabin 등 총 3개이다. 이제 하나하나씩 변수를 자세히 살펴보고 적절한 변환을 해보자. 
+
+### 3.2.1 PassengerId
+&nbsp;&nbsp;&nbsp;&nbsp;PassengerId는 변수명 그대로 인식을 위해 임의로 부여한 numerical variable이다. dataframe의 row에는 # of observation만큼의 index가 이미 존재하므로 index와 PassengerId는 완벽히 같다. 따라서 **PassengerId는 dataframe에서 삭제하도록 하겠다.**
+
+```python
+# index와 PassengerId colum가 같음을 확인하기
+com_df.index #RangeIndex(start=0, stop=1309, step=1)
+com_df['PassengerId'] # 1:1309
+
+# PassengerId column 삭제 
+com_df = com_df.drop(['PassengerId'], 1)
+com_df.head() 
+```
+
+### 3.2.2 Name
+&nbsp;&nbsp;&nbsp;&nbsp;Name
+
+
+
+
+## 3.3 Dealing with missing values 
+&nbsp;&nbsp;&nbsp;&nbsp;Missing value, 결측값은 전처리 과정에서 반드시 짚고 넘어가야할 중요한 문제다. 결측값이 존재하기만 해도 modeling 과정에서 algorithm이 실행되지 않는 경우가 대부분이고 설사 실행된다한들 full-filled dataset보다 accuracy가 떨어지는 경우가 부기지수다. 그러므로 결측값을 어떻게든 채워넣어야 하는데 그 방법 또한 여러 개라 가장 적절한 방법이 무엇인지 판단하고 해당 방법을 통해 imputation을 거쳐 dataset에 채워넣어야 한다. 이제 우리가 갖고 있는 combined dataset으로 missing values를 다루는 방법들을 천천히 알아보자.
 
 ### 3.2.1 Are there missing values?
 &nbsp;&nbsp;&nbsp;&nbsp;사실 위의 과정을 성실히 거쳐왔다면 이미 missing values가 포함된 columns을 알고 있을 것이다.
@@ -395,13 +424,12 @@ print(com_df.info()) ## train dataset과 같은 column 순서임을 확인
 ```python
 print(com_df.info())
 print("\n","혹은 이 방법으로도 알 수 있다","\n",com_df.isnull().sum())
+print("\n","좀 더 깔끔하게","\n",com_df.isna().sum()[[n for n in range(len(com_df.isna().sum())) if com_df.isna().sum()[n] != 0]].sort_values())
 ```
 .info()를 overview에 유용하게 사용할 수 있는 이유 중 하나는 위와 같이 null value(=missing value)를 보여주기 때문이다. missing value의 개수만 알고 싶다면 bulit-in function인 .isnull()과 .sum()을 이용해 column 단위의 missing value 개수를 볼 수도 있다. 위의 결과로 총 5개의 column에 missing values가 있음을 알 수 있으며 missing value의 크기 순으로 보면 Cabin > Survived > Age > Embarked > Fare이다. 이 중, 418개의 missing values를 갖고 있는 Survived는 test dataset으로 나눠지며 삭제된 값으로 우리가 model fitting 및 prediction으로 채워야할 것들이므로 채워넣어야할 대상으로 고려하지 않을 것이다.
 
 ```python
 missing_values = pd.DataFrame(com_df.isnull().sum(), columns = ['The number of missing values'])
-# print(missing_values.iloc[:, 0]) # .iloc를 이용해 1열만 print
-# print(missing_values[missing_values.iloc[:, 0] != 0]) ## masking을 이용해 non-zero만 print
 missing_values[missing_values.iloc[:, 0] != 0].sort_values('The number of missing values', ascending=False).plot(kind = 'bar')
 plt.xticks(rotation=45)
 plt.show()
@@ -414,6 +442,23 @@ plt.show()
 
 &nbsp;&nbsp;&nbsp;&nbsp;시각화를 이용해서 각 feature에 있는 null-value를 표시할 수도 있다. 
 
-### 3.2.2. Fill missing values with pseudo-observations
+### 3.3.2. Fill missing values with imputation method
+&nbsp;&nbsp;&nbsp;&nbsp;Imputation이라고도 하는 이 작업은 missing value로 비어있는 observation을 특정 방법론으로 추정해 채워넣는 과정이다. 앞서도 얘기했지만 imputation 자체가 연구 분야가 되어 있을 정도로 이 작업이 갖는 의미가 크다. imputation을 하기 위해선 두 가지 정도의 의사결정을 해야 하며 결과에 따라 접근 방법이 조금씩 달라진다. 의사결정이 필요한 내용은 아래와 같다.
+
+1. 어떤 변수가 missing value를 갖고 있는가? 
+1. missing value가 어떻게 생긴 것인가? 
+
+첫 번째 내용은 변수의 성질에 관한 것이다. '변수'(Variable, or Feature)라고 통칭되는 이것은 크게 숫자형 변수와 명목형 변수로 나눠지고 그 안에서도 구체적인 성질에 따라 나뉘기 때문에 '어떤 변수'에 missing value가 있는지 알아야 어떤 식의 imputation method를 쓸 지 결정할 수 있다. 이 부분은 2장에서 이미 한 번 다뤘으며 두 번째 내용은 missing value의 구분에 대한 것이다. missing value는 크게 [3가지로 구분](https://en.wikipedia.org/wiki/Missing_data#Types)되며 구분에 따라 사용할 수 있는 방법들에 차이가 있으므로 갖고 있는 data의 missing value가 어디에 속하는지 판단해야 한다.
+
+ imputation에 대한 다양한 방법은 다음 번에 알아보고, 이번에는 가장 쉽게 쓰이는 세 가지 방법 중 하나를 택해 사용하겠다. 세가지 방법은 다음과 같다.
+* missing value가 속한 변수에서 missing value를 제외한 값으로 분포를 구한 후 평균과 표준편차에 맞춰 missing value를 채우는 방법
+* missing value가 속한 변수와 관련있는 다른 변수들을 이용해 다른 변수들의 조건과 관련성을 고려하여 중앙값으로 missing value를 채우는 방법
+* 첫 번째와 두 번째를 혼합해 missing value가 속한 변수와 관련있는 다른 변수들을 이용해 다른 변수들의 조건과 관련성을 고려하여 평균과 표준편차에 맞춰 missing value를 채우는 방법
+첫 번째와 세 번째 방법은 변수에 대한 분포가정이 필요하다는 점과 분포를 기준으로한 random sampling을 이용하기 때문에 생기는 오차 가능성을 한계로 갖고 두 번째 방법은 변수 간 관계성을 먼저 증명해야한다는 점과 변수들이 분포를 갖고 있을 경우 중앙값을 사용함으로써 생기는 오차 가능성을 한계로 갖는다. 변수 간의 관계만 밝혀낸다면 두 번째 방법이 좀 더 리스크가 적은 방법이므로 관련성이 존재한다면 두 번째 방법을, 관련성이 존재하지 않거나 밝혀낼 수 없다면 첫 번째 방법을 추천한다. 그렇다면 imputation 이전에 missing value를 갖고 있는 변수들과 다른 변수들의 관계를 먼저 알아봐야 할 것이다. 
+
+
+> 과정을 진행하다보니 느끼는 건데, Titanic Titanic Data Science Solutions의 과정이 굉장히 좋았다는 생각이 든다. 지금 이렇게 하면 '관계'를 찾기 위한 하위항목을 또 만들어내야 함....깨달았으니 수정해보자. 위의 Overview에서 과정을 추가하면 될 것 같다. 결국 이틀 걸려서 위의 과정을 전반적으로 수정하고 다시 여기까지 왔다. 
+
+
 
 
