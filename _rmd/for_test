@@ -1,5 +1,9 @@
 
 ```r
+# step 1. input csv files
+
+
+# step 2. check the datasets
 
 str(gj_2002)
 str(gj_2003)
@@ -7,16 +11,36 @@ head(gy_2002)
 head(gy_2003)
 str(jk_2002)
 str(jk_2003)
+
+# step 3. solve the problems
+
 # Q1.
 nrow(gj_2002) + nrow(gj_2003) ## 294729 + 310210 = total 검진 횟수 604939
 m_gj <- merge(gj_2002, gj_2003, by = "PERSON_ID") ## 중복 ID 체크 
 nrow(m_gj) ## 중복 ID 90144명
+
+## 12.3 approach
+nrow(gj_2002) # 2002년 : 294729명
+nrow(gj_2003) # 2003년 : 310210명
+
+gj_2002 %>% merge(gj_2003, by = "PERSON_ID") %>% nrow() # 2002년과 2003년에 검진받은 사람 : 90114명
+
+# 따라서 02-03년에 건강검진을 받은 사람은
+nrow(gj_2002) + nrow(gj_2003) - 90114 # 514825명
+
+
 # Q2.
 gj_1 <- (nrow(gj_2002) + nrow(gj_2003)) - nrow(m_gj)
 gj_2 <- nrow(m_gj)
 mean_gj <- ((1*gj_1) + (2*gj_2)) / 2  ## 평균 
 sd_gj <- sqrt((((gj_1-mean_gj)^2) + ((gj_2-mean_gj)^2)) / 2) ## 표준편차 
-An2 <- mean_gj + sd_gj
+# 따라서 347541.5 ± 217056.7 
+
+## 12.3 approach : 위와 다름. 
+mean(nrow(gj_2002), nrow(gj_2003))
+sd(c(nrow(gj_2002), nrow(gj_2003))) # 따라서 294729 ± 10946.72번
+
+
 # Q3.
 str(jk_2002)
 sum(is.na(jk_2002$DTH_MDY)) ## 02년의 경우 사망일자가 모두 NA
@@ -39,5 +63,79 @@ mean(as.Date(as.character(m_D_jk03_gj02$DTH_MDY), "%Y%m%d") - as.Date(as.charact
        as.Date(as.character(m_D_jk03_gj03$DTH_MDY), "%Y%m%d") - as.Date(as.character(m_D_jk03_gj03$HME_DT), "%Y%m%d"))
 sd(as.Date(as.character(m_D_jk03_gj02$DTH_MDY), "%Y%m%d") - as.Date(as.character(m_D_jk03_gj02$HME_DT), "%Y%m%d") + 
        as.Date(as.character(m_D_jk03_gj03$DTH_MDY), "%Y%m%d") - as.Date(as.character(m_D_jk03_gj03$HME_DT), "%Y%m%d"))
+
+## 12.3 approach
+# 3.1 사망자 (사망일이 있는 경우) (N, %)
+na.omit(jk_2002) # 사망자 0명 
+sum(is.na(jk_2002['DTH_MDY'])) # 사망자 0명 다시 확인
+na.omit(jk_2003) # 03년, 1320명의 사망자 확인
+
+# 3.2 첫 검진으로부터 사망일까지의 평균기간(일) (Mean ± SD)
+na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID') %>% nrow() # 02년 검진, 03년 사망 : 1047명
+na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID') %>% nrow() # 03년 검진, 03년 사망 : 319명
+na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID') %>% merge(gj_2003, key='PERSON_ID') # 02, 03년 검진, 03년 사망 : 0명, 따라서 1047명, 319명의 첫검진은 중복되지 않음.
+
+# 3.2.1 03년의 사망자는 1320명인데, 위의 merge의 사망자를 합치면 1366명이다. 46명은 어디서 나온걸까? 
+# na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID') %>% merge(gj_2003, key='PERSON_ID')의 결과가 0명이라는건
+# 사망자의 중복검진 case도 없다는 얘기다. 이게 exercise data라 차이가 난다고 생각하자. 
+
+a = tbl_df(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'))
+b = tbl_df(na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID'))
+
+mean_a = mean(as.Date(as.character(a$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(a$HME_DT), format = "%Y%m%d"))
+mean_b = mean(as.Date(as.character(b$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(b$HME_DT), format = "%Y%m%d"))
+
+mean(300.6514, 100.0439) # 검진일로부터의 평균 사망일 
+sd(c(300.6514, 100.0439)) # 검진일로부터의 사망일의 표준편차
+
+# 검진일로부터의 평균 사망일 
+mean(mean(as.integer(as.Date(as.character(a$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(a$HME_DT), format = "%Y%m%d"))), 
+      mean(as.integer(as.Date(as.character(b$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(b$HME_DT), format = "%Y%m%d"))))
+
+# 검진일로부터의 사망일의 표준편차 
+sd(c(mean(as.integer(as.Date(as.character(a$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(a$HME_DT), format = "%Y%m%d"))), 
+     mean(as.integer(as.Date(as.character(b$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(b$HME_DT), format = "%Y%m%d")))))
+
+## Indexing에 따른 output의 차이.
+## a["DTH_MDY"]로 as.Date하려다가 30분 넘게 날림. as.Date는 value 하나씩 바꾸는 건데, a["DTH_MDY"]로 arg를 넣으면
+## value가 아니라 data frame이 들어가서 작동이 안된다. 그러나 a$DTH_MDY는 vector-wise의 indexing이므로 as.Date에 적절히 들어간다. 
+
+head(a$DTH_MDY)
+class(a$DTH_MDY)
+head(a["DTH_MDY"])
+class(a["DTH_MDY"])
+
+
 # Q4. 
+## 12.3 approach
+# 4.1 뇌졸중 (MAIN_SICK = I60 ~ I64)을 진단받은 자 (N, %)
+
+c = gy_2002[c(grep(c("160"), gy_2002$MAIN_SICK), grep(c("161"), gy_2002$MAIN_SICK), grep(c("162"), gy_2002$MAIN_SICK), grep(c("163"), gy_2002$MAIN_SICK), grep(c("164"), gy_2002$MAIN_SICK)), ]
+d = gy_2003[c(grep(c("160"), gy_2003$MAIN_SICK), grep(c("161"), gy_2003$MAIN_SICK), grep(c("162"), gy_2003$MAIN_SICK), grep(c("163"), gy_2003$MAIN_SICK), grep(c("164"), gy_2003$MAIN_SICK)), ]
+head(c)
+## 중복 체크 : 1) 02 검진 02 진단 03 다시 검진, 2) 02검진 02진단 02 다시 검진 
+c$PERSON_ID[duplicated(c$PERSON_ID)]
+filter(c, PERSON_ID == "19605309")
+
+nrow(c) + nrow(d) # 뇌졸중 진단자, 29436명 
+(nrow(c) + nrow(d))/(nrow(gy_2002) + nrow(gy_2003)) # 전체 진단 환자의 0.0036%
+
+# 4.2 첫 검진으로부터 첫번째 뇌졸중 진단일까지의 평균기간(일) (Mean ± SD)
+e = gj_2002 %>% merge(c, key = 'PERSON_ID')
+f = gj_2003 %>% merge(c, key = 'PERSON_ID')
+
+gj_2002 %>% merge(c, key = 'PERSON_ID') %>% merge(d, key = 'PERSON_ID') 
+gj_2002 %>% merge(d, key = 'PERSON_ID') %>% merge(gj_2003, key = 'PERSON_ID')
+
+g = gj_2002 %>% merge(d, key = 'PERSON_ID')
+h = gj_2003 %>% merge(d, key = 'PERSON_ID')
+
+mean_e = mean(as.Date(as.character(e$RECU_FR_DT), format = "%Y%m%d") - as.Date(as.character(e$HME_DT), format = "%Y%m%d"))
+mean_f = mean(as.Date(as.character(f$RECU_FR_DT), format = "%Y%m%d") - as.Date(as.character(f$HME_DT), format = "%Y%m%d"))
+mean_g = mean(as.Date(as.character(g$RECU_FR_DT), format = "%Y%m%d") - as.Date(as.character(g$HME_DT), format = "%Y%m%d"))
+mean_h = mean(as.Date(as.character(h$RECU_FR_DT), format = "%Y%m%d") - as.Date(as.character(h$HME_DT), format = "%Y%m%d"))
+
+
+mean(69.19327, 419.1863, 288.5308, 55.64664)
+sd(c(69.19327, 419.1863, 288.5308, 55.64664))
 ```
