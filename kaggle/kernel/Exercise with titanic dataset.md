@@ -418,7 +418,7 @@ com_df.head()
 ## 3.3 Dealing with missing values 
 &nbsp;&nbsp;&nbsp;&nbsp;Missing value, 결측값은 전처리 과정에서 반드시 짚고 넘어가야할 중요한 문제다. 결측값이 존재하기만 해도 modeling 과정에서 algorithm이 실행되지 않는 경우가 대부분이고 설사 실행된다한들 full-filled dataset보다 accuracy가 떨어지는 경우가 부기지수다. 그러므로 결측값을 어떻게든 채워넣어야 하는데 그 방법 또한 여러 개라 가장 적절한 방법이 무엇인지 판단하고 해당 방법을 통해 imputation을 거쳐 dataset에 채워넣어야 한다. 이제 우리가 갖고 있는 combined dataset으로 missing values를 다루는 방법들을 천천히 알아보자.
 
-### 3.2.1 Are there missing values?
+### 3.3.1 Are there missing values?
 &nbsp;&nbsp;&nbsp;&nbsp;사실 위의 과정을 성실히 거쳐왔다면 이미 missing values가 포함된 columns을 알고 있을 것이다.
 
 ```python
