@@ -12,6 +12,46 @@ head(gy_2003)
 str(jk_2002)
 str(jk_2003)
 
+# 12.4 data handling부터 하는 게 맞는 것 같음.
+## dim
+gj_2002 # 294,729 x 3
+gj_2003 # 310,210 x 3
+gy_2002 # 3,794,437 x 3
+gy_2003 # 4,353,681 x 3
+jk_2002 # 514,866 x 3
+jk_2003 # 514,531 x 3
+
+## NA
+sum(is.na(gj_2002))
+sum(is.na(gj_2003))
+sum(is.na(gy_2002))
+sum(is.na(gy_2003))
+sum(is.na(jk_2002)) # 514866개 NA
+sum(is.na(jk_2003)) # 513211개 NA 
+
+sum(is.na(jk_2002[, 1]))
+sum(is.na(jk_2002[, 2]))
+sum(is.na(jk_2002[, 3])) # 514866
+
+
+sum(is.na(jk_2003[, 1]))
+sum(is.na(jk_2003[, 2]))
+sum(is.na(jk_2003[, 3])) # 513211
+
+## : 자격 data의 3열에서 AN 발견 > '사망 연월일'이 없는 것
+
+## Duplicated values
+gj_2002$PERSON_ID[duplicated(gj_2002$PERSON_ID)]
+gj_2003$PERSON_ID[duplicated(gj_2003$PERSON_ID)]
+
+length(gy_2002$PERSON_ID[duplicated(gy_2002$PERSON_ID)]) # 3345683개 중복 ID
+length(gy_2003$PERSON_ID[duplicated(gy_2003$PERSON_ID)]) # 3895450개 중복 ID
+
+jk_2002$PERSON_ID[duplicated(jk_2002$PERSON_ID)]
+jk_2003$PERSON_ID[duplicated(jk_2003$PERSON_ID)]
+
+## : 진료 data에서 중복 진료 기록 발견 
+
 # step 3. solve the problems
 
 # Q1.
@@ -28,6 +68,8 @@ gj_2002 %>% merge(gj_2003, by = "PERSON_ID") %>% nrow() # 2002년과 2003년에 
 # 따라서 02-03년에 건강검진을 받은 사람은
 nrow(gj_2002) + nrow(gj_2003) - 90114 # 514825명
 
+# 12.4 duplicate를 이용한 중복체크 시행 후 다시 해보기.
+length(rbind(gj_2002, gj_2003)$PERSON_ID[duplicated(rbind(gj_2002, gj_2003)$PERSON_ID)]) # 02+03년 중복 검진자는 마찬가지로 90144명
 
 # Q2.
 gj_1 <- (nrow(gj_2002) + nrow(gj_2003)) - nrow(m_gj)
@@ -79,22 +121,26 @@ na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID') %>% merge(gj_2003, key='PER
 # na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID') %>% merge(gj_2003, key='PERSON_ID')의 결과가 0명이라는건
 # 사망자의 중복검진 case도 없다는 얘기다. 이게 exercise data라 차이가 난다고 생각하자. 
 
-a = tbl_df(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'))
-b = tbl_df(na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID'))
+gj02_d03 = tbl_df(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'))
+gj03_d03 = tbl_df(na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID'))
 
-mean_a = mean(as.Date(as.character(a$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(a$HME_DT), format = "%Y%m%d"))
-mean_b = mean(as.Date(as.character(b$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(b$HME_DT), format = "%Y%m%d"))
+mean_gj02_d03 = mean(as.Date(as.character(gj02_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj02_d03$HME_DT), format = "%Y%m%d"))
+mean_gj03_d03 = mean(as.Date(as.character(gj03_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj03_d03$HME_DT), format = "%Y%m%d"))
 
 mean(300.6514, 100.0439) # 검진일로부터의 평균 사망일 
 sd(c(300.6514, 100.0439)) # 검진일로부터의 사망일의 표준편차
 
+mean(as.double(mean_gj02_d03), as.double(mean_gj03_d03))
+sd(c(as.double(mean_gj02_d03), as.double(mean_gj03_d03)))
+
+
 # 검진일로부터의 평균 사망일 
-mean(mean(as.integer(as.Date(as.character(a$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(a$HME_DT), format = "%Y%m%d"))), 
-      mean(as.integer(as.Date(as.character(b$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(b$HME_DT), format = "%Y%m%d"))))
+mean(mean(as.integer(as.Date(as.character(gj02_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj02_d03$HME_DT), format = "%Y%m%d"))), 
+      mean(as.integer(as.Date(as.character(gj03_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj03_d03$HME_DT), format = "%Y%m%d"))))
 
 # 검진일로부터의 사망일의 표준편차 
-sd(c(mean(as.integer(as.Date(as.character(a$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(a$HME_DT), format = "%Y%m%d"))), 
-     mean(as.integer(as.Date(as.character(b$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(b$HME_DT), format = "%Y%m%d")))))
+sd(c(mean(as.integer(as.Date(as.character(gj02_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj02_d03$HME_DT), format = "%Y%m%d"))), 
+     mean(as.integer(as.Date(as.character(gj03_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj03_d03$HME_DT), format = "%Y%m%d")))))
 
 ## Indexing에 따른 output의 차이.
 ## a["DTH_MDY"]로 as.Date하려다가 30분 넘게 날림. as.Date는 value 하나씩 바꾸는 건데, a["DTH_MDY"]로 arg를 넣으면
@@ -104,7 +150,6 @@ head(a$DTH_MDY)
 class(a$DTH_MDY)
 head(a["DTH_MDY"])
 class(a["DTH_MDY"])
-
 
 # Q4. 
 ## 12.3 approach
@@ -119,6 +164,93 @@ filter(c, PERSON_ID == "19605309")
 
 nrow(c) + nrow(d) # 뇌졸중 진단자, 29436명 
 (nrow(c) + nrow(d))/(nrow(gy_2002) + nrow(gy_2003)) # 전체 진단 환자의 0.0036%
+
+## 12.4 approach
+CI02 = gy_2002[c(grep(c("160"), gy_2002$MAIN_SICK), grep(c("161"), gy_2002$MAIN_SICK), grep(c("162"), gy_2002$MAIN_SICK), grep(c("163"), gy_2002$MAIN_SICK), grep(c("164"), gy_2002$MAIN_SICK)), ]
+CI03 = gy_2003[c(grep(c("160"), gy_2003$MAIN_SICK), grep(c("161"), gy_2003$MAIN_SICK), grep(c("162"), gy_2003$MAIN_SICK), grep(c("163"), gy_2003$MAIN_SICK), grep(c("164"), gy_2003$MAIN_SICK)), ]
+
+CI02 # 15,009 x 3
+CI03 # 14,427 x 3
+
+## 12. 4 중복 진단? 
+length(CI02$PERSON_ID[duplicated(CI02$PERSON_ID)]) # 02년 CI진단 : 4948명 중복 
+length(CI03$PERSON_ID[duplicated(CI03$PERSON_ID)]) # 03년 CI진단 : 5208명 중복 
+
+CI02 %>% merge(CI03, key="PERSON_ID") ## CI02와 CI03 간 중복은 없음. 
+
+### CI02와 CI03 내의 중복이 정말인가? 
+### CI02의 경우 
+ol_CI02 = CI02[duplicated(CI02$PERSON_ID), ] # duplicated 결과를 저장 
+sum(duplicated(CI02$PERSON_ID)) # 4948개 확인
+
+arrange(ol_CI02, PERSON_ID) # 10001506가 한 개뿐인데?
+sum(ol_CI02$PERSON_ID == 10074992) # 1. 진짜 한 개다. 
+
+### 혹시 dulicated를 시행하면 중복값의 하나를 제외하고 가져오는 건가? 
+### 가령, CI02에 10074992가 2개가 있는데, duplicated 결과를 indexing으로 불러오면 하나만 가져와지는거지. 
+sum(CI02$PERSON_ID == 10074992) # CI02는 10074992가 중복값으로 되어 있지만 
+sum(ol_CI02$PERSON_ID == 10074992) # ol_CI02는 10074992가 단일값으로 되어 있다. 
+
+#### 왜 이런 결과가 생길까? 그리고 어떻게 하면 중복값만 정확히 따로 뺄 수 있을까? ####
+
+### 1) 왜 이런 결과가 생길까?
+k = c(1,2,3,4,5,6,1)
+duplicated(k) # 중복값의 '최초값'은 FALSE이다. 그러니까 중복된 횟수만큼의 값이 return되는 게 dulicated()이다. 
+
+### 2) 어떻게 해결할 수 있을까? 
+duplicated(k) | duplicated(k, fromLast = T) # 최초값도 TRUE로 만들었다. 
+# 앞에서부터 중복검사 or 뒤에서부터 중복검사로 해결할 수 있었다. [출처](https://lightblog.tistory.com/18)
+
+
+
+#### 다시 과제로 ####
+CI02[which(duplicated(CI02$PERSON_ID) | duplicated(CI02$PERSON_ID, fromLast=T) ), ] %>% 
+  arrange(PERSON_ID) # 7,537 x 3
+
+CI03[which(duplicated(CI03$PERSON_ID) | duplicated(CI03$PERSON_ID, fromLast=T) ), ] %>% 
+  arrange(PERSON_ID) # 7,689 x 3
+
+# ID가 중복된 것만 따로 저장. 
+ol_CI02 = CI02[which(duplicated(CI02$PERSON_ID) | duplicated(CI02$PERSON_ID, fromLast=T) ), ]
+ol_CI03 = CI03[which(duplicated(CI03$PERSON_ID) | duplicated(CI03$PERSON_ID, fromLast=T) ), ]
+
+ot_CI02 = CI02[-which(duplicated(CI02$PERSON_ID) | duplicated(CI02$PERSON_ID, fromLast=T) ), ]
+ot_CI03 = CI03[-which(duplicated(CI03$PERSON_ID) | duplicated(CI03$PERSON_ID, fromLast=T) ), ]
+
+nrow(ol_CI02) + nrow(ot_CI02)
+nrow(CI02) # nrow(ol_CI02) + nrow(ot_CI02) = nrow(CI02)
+
+nrow(ol_CI03) + nrow(ot_CI03)
+nrow(CI03) # nrow(ol_CI03) + nrow(ot_CI03) = nrow(CI03)
+
+sum(unique(ot_CI02) != ot_CI02) # unique(ot_CI02)와 ot_CI02가 같음을 확인 = ot_CI02는 unique값만 들어있다. 
+sum(unique(ot_CI03) != ot_CI03) # unique(ot_CI03)와 ot_CI03가 같음을 확인 = ot_CI03는 unique값만 들어있다. 
+
+# CI02와 CI03간 중복값은 없으며 
+# CI02는 7,537개의 중복값, CI03은 7,689개의 중복값을 갖고 있다. 
+
+## 중복진단 끝.
+
+# 다시, 뇌졸중을 진단받은 총 사람수는 ?
+# 전체 사람 수 구하기
+gy_rbind = rbind(gy_2002, gy_2003)
+
+nrow(gy_rbind[which(duplicated(gy_rbind$PERSON_ID) | duplicated(gy_rbind$PERSON_ID, fromLast=T) ), ]) + 
+  nrow(gy_rbind[-which(duplicated(gy_rbind$PERSON_ID) | duplicated(gy_rbind$PERSON_ID, fromLast=T) ), ])
+nrow(gy_rbind) # gy_rbind에서 id 중복된 ID개수 + gy_rbind에서 id 중복되지 ID개수 = gy_rbind의 ID개수 
+
+# 전체 사람 수는 466029 + 23247 = 489276
+length(unique(gy_rbind[which(duplicated(gy_rbind$PERSON_ID) | duplicated(gy_rbind$PERSON_ID, fromLast=T) ), ]$PERSON_ID)) +
+  length(unique(gy_rbind[-which(duplicated(gy_rbind$PERSON_ID) | duplicated(gy_rbind$PERSON_ID, fromLast=T) ), ]$PERSON_ID))
+
+# 뇌졸중 진단받은 사람의 수 19280
+nrow(ot_CI02) + nrow(ot_CI03) + length(unique(ol_CI02$PERSON_ID)) + length(unique(ol_CI03$PERSON_ID))
+
+# 전체 환자의 0.0394%가 뇌졸중 진단을 받았다. 
+(nrow(ot_CI02) + nrow(ot_CI03) + length(unique(ol_CI02$PERSON_ID)) + length(unique(ol_CI03$PERSON_ID)))/ 
+  (length(unique(gy_rbind[which(duplicated(gy_rbind$PERSON_ID) | duplicated(gy_rbind$PERSON_ID, fromLast=T) ), ]$PERSON_ID)) +
+     length(unique(gy_rbind[-which(duplicated(gy_rbind$PERSON_ID) | duplicated(gy_rbind$PERSON_ID, fromLast=T) ), ]$PERSON_ID)))
+  
 
 # 4.2 첫 검진으로부터 첫번째 뇌졸중 진단일까지의 평균기간(일) (Mean ± SD)
 e = gj_2002 %>% merge(c, key = 'PERSON_ID')
@@ -138,4 +270,62 @@ mean_h = mean(as.Date(as.character(h$RECU_FR_DT), format = "%Y%m%d") - as.Date(a
 
 mean(69.19327, 419.1863, 288.5308, 55.64664)
 sd(c(69.19327, 419.1863, 288.5308, 55.64664))
+
+# 12.4 approach
+## 1) 뇌졸중 진단 데이터 정리 
+ot_CI02$RECU_FR_DT = as.Date(as.character(ot_CI02$RECU_FR_DT), format = "%Y%m%d")
+ot_CI03$RECU_FR_DT = as.Date(as.character(ot_CI03$RECU_FR_DT), format = "%Y%m%d")
+ol_CI02$RECU_FR_DT = as.Date(as.character(ol_CI02$RECU_FR_DT), format = "%Y%m%d")
+ol_CI03$RECU_FR_DT = as.Date(as.character(ol_CI03$RECU_FR_DT), format = "%Y%m%d")
+
+ot_CI02 = ot_CI02 %>% arrange(RECU_FR_DT, PERSON_ID)
+ot_CI03 = ot_CI02 %>% arrange(RECU_FR_DT, PERSON_ID)
+ot_ol_CI02 = arrange(ol_CI02, RECU_FR_DT, PERSON_ID) %>% distinct(PERSON_ID, .keep_all = T) # 2,589 x 3, length(unique(ol_CI02$PERSON_ID))와 같음. 
+ot_ol_CI03 = arrange(ol_CI03, RECU_FR_DT, PERSON_ID) %>% distinct(PERSON_ID, .keep_all = T) # 2,481 x 3, length(unique(ol_CI03$PERSON_ID))와 같음. 
+
+
+## 2) 검진 데이터 정리 
+gj_2002$HME_DT = as.Date(as.character(gj_2002$HME_DT), format = "%Y%m%d")
+gj_2003$HME_DT = as.Date(as.character(gj_2003$HME_DT), format = "%Y%m%d")
+
+gj_2002 = gj_2002 %>% arrange(HME_DT, PERSON_ID)
+gj_2003 = gj_2003 %>% arrange(HME_DT, PERSON_ID)
+
+# 통합 데이터, gj_CI 생성 
+gj_CI = rbind(gj_2002, gj_2003) %>% 
+  merge(rbind(ot_CI02, ot_CI03, ot_ol_CI02, ot_ol_CI03), key = 'PERSON_ID') %>% 
+  distinct(PERSON_ID, .keep_all = T) %>%
+  arrange(HME_DT, RECU_FR_DT)
+
+sum(duplicated(gj_CI$PERSON_ID)) # 다행히 검진 + CI dataset에는 중복값이 없다. 
+
+
+# 3) 새로운 문제 : gj_CI filtering하기. 
+
+"gj_CI의 문제 : 검진일이 진단일보다 빠른 obs가 존재한다. 
+아마 이전에 검진했던 결과가 나온 후 다시 검진받은 듯.
+파편화된 dataset이라 생기는 문제인 것 같다. "
+
+# 검진일이 진단일보다 빠른 obs만 뽑아내기
+result = rep(NA, nrow(gj_CI)) # dummy space 
+
+# for + if sentence
+for (i in 1:nrow(gj_CI)){
+  
+  "검진일-진단일이 음수면 result에 index를 저장하기."
+  
+  if (gj_CI[i, ]$HME_DT - gj_CI[i, ]$RECU_FR_DT < 0) {
+    result[i] = i
+  }
+}
+
+result1 <- na.omit(result) # 공간확보를 위해 선언했던 NA 제거 
+
+gj_CI[result1, ] %>% arrange(RECU_FR_DT) # result1을 index로 gj_CI의 data filtering 
+
+
+# 4) 평균과 표준편차 계산하기 
+mean(abs(gj_CI[result1, ]$HME_DT - gj_CI[result1, ]$RECU_FR_DT)) # 평균 : 134.0417
+sd(abs(gj_CI[result1, ]$HME_DT - gj_CI[result1, ]$RECU_FR_DT)) # 표준편차 : 121.044
+
 ```
