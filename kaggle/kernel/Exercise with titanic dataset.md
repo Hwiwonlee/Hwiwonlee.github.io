@@ -410,7 +410,55 @@ com_df.head()
 ```
 
 ### 3.2.2 Name
-&nbsp;&nbsp;&nbsp;&nbsp;Name
+&nbsp;&nbsp;&nbsp;&nbsp;Name은 체계를 갖고 있으므로 자연어보단 분석하기 편한 편이라고 한다. 실제로 Titanic의 Name column을 보면 '.', ',', ' ' 등으로 나눠져 있음을 볼 수 있다. 그렇다면 가장 많은 빈도를 가진 단어는 무엇일까? 
+
+> To do. 띄어쓰기를 기준으로 같은 문자열을 찾는 방법이 있을까? 중복도 검사하기. 해결! 
+
+> To do. re module을 이용할 수도 있을까? 
+
+
+```python
+# Name을 기호를 제외하고 공백 기준으로 나눈 새로운 column New_name 추가
+com_df['New_name'] = com_df['Name'].str.replace('[^\w\s]','') # https://stackoverflow.com/questions/39782418/remove-punctuations-in-pandas
+
+# New_name으로 string의 빈도수 파악 : 공백을 기준으로 중복 문자열 알아보기
+Name_list = list(com_df["New_name"]) ## List로 변환
+Name_list = ' '.join(Name_list).split(' ') ## 공백기준, value을 하나의 list로 합친 후 다시 공백 기준 나누기
+"""이렇게 하는 이유는 위에서 쓴 split()이 str만 사용가능한 method이기 때문(https://www.geeksforgeeks.org/python-string-split/)이다.
+1) ' '.join(Name_list)로 하나의 str object로 합치고
+2) str.split(' ')로 str를 공백 기준으로 나눈 하나의 list로 저장"""
+type(' '.join(Name_list)) ## str 확인
+
+# Name_list에서 가장 많은 빈도수를 가진 단어는?
+import collections
+collections.Counter(Name_list) # https://excelsior-cjh.tistory.com/94
+collections.Counter(Name_list).most_common(20) # 상위 20개의 중복 빈도를 가진 단어 출력
+
+```
+
+원래의 Name column을 [공백 기준으로 나누고](https://stackoverflow.com/questions/39782418/remove-punctuations-in-pandas), [collections 모듈을 이용한 방법](https://excelsior-cjh.tistory.com/94)으로 빈도수가 많은 단어만 추려내보았다. Last name으로 보이는 것들을 제외하면 성별을 나타내는 'Mr', 'Miss', 'Mrs'과 알 수 없는 호칭인 'Master'가 눈에 띈다. 'Master'에 대해 알아보니 청소년 미만의 '남자 아이'를 뜻하는 말이라고 한다. 추가적으로 성별을 나타내는 호칭과 직위를 나타내는 호칭까지 추가한 결과가 아래에 나와있다. 
+
+> To do. Dr은 'Dr'로 찾으니 'Dr'로 시작하는 이름들이 나와서 ' Dr'로 찾았다. '완벽히 일치하는 문자열'을 찾을 수 있는 방법은 없을까?  
+> 정규표현식에 대해 더 알아보자 [(1)](https://greeksharifa.github.io/blog/tags/#re), [(2)](https://wikidocs.net/4308#match), [(3)](https://wikidocs.net/4309)
+
+
+```python
+# 성별을 의미하는 호칭 추가 : Ms
+com_df[com_df['New_name'].str.contains('Ms')] # 2개 
+```
+```python
+# 직위를 나타내는 호칭 찾기. 
+com_df[com_df['New_name'].str.contains(r'\bDr\b')] # 11개
+com_df[com_df['New_name'].str.contains(r'\bSir\b')] # 1개
+com_df[com_df['New_name'].str.contains('Prof')] # 0개 
+```
+
+### 3.2.3 Sex
+&nbsp;&nbsp;&nbsp;&nbsp;Sex와 같은 categorical variable을 string 형태로 둬도 크게 상관없긴 하지만 분석의 편의성을 위해 integer로 변환하는 것이 보통이다. 따라서 남성을 0으로, 여성을 1로 바꿔보자. 
+
+```python
+com_df['Sex_int'] = com_df['Sex'].map( {'female': 1, 'male': 0} ).astype(int)
+```
 
 
 
