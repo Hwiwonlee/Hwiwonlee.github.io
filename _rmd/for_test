@@ -82,6 +82,11 @@ sd_gj <- sqrt((((gj_1-mean_gj)^2) + ((gj_2-mean_gj)^2)) / 2) ## 표준편차
 mean(nrow(gj_2002), nrow(gj_2003))
 sd(c(nrow(gj_2002), nrow(gj_2003))) # 따라서 294729 ± 10946.72번
 
+## 12. 6 approach 
+mean(nrow(gj_2002), nrow(gj_2003))!=mean(c(nrow(gj_2002), nrow(gj_2003)))
+# mean(nrow(gj_2002), nrow(gj_2003))으로 선언하면 arg에는 nrow(gj_2002)만 들어가서 nrow(gj_2002)가 return됨.
+# mean(c(nrow(gj_2002), nrow(gj_2003)))가 맞음. 
+
 
 # Q3.
 str(jk_2002)
@@ -141,6 +146,12 @@ mean(mean(as.integer(as.Date(as.character(gj02_d03$DTH_MDY), format = "%Y%m%d") 
 # 검진일로부터의 사망일의 표준편차 
 sd(c(mean(as.integer(as.Date(as.character(gj02_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj02_d03$HME_DT), format = "%Y%m%d"))), 
      mean(as.integer(as.Date(as.character(gj03_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj03_d03$HME_DT), format = "%Y%m%d")))))
+
+# 12. 6 approach
+mean(c(300.6514, 100.0439))
+mean(c(as.double(mean_gj02_d03), as.double(mean_gj03_d03)))
+mean(c(mean(as.integer(as.Date(as.character(gj02_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj02_d03$HME_DT), format = "%Y%m%d"))), 
+      mean(as.integer(as.Date(as.character(gj03_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj03_d03$HME_DT), format = "%Y%m%d")))))
 
 ## Indexing에 따른 output의 차이.
 ## a["DTH_MDY"]로 as.Date하려다가 30분 넘게 날림. as.Date는 value 하나씩 바꾸는 건데, a["DTH_MDY"]로 arg를 넣으면
