@@ -169,6 +169,14 @@ nrow(c) + nrow(d) # 뇌졸중 진단자, 29436명
 CI02 = gy_2002[c(grep(c("160"), gy_2002$MAIN_SICK), grep(c("161"), gy_2002$MAIN_SICK), grep(c("162"), gy_2002$MAIN_SICK), grep(c("163"), gy_2002$MAIN_SICK), grep(c("164"), gy_2002$MAIN_SICK)), ]
 CI03 = gy_2003[c(grep(c("160"), gy_2003$MAIN_SICK), grep(c("161"), gy_2003$MAIN_SICK), grep(c("162"), gy_2003$MAIN_SICK), grep(c("163"), gy_2003$MAIN_SICK), grep(c("164"), gy_2003$MAIN_SICK)), ]
 
+CI02 = gy_2002[grep("16(0|1|2|3|4)", gy_2002$MAIN_SICK), ] # 12. 5
+CI02 = gy_2002[grep("16(0|1|2|3|4)", gy_2002$MAIN_SICK), ] # 12. 5 REX를 이용한 깔끔한 표현
+
+# CI02와 위 코드가 일치하는지 확인
+sum(arrange(CI02, PERSON_ID, RECU_FR_DT, MAIN_SICK) == arrange(gy_2002[grep("16(0|1|2|3|4)", gy_2002$MAIN_SICK), ], PERSON_ID, RECU_FR_DT, MAIN_SICK))
+sum(arrange(CI03, PERSON_ID, RECU_FR_DT, MAIN_SICK) == arrange(gy_2003[grep("16(0|1|2|3|4)", gy_2003$MAIN_SICK), ], PERSON_ID, RECU_FR_DT, MAIN_SICK))
+# 일치함
+
 CI02 # 15,009 x 3
 CI03 # 14,427 x 3
 
