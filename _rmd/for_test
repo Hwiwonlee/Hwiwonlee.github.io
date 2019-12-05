@@ -305,7 +305,17 @@ gj_CI = rbind(gj_2002, gj_2003) %>%
   distinct(PERSON_ID, .keep_all = T) %>%
   arrange(HME_DT, RECU_FR_DT)
 
-sum(duplicated(gj_CI$PERSON_ID)) # 다행히 검진 + CI dataset에는 중복값이 없다. 
+sum(duplicated(gj_CI$PERSON_ID)) 
+# 다행히 검진 + CI dataset에는 중복값이 없다. 
+# 12. 5 아니, 중복값이 있는데 distinct()로 걸러진거다. 
+
+gj_CI2 = rbind(gj_2002, gj_2003) %>% 
+  merge(rbind(ot_CI02, ot_CI03, ot_ol_CI02, ot_ol_CI03), key = 'PERSON_ID') %>% 
+  arrange(HME_DT, RECU_FR_DT)
+
+str(gj_CI); str(gj_CI2)
+sum(duplicated(gj_CI$PERSON_ID)) 
+sum(duplicated(gj_CI2$PERSON_ID)) 
 
 
 # 3) 새로운 문제 : gj_CI filtering하기. 
