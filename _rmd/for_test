@@ -136,6 +136,25 @@ rbind(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'), na.omit(jk_2003) %>%
   arrange(PERSON_ID) # 46명에 대한 중복자료, 총 92개의 value를 확인했다. 
 # 그러니까 전체는 1320명이 맞고 merge의 사망자가 1366명인건 02년, 03년 검진받은 사람이 총 46명 있기 때문이다. 
 
+# 02, 03년 중복 검진한 경우 '최초 검진날짜'만 뽑으려면? 
+ol_32$DTH_MDY = as.Date(as.character(ol_32$DTH_MDY), format = "%Y%m%d")
+ol_32 %>% distinct(PERSON_ID, .keep_all = TRUE)
+ol_32 # 더 이른 검진날짜가 중복값 중 앞 쪽에 오도록 정렬시킨 후 distinct를 이용해 unique value만 뽑아내면 된다. 확인 완료.
+
+Q_32 = tbl_df(rbind(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'), na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID')))
+Q_32$DTH_MDY = as.Date(as.character(Q_32$DTH_MDY), format = "%Y%m%d")
+Q_32 = Q_32 %>% arrange(HME_DT)
+
+
+ol_Q32 = Q_32[which(duplicated(Q_32$PERSON_ID) | duplicated(Q_32$PERSON_ID, fromLast = TRUE)), ]
+ot_Q32 = Q_32[-which(duplicated(Q_32$PERSON_ID) | duplicated(Q_32$PERSON_ID, fromLast = TRUE)), ]
+
+mean(c(abs(ol_Q32$HME_DT - ol_Q32$DTH_MDY), abs(ot_Q32$HME_DT - ot_Q32$DTH_MDY)))
+sd(c(abs(ol_Q32$HME_DT - ol_Q32$DTH_MDY), abs(ot_Q32$HME_DT - ot_Q32$DTH_MDY)))
+
+mean(c(abs(rbind(ol_Q32, ot_Q32)$HME_DT - rbind(ol_Q32, ot_Q32)$DTH_MDY)))
+sd(c(abs(rbind(ol_Q32, ot_Q32)$HME_DT - rbind(ol_Q32, ot_Q32)$DTH_MDY)))
+
 
 gj02_d03 = tbl_df(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'))
 gj03_d03 = tbl_df(na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID'))
@@ -144,7 +163,7 @@ mean_gj02_d03 = mean(as.Date(as.character(gj02_d03$DTH_MDY), format = "%Y%m%d") 
 mean_gj03_d03 = mean(as.Date(as.character(gj03_d03$DTH_MDY), format = "%Y%m%d") - as.Date(as.character(gj03_d03$HME_DT), format = "%Y%m%d"))
 
 mean(300.6514, 100.0439) # 검진일로부터의 평균 사망일 
-sd(c(300.6514, 100.0439)) # 검진일로부터의 사망일의 표준편차
+sd(c(300.6514, 100.0439)) # 검진일로부터의 사망일의 표준편차, 틀림. 검진일로부터의 평균 사망일의 표준편차임. 
 
 mean(as.double(mean_gj02_d03), as.double(mean_gj03_d03))
 sd(c(as.double(mean_gj02_d03), as.double(mean_gj03_d03)))
