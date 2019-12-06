@@ -125,6 +125,17 @@ na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID') %>% merge(gj_2003, key='PER
 # 3.2.1 03년의 사망자는 1320명인데, 위의 merge의 사망자를 합치면 1366명이다. 46명은 어디서 나온걸까? 
 # na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID') %>% merge(gj_2003, key='PERSON_ID')의 결과가 0명이라는건
 # 사망자의 중복검진 case도 없다는 얘기다. 이게 exercise data라 차이가 난다고 생각하자. 
+# 12. 6 approach : 실제로 중복이 있다. 
+rbind(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'), na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID')) %>%
+  distinct(PERSON_ID, .keep_all = TRUE) # 'distinct'를 이용한 unique value의 total은 1320명
+
+rbind(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'), na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID'))[
+  which(duplicated(rbind(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'), na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID'))$PERSON_ID) | 
+    duplicated(rbind(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'), na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID'))$PERSON_ID, fromLast = TRUE))
+        , ] %>%
+  arrange(PERSON_ID) # 46명에 대한 중복자료, 총 92개의 value를 확인했다. 
+# 그러니까 전체는 1320명이 맞고 merge의 사망자가 1366명인건 02년, 03년 검진받은 사람이 총 46명 있기 때문이다. 
+
 
 gj02_d03 = tbl_df(na.omit(jk_2003) %>% merge(gj_2002, key='PERSON_ID'))
 gj03_d03 = tbl_df(na.omit(jk_2003) %>% merge(gj_2003, key='PERSON_ID'))
