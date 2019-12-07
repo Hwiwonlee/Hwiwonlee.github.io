@@ -418,6 +418,9 @@ com_df.head()
 
 
 ```python
+# com_df에 '문자열'을 포함한 observation을 대상으로한 describe 결과
+com_df.describe(include=['O'])
+
 # Name을 기호를 제외하고 공백 기준으로 나눈 새로운 column New_name 추가
 com_df['New_name'] = com_df['Name'].str.replace('[^\w\s]','') # https://stackoverflow.com/questions/39782418/remove-punctuations-in-pandas
 
@@ -433,24 +436,44 @@ type(' '.join(Name_list)) ## str 확인
 import collections
 collections.Counter(Name_list) # https://excelsior-cjh.tistory.com/94
 collections.Counter(Name_list).most_common(20) # 상위 20개의 중복 빈도를 가진 단어 출력
-
 ```
 
-원래의 Name column을 [공백 기준으로 나누고](https://stackoverflow.com/questions/39782418/remove-punctuations-in-pandas), [collections 모듈을 이용한 방법](https://excelsior-cjh.tistory.com/94)으로 빈도수가 많은 단어만 추려내보았다. Last name으로 보이는 것들을 제외하면 성별을 나타내는 'Mr', 'Miss', 'Mrs'과 알 수 없는 호칭인 'Master'가 눈에 띈다. 'Master'에 대해 알아보니 청소년 미만의 '남자 아이'를 뜻하는 말이라고 한다. 추가적으로 성별을 나타내는 호칭과 직위를 나타내는 호칭까지 추가한 결과가 아래에 나와있다. 
+원래의 Name column을 [공백 기준으로 나누고](https://stackoverflow.com/questions/39782418/remove-punctuations-in-pandas), [collections 모듈을 이용한 방법](https://excelsior-cjh.tistory.com/94)으로 빈도수가 많은 단어만 추려내보았다. Last name으로 보이는 것들을 제외하면 성별을 나타내는 'Mr', 'Miss', 'Mrs'과 알 수 없는 칭호인 'Master'가 눈에 띈다. 'Master'에 대해 알아보니 청소년 미만의 '남자 아이'를 뜻하는 말이라고 한다. 추가적으로 성별을 나타내는 칭호과 직위를 나타내는 칭호까지 추가한 결과가 아래에 나와있다. 
 
 > To do. Dr은 'Dr'로 찾으니 'Dr'로 시작하는 이름들이 나와서 ' Dr'로 찾았다. '완벽히 일치하는 문자열'을 찾을 수 있는 방법은 없을까?  
 > 정규표현식에 대해 더 알아보자 [(1)](https://greeksharifa.github.io/blog/tags/#re), [(2)](https://wikidocs.net/4308#match), [(3)](https://wikidocs.net/4309)
 
 
 ```python
-# 성별을 의미하는 호칭 추가 : Ms
+# 성별을 의미하는 칭호 추가 : Ms
 com_df[com_df['New_name'].str.contains('Ms')] # 2개 
 ```
 ```python
-# 직위를 나타내는 호칭 찾기. 
+# 직위를 나타내는 칭호 찾기. 
 com_df[com_df['New_name'].str.contains(r'\bDr\b')] # 11개
 com_df[com_df['New_name'].str.contains(r'\bSir\b')] # 1개
 com_df[com_df['New_name'].str.contains('Prof')] # 0개 
+```
+
+아래의 코드는 pd.crosstab()을 이용해 '칭호'과 생존여부 사이에 관계가 있는지 알아보기 위해 작성한 코드다. Survived가 포함되어야만 했기에 dataset은 train set으로 한정지었다. 2장에서 보았듯, 여성의 생존률이 높기 때문에 여성을 의미하는 칭호를 가진 사람의 생존률이 더 높은 것을 확인할 수 있었다. 그렇다면 '칭호'과 생존여부 사이에는 적절한 관계가 있다고 생각해도 될 것이다. [정규표현식](https://whatisthenext.tistory.com/116)
+
+```python
+pd.crosstab(train.Name.str.extract(' ([A-Za-z]+)\.', expand=False), train['Survived']) # train['Title'] = train.Name.str.extract(' ([A-Za-z]+)\.', expand=False)
+# ' ([A-Za-z]+)\.' : ([A-Za-z]+), 대소문자를 가리지 않는 알파벳(A-Za-z)을 대상으로 하며 반복이 존재하는(+, 즉, 글자수 제한이 없음) 문자열([])을 대상으로 함.
+# + \. : 메타 문자인 .(dot)을 일반문자로 인식하게 해(\) [some words].의 형태를 추출할 수 있도록 한다. 
+```
+
+&nbsp;&nbsp;&nbsp;&nbsp;앞서 칭호와 생존률에 관련이 있음을 확인했으니 Name에서 칭호를 추출, '칭호'의 여부와 종류에 따른 새로운 variable을 만들어 dataset에 추가해보자. 칭호 변수, 이후로는 Title이라 부를 이 변수는 성격상 categorical variable로 정의되어야 옳으므로 너무 많은 수준의 category를 포함하지 않는 것이 좋다. 따라서 [Title의 수준은 총 5개로 빈도수에 따라 Mr, Miss, Mrs, Master, Rare를 각각 1,2,3,4,5에 대응시킬 것](https://www.kaggle.com/startupsci/titanic-data-science-solutions/notebook#Titanic-Data-Science-Solutions)이다. 
+
+> 여기까지 하다가 느낀 건데, Titanic Data Science Solutions에서 combine = [train, test]로 합친 것은 굉장히 깔끔하게 합친 것 같다. 이렇게 합치면 for문으로 train, test를 쉽게 바꿔줄 수 있기 때문에 코드가 좀 더 간편해지는 장점이 있다. 
+
+```python
+title_mapping = {"Mr": 1, "Miss": 2, "Mrs": 3, "Master": 4, "Rare": 5}
+com_df['Title'] = com_df.Name.str.extract(' ([A-Za-z]+)\.', expand=False)
+com_df['Title'] = com_df['Title'].map(title_mapping)
+com_df['Title'] = com_df['Title'].fillna(0)
+
+com_df.head()
 ```
 
 ### 3.2.3 Sex
@@ -460,6 +483,47 @@ com_df[com_df['New_name'].str.contains('Prof')] # 0개
 com_df['Sex_int'] = com_df['Sex'].map( {'female': 1, 'male': 0} ).astype(int)
 ```
 
+### 3.2.4 Age
+&nbsp;&nbsp;&nbsp;&nbsp;Age는 numerical variable 중 interger를 갖는 descrete variable로 정의되는 것이 보통이지만 Tatinic dataset은 float를 갖는 continuous variable로 정의되었다. 더불어 2장에서 살펴본 것과 같이 Age의 구간이 n개월의 영아부터 80세의 노인까지 굉장히 넓게 분포하고 있다. 따라서 continuous variable로 유지하는 것이 아닌 categorical variable로 바꾸는 것이 분석을 위해 바람직해보이며 나이의 scale과 나이 차이의 성격을 유지하기 위해 Ordinal로 정의할 것이다. 따라서 [Age는 'Age_band'로 총 다섯 등분해 저장하겠다.](https://www.kaggle.com/startupsci/titanic-data-science-solutions/notebook#Titanic-Data-Science-Solutions)
+
+```python
+# Age를 float value로 갖는 obs 출력
+com_df[((com_df["Age"] / np.trunc(com_df["Age"])) > 1)]
+com_df[((com_df["Age"] / np.trunc(com_df["Age"])) > 1)].shape[0]
+```
+```python
+sns.boxplot(com_df["Age"].dropna())
+```
+```python
+com_df['Age_band'] = pd.cut(com_df['Age'], 5)
+
+## Age band를 숫자형 범주로 바꿔 'Age'로 대체시키기 
+com_df.loc[com_df['Age'] <= 16, 'Age'] = 0
+com_df.loc[(com_df['Age'] > 16) & (com_df['Age'] <= 32), 'Age'] = 1
+com_df.loc[(com_df['Age'] > 32) & (com_df['Age'] <= 48), 'Age'] = 2
+com_df.loc[(com_df['Age'] > 48) & (com_df['Age'] <= 64), 'Age'] = 3
+com_df.loc[ com_df['Age'] > 64, 'Age']
+com_df.head()
+```
+
+사실 굳이 '다섯 등분'일 필요는 없다. 물론 이 부분에 대한 방법론(=countinuous variable을 bining하는 방법론)이 존재하는 것으로 알고 있지만 '적절한 수준'으로 쪼개 뭉쳐주기만 하면 되는 일이다. '적절한 수준'이라는 말이 조금 어려운데, 하나의 bin이 너무나 큰 대푯값을 갖지 않도록 하는 동시에 구간 안에 너무 많은 값을 갖지 않도록 하는 것이 중요하다. 가령, Titanic dataset에서는 생존률을 대푯값으로 보면 10대 이전의 생존률이 높고 분포의 밀도는 20-40대에서 높다. 따라서, 10대와 20대를 적절히 섞어줄 수 있는 bining을 시행하면 얼추 맞는다. 이 때 5,6,7개의 구간으로 나눠주는 선에서 선택할 수 있는데 categorical variable 내의 수준이 많아지는 것을 지양하는 것이 바람직하므로 5개의 수준으로 선택한 것으로 보인다. 
+
+```python
+# n등분에 대한 approach
+# 5등분 
+train['Age_band'] = pd.cut(train['Age'], 5)
+train[['Age_band', 'Survived']].groupby(['Age_band'], as_index=False).mean().sort_values(by='Age_band', ascending=True)
+
+# 6등분 
+train['Age_band'] = pd.cut(train['Age'], 6)
+train[['Age_band', 'Survived']].groupby(['Age_band'], as_index=False).mean().sort_values(by='Age_band', ascending=True)
+
+# 7등분 
+train['Age_band'] = pd.cut(train['Age'], 7)
+train[['Age_band', 'Survived']].groupby(['Age_band'], as_index=False).mean().sort_values(by='Age_band', ascending=True)
+```
+
+이제 Age variable에 missing value를 채우는 일이 남았다. 그러나 당장은 다른 variable handling을 계속 진행하도록 하자. imputation은 3절에서 시행하겠다. 
 
 
 
