@@ -318,7 +318,7 @@ grid.add_legend();
 **분석 결과**
 - 여성 승객의 생존률이 남성보다 더 높다. 따라서 개략적인 가설설정 #1이 가설로써 의미있을 것으로 보인다.
 - Exception in Embarked=C where males had higher survival rate. This could be a correlation between Pclass and Embarked and in turn Pclass and Survived, not necessarily direct correlation between Embarked and Survived.
-- Pclass=2에 비해 Pclass=3(C와 Q 항구에서 탑승한)의 남성이 생존률이 높다. 
+- C와 Q 항구에서 탑승한 남성 중 Pclass=2에 비해 Pclass=3의 남성들의 생존률이 높다. 
 - 승선이 이뤄진 항구와 Pclass=3의 남성 탑승객 사이의 생존률이 다르다. 
 
 **분석 결과를 통한 의사결정**
