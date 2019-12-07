@@ -525,6 +525,42 @@ train[['Age_band', 'Survived']].groupby(['Age_band'], as_index=False).mean().sor
 
 이제 Age variable에 missing value를 채우는 일이 남았다. 그러나 당장은 다른 variable handling을 계속 진행하도록 하자. imputation은 3절에서 시행하겠다. 
 
+### 3.2.5 Fare
+&nbsp;&nbsp;&nbsp;&nbsp;Fare는 Age와 같은 numerical variable, continuous varaible이다. 따라서 Age에서와 마찬가지로 구간을 나눠 ordinal로 만들어주면 된다. 단, 2장에서 이미 살펴보았듯 Fare는 상당히 치우친 분포를 갖고 있으므로 Age에서 처럼 pd.cut()을 사용할 수 없으므로 전체 obs를 동일한 개수로 나누는 pd.qcut()를 이용하는 것이 좀 더 바람직할 것이다. 이제 Fare를 정확히 4등분해서 각 구간에 따라 0, 1,2,3의 ordinal로 다시 정의해보자. 이 과정에서 Fare에 포함된 하나의 missing value에 대해서는 median으로 대체하겠다. 
+
+```python
+# 'Fare'에 있는 하나의 Na를 median으로 채워줌. 
+com_df['Fare'].fillna(com_df['Fare'].dropna().median(), inplace=True)
+
+com_df['Fare_band'] = pd.qcut(com_df['Fare'], q=4)
+com_df.loc[com_df['Fare'] <= 7.896, 'Fare'] = 0
+com_df.loc[(com_df['Fare'] > 7.896) & (com_df['Fare'] <= 14.454), 'Fare'] = 1
+com_df.loc[(com_df['Fare'] > 14.454) & (com_df['Fare'] <= 31.275), 'Fare']   = 2
+com_df.loc[com_df['Fare'] > 31.275, 'Fare'] = 3
+com_df['Fare'] = com_df['Fare'].dropna().astype(int)
+com_df.head()
+```
+```python
+# FareBand와 Survived의 관계 
+train['Fare_band'] = pd.qcut(train_df['Fare'], 4)
+train[['Fare_band', 'Survived']].groupby(['Fare_band'], as_index=False).mean().sort_values(by='Fare_band', ascending=True)
+```
+### 3.2.6 SibSp + Parch = New variable, Alone
+&nbsp;&nbsp;&nbsp;&nbsp;SibSp는 Titanic에 동승한 형제 및 자매의 숫자를, Parch는 Titanic에 동승한 부모 및 자녀의 숫자를 의미하는 변수들이며 numerical, descrete variable이다. Titanic dataset에서 이 두 변수는 과반수 이상의 obs에서 SibSp = 0, Parch = 0를 갖으므로 동승자가 있다 혹은 없다의 categorical variable로 재정의하는 것이 더 좋아보인다. 따라서, SibSp나 Parch 혹은 SibSp와 Parch를 0이상으로 갖는 obs를 '동승자가 있다'로, SibSp=Parch=0인 obs를 '동승자가 없다'로 정의한 Alone을 추가해 SibSp와 Parch를 대체할 것이다. 
+
+
+```python
+print(len(com_df[com_df['SibSp']<1])) # 형제 자매와 함께 타지 않은 사람이 891명
+print(len(com_df[com_df['Parch']<1])) # 부모와 함께 타지 않은 사람이 1002명
+print(len(com_df[(com_df['Parch']<1) & (com_df['SibSp']<1)])) # 가족과 함께 타지 않은 사람이 790명
+print(len(com_df)) # 전체 1309명
+```
+```python
+com_df['Family'] = com_df['SibSp'] + com_df['Parch']
+com_df['Alone'] = 0 # 0 : 가족없이 홀로 탑승
+com_df.loc[com_df['Family'] != 0, 'Alone'] = 1 # 가족과 함께 탑승
+com_df[(com_df['Family']!=0) & (com_df['Alone']==0)] # 제대로 Alone이 추가되었는지 확인 
+```
 
 
 ## 3.3 Dealing with missing values 
