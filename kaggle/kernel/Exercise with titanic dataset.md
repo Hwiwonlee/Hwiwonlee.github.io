@@ -575,8 +575,14 @@ com_df['Embarked'] = com_df['Embarked'].fillna('S')
 com_df["Embarked_int"] = com_df['Embarked'].map( {'S': 0, 'C': 1, 'Q': 2 } ).astype(int)
 com_df["Embarked_int"].value_counts() # check
 ```
+### 3.2.8 Ticket
+&nbsp;&nbsp;&nbsp;&nbsp;Ticket은 문자열+숫자의 mixed variable이나 obs에 따라 숫자로만 이뤄진 obs가 있고 mixed type의 obs가 있다. 따라서 side story로 남겨두고 이번 분석에서는 삭제하도록 하겠다. 
 
-### 3.2.8 Cleaning the dataset
+```python
+com_df = com_df.drop(['Ticket'], 1)
+```
+
+### 3.2.9 Cleaning the dataset
 &nbsp;&nbsp;&nbsp;&nbsp;지금까지 Titanic dataset에 있는 변수들을 다뤄보았다. 몇 개의 변수들이 다른 type의 obs로 대체되면서 쓸모가 없어졌고 아예 새로운 변수로 대체되는 변수들도 있었다. 이제 dataset에서 의미없어진 변수들을 지워보자. 
 
 ```python
@@ -586,7 +592,7 @@ com_df.head()
 com_df.info()
 ```
 
-이제 3장에서 남은 일은 Cabin, Ticket의 처리와 Cabin과 Age의 missing value를 채우는 일이다. Ticket의 처리는 보류하고 다음 절에서 cabin과 age의 imputation을 해보자. 
+이제 3장에서 남은 일은 Cabin의 처리와 Cabin과 Age의 missing value를 채우는 일이다. 다음 절에서 cabin과 age의 imputation을 해보자. 
 
 
 ## 3.3 Dealing with missing values 
