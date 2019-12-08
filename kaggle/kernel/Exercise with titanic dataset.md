@@ -562,6 +562,32 @@ com_df.loc[com_df['Family'] != 0, 'Alone'] = 1 # 가족과 함께 탑승
 com_df[(com_df['Family']!=0) & (com_df['Alone']==0)] # 제대로 Alone이 추가되었는지 확인 
 ```
 
+### 3.2.7 Embarked
+&nbsp;&nbsp;&nbsp;&nbsp;Embarked는 Titanic이 정박한 항구에 관한 변수로 3개의 수준, S, C, Q를 갖는 categorical variable이다. 앞서 Sex에서 male:0, female:1으로 처리했던 것처럼 string type의 obs를 integer로 바꿀 것이다. 빈도수에 따라 S:0, C:1, Q:2로 재정의할 것이며 combined set에 포함된 2개의 missing value는 최빈값인 S:0으로 대체할 것이다. 
+
+```python
+print(com_df["Embarked"].value_counts())
+print(len(com_df["Embarked"].dropna()))
+print(len(com_df["Embarked"]))
+```
+```python
+com_df['Embarked'] = com_df['Embarked'].fillna('S')
+com_df["Embarked_int"] = com_df['Embarked'].map( {'S': 0, 'C': 1, 'Q': 2 } ).astype(int)
+com_df["Embarked_int"].value_counts() # check
+```
+
+### 3.2.8 Cleaning the dataset
+&nbsp;&nbsp;&nbsp;&nbsp;지금까지 Titanic dataset에 있는 변수들을 다뤄보았다. 몇 개의 변수들이 다른 type의 obs로 대체되면서 쓸모가 없어졌고 아예 새로운 변수로 대체되는 변수들도 있었다. 이제 dataset에서 의미없어진 변수들을 지워보자. 
+
+```python
+com_df.head()
+com_df = com_df.drop(['Name', 'Sex', 'SibSp', 'Parch', 'Embarked', 'New_name', 'Age_band', 'Fare_band', 'Family'], 1)
+com_df.head()
+com_df.info()
+```
+
+이제 3장에서 남은 일은 Cabin, Ticket의 처리와 Cabin과 Age의 missing value를 채우는 일이다. Ticket의 처리는 보류하고 다음 절에서 cabin과 age의 imputation을 해보자. 
+
 
 ## 3.3 Dealing with missing values 
 &nbsp;&nbsp;&nbsp;&nbsp;Missing value, 결측값은 전처리 과정에서 반드시 짚고 넘어가야할 중요한 문제다. 결측값이 존재하기만 해도 modeling 과정에서 algorithm이 실행되지 않는 경우가 대부분이고 설사 실행된다한들 full-filled dataset보다 accuracy가 떨어지는 경우가 부기지수다. 그러므로 결측값을 어떻게든 채워넣어야 하는데 그 방법 또한 여러 개라 가장 적절한 방법이 무엇인지 판단하고 해당 방법을 통해 imputation을 거쳐 dataset에 채워넣어야 한다. 이제 우리가 갖고 있는 combined dataset으로 missing values를 다루는 방법들을 천천히 알아보자.
@@ -602,11 +628,34 @@ plt.show()
 * missing value가 속한 변수에서 missing value를 제외한 값으로 분포를 구한 후 평균과 표준편차에 맞춰 missing value를 채우는 방법
 * missing value가 속한 변수와 관련있는 다른 변수들을 이용해 다른 변수들의 조건과 관련성을 고려하여 중앙값으로 missing value를 채우는 방법
 * 첫 번째와 두 번째를 혼합해 missing value가 속한 변수와 관련있는 다른 변수들을 이용해 다른 변수들의 조건과 관련성을 고려하여 평균과 표준편차에 맞춰 missing value를 채우는 방법
-첫 번째와 세 번째 방법은 변수에 대한 분포가정이 필요하다는 점과 분포를 기준으로한 random sampling을 이용하기 때문에 생기는 오차 가능성을 한계로 갖고 두 번째 방법은 변수 간 관계성을 먼저 증명해야한다는 점과 변수들이 분포를 갖고 있을 경우 중앙값을 사용함으로써 생기는 오차 가능성을 한계로 갖는다. 변수 간의 관계만 밝혀낸다면 두 번째 방법이 좀 더 리스크가 적은 방법이므로 관련성이 존재한다면 두 번째 방법을, 관련성이 존재하지 않거나 밝혀낼 수 없다면 첫 번째 방법을 추천한다. 그렇다면 imputation 이전에 missing value를 갖고 있는 변수들과 다른 변수들의 관계를 먼저 알아봐야 할 것이다. 
+첫 번째와 세 번째 방법은 변수에 대한 분포가정이 필요하다는 점과 분포를 기준으로한 random sampling을 이용하기 때문에 생기는 오차 가능성을 한계로 갖고 두 번째 방법은 변수 간 관계성을 먼저 증명해야한다는 점과 변수들이 분포를 갖고 있을 경우 중앙값을 사용함으로써 생기는 오차 가능성을 한계로 갖는다. 변수 간의 관계만 밝혀낸다면 두 번째 방법이 좀 더 리스크가 적은 방법이므로 관련성이 존재한다면 두 번째 방법을, 관련성이 존재하지 않거나 밝혀낼 수 없다면 첫 번째 방법을 추천한다. 이제 imputation 이전에 missing value를 갖고 있는 변수에 대해서, 또한 해당 변수와 다른 변수들의 관계를 먼저 알아봐자.
 
 
-> 과정을 진행하다보니 느끼는 건데, Titanic Titanic Data Science Solutions의 과정이 굉장히 좋았다는 생각이 든다. 지금 이렇게 하면 '관계'를 찾기 위한 하위항목을 또 만들어내야 함....깨달았으니 수정해보자. 위의 Overview에서 과정을 추가하면 될 것 같다. 결국 이틀 걸려서 위의 과정을 전반적으로 수정하고 다시 여기까지 왔다. 
+#### 3.3.2.1 [Cabin](https://www.kaggle.com/ccastleberry/titanic-cabin-features)
+&nbsp;&nbsp;&nbsp;&nbsp;Cabin은 객실의 번호에 관한 변수로 문자와 숫자가 결합된 mixed variable이다. Cabin은 Titanic dataset에서 가장 많은 1014개의 missing value를 가지고 있으며 이는 Cabin의 77%가 missing value라는 말과 같다. 사실, obs의 수가 굉장히 많은 상황이 아니라면 이 정도 비율을 가진 missing value를 imputation하기 매우 어렵다. imputation을 진행한다고 하더라도 그 방법이 잘못되었다면 오히려 prediction accuracy에 악영향을 미치게 되기 때문에 오히려 imputation을 하지 않는 것을 권장할 수도 있다. 때문에 Cabin을 제외하고 분석한 commit이 대부분이며 그 결과가 나쁜 수준도 아니라 Cabin을 dataset에서 삭제해도 괜찮아보인다. 이제 스스로 선택할 시간이다. Cabin을 버릴 것인가, 아니면 Cabin을 이용해 분석해볼 것인가? Cabin을 이용해 분석해볼 것이라면 상단의 하이퍼링크를 추천한다. 해당 링크는 Cabin만을 이용해 0.68의 점수를 받았다.
 
+```python
+print(len(com_df['Cabin'].dropna()))
+print(len(com_df['Cabin']))
+
+print(train.iloc[train['Cabin'].dropna().index, :].Survived.value_counts())
+print(train.loc[train['Cabin'].isna(), :].Survived.value_counts())
+print(136/(136+68))
+print(206/(481+206))
+```
+
+Cabin을 imputation 하지 않고 Missing vs Non-missing 사이의 생존률 차이만 살펴봐도 0.3 vs 0.66로 Cabin에 value를 갖는 obs가 value를 갖지 않는 obs보다 생존률이 36% 높은 것으로 나타난다. 따라서 무리하게 imputation을 하는 것보다 Cabin을 value : 1, missing value : 0으로 정의된 categorical variable로 바꾸는 것이 더 좋아보인다. 
+
+```python
+com_df['Cabin_cate'] = 0
+
+# Cabin이 Non-null인 obs만 Cabin_cate = 1로 바꿔줌
+com_df.loc[com_df['Cabin'].dropna().index, 'Cabin_cate'] = 1
+com_df.drop(['Cabin'], axis = 1)
+com_df.head()
+```
+
+> To do. loc, iloc에 대한 이해가 부족한 것 같다. 왜 loc, iloc를 써야하고 어떻게 작동하는지 알아보자. 
 
 
 
