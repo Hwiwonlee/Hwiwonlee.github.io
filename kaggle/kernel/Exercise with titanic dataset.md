@@ -663,5 +663,16 @@ com_df.head()
 
 > To do. loc, iloc에 대한 이해가 부족한 것 같다. 왜 loc, iloc를 써야하고 어떻게 작동하는지 알아보자. 
 
+#### 3.3.2.2 Age
+&nbsp;&nbsp;&nbsp;&nbsp;Age는 생존률과 관련이 있는 중요 변수로 Combine dataset 기준, 263개의 missing value를 갖고 있으며 이는 전체 obs 중 약 20%정도 되는 양이다. 이미 80%의 Age obs가 존재하며 Age와의 관계를 알아볼 수 있는 8개의 변수(Pclass, Fare, Title, Sex_in, Alone, Embarked_int, Cabin_cate, Survived)를 갖고 있으므로 무리없이 imputation을 해볼 수 있을 것이다. 
 
+```python
+com_df['Age'].isna().sum() # missing value의 토탈
+com_df['Age'].isna().sum()/len(com_df) # 전체 obs 대비 missing value의 비율
+com_df[com_df['Age'].isna()] # 'Age'를 missing value로 갖는 obs 
+com_df.iloc[com_df['Age'].dropna().index, :] # Age를 value로 갖는 obs
+```
+```python
+sns.countplot(x="Age", hue="Pclass", data=com_df) # Age와 Pclass의 관계를 표현하기 위한 Countplot 
+```
 
