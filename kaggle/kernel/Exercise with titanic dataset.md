@@ -676,3 +676,4 @@ com_df.iloc[com_df['Age'].dropna().index, :] # Age를 value로 갖는 obs
 sns.countplot(x="Age", hue="Pclass", data=com_df) # Age와 Pclass의 관계를 표현하기 위한 Countplot 
 ```
 
+> Age와 다른 변수들 간의 관계를 보여줄 수 있는 plot이나 method가 있을까? 
