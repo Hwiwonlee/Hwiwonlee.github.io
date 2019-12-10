@@ -677,3 +677,5 @@ sns.countplot(x="Age", hue="Pclass", data=com_df) # Age와 Pclass의 관계를 �
 ```
 
 > Age와 다른 변수들 간의 관계를 보여줄 수 있는 plot이나 method가 있을까? 
+
+> 결과는 random forest로만 
