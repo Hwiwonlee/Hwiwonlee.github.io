@@ -4,8 +4,8 @@ library(xlsx)
 # Merging data set
 
 ## 1. exploring raw dataset 
-hw <- as.tbl(read.xlsx2('C:/Users/74433/Downloads/Health_writing_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
-pc <- as.tbl(read.xlsx2('C:/Users/74433/Downloads/Personal_checkup_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
+hw <- as.tbl(read.xlsx2('...HW_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
+pc <- as.tbl(read.xlsx2('...PC_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
 pc
 dim(hw) # (227, 949)
 dim(pc) # (137, 391)
