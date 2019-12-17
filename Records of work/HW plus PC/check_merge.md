@@ -153,49 +153,202 @@ col_pc2 <- c("ALCOHOL", "ALCOHYR", "DrQYr","DrQMo",
              "ETNAME", "ETALN", "ETALAM", "ETALCUP")
 pc2 <- pc[, col_pc2] %>% type_convert(cols(ALCOHOL = col_double()))
 
-#### 2.2.1 건강기록지와 건강검진의 '음주횟수' 수준이 다르다. 
+#### PROBLEM 2.2.1 건강기록지와 건강검진의 '음주횟수' 수준이 다르다. 
 # coding book 기준, 각각 1~8, 0~7 이므로 reference를 0에 맞추면 해결 가능.
 
 # 새로운 문제 : 첫번째 건강기록지의 음주횟수 수준이 6개로 차이가 있다.
 ## 가설 1. 1st 건강기록지의 음주횟수 수준에는 '안 마신다'가 포함되어 있지 않다. 
-##         따라서, 첫번째 수준을 갖지만 '음주량'에 value가 들어가 있으면 음주횟수를 조정한다. 
+##         따라서, 1st 건강기록지의 음주횟수 수준이 첫번째 수준을 갖지만 '음주량'에 value가 들어가 있으면 음주횟수를 조정한다. 
 ##         => 1st 건강기록지를 제외한 나머지 질문지의 음주횟수 첫번째 수준은 '안 마신다'이므로 '안 마시는 사람'이 '음주량'을 갖고 있을 수 없다고 가정한다. 
 
 # 소주를 예로 들어 시도해보자. 
-hw2[na.omit(hw2[, "SOJU"]) == 1, "SOJU_A"]
-hw2[(hw2[, "SOJU"]) == 1, ]$SOJU_A
-hw2[(hw2[, "SOJU"]) == 2, ]$SOJU_A
-hw2[(hw2[, "SOJU"]) == 3, ]$SOJU_A
+hw2[which(hw2[(hw2[, "SOJU"]) == 1, ]$SOJU_A < 99), "SOJU_A"]
+hw2[which(hw2[(hw2[, "SOJU"]) == 2, ]$SOJU_A < 99), "SOJU_A"]
+hw2[which(hw2[(hw2[, "SOJU"]) == 3, ]$SOJU_A < 99), "SOJU_A"]
+hw2[which(hw2[(hw2[, "SOJU"]) == 4, ]$SOJU_A < 99), "SOJU_A"]
+hw2[which(hw2[(hw2[, "SOJU"]) == 5, ]$SOJU_A < 99), "SOJU_A"]
+hw2[which(hw2[(hw2[, "SOJU"]) == 6, ]$SOJU_A < 99), "SOJU_A"]
+hw2[which(hw2[(hw2[, "SOJU"]) == 7, ]$SOJU_A < 99), "SOJU_A"] # null
 
-pc2[(pc2[, "SOJUN"]) == 0, ]$SOJUAM
-pc2[(pc2[, "SOJUN"]) == 1, ]$SOJUAM
-
-
-# 12.17, 음주횟수 및 음주량이 중복응답 가능해서 table 전체를 봐야 할 것 같음. 
-
-
-# 모르는 경우, 건강기록지는 99, 개인검진은 9999
-sum(hw2 == 99, na.rm = T) # 31
-sum(pc2 == 9999, na.rm = T) # 4 
-
-pc2 %>% dplyr::filter(SOJUAM == 9999 | BEERAM == 9999 | GINAM == 9999 | RICEAM == 9999 | WINEAM == 9999)  
-# 음주량을 모르는 경우 3개
-hw2 %>% dplyr::filter(SOJU_A == 99)
-hw2[, 4:16] %>% dplyr::filter(SOJU_A == 99 | BEER_A == 99 | WSKY_A == 99 | TKJU_A == 99 | WINE_A == 99) 
-# 음주량을 모르는 경우 14개 
+pc2[which(pc2[(pc2[, "SOJUN"]) == 0, ]$SOJUAM < 9999), "SOJUAM"]
+pc2[which(pc2[(pc2[, "SOJUN"]) == 1, ]$SOJUAM < 9999), "SOJUAM"]
+pc2[which(pc2[(pc2[, "SOJUN"]) == 2, ]$SOJUAM < 9999), "SOJUAM"]
+pc2[which(pc2[(pc2[, "SOJUN"]) == 3, ]$SOJUAM < 9999), "SOJUAM"]
 
 
 
-# 개인검진의 과실주를 기타술로 포함
+#### pc2[which(pc2[(pc2[, "SOJUN"]) == 3, ]$SOJUAM < 9999), "SOJUAM"]에서 9999가 나옴. ####
+pc2[(pc2[, "SOJUN"]) == 3, ]$SOJUAM # non '9999'
+sum(pc2[(pc2[, "SOJUN"]) == 3, ]$SOJUAM == 9999, na.rm=T) # non '9999'
+
+which(pc2[(pc2[, "SOJUN"]) == 3, ]$SOJUAM < 9999)
+# 애초에 위 결과가 SOJUN column == 3의 결과를 return해주지도 않는다. 
+# 문제가 뭘까?
+
+pc2[(pc2[, "SOJUN"]) == 3, ] # 1)
+pc2[which((pc2[, "SOJUN"]) == 3), ] # 2) 
+
+# 2)가 맞다. 
+# 1)로는 제대로된 filtering이 되지 않는다. 
+# filtering? 좀 더 간단하게 할 수 있지 않을까? 
+
+pc2 %>% dplyr::filter(SOJUN == 3 & SOJUAM < 9999) %>% select(SOJUAM)
+# Done
+
+# which를 이용해서 할 수는 없을까?, 사실 index column 하나 만들어서 하면 해결 되긴 함. 
+# Step 1. SOJUN에서 level 3 뽑아내기 
+pc2 %>% dplyr::filter(SOJUN == 3)
+pc2[which((pc2[, "SOJUN"]) == 3), ]
+
+# Step 2. SOJUN == 3 & SOJUAM < 9999 뽑아내기 
+pc2 %>% dplyr::filter(SOJUN == 3 & SOJUAM < 9999) %>% select(SOJUAM)
+pc2[which((pc2[, "SOJUN"]) == 3), "SOJUAM"][which(pc2[which((pc2[, "SOJUN"]) == 3), "SOJUAM"] < 9999), ]
+
+# Step 3. SOJUN == 3 & SOJUAM < 9999의 index? 
+# which로 뽑으면 조건에 따라 범위가 바뀌기 때문에 위에서 사용한 방법으로 하기 어려움. 
+pc2_index <- pc2 %>% mutate(index = seq(1, nrow(pc2), 1))
+pc2_index %>% dplyr::filter(SOJUN == 3 & SOJUAM < 9999) %>% select(SOJUAM, index) # 1)
+pc2_index[which((pc2_index[, "SOJUN"]) == 3), c("SOJUAM", "index")][which(pc2_index[which((pc2_index[, "SOJUN"]) == 3), "SOJUAM"] < 9999), ] # 2)
+
+# dplyr와 which를 이용한 방법으로 같은 결과를 만들어냈다.
+# 보면 알겠지만 dplyr, pipe를 사용하면 훨씬 직관적인 code로 결과를 만들어낼 수 있다. 
+# 그러니 dplyr를 사용해서 위의 code를 바꿔주자.
+#### ####
+
+# 편의성을 위해 index column 추가 
+hw2 <- hw2 %>% mutate(index = seq(1, nrow(hw2), 1))
+pc2 <- pc2 %>% mutate(index = seq(1, nrow(pc2), 1))
+
+## 사실 지금까지 이 과정을 했던 건, "가설 1 : 음주횟수의 수준 1 = 안마신다로 변경할 수 있다"를 
+## 해보려고 한건데, dataset 자체에 설문지 버전을 의미하는 column이 있었다. 
+## 그러니까, 설문지 버전 column을 가지고 오면 쉽게 알아볼 수 있었다는 것.
+
+# 설문지 버전 column 추가 
+hw2 <- hw2 %>% mutate(Q_ver = as.double(hw$건강기록지.버전)) %>% select(Q_ver, everything())
+pc2 <- pc2 %>% mutate(Q_ver = as.double(str_replace_all(pc$설문지버전, "개인_", ""))) %>% select(Q_ver, everything())
+
+hw2 %>% dplyr::filter(Q_ver == 1 & ALC == 3) %>% select(-contains("_A"))
+hw2 %>% dplyr::filter(Q_ver == 1 & ALC == 3) %>% select(contains("_A"))
+
+hw2 %>% dplyr::filter(Q_ver == 1 & ALC == 2) %>% select(-contains("_A"))
+hw2 %>% dplyr::filter(Q_ver == 1 & ALC == 2) %>% select(contains("_A"))
+
+hw2 %>% dplyr::filter(Q_ver == 1 & ALC == 1) %>% select(-contains("_A"))
+hw2 %>% dplyr::filter(Q_ver == 1 & ALC == 1) %>% select(contains("_A"))
+
+# CAUTION. 건강기록지 첫번째 버전에서 술을 마시는 사람들이 '몇 번' 마시는지 모두 null value
+# 일단 두고, 나중에 처리할 것. 
+
+
+#### PROBLEM. 2.2.2 개인검진의 과실주를 기타술로 포함
 ## 해도 될까? 거-의 없는 수준 일까? 
-na.omit(pc2[(pc2[, "FRUITN"]) != 0, "FRUITN"])
-na.omit(pc2[(pc2[, "ETALN"]) != 0, "ETALN"])
-na.omit(pc2[, "ETNAME"])
+pc2 %>% dplyr::filter(FRUITN != 0) %>% select(FRUITN, FRUITAM)
+pc2 %>% dplyr::filter(ETALN != 0) %>% select(ETALN, ETNAME, ETALAM, ETALCUP)
 
-na.omit(hw2[(hw2[, "ALC_T"]) != 0, "ALC_T"])
-na.omit(hw2[(hw2[, "ALC_T"]) != 0, "ALC_DA"])
-na.omit(hw2[, "ALC_A"])
+hw2 %>% dplyr::filter(ALC_T != 0) %>% select(ALC_T, ALC_DA, ALC_A)
 
 # 기타 술 항목 자체가 전체 obs에서 미미한 수준이다.
-# 따라서 개인검진의 과실주 항목을 기타술로 포함. 
-```
+# NOTE. 따라서 개인검진의 과실주 항목을 기타술로 포함시켜도 될 듯.
+
+#### PROBLEM. 2.2.3 변수 균일화
+# 1. 금주 기간
+## pc는 연, 개월로 나눠져 있고 hw는 연 단위임. 
+## 연을 기준으로 하자. 
+summary(hw2$CALC, na.rm=T)
+summary(pc2$DrQYr, na.rm=T)
+summary(pc2$DrQMo, na.rm=T) # 애초에 금주기간의 NA가 너무 많다. 
+
+# CACL 생성 후 체크
+pc2 %>% 
+  mutate_at(vars(contains("DrQ")), ~replace(., is.na(.), 0)) %>%
+  mutate(CALC = DrQYr + (DrQMo/12)) %>% 
+  filter(CALC != 0) %>% 
+  select(CALC, DrQYr, DrQMo)
+
+# CACL로 DrQYr과 DrQMo를 대체 
+pc2 <- pc2 %>% 
+  mutate_at(vars(contains("DrQ")), ~replace(., is.na(.), 0)) %>%
+  mutate(CALC = DrQYr + (DrQMo/12)) %>% 
+  select(1:3, CALC, everything(), -c(DrQYr, DrQMo))
+
+#### PROBLEM 2.2.4 중복 안되는 변수 
+summary(pc2[5:6], na.rm=T)
+
+nrow(pc2) - sum(is.na(pc2[5])) # 0 : AUDIT7은 모두 NA
+nrow(pc2) - sum(is.na(pc2[6])) # 1 : AUDIT8은 하나 빼고 모두 NA
+
+# TRY : AUDIT7, AUDIT8 삭제
+pc2 <- pc2 %>% 
+  select(-c(AUDIT7, AUDIT8))
+
+
+#### TRY 2.2.5 rbind(hw2, pc2)
+# pc2의 과실주 관련 변수를 기타에 포함시키기
+## Step 1. pc2를 기준, ALC_T, ALC_A, ALC_DA 만들고 확인 
+pc2 %>% 
+  dplyr::filter(FRUITN != 0 | ETALN != 0) %>% 
+  select(FRUITN, FRUITAM, ETALN, ETNAME, ETALAM, ETALCUP, index) %>% 
+  mutate_all(~replace(., is.na(.), 0)) %>% 
+  mutate(ALC_T = FRUITN + ETALN, ALC_A = ETNAME) %>% 
+  mutate(ALC_DA = ifelse(ETALCUP != 0, FRUITAM + ETALAM*(ETALCUP/50), FRUITAM + ETALAM))
+
+## Step 2. FRUIT- 변수 제거 
+pc2 %>% 
+  mutate_at(vars(FRUITN, FRUITAM, ETALN, ETNAME, ETALAM, ETALCUP), ~replace(., is.na(.), 0)) %>% 
+  mutate(ALC_T = FRUITN + ETALN, ALC_A = ETNAME) %>% 
+  mutate(ALC_DA = ifelse(ETALCUP != 0, FRUITAM + ETALAM*(ETALCUP/50), FRUITAM + ETALAM)) %>%
+  select(everything(), -matches("FRUIT"), -matches("ET")) %>%
+  dplyr::filter(ALC_T != 0) %>% 
+  select(matches("ALC")) # 제거 후 확인함
+
+## Step 3. pc2 대체
+pc2_c <- pc2 %>% 
+  mutate_at(vars(FRUITN, FRUITAM, ETALN, ETNAME, ETALAM, ETALCUP), ~replace(., is.na(.), 0)) %>% 
+  mutate(ALC_T = FRUITN + ETALN, ALC_A = ETNAME) %>% 
+  mutate(ALC_DA = ifelse(ETALCUP != 0, FRUITAM + ETALAM*(ETALCUP/50), FRUITAM + ETALAM)) %>%
+  select(everything(), -matches("FRUIT"), -matches("ET"))
+
+pc2_c %>% dplyr::filter(ALC_T != 0) %>% 
+  select(matches("ALC")) 
+
+pc2 %>% 
+  mutate_at(vars(FRUITN, FRUITAM, ETALN, ETNAME, ETALAM, ETALCUP), ~replace(., is.na(.), 0)) %>% 
+  mutate(ALC_T = FRUITN + ETALN, ALC_A = ETNAME) %>% 
+  mutate(ALC_DA = ifelse(ETALCUP != 0, FRUITAM + ETALAM*(ETALCUP/50), FRUITAM + ETALAM)) %>%
+  select(everything(), -matches("FRUIT"), -matches("ET")) %>%
+  dplyr::filter(ALC_T != 0) %>% 
+  select(matches("ALC"))
+
+# 위의 결과가 같은 것을 확인
+pc2 <- pc2_c
+  
+
+## Step 4. 변수 이름과 순서 통합 
+# select하고 rename으로 바꿔줌
+hw2_colnames <- colnames(hw2)
+
+pc2_c <- pc2 %>% select(-15, 15) %>% 
+  rename_all(funs(c(hw2_colnames)))
+
+sum(pc2_c != pc2 %>% select(-15, 15), na.rm = T) # 같은 것 확인
+
+
+## Step 5. TRY rbind
+pc2 <- pc2_c
+
+# CONCLUSION
+df2 <- rbind(hw2, pc2)
+
+# To DO index와 Q_ver 정리할 것. 근데 어차피 나중에 한번에 정리해야할 것 같음.
+
+### 2.3 columns with smoking
+hw3 <- hw %>% mutate(Q_ver = as.double(hw$건강기록지.버전)) %>%
+  mutate(index = seq(1, nrow(hw), 1)) %>% 
+  select(Q_ver, index, matches("SM")) %>% 
+  type_convert(cols(SMOKST = col_double()))
+
+
+pc3 <- pc %>% mutate(Q_ver = as.double(str_replace_all(pc$설문지버전, "개인_", ""))) %>% 
+  mutate(index = seq(1, nrow(pc), 1)) %>% 
+  select(Q_ver, index, matches("SMOK"), PTSMK, matches("SECSM")) %>% 
+  type_convert(cols(SMOKST = col_double()))
