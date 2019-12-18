@@ -173,7 +173,7 @@ col_hw2 <- c("ALC", "ALCDU", "CALC",
              "WINE", "WINE_A",
              "ALC_A", "ALC_T",
              "ALC_DA")
-             
+
 hw2 <- hw[, col_hw2] %>% type_convert(cols(ALC = col_double()))
 
 col_pc2 <- c("ALCOHOL", "ALCOHYR", "DrQYr","DrQMo",
@@ -295,8 +295,8 @@ summary(pc2$DrQMo, na.rm=T) # 애초에 금주기간의 NA가 너무 많다.
 # CACL 생성 후 체크
 pc2 %>% 
   mutate_at(vars(contains("DrQ")), ~replace(., is.na(.), 0)) %>%
-  mutate(CALC = DrQYr + (DrQMo/12)) %>% 
-  filter(CALC != 0) %>% 
+  mutate(CALC = DrQYr + (DrQMo/12))%>% 
+  dplyr::filter(CALC != 0) %>% 
   select(CALC, DrQYr, DrQMo)
 
 # CACL로 DrQYr과 DrQMo를 대체 
@@ -342,6 +342,7 @@ pc2_c <- pc2 %>%
   mutate(ALC_DA = ifelse(ETALCUP != 0, FRUITAM + ETALAM*(ETALCUP/50), FRUITAM + ETALAM)) %>%
   select(everything(), -matches("FRUIT"), -matches("ET"))
 
+# pc2_c와 pc2가 같은지 확인 
 pc2_c %>% dplyr::filter(ALC_T != 0) %>% 
   select(matches("ALC")) 
 
@@ -386,3 +387,168 @@ pc3 <- pc %>% mutate(Q_ver = as.double(str_replace_all(pc$설문지버전, "개�
   mutate(index = seq(1, nrow(pc), 1)) %>% 
   select(Q_ver, index, matches("SMOK"), PTSMK, matches("SECSM")) %>% 
   type_convert(cols(SMOKST = col_double()))
+
+
+#### 2.3.1 impute the missing with "Have you ever been smoking?"
+hw3 %>% select(SM) %>% drop_na() # 전체 127개에서 68개만 non-null. 나머지는?
+
+hw3 %>% mutate_at(vars(("SM")), ~replace(., is.na(.), 77)) %>%
+  dplyr::filter(SM == 77) %>% select(-matches("CSM"), -matches("CHSM")) %>%
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.)))) -> extra_NA
+
+extra_NA 
+# 흡연여부가 NA인 obs 중 본인 흡연 관련 변수들에서 non-null을 갖는 obs가 하나도 없음.
+# NOTE imputation할 근거가 없음. 
+
+pc3 %>% select(SMOKST) %>% drop_na() # 226, 하나 제외하고 모두 non-null
+nrow(pc3) # 227
+
+
+#### 2.3.2 impute the missing with "Have your spouse ever been smoking?"
+# Part 1. HW
+hw3 %>% select(CSM) %>% drop_na() # 63
+
+hw3 %>% select(CSM) %>% 
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.)))) # 74개의 null
+
+# 배우자 흡연과 관련있는 변수를 모아 74개의 null에 imputation 시행 
+## 관련있는 변수들만 따로 선택 
+hw3 %>% mutate_at(vars(("CSM")), ~replace(., is.na(.), 77)) %>%
+  dplyr::filter(CSM == 77) %>% 
+  select(-c(index, CSM), -matches("^S"), -matches("^H"), -matches("CHSM")) %>%
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.)))) # 10개의 관련 변수 중 null 개수 
+
+# 모두 null인 col 제외하고 관련있는 변수 선택   
+hw3 %>% mutate_at(vars(("CSM")), ~replace(., is.na(.), 77)) %>%
+  dplyr::filter(CSM == 77) %>% 
+  select(-c(index, CSM), -matches("^S"), -matches("^H"), -matches("CHSM")) %>%
+  select(-(2:6)) 
+# 순서에 따라, 가족에 의한 흡연 노출, 가족에 의한 흡연 노출 - 가족
+# 흡연에 노출된 시기, 흡연에 노출된 기간, 간접흡연이 이뤄지는 장소
+# 결국, 배우자의 흡연 여부를 추측할 수 있는 자료는 아님. 
+# NOTE 배우자의 흡연 여부 imputation 불가 
+
+# Part 2. PC
+pc3 %>% select(PTSMK) %>% drop_na() # 14
+
+pc3 %>% select(PTSMK) %>% 
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.)))) # 213개의 null
+
+# 배우자 흡연과 관련있는 변수를 모아 213개의 null에 imputation 시행 
+## 관련있는 변수들만 따로 선택 
+pc3 %>% mutate_at(vars(("PTSMK")), ~replace(., is.na(.), 77)) %>%
+  dplyr::filter(PTSMK == 77) %>% 
+  select(-2, -matches("SMOK")) %>%
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.)))) # 10개의 관련 변수 중 null 개수 
+# 위의 과정이 의미 없음. 
+# pc dataset에는 '배우자 흡연 유무'만 존재해서 
+# 흡연량, 기간과 같이 추론할 수 있는 obs가 존재하지 않음. 
+# NOTE 배우자의 흡연 여부 imputation 불가 
+
+#### 2.3.3 impute the missing with "Have you ever been second-hand smoking?"
+# part 1. HW
+hw3 %>% select(matches('CSM_F')) %>%
+  mutate_at(vars(("CSM_F")), ~replace(., is.na(.), 77)) %>%
+  dplyr::filter(CSM_F == 77) %>% 
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.))))
+
+# CSM_F가 null이면 다른 관련 변수도 null 
+# NOTE imputation 불가. 
+
+# Part 2. PC
+pc3 %>% select(matches('SECSM')) %>%
+  mutate_at(vars(("SECSM")), ~replace(., is.na(.), 77)) %>%
+  dplyr::filter(SECSM == 77) %>% 
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.))))
+# SECSM이 null이면 다른 관련 변수도 null
+# NOTE imputation 불가 
+
+
+#### 2.3.4 변수 균일화
+# 흡연 유무에 대해서 hw3는 3개, pc3는 4개의 level을 가짐. 
+# hw3의 level로 맞춰주자. 
+## Step 1. pc3의 SMOKST의 3을 2로, 4를 3으로 바꿔줌 
+pc3 %>% mutate_at(vars("SMOKST"), ~replace(., .==3, 2)) %>% 
+  mutate_at(vars("SMOKST"), ~replace(., .==4, 3))
+
+## Step 2. 제대로 바뀌었는지 index를 이용해 확인 
+# 1. 바뀐 2와 바뀌기 전 3이 같은지 확인 
+pc3 %>% mutate_at(vars("SMOKST"), ~replace(., .==2, 0)) %>%  # test를 위해 원래 2를 0으로 대체 
+  mutate_at(vars("SMOKST"), ~replace(., .==3, 2)) %>% 
+  mutate_at(vars("SMOKST"), ~replace(., .==4, 3)) %>%
+  dplyr::filter(SMOKST == 2) %>% 
+  select(index) # 1)
+
+pc3 %>% dplyr::filter(SMOKST == 3) %>% 
+  select(index) # 2), 1)과 2)가 같음. 
+
+# 2. 바뀐 3와 바뀌기 전 4가 같은지 확인 
+pc3 %>% mutate_at(vars("SMOKST"), ~replace(., .==2, 0)) %>%  # test를 위해 원래 2를 0으로 대체 
+  mutate_at(vars("SMOKST"), ~replace(., .==3, 2)) %>% 
+  mutate_at(vars("SMOKST"), ~replace(., .==4, 3)) %>%
+  dplyr::filter(SMOKST == 3) %>% 
+  select(index) # 1)
+
+pc3 %>% dplyr::filter(SMOKST == 4) %>% 
+  select(index) # 2) 1)과 2)가 같음 
+
+## Step 3. 바꿔주기 
+pc3 %>% mutate_at(vars("SMOKST"), ~replace(., .==3, 2)) %>% 
+  mutate_at(vars("SMOKST"), ~replace(., .==4, 3)) -> pc3
+
+sum(pc3$SMOKST == 4, na.rm=T) # 4가 남아있는지 확인, 없음. 
+
+
+# 배우자의 흡연유무에 대해서는 hw3는 3개, pc3는 4개의 level을 가짐.
+# hw3의 level로 맞춰추자.
+pc3 %>% select(PTSMK) %>% drop_na() # 227 중 14
+
+## Step 1. pc3의 SMOKST의 3을 2로, 4를 3으로 바꿔줌 
+pc3 %>% mutate_at(vars("PTSMK"), ~replace(., .==3, 2)) %>% 
+  mutate_at(vars("PTSMK"), ~replace(., .==4, 3))
+
+## Step 2. 제대로 바뀌었는지 index를 이용해 확인 
+# 1. 바뀐 2와 바뀌기 전 3이 같은지 확인 
+pc3 %>% mutate_at(vars("PTSMK"), ~replace(., .==2, 0)) %>%  # test를 위해 원래 2를 0으로 대체 
+  mutate_at(vars("PTSMK"), ~replace(., .==3, 2)) %>% 
+  mutate_at(vars("PTSMK"), ~replace(., .==4, 3)) %>%
+  dplyr::filter(PTSMK == 2) %>% 
+  select(index) # 1)
+
+pc3 %>% dplyr::filter(PTSMK == 3) %>% 
+  select(index) # 2), 1)과 2)가 같음. 
+
+# 2. 바뀐 3와 바뀌기 전 4가 같은지 확인 
+pc3 %>% mutate_at(vars("PTSMK"), ~replace(., .==2, 0)) %>%  # test를 위해 원래 2를 0으로 대체 
+  mutate_at(vars("PTSMK"), ~replace(., .==3, 2)) %>% 
+  mutate_at(vars("PTSMK"), ~replace(., .==4, 3)) %>%
+  dplyr::filter(PTSMK == 3) %>% 
+  select(index) # 1)
+
+pc3 %>% dplyr::filter(PTSMK == 4) %>% 
+  select(index) # 2) 1)과 2)가 같음 
+
+## Step 3. 바꿔주기 
+pc3 %>% mutate_at(vars("PTSMK"), ~replace(., .==3, 2)) %>% 
+  mutate_at(vars("PTSMK"), ~replace(., .==4, 3)) -> pc3
+
+sum(pc3$PTSMK == 4, na.rm=T) # 4가 남아있는지 확인, 없음. 
+
+# hw3의 HSM_Y가 '연월일'의 형태를 가지고 pc3가 금연시작 나이를 가짐.
+# hw3의 형태를 pc3로 바꿔보자.
+
+hw3 %>% mutate(NO = hw$NO) %>% 
+  mutate(HSM_Y = str_replace(HSM_Y, "(-\\d+)", "")) %>% # str_replace와 rex를 이용해 바꿈. 
+  select(HSM_Y, NO) %>% drop_na() %>% type_convert(cols(HSM_Y = col_double())) %>% 
+  merge(age, key = NO) %>%  # NO를 기준으로 age와 merging 
+  select(HSM_Y, a, ymd, NO) %>% # 결과 확인 
+  mutate(age_Year = str_replace(ymd, "(-\\d+-\\d+)", "")) %>% # ymd에서 year만 추출 
+  type_convert(cols(age_Year= col_double())) %>% 
+  mutate(SMOKSP = a - (age_Year - HSM_Y)) # SMOKSP : 금연한 나이 생성 완료 
