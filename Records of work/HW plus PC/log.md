@@ -3,7 +3,7 @@
 [dplyr 패키지를 사용해서 그룹별 행의 개수 세기 (counting up rows by group using dplyr) : summarise(n=n()), tally(), count()](https://rfriend.tistory.com/240)  
 [데이터전처리, 조작을 위한 dplyr 패키지 : filter() 함수, slice() 함수, arrange() 함수, select() 함수, rename() 함수](https://rfriend.tistory.com/234)  
 [[R 프로그래밍] 데이터 가공 - 컬럼 추가하기 : mutate() (dplyr)](https://realab.tistory.com/11)  
-[dplyr 주요 동사 5가지에 대하여](https://issactoast.com/60)
+[dplyr 주요 동사 5가지에 대하여](https://issactoast.com/60)  
 [문자열함수 stingr](https://data-make.tistory.com/42)  
 [Checking for NA with dplyr](https://sebastiansauer.github.io/NAs-with-dplyr/)  
 [Data Cleaning with R and the Tidyverse: Detecting Missing Values](https://towardsdatascience.com/data-cleaning-with-r-and-the-tidyverse-detecting-missing-values-ea23c519bc62)  
