@@ -17,7 +17,7 @@
 [4. mutate 함수 : 파생변수 추가하기](http://rstudio-pubs-static.s3.amazonaws.com/318073_d95c96455d5d4891afa766bbc6d541e4.html)  
 
 
-12/18
+12/18  
 [**R 데이터 프레임 결합 : rbind(), cbind(), merge()**](https://rfriend.tistory.com/51)  
 [**Replace all occurrences of a string in a data frame**](https://stackoverflow.com/questions/29271549/replace-all-occurrences-of-a-string-in-a-data-frame)  
 [**날짜 다루는 법**](https://homy.tistory.com/2)  
