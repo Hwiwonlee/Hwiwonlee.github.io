@@ -6,9 +6,9 @@ library(xlsx)
 ## 1. exploring raw dataset 
 hw <- as.tbl(read.xlsx2('...HW_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
 pc <- as.tbl(read.xlsx2('...PC_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
-pc
-dim(hw) # (227, 949)
-dim(pc) # (137, 391)
+
+dim(hw) # (137, 391)
+dim(pc) # (227, 949)
 
 ### 1.1 중복 검사 
 duplicated(rbind(hw[, 1], pc[, 1])) 
@@ -51,14 +51,32 @@ pc1[, which(sapply(hw1,class) != sapply(pc1,class))]
 # '문자' 때문에 chr로 설정되어 있는 것을 확인
 # example : hw1$CEA vs pc1$CEA, pc1$CEA가 '>0.5' 때문에 chr로 설정되어 있음. 
 
-which(sapply(hw1, class) == "character" | sapply(pc1, class) == "character")
+#### 2.2.1 data type 비교 
+which(sapply(hw1, class) == sapply(pc1, class)) # hw1과 pc1이 같은 type인 column의 이름과 자리
+which(sapply(hw1, class) != sapply(pc1, class)) # hw1과 pc1이 다른 type인 column의 이름과 자리
+sum(sapply(hw1, class) != sapply(pc1, class)) # 17개의 col이 다른 dtype을 갖음 
 
-which(sapply(hw1, class) == "character")
-length(which(sapply(hw1, class) == "character"))
-which(sapply(pc1, class) == "character")
-length(which(sapply(pc1, class) == "character"))
+hw1[, which(sapply(hw1,class) != sapply(pc1,class))]
+pc1[, which(sapply(hw1,class) != sapply(pc1,class))]
+# '문자' 때문에 chr로 설정되어 있는 것을 확인
+# example : hw1$CEA vs pc1$CEA, pc1$CEA가 '>0.5' 때문에 chr로 설정되어 있음. 
 
-options(max.print=100000)
+which(sapply(hw1, class) == "character" | sapply(pc1, class) == "character") # hw1의 col이 char거나, pc1의 col이 char인 col name과 자리
+length(which(sapply(hw1, class) == "character" | sapply(pc1, class) == "character")) # 전체 26개 
+ 
+which(sapply(hw1, class) == "character") # hw1의 col 중 char인 colname과 자리 
+length(which(sapply(hw1, class) == "character")) # 19개 
+which(sapply(pc1, class) == "character") # pc1의 col 중 char인 colname과 자리 
+length(which(sapply(pc1, class) == "character")) # 26개 
+
+# MORE EFFICIENT char인 pc1와 hw1의 col 중에 겹치는 것, 겹치지 않는 것 뽑아내기. 
+#### GRAB-BAG ####
+a <- c(which(sapply(pc1, class) == "character"), which(sapply(hw1, class) == "character")) 
+length(a) # 26 + 19, hw1와 pc1의 char인 colname 합치기 
+
+a[duplicated(a)]; length(a[duplicated(a)]) # 19개의 col이 겹침. 
+a[-which(duplicated(a) | duplicated(a, fromLast = T))]; length(a[-which(duplicated(a) | duplicated(a, fromLast = T))]) # 7개의 col이 겹치지 않음. 
+
 print(as.data.frame(rbind(hw1[, which(sapply(hw1, class) == "character")], pc1[, which(sapply(hw1, class) == "character")])), width = getOption("max.print"))
 
 # U_cotinine
@@ -98,9 +116,7 @@ print(as.data.frame(rbind(hw1[, which(sapply(hw1, class) == "character")], pc1[,
 # hw와 pc의 구간이 조금 다름 : (1,4) vs (1,2), (3,4)
 # < 1, (1,4), (5,9), (10. 19), (20, 29), (30, 39), 100 이상
 
-
-print(as.data.frame(rbind(hw1[, which(sapply(pc1, class) == "character")], pc1[, which(sapply(pc1, class) == "character")]))[, 1:13], width = getOption("max.print"))
-
+print(as.data.frame(rbind(hw1[, which(sapply(pc1, class) == "character")], pc1[, which(sapply(pc1, class) == "character")])), width = getOption("max.print"))
 # SBP, DBP, LDL : '.' = null value 때문
 # U_cotinine : 위에서 처리
 
@@ -116,12 +132,12 @@ print(as.data.frame(rbind(hw1[, which(sapply(pc1, class) == "character")], pc1[,
 
 # Anti_HIV : negative or null
 
-
-print(as.data.frame(rbind(hw1[, which(sapply(pc1, class) == "character")], pc1[, which(sapply(pc1, class) == "character")]))[, 14:26], width = getOption("max.print"))
-
 # Anti_HAVIgG, U_color, U_Turbidity : chr 
 # U_Alb, U_Glucose, U_Ket, U_BIL, U_BLD, U_Uro,
 # U_NIT, U_RBC, U_WBC, U_SQE : 위에서 처리 
+
+
+#### ####        
 
 
 # CONCLUSION df1, hw1 bind with pc1 
@@ -130,6 +146,7 @@ df1 <- rbind(hw1, pc1)
 
 
 ### 2.2 columns with alcohole
+# 알콜 관련한 column의 base line
 col_hw2 <- c("ALC", "ALCDU", "CALC",
              "BEER", "BEER_A",
              "SOJU", "SOJU_A",
@@ -138,8 +155,7 @@ col_hw2 <- c("ALC", "ALCDU", "CALC",
              "WINE", "WINE_A",
              "ALC_A", "ALC_T",
              "ALC_DA")
-
-# 알콜 관련한 column의 base line
+             
 hw2 <- hw[, col_hw2] %>% type_convert(cols(ALC = col_double()))
 
 col_pc2 <- c("ALCOHOL", "ALCOHYR", "DrQYr","DrQMo",
