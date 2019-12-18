@@ -18,4 +18,12 @@
 
 
 12/18
+[**R 데이터 프레임 결합 : rbind(), cbind(), merge()**](https://rfriend.tistory.com/51)  
+[**Replace all occurrences of a string in a data frame**](https://stackoverflow.com/questions/29271549/replace-all-occurrences-of-a-string-in-a-data-frame)  
+[**날짜 다루는 법**](https://homy.tistory.com/2)  
+[[R]날짜와 시간, as.Date, lubridate]https://data-make.tistory.com/35)  
+[**Extract Month and Year From Date in R**](https://stackoverflow.com/questions/37704212/extract-month-and-year-from-date-in-r)
+
+
+
 
