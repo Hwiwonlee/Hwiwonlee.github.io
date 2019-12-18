@@ -7,6 +7,23 @@ library(xlsx)
 hw <- as.tbl(read.xlsx2('...HW_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
 pc <- as.tbl(read.xlsx2('...PC_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
 
+# dataset에  '나이'가 누락되어 있어서 추가로 import 
+age <- as.tbl(read.xlsx2('...AGE.xlsx', sheetIndex=1, header=T, stringsAsFactors = FALSE))
+age %>% rename(NO = NO.) -> age
+
+#### NOTE. age의 종양은행검체입고일 날짜로 바꿔주기 ####
+# import할 때 (char, int) 형태로 들어옴.
+# as.Date(age$종양은행.검체.입고일, format = "%Y-%m-%d")
+# 로 안바뀜 
+
+# 차선책으로 origin을 설정해 origin 기준 integer만큼 day가 추가된 형태로 구함.
+# origin 찾아서 넣음.
+as.Date(as.integer(age$종양은행.검체.입고일), origin = "1899-12-30")
+age$종양은행.검체.입고일 <- as.Date(as.integer(age$종양은행.검체.입고일), origin = "1899-12-30")
+age
+# 일단 답은 나오는데, 이게 최선일까? 
+####
+
 dim(hw) # (137, 391)
 dim(pc) # (227, 949)
 
