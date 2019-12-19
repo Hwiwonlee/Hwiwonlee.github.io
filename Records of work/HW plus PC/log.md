@@ -31,5 +31,14 @@ Rprofile
 [R의 환경설정을 내맘대로? Working Dir 변경과 R 시작시 library 호출](https://niceguy1575.tistory.com/13)
 
 
+12/19
+[**Count/tally observations by group**](https://dplyr.tidyverse.org/reference/tally.html)  
+[dplyr count non-NA value in group by [duplicate]](https://stackoverflow.com/questions/44290704/dplyr-count-non-na-value-in-group-by)  
+[**R 데이터 프레임 결합 : rbind(), cbind(), merge()**](https://rfriend.tistory.com/51) : merge에서 자주 실수함.  
+[tidyr 패키지 사용법(split, reshape, combine)](https://gomguard.tistory.com/229)  
+[**https://stackoverflow.com/questions/28857653/removing-na-observations-with-dplyrfilter**](Removing NA observations with dplyr::filter())  
+
+###**R markdown**
+[한글을 포함한 R Markdown 컴파일](https://github.com/jaimyoung/data-science-in-korean/blob/master/r-markdown-korean.md)
 
 
