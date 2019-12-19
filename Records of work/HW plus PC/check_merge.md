@@ -608,3 +608,103 @@ pc4 %>% mutate(JOB_index = JOB + 0.2) -> pc4_change
 # 4.4 rbind
 # CONCLUSION
 df4 <- rbind(hw4_change, pc4_change)
+
+#### 5. 약 관련 변수
+
+# 5.1 extract 
+hw %>% 
+  # 아무 영문자로 시작하고 뒤에 OC가 오는 col과 OC로 시작하는 col 선택 
+  select(matches("^[A-z]OC|^OC"), index) %>% 
+  type_convert(cols(OC=col_double()))-> hw5 
+
+pc %>% 
+  # OC로 시작하는 col 선택 
+  select(matches("^OC"), index) %>% 
+  type_convert(cols(OC=col_double()))-> pc5
+
+# 5.2 describe 
+hw5 %>% 
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.)))) 
+# OC_A와 OCDU는 모두 null, 사용나이와 기간
+# HOC_A, HOCDU는 7개 non-null
+# OC는 34개 non_null
+
+pc5 %>% 
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.))))
+# OCYR, OCMO 15개 non_null
+# OCAGE 18개 non_null
+# OC 56개 non-null
+
+# 5.3 Imputation
+# TO DO. OC, HOC_A, HOCDU의 NA row가 모두 일치 하나?
+# 일치하지 않는다면 그 자리의 obs를 imputation할 수 있지 않을까?
+# 그럼 일치 여부를 쉽게 볼 수 있는 방법은 뭘까? 
+
+# Step 1. hw5
+hw5 %>% 
+  drop_na(OC) %>% 
+  drop_na(HOC_A) # 1)
+
+hw5 %>% 
+  drop_na(OC) %>% 
+  drop_na(HOCDU) # 2)
+
+# 1)과 2)의 결과가 같음. 
+# 따라서 OC가 NA이나 다른 column이 값을 갖는 경우는 없음.
+# 즉, imputation 불가 
+
+# Step 2. pc5
+pc5 %>% 
+  dplyr::filter(is.na(OC)) %>% # OC가 na인 것만 return, 네 개의 col 모두 171개 
+  select_if(function(x) any(is.na(x))) %>% 
+  summarise_each(funs(sum(is.na(.)))) # 4개의 col의 NA 모두 171개
+# 따라서 OC가 NA면 다른 col도 NA다. 
+# 즉, imputation 불가 
+
+# 5.4 variable scaling
+# hw5.HOCDU : 과거 복용 기간, scale이 년,월인데 한 개의 column으로 표현
+# 120과 180으로 추측해본 결과 '개월'이 아닐까 함.
+
+# pc5.OCYR, pc5.OCOM : 복용 기간의 년, 월
+
+# 두 table을 합치기 위해 단위를 '년'으로 통일하기로 함. 
+# 단, 120과 180는 수정에 의사결정이 필요하므로 일단 그냥 두기로 함. 
+
+# pc5.OCYR, pc5.OCOM를 연 단위로 바꾸기
+pc5 %>% 
+  dplyr::filter(!is.na(OC)) %>%
+  dplyr::filter(!is.na(OCAGE)) %>% 
+  mutate_at(vars(contains("OC")), ~replace(., is.na(.), 0)) %>%
+  mutate(HOCDU = ifelse(OCYR != 9999 | OCMO != 9999, OCYR + (OCMO/12), 9999))
+# To DO 이 코드의 문제는 mutate_at을 써서 NA를 채워 넣었기 때문에 
+# 이 상태로 pc5를 업데이트하면 dataset이 손상된다. 
+# merge?
+
+pc5 %>% 
+  dplyr::filter(!is.na(OC)) %>%
+  dplyr::filter(!is.na(OCAGE)) %>% 
+  mutate_at(vars(contains("OC")), ~replace(., is.na(.), 0)) %>%
+  mutate(HOCDU = ifelse(OCYR != 9999 | OCMO != 9999, OCYR + (OCMO/12), 9999)) %>% 
+  select(HOCDU, index) %>% # merge 대상인 HOCDU와 key, index 선택 
+  mutate_at(vars(contains("OC")), ~replace(., . == 0 , NA)) %>% # NA는 NA로 돌려놓고 
+  merge(pc5, by = "index", all = T) %>% # Outter join by index 
+  as.tbl() %>% 
+  select(OC, OCAGE, OCYR, OCMO, HOCDU, index) -> pc5 # 결과 확인, pc5로 대체 
+  
+# 5.5 rbind 
+# hw5에서 의미 없는 col인 OC_A와 OCDU를 지우고
+# HOC_A와 HOCDU를 OC_A, OCDU로 바꿔준다. 
+# pc5는 hw5의 형식에 맞춰준다. 
+
+hw5 %>% select(OC, HOC_A, HOCDU) %>% 
+  rename(OC_A = HOC_A,
+         OCDU = HOCDU) -> hw5_change
+
+pc5 %>% rename(OC_A = OCAGE,
+               OCDU = HOCDU) %>% 
+  select(OC, OC_A, OCDU) -> pc5_change
+
+# CONCLUSION
+df5 <- rbind(hw5_change, pc5_change)
