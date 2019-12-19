@@ -24,10 +24,10 @@
 [[R]날짜와 시간, as.Date, lubridate](https://data-make.tistory.com/35)  
 [**Extract Month and Year From Date in R**](https://stackoverflow.com/questions/37704212/extract-month-and-year-from-date-in-r)
 
-오류 해결
+오류 해결  
 [[R] 의 패키지 xlsx가 rJava 때문에 로딩되지 않을 때 해결법](http://egloos.zum.com/greentec/v/4176464)
 
-Rprofile
+Rprofile  
 [R의 환경설정을 내맘대로? Working Dir 변경과 R 시작시 library 호출](https://niceguy1575.tistory.com/13)
 
 
