@@ -708,3 +708,43 @@ pc5 %>% rename(OC_A = OCAGE,
 
 # CONCLUSION
 df5 <- rbind(hw5_change, pc5_change)
+
+#### 6. 정보 (1)
+# 6.1 extract
+hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+  type_convert(cols(MARRIG = col_double())) %>% 
+  group_by(MARRIG) %>% tally() # NA 6개 
+
+pc %>% select(MARRI, SCHOLA, INCOME) %>% 
+  type_convert(cols(MARRI = col_double())) %>% 
+  group_by(MARRI) %>% tally() # 기타 항목은 null 그러나 level 5, 6건 존재
+# MARRI는 의사결정 필요하므로 동결
+
+# To DO group_by를 여러번 할 수 있는 방법은 없을까? 
+# MARRIG, EDULEV, ECOST의 항목 개수를 모두 보여줄 수 있는 방법? 
+
+#### TRY LOG ####
+hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+  type_convert(cols(MARRIG = col_double())) %>% 
+  group_by(MARRIG) %>% group_map(~ head(.x, 100L))
+
+pc %>% select(MARRI, SCHOLA, INCOME) %>% 
+  type_convert(cols(MARRI = col_double())) %>% 
+  group_by(MARRI) %>% group_map(~ head(.x, 100L)) 
+#### ####
+
+# TO DO 아래의 과정을 한 코드로 묶을 수는 없을까? 
+# list로 출력하면 가능할 것 같은데 
+hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+  type_convert(cols(MARRIG = col_double())) %>% 
+  group_by(MARRIG) %>% arrange(MARRIG) %>% summarise(n = n())
+
+hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+  type_convert(cols(MARRIG = col_double())) %>% 
+  group_by(EDULEV) %>% arrange(EDULEV) %>% summarise(n = n())
+
+hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+  type_convert(cols(MARRIG = col_double())) %>% 
+  group_by(ECOST) %>% arrange(ECOST) %>% summarise(n = n())
+
+  
