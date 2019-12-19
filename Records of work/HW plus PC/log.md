@@ -38,7 +38,7 @@ Rprofile
 [tidyr 패키지 사용법(split, reshape, combine)](https://gomguard.tistory.com/229)  
 [**https://stackoverflow.com/questions/28857653/removing-na-observations-with-dplyrfilter**](Removing NA observations with dplyr::filter)  
 
-###**R markdown**
+### **R markdown**  
 [한글을 포함한 R Markdown 컴파일](https://github.com/jaimyoung/data-science-in-korean/blob/master/r-markdown-korean.md)
 [R Markdown 기초](https://blog.zarathu.com/posts/2019-01-03-rmarkdown/)
 
