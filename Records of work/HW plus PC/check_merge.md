@@ -546,9 +546,67 @@ sum(pc3$PTSMK == 4, na.rm=T) # 4가 남아있는지 확인, 없음.
 
 hw3 %>% mutate(NO = hw$NO) %>% 
   mutate(HSM_Y = str_replace(HSM_Y, "(-\\d+)", "")) %>% # str_replace와 rex를 이용해 바꿈. 
-  select(HSM_Y, NO) %>% drop_na() %>% type_convert(cols(HSM_Y = col_double())) %>% 
-  merge(age, key = NO) %>%  # NO를 기준으로 age와 merging 
-  select(HSM_Y, a, ymd, NO) %>% # 결과 확인 
+  # select(HSM_Y, NO) %>% 
+  # drop_na() %>% 
+  type_convert(cols(HSM_Y = col_double())) %>% 
+  # select(NO) %>% 
+  merge(age, by = 'NO') %>%  # NO를 기준으로 age와 merging 
+  # select(HSM_Y, a, ymd, NO) %>% # 결과 확인
   mutate(age_Year = str_replace(ymd, "(-\\d+-\\d+)", "")) %>% # ymd에서 year만 추출 
   type_convert(cols(age_Year= col_double())) %>% 
-  mutate(SMOKSP = a - (age_Year - HSM_Y)) # SMOKSP : 금연한 나이 생성 완료 
+  mutate(SMOKSP = a - (age_Year - HSM_Y)) %>%   # SMOKSP : 금연을 시작한 나이 생성 완료 
+  as.tbl() %>% 
+  select(c(2:27), SMOKSP) -> hw3 # SMOKSP 추가함. 137 x 27
+
+  
+#### 2.3.5 rbind()
+
+# 기존 hw3에서 유의미한 변수들만 뽑아서 정리
+# '유의미한 변수'란 pc3와 함께 볼 수 있는 변수들을 의미. 
+hw3 %>% 
+  select(c(SM, SM_A, SMAM, SMDU, SMOKSP, CSM, CSM_F)) -> hw3_change 
+
+# 기존 pc3에서 유의미한 변수들만 뽑아서 정리
+# '유의미한 변수'란 hw3와 함께 볼 수 있는 변수들을 의미. 
+pc3 %>%
+  select(c(SMOKST , SMOKAGE, SMOKDS, SMOKYR, SMOKSP, PTSMK, SECSM)) %>% 
+  rename(SM = SMOKST,
+         SM_A = SMOKAGE,
+         SMAM = SMOKDS,
+         SMDU = SMOKYR,
+         CSM = PTSMK,
+         CSM_F = SECSM) -> pc3_change
+
+# rbind(hw3_change, pc3_change)
+# CONCLUSION
+df3 <- rbind(hw3_change, pc3_change)
+
+
+#### 4. JOB 
+# rawdatset의 codebook을 체크해보니 사용할 수 있는 변수가 "JOB" 밖에 없음
+# 1) hw와 pc의 JOB column을 추출하고 
+# 2) level을 맞춰주고
+# 3) 합치기 
+
+# 4.1 extract
+hw %>% select(JOB) %>% 
+  type_convert(cols(JOB = col_double())) -> hw4
+
+pc %>% select(JOB) %>% 
+  type_convert(cols(JOB = col_double())) -> pc4
+
+# 4.2 decrirbe
+# imputation 보류 
+# 의사 결정 필요 
+hw4 %>% group_by(JOB) %>% tally()
+pc4 %>% group_by(JOB) %>% tally()
+
+
+# 4.3 add index
+hw4 %>% mutate(JOB_index = JOB + 0.1) -> hw4_change
+pc4 %>% mutate(JOB_index = JOB + 0.2) -> pc4_change
+
+
+# 4.4 rbind
+# CONCLUSION
+df4 <- rbind(hw4_change, pc4_change)
