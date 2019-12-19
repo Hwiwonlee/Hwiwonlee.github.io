@@ -40,5 +40,5 @@ Rprofile
 
 ###**R markdown**
 [한글을 포함한 R Markdown 컴파일](https://github.com/jaimyoung/data-science-in-korean/blob/master/r-markdown-korean.md)
-
+[R Markdown 기초](https://blog.zarathu.com/posts/2019-01-03-rmarkdown/)
 
