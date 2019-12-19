@@ -1,6 +1,4 @@
 ```r
-# install.packages("xlsx")
-library(xlsx)
 # Merging data set
 
 ## 1. exploring raw dataset 
