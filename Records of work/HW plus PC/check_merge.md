@@ -747,4 +747,36 @@ hw %>% select(MARRIG, EDULEV, ECOST) %>%
   type_convert(cols(MARRIG = col_double())) %>% 
   group_by(ECOST) %>% arrange(ECOST) %>% summarise(n = n())
 
+
+
+
+
+
+
+
+
+
+
+ #### Function DEFINING ####
+
+sum_of_each_category_element <- function(df, target) {
+  # dataset과 dataset의 column을 받아 
+  # column 기준에서 각 column이 몇 개의 category를 갖고 있으며
+  # 각 category마다 몇 개의 element를 갖고 있는지 보여주기 위한 function
   
+  # 결과 공간 생성
+  # 여러 개의 결과를 한번에 보여주려면 list가 좋을 듯
+  # ? list에 빈 공간 어떻게 만들더라? 
+  l <- list()
+  
+  # n개의 column을 반복하기 위한 for문
+  for(i in 1:length(target)){
+    df %>% select(target) %>% # df에서 target column을 선택 
+      type_convert(cols(target[1] = col_double())) %>% # 편의를 위해 col type 변경 
+      group_by(target[i]) %>% # i번째 col을 기준으로 group_by
+      arrange(MARRIG) %>% # @ 굳이 arrange할 필요가 있을까? 
+      summarise(n = n()) # element 계산을 위한 summarise 
+    
+    
+  }
+}
