@@ -709,19 +709,22 @@ pc5 %>% rename(OC_A = OCAGE,
 # CONCLUSION
 df5 <- rbind(hw5_change, pc5_change)
 
-#### 6. 정보 (1)
+#### 6. 개인정보 (1)
 # 6.1 extract
-hw %>% select(MARRIG, EDULEV, ECOST) %>% 
-  type_convert(cols(MARRIG = col_double())) %>% 
-  group_by(MARRIG) %>% tally() # NA 6개 
 
-pc %>% select(MARRI, SCHOLA, INCOME) %>% 
-  type_convert(cols(MARRI = col_double())) %>% 
-  group_by(MARRI) %>% tally() # 기타 항목은 null 그러나 level 5, 6건 존재
-# MARRI는 의사결정 필요하므로 동결
-
-# To DO group_by를 여러번 할 수 있는 방법은 없을까? 
-# MARRIG, EDULEV, ECOST의 항목 개수를 모두 보여줄 수 있는 방법? 
+# TO DO 아래의 과정을 한 코드로 묶을 수는 없을까? 
+# list로 출력하면 가능할 것 같은데 
+# hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+#   type_convert(cols("MARRIG" = col_double())) %>% 
+#   group_by(MARRIG) %>% arrange(MARRIG) %>% summarise(n = n())
+# 
+# hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+#   type_convert(cols(MARRIG = col_double())) %>% 
+#   group_by(EDULEV) %>% arrange(EDULEV) %>% summarise(n = n())
+# 
+# hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+#   type_convert(cols(MARRIG = col_double())) %>% 
+#   group_by(ECOST) %>% arrange(ECOST) %>% summarise(n = n())
 
 #### TRY LOG ####
 hw %>% select(MARRIG, EDULEV, ECOST) %>% 
@@ -733,21 +736,158 @@ pc %>% select(MARRI, SCHOLA, INCOME) %>%
   group_by(MARRI) %>% group_map(~ head(.x, 100L)) 
 #### ####
 
-# TO DO 아래의 과정을 한 코드로 묶을 수는 없을까? 
-# list로 출력하면 가능할 것 같은데 
-hw %>% select(MARRIG, EDULEV, ECOST) %>% 
+
+sum_of_each_category_element(hw, list("MARRIG", "EDULEV", "ECOST"))
+sum_of_each_category_element(pc, list("MARRI", "SCHOLA", "INCOME"))
+
+
+# 6.2 Variable scaling 
+# 1) MARRI는 의사결정이 필요해서 동결
+
+# 2) EDULEV은 가능할 것 같아서 시도 : TRY 
+pc %>% select(SCHOLA, index) %>% 
+  type_convert(cols(MARRI = col_double())) %>% 
+  mutate(EDULEV = ifelse(
+    SCHOLA == 2, 1, ifelse(
+      SCHOLA == 3, 2, ifelse(
+        SCHOLA == 4 | SCHOLA == 5 | SCHOLA == 6, 3, ifelse(
+          SCHOLA == 7 | SCHOLA == 8, 4, 
+          5
+            )
+        )
+      )
+    )
+    ) %>% 
+  # dplyr::filter(EDULEV == 5) # check. 
+  select(-SCHOLA) -> pc_6_EDULEV
+
+# 3) ECOST도 가능할 것 같아서 시도 : TRY
+## Step 1. hw의 수준이 이상해서 바꿔줌 
+## 4 : [400, 700), 5 : 400 이상, 6 : 700 이상.
+## 4 : 4 + 5, 5 : 6 으로 
+  
+hw %>% select(ECOST, index) %>% 
+  type_convert(cols(ECOST = col_double())) %>% 
+  mutate(ECOST = ifelse(
+    ECOST == 4 | ECOST == 5, 4, ifelse(
+      ECOST == 6, 5, ifelse(
+        ECOST == 7, 6, ECOST
+      )
+    )
+  )
+  ) -> hw_6_ECOST
+  
+
+sum_of_each_category_element(hw, list("ECOST"))
+sum_of_each_category_element(hw_6_ECOST, list("ECOST")) # 체크 완료 
+
+## Step 2. pc의 수준 맞춰주기
+## 9 : 기타를 6: 잘모름으로 바꿔줌
+
+pc %>% select(INCOME, index) %>% 
+  type_convert(cols(INCOME = col_double())) %>% 
+  mutate(ECOST = ifelse(
+    INCOME == 9, 6, INCOME
+  )) %>%
+  select(ECOST, index) -> pc_6_ECOST
+
+sum_of_each_category_element(pc, list("INCOME"))
+sum_of_each_category_element(pc_6_ECOST, list("ECOST")) # 체크 완료 
+
+
+## Step 3. rbind
+hw %>% select(MARRIG, EDULEV, index) %>% 
   type_convert(cols(MARRIG = col_double())) %>% 
-  group_by(MARRIG) %>% arrange(MARRIG) %>% summarise(n = n())
+  merge(hw_6_ECOST, by = "index", all = T) %>% 
+  as.tibble() -> hw6
 
-hw %>% select(MARRIG, EDULEV, ECOST) %>% 
-  type_convert(cols(MARRIG = col_double())) %>% 
-  group_by(EDULEV) %>% arrange(EDULEV) %>% summarise(n = n())
-
-hw %>% select(MARRIG, EDULEV, ECOST) %>% 
-  type_convert(cols(MARRIG = col_double())) %>% 
-  group_by(ECOST) %>% arrange(ECOST) %>% summarise(n = n())
+sum_of_each_category_element(hw, list("MARRIG", "EDULEV", "ECOST"))
+sum_of_each_category_element(hw6, list("MARRIG", "EDULEV", "ECOST")) # 변경 사항 체크 완료
 
 
+pc %>% select(MARRI, index) %>% 
+  type_convert(cols(MARRI = col_double())) %>% 
+  merge(pc_6_EDULEV, by = "index", all = T) %>% 
+  merge(pc_6_ECOST, by = "index", all = T) %>%
+  rename(MARRIG = MARRI) %>% 
+  as.tibble() -> pc6
+
+sum_of_each_category_element(pc, list("MARRI", "SCHOLA", "INCOME"))
+sum_of_each_category_element(pc6, list("MARRIG", "EDULEV", "ECOST")) # 변경 사항 체크 완료
+
+
+# CONCLUSION
+df6 <- rbind(hw6, pc6)
+
+
+
+#### 7. MENA 관련 정보
+# 7.1 extract
+hw %>% 
+  select(matches("^MENA|^MPER|LMP|MENO|HORMONE|^LAC|^FAIL|FDEL"), 
+         -matches("FAILURE$|MENO$|O_A$")) %>% 
+  type_convert(cols(MENA = col_double()))-> hw7
+# %>% names(.)로 colname 뽑을 수 있음. 
+
+pc %>% 
+  select(matches("^MEN|^LMP|^HRT$|^BRFEED$|^BRFEEDN$|^SAB$|^AAB$|^FPR"), 
+         -matches("^MENDRE$|MENSDU")) %>% 
+  type_convert(cols(MENAGE = col_double()))-> pc7
+
+
+#### 7.2 decrirbe
+dim(hw7); dim(pc7)
+names(pc7)
+names(hw7)
+
+#### 7.3 variable handling 
+sum_of_each_category_element(pc7, list("MENARCH"))
+sum_of_each_category_element(hw7, list("MENA"))
+
+hw7 %>%
+  select(LMP) %>% drop_na()
+
+# hw7는 LMP, pc7는 LMPM, LMPD로 되어 있기 때문에
+# hw7의 형식으로 맞춰줌
+pc7 %>%
+  # LMPM이 10보다 크면 바로 paste, 작으면 0을 붙여서 paste
+  mutate(LMP = ifelse(LMPM >= 10, # TO DO paste 좀 더 깔끔하게 할 수 없을까? 
+                      paste(LMPM, LMPD, sep = "-"), 
+                      paste(0, paste(LMPM, LMPD, sep = "-"), sep = ""))) %>% 
+  
+  select(-c(LMPM, LMPD)) -> pc7_change # LMPM과 LMPD 삭제 
+
+# pc7.MENORETC가 null이므로 삭제 
+pc7 %>% 
+  select(MENORETC) %>% drop_na()
+
+pc7_change %>% select(-MENORETC) -> pc7_change
+
+names(pc7)
+names(hw7)
+
+#### 7.4 renaming
+pc7_change %>%
+  rename(MENA_A = MENAGE, 
+         MENA = MENARCH, 
+         MPERID1 = MENREG,
+         MPERID2 = MENSPE,
+         MENO_D = MENOAGE, 
+         MENO_RES = MENORE,
+         HORMONE = HRT,
+         LACTATION = BRFEED, 
+         LAC_NO = BRFEEDN,
+         FAILURE1_T = SAB,
+         FAILURE2_T = AAB,
+         FDEL_A= FPRAGE) %>% 
+  select(names(hw7)) -> pc7_change
+
+#### 7.5 rbind
+df7 <- rbind(hw7, pc7_change)
+# CONCLUSION
+#### CAUTION ####
+# variable scaling을 하지 않음.
+# MENA, HORMONE에 대한 의사결정 필요함. 
 
 
 
@@ -757,7 +897,9 @@ hw %>% select(MARRIG, EDULEV, ECOST) %>%
 
 
 
- #### Function DEFINING ####
+
+
+#### DEFINING ####
 
 sum_of_each_category_element <- function(df, target) {
   # dataset과 dataset의 column을 받아 
@@ -772,11 +914,43 @@ sum_of_each_category_element <- function(df, target) {
   # n개의 column을 반복하기 위한 for문
   for(i in 1:length(target)){
     df %>% select(target) %>% # df에서 target column을 선택 
-      type_convert(cols(target[1] = col_double())) %>% # 편의를 위해 col type 변경 
+      type_convert(cols(target[i] = col_double())) %>% # 편의를 위해 col type 변경 
+      
+      # 12.20 error
+      # 아마 target[i]로 처리가 안되는 것 같음.
+      # character를 받아올 수 없나? 
+
+      # SOLUTION : 하단 참조       
+      
       group_by(target[i]) %>% # i번째 col을 기준으로 group_by
-      arrange(MARRIG) %>% # @ 굳이 arrange할 필요가 있을까? 
-      summarise(n = n()) # element 계산을 위한 summarise 
-    
-    
+      arrange(target[i]) %>% # @ 굳이 arrange할 필요가 있을까? 
+      summarise(n = n()) -> l[[length(l)+1]] # element 계산을 위한 summarise 
   }
+  return(l)  
+
 }
+
+## SOLUTION ##
+hw %>% select(target) %>% 
+  type_convert(cols(target = col_double())) -> test_df
+
+target <- list("MARRIG", "EDULEV", "ECOST")
+
+## 단 한 줄의 코드로 원하는 결과를 얻어올 수 있음. 
+df_list <- lapply(target, function(i) group_by(test_df, .dots=i) %>%summarise(n = n()))
+## SOLUTION ##
+
+#### FUNCTION 1 ####
+sum_of_each_category_element <- function(df, target) {
+  
+  a <- unlist(target)[1]
+   
+  df %>% select(unlist(target)) %>% 
+    type_convert(cols(a = col_double())) -> test_df
+  
+  df_list <- lapply(target, function(i) group_by(test_df, .dots=i) %>%summarise(n = n()))
+  
+  return(df_list)
+   
+}
+#### FUNCTION 1 
