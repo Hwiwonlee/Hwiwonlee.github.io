@@ -889,7 +889,91 @@ df7 <- rbind(hw7, pc7_change)
 # variable scaling을 하지 않음.
 # MENA, HORMONE에 대한 의사결정 필요함. 
 
+#### 8. EXFQ
+# 8.1 extract
+hw %>% 
+  select(EXFQ, EXAM, DAY_WALK, SPORT, SPORT_K, SPORT_T, SPORT2_K, index) %>% 
+  type_convert(cols(EXFQ = col_double())) -> hw8
 
+pc %>% 
+  select(VIGORD, VIGORM, WALKH, PA, PA1_KIND, PA1_HR, PA2_KIND, index) %>% 
+  type_convert(cols(VIGORD = col_double())) -> pc8
+
+sum_of_each_category_element(hw8, list("EXFQ", "EXAM"))
+sum_of_each_category_element(pc8, list("VIGORD", "VIGORM"))
+
+
+# 8.2 variable handling
+
+# 1) VIGORM : 0을 60, 11을 70으로 교체 
+pc8 %>% 
+  mutate(VIGORM = ifelse(VIGORM == 0, 60,
+                         ifelse(VIGORM == 11, 70, VIGORM))) -> pc8_change
+  
+
+
+# 2) hw.SPORT_T : categorical, pc.PA1_HR : descrete
+# categorical로 맞춰주기 
+sum_of_each_category_element(hw8, list("SPORT_T"))
+sum_of_each_category_element(pc8_change, list("PA1_HR"))
+
+pc8_change %>% 
+  # PA1_HR : 0 or 9999인 obs의 다른 value는 어떻게 되어 있는지 확인 
+  dplyr::filter(PA1_HR == 0 | PA1_HR == 9999) 
+  # EX는 하지만 얼마나 하는지는 모르는 obs로 보임. 일단 두자. 
+
+
+# 구간에 맞춰 categorical로 정리 
+pc8_change %>% 
+  # select(PA1_HR) %>% 
+  mutate(SPORT_T = ifelse(PA1_HR < 1, 1,
+                          ifelse(PA1_HR < 2, 2,
+                                 ifelse(PA1_HR < 3, 3,
+                                        ifelse(PA1_HR < 4, 4,
+                                               ifelse(PA1_HR < 9999, 5, PA1_HR)))))) %>% 
+  # sum_of_each_category_element(., list("PA1_HR", "SPORT_T")) # 체크 완료 
+  select(-PA1_HR) -> pc8_change # PA1_HR 삭제 
+  
+
+
+# 3) hw.DAY_WALK : categorical, pc.WALKH : descrete
+# descrete를 categorical로 맞춰주기. 
+
+sum_of_each_category_element(hw8, list("DAY_WALK"))
+sum_of_each_category_element(pc8_change, list("VIGORM"))
+
+# 0이 있는게 이상해서 찾아보니 WALKM이 있음. 
+# WALKM이 true인 경우를 찾아서 mutate해야할 것 같음. 
+
+pc %>% 
+  select(WALKH, WALKM, index) %>% 
+  type_convert(cols(.=col_double())) %>% 
+  dplyr::filter(WALKH != "NA" | WALKM != "NA") %>% 
+  mutate_at(vars(("WALKH")), ~replace(., is.na(.), 0)) %>% 
+  mutate(DAY_WALK = ifelse(WALKH == 0 & WALKM < 5, 1, 
+                           ifelse(WALKH == 0 &WALKM < 15, 2,
+                                 ifelse(WALKH == 0  & WALKM < 30, 3,
+                                       ifelse(WALKH == 0  & WALKM < 45, 4,
+                                             ifelse(WALKH != 0 | WALKH != "NA", 5, WALKH)))))
+         ) %>% # %>% dplyr::filter(WALKM < 10) 체크 완료  
+  merge(pc8_change, by = "index", all.y=T) %>% 
+  as_tibble() %>% 
+  select(-matches("H.x$")) %>% # %>% names()
+  select(-matches("WALK.")) -> pc8_change
+
+
+# 8.3 rename
+pc8_change %>% 
+  rename(EXFQ = VIGORD,
+         EXAM = VIGORM,
+         SPORT = PA,
+         SPORT_K = PA1_KIND,
+         SPORT2_K = PA2_KIND) %>% 
+  select(names(hw8)) -> pc8_change
+
+
+# 8.4 rbind
+df8 <- rbind(hw8, pc8_change)
 
 
 
