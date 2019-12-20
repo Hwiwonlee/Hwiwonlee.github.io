@@ -45,3 +45,12 @@ Rprofile
 [한글을 포함한 R Markdown 컴파일](https://github.com/jaimyoung/data-science-in-korean/blob/master/r-markdown-korean.md)  
 [R Markdown 기초](https://blog.zarathu.com/posts/2019-01-03-rmarkdown/)
 
+
+
+12/20
+### [**dplyr group_by loop through different columns**](https://stackoverflow.com/questions/55152472/dplyr-group-by-loop-through-different-columns) : function 1  
+[R Conditional evaluation when using the pipe operator %>%](https://stackoverflow.com/questions/30604107/r-conditional-evaluation-when-using-the-pipe-operator)  
+[ifelse with no else](https://stackoverflow.com/questions/42427343/ifelse-with-no-else) : ifelse에서 else일 때는 pass하고 싶을 때  
+[select columns based on multiple strings with dplyr matches()](https://stackoverflow.com/questions/29018292/select-columns-based-on-multiple-strings-with-dplyr-contains)  
+
+
