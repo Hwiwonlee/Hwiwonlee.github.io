@@ -1,8 +1,8 @@
 
-comment's legend
-TRY : Just give it a try, just. 
-CAUTION : Need to discuss 
-NOTE : An important thing for check, or something, 
+comment's legend  
+TRY : Just give it a try, just.   
+CAUTION : Need to discuss   
+NOTE : An important thing for check, or something,   
 ```r
 # Merging data set
 
