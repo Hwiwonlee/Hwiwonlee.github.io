@@ -6,7 +6,7 @@ NOTE : An important thing for check, or something,
 ```r
 # Merging data set
 
-## 1. exploring raw dataset 
+# 1. exploring raw dataset 
 hw <- as.tbl(read.xlsx2('...HW_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
 pc <- as.tbl(read.xlsx2('...PC_DATA.xlsx', sheetIndex=1, header=TRUE, stringsAsFactors = FALSE))
 
