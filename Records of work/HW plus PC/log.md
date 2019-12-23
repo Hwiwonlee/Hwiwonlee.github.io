@@ -1,6 +1,4 @@
-12/17
-
-
+# 12/17  
 [정규표현식](https://data-make.tistory.com/44)  
 [**How do I replace NA values with zeros in an R dataframe?**](https://stackoverflow.com/questions/8161836/how-do-i-replace-na-values-with-zeros-in-an-r-dataframe)  
 [**dplyr 패키지를 사용해서 그룹별 행의 개수 세기 (counting up rows by group using dplyr) : summarise(n=n()), tally(), count()**](https://rfriend.tistory.com/240)  
@@ -17,7 +15,7 @@
 [4. mutate 함수 : 파생변수 추가하기](http://rstudio-pubs-static.s3.amazonaws.com/318073_d95c96455d5d4891afa766bbc6d541e4.html)  
 
 
-12/18  
+# 12/18  
 [**R 데이터 프레임 결합 : rbind(), cbind(), merge()**](https://rfriend.tistory.com/51)  
 [**Replace all occurrences of a string in a data frame**](https://stackoverflow.com/questions/29271549/replace-all-occurrences-of-a-string-in-a-data-frame)  
 [**날짜 다루는 법**](https://homy.tistory.com/2)  
@@ -31,7 +29,7 @@ Rprofile
 [R의 환경설정을 내맘대로? Working Dir 변경과 R 시작시 library 호출](https://niceguy1575.tistory.com/13)
 
 
-12/19  
+# 12/19  
 [**Count/tally observations by group**](https://dplyr.tidyverse.org/reference/tally.html)  
 [dplyr count non-NA value in group by [duplicate]](https://stackoverflow.com/questions/44290704/dplyr-count-non-na-value-in-group-by)  
 [**R 데이터 프레임 결합 : rbind(), cbind(), merge()**](https://rfriend.tistory.com/51) : merge에서 자주 실수함.  
@@ -47,7 +45,7 @@ Rprofile
 
 
 
-12/20
+# 12/20  
 ### [**dplyr group_by loop through different columns**](https://stackoverflow.com/questions/55152472/dplyr-group-by-loop-through-different-columns) : function 1  
 [R Conditional evaluation when using the pipe operator %>%](https://stackoverflow.com/questions/30604107/r-conditional-evaluation-when-using-the-pipe-operator)  
 [ifelse with no else](https://stackoverflow.com/questions/42427343/ifelse-with-no-else) : ifelse에서 else일 때는 pass하고 싶을 때  
