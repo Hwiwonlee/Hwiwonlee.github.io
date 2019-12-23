@@ -981,6 +981,21 @@ pc8_change %>%
 df8 <- rbind(hw8, pc8_change)
 
 
+#### 9. HCDX 
+# 9.1 extracting 
+hw %>% 
+  select(1, matches("HCDX")) %>% 
+  type_convert(cols(HCDX = col_double()))-> hw9
+
+pc %>% select(1, 199:296) %>% 
+  select(-matches("CH$")) %>% # names(.)
+  select(-matches("TR.$|CATRETC2|LUEKH")) %>% 
+  # names(.) %>% length(.) # 개수 확인 완료 
+  type_convert(cols(ORALC = col_double())) %>% 
+  merge(hw9, by="NO", all=T) %>% as.tibble() -> df9
+  # dplyr::filter(HCDX == 2) filter를 이용한 merge 확인함.
+  
+  
 
 
 
