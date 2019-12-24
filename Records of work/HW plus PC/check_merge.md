@@ -995,7 +995,172 @@ pc %>% select(1, 199:296) %>%
   merge(hw9, by="NO", all=T) %>% as.tibble() -> df9
   # dplyr::filter(HCDX == 2) filter를 이용한 merge 확인함.
   
+#### 10. HOUSE
+hw %>% 
+  select(1, matches("^HOUSE")) %>% 
+  type_convert(cols(HOUSE = col_double())) -> hw10 # 137 x (2+1)
+
+pc %>% select(1, matches("^C_H")) %>% 
+  type_convert(cols(HOUSE = col_double())) %>% # 227 x (2+1)
+  # sum_of_each_category_element(., list("C_HB", "C_HEAT")) # 체크완료 
+  merge(hw10, by = "NO", all=T) %>% 
+  as.tibble() -> df10
+
+
+#### 11. FHCA
+hw %>% 
+  select(1, matches("FHCA|FHDS")) %>% 
+  type_convert(cols(FHCA = col_double())) -> hw_m
+
+pc %>% select(1, matches("FHCA|FCa")) %>% 
+  type_convert(cols(FHCA = col_double())) %>% 
+  merge(hw_m, by = c("NO", "FHCA"), all=T) %>% 
+  as.tibble() -> df11
+  # sum_of_each_category_element(., list("FHCA")) %>% # 확인함.
+
+
+#### 12. HDX5 ~ HDX40_Y
+hw12_colname <- c("HDX5", "HDX5_Y", "HDX34", "HDX34_Y", "HDX35", "HDX35_Y",
+                  "HDX12","HDX12_Y", "HDX38", "HDX38_Y", "HDX37", "HDX37_Y",
+                  "HDX8", "HDX8_Y", "HDX9", "HDX9_Y", "HDX36", "HDX36_Y",
+                  "HDX17", "HDX17_Y", "HDX43", "HDX43_Y", "HDX44", "HDX44_Y", 
+                  "HDX1", "HDX1_Y", "HDX2", "HDX2_Y", "HDX14", "HDX14_Y", 
+                  "HDX13", "HDX13_Y", "HDX4", "HDX4_Y", "HDX11", "HDX11_Y",
+                  "HDX21", "HDX21_Y", "HDX18", "HDX18_Y", "HDX39", "HDX39_Y",
+                  "HDX40", "HDX40_Y")
+hw %>% 
+  select(1, hw12_colname) %>% 
+  type_convert(cols(HDX5 = col_double())) -> hw_m
   
+
+pc12_colname <- c("GASTUL", "GASTULY", "DUODEN", "DUODYR", "MIHX", "MIYR", 
+                  "ANGINA", "ANGYR", "BHEPA", "BHEYR", "CHEPA", "CHEYR",
+                  "GBSTONE", "GBSTONY", "CHOLEC", "CHOLEY", "HTHX", "HTYR",
+                  "DMHX", "DMYR", "LIPID", "LIPIDR", "CVA", "CVAYR", "GASTRI", "GASTYR",
+                  "LIFUN", "LIFYR", "THYROM", "THYROY", "HYPOTH", "HYPOTY", "HYPERTH", "HYPERTY")
+
+pc %>% 
+  select(1, pc12_colname) %>% 
+  type_convert(cols(GASTUL = col_double())) %>% 
+  merge(hw_m, by = "NO", all=T) %>% 
+  as.tibble() -> df12
+
+#### 13. HBV ~ HDX27
+hw13_colname <- c("HBV", "HDX46", "HDX46_Y", "HDX25", "HDX25_Y",
+                  "HDX7","HDX7_Y", "HDX32_K", "HDX32_Y", "DRUG3_D", "DRUG3",
+                  "HDX6", "HDX6_Y", "HDX45", "HDX45_Y", "HDX27", "HDX27_Y")
+
+hw %>% 
+  select(1, hw13_colname) %>% 
+  type_convert(cols(HBV = col_double())) -> hw_m
+
+
+pc13_colname <- c("BANTVIR", "HELICOBA", "HELICOTE", "OSTEOP", "OSTEYR",
+                  "IBS", "IBSYR", "ETDZY", "ETDZN", "DMDRDY", "DMDRYN",
+                  "POLYP", "POLYR", "DISKYR")
+
+pc %>% 
+  select(1, pc13_colname) %>% 
+  type_convert(cols(BANTVIR = col_double())) %>% 
+  merge(hw_m, by = "NO", all=T) %>% 
+  as.tibble() -> df13
+  
+
+#### 14. DRUG15 ~ DRUG5_D
+hw14_colname <- c("DRUG15", "DRUG15_D", "DRUG910", "DRUG910_D", "DRUG9",
+                  "DRUG10","DRUG12", "DRUG1", "DRUG1_D", "DRUG4_D", "DRUG4",
+                  "DRUG5", "DRUG5_D")
+
+hw %>% 
+  select(1, hw14_colname) %>% 
+  type_convert(cols(DRUG15 = col_double())) -> hw_m
+
+
+pc14_colname <- c("FOLKDM", "FOLKDY", "SVITDM", "SVITDY","SVITAM", "SVIT",
+                  "VITAMN", "VITAMDM", "VITAMDY", "VITAM",
+                  "MVITDM", "MVITDY", "MVITAM", "MVIT",
+                  "ETDRN", "ETDRDM", "ETDRDY", "ETDRNA", "ETDR",
+                  "ETMED", "DIGDRN", "DIGDRDM", "BARTDM", "BARTYN",
+                  "PCDRYN", "PCDRN")
+
+pc %>% 
+  select(1, pc14_colname) %>% 
+  type_convert(cols(FOLKDM = col_double())) %>% 
+  merge(hw_m, by = "NO", all=T) %>% 
+  as.tibble() -> df14
+
+
+
+#### 15. HDX47 ~ HDX19_Y
+hw15_colname <- c("HDX47", "HDX47_Y", "HDX16", "HDX16_Y",
+                  "HDX42", "HDX42_Y", "HDX41", "HDX41_Y", "HDX19", "HDX19_Y")
+
+hw %>% 
+  select(1, hw15_colname) %>% 
+  type_convert(cols(HDX47 = col_double())) -> hw_m
+
+
+pc14_colname <- c("ESOPHA", "ESOPYR", "URSTONE", "URSTONY", "KIDOP", "KIDOPY")
+
+pc %>% 
+  select(1, pc14_colname) %>% 
+  type_convert(cols(ESOPHA = col_double())) %>% 
+  merge(hw_m, by = "NO", all=T) %>% 
+  as.tibble() -> df15
+  
+
+#### 16. DRUG14 & HDX31
+hw %>%
+  select(NO, DRUG14_D, DRUG14, HDX31, HDX31_Y) %>% 
+  type_convert(cols(DRUG14_D = col_double())) -> hw_m
+
+pc %>% 
+  select(NO, ASPDM, ASPYN, TRAUMA, TRAUYR) %>% 
+  type_convert(cols(DRUG14_D = col_double())) %>% 
+  rename(DRUG14_D = ASPDM, 
+         DRUG14 = ASPYN,
+         HDX31 = TRAUMA, 
+         HDX31_Y = TRAUYR) %>% 
+  rbind(hw_m) %>% # rbind and arrange = merge
+  arrange(NO) -> df16
+
+  
+
+#### 17. HDX29_Y ~ HDX10_Y
+hw %>% 
+  select(NO, HDX29, HDX29_Y, XRAY, PAP, HDX20, HDX20_Y, HDX10, HDX10_Y) %>% 
+  type_convert(cols(HDX29 = col_double())) -> hw_m
+
+pc %>% 
+  select(NO, BRMASY, BRMAS, BRSC, UT, PROSTA, PROSYR, FATLV, FATYR) %>% 
+  type_convert(cols(BRMASY = col_double())) %>% 
+  merge(hw_m, by = "NO", all = T) %>% 
+  as.tibble() -> df17
+ 
+
+#### 18. HDX15 ~ HDX3_Y
+hw %>% 
+  select(NO, SALTS, HDX15, HDX15_Y, HDX28, HDX28_Y, DRUG11, DRUG11_D, HDX3, HDX3_Y) %>% 
+  type_convert(cols(SALTS = col_double())) -> hw_m
+
+pc %>% 
+  select(NO, eat11, BRONCH, BRONCHY, HEMOP, HEMOR, HEMYR, CALCIUM, CALCIUMY, PNEUM, PNEUMY) %>% 
+  type_convert(cols(eat11 = col_double())) %>% 
+  merge(hw_m, by = "NO", all = T) %>% 
+  as.tibble() -> df18
+
+
+#### 19. DRUG7 ~ DRUG2_D
+hw %>% 
+  select(NO, DRUG7, DRUG7_D, DRUG2, DRUG2_D) %>% 
+  type_convert(cols(DRUG7 = col_double())) -> hw_m
+
+
+pc %>% 
+  select(NO, CHMEN, CHMEDM, CHMEDY, HTDRN, HTDRDM, HTDRDY) %>% 
+  type_convert(cols(CHMEN = col_double())) %>% 
+  merge(hw_m, by = "NO", all = T) %>% 
+  as.tibble() -> df19  
 
 
 
