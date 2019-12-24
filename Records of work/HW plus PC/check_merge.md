@@ -51,8 +51,8 @@ sum(colnames(hw[, 4:89]) != colnames(pc[, 4:89])) # 순서와 이름이 같은 �
 colnames(hw[, 4:89]) # 수기 확인 완료
 
 # 4:89까지 part 1로 정의 
-hw1 <- hw[, 4:89] %>% type_convert(cols(HEIGHT = col_double()))
-pc1 <- pc[, 4:89] %>% type_convert(cols(HEIGHT = col_double()))
+hw1 <- hw[, c(1, 4:89)] %>% type_convert(cols(HEIGHT = col_double()))
+pc1 <- pc[, c(1, 4:89)] %>% type_convert(cols(HEIGHT = col_double()))
 
 #### NOTE. tyoe_convert ####
 # 딱 한 번만, 하나의 열의 data type을 바꿔도 나머지 columns의 data type이 바뀐다. 
@@ -162,7 +162,32 @@ print(as.data.frame(rbind(hw1[, which(sapply(pc1, class) == "character")], pc1[,
 
 
 # CONCLUSION df1, hw1 bind with pc1 
-df1 <- rbind(hw1, pc1)
+# 12.24 수정, merging을 위한 NO 추가
+
+#### LOG #####
+df1 <- as.tibble(rbind(cbind(hw1, "index"=hw$index), cbind(pc1, "index"=pc$index)))
+hw1 %>% rbind(pc1) %>% 
+  arrange(NO) -> df1_NO
+
+NO_v <- c(as.numeric(hw$NO), as.numeric(pc$NO))
+index_v <- c(hw$index, pc$index)
+
+NO_v
+
+df1_index <- as.tibble(cbind(df1, NO_v))
+df1_index %>%
+  arrange(NO_v) %>% 
+  rename(NO=NO_v) %>% 
+  select(NO, everything()) %>% 
+  select(-index) -> df1_index
+
+dim(df1_NO) == dim(df1_index) # same dim 
+sum(df1_NO != df1_index, na.rm = T) # NA 제외한 값들 모두 같음
+sum((is.na(df1_NO))) == sum((is.na(df1_index))) # NA의 개수 모두 같음
+sum(which((is.na(df1_NO)))) == sum(which((is.na(df1_index)))) # NA의 자리 모두 같음
+#####
+
+df1 <- df1_NO
 
 
 
@@ -378,7 +403,17 @@ pc2 <- pc2_c
 df2 <- rbind(hw2, pc2)
 
 # To DO index와 Q_ver 정리할 것. 근데 어차피 나중에 한번에 정리해야할 것 같음.
+# 12.24 DONE
+# 12.24 merging을 위한 NO 추가 
 
+df2 %>% 
+  select(-c(Q_ver, index)) %>% 
+  mutate(NO_v) %>% 
+  arrange(NO_v) %>% 
+  select(NO_v, everything()) %>% 
+  rename(NO = NO_v) -> df2
+  
+  
 ### 2.3 columns with smoking
 hw3 <- hw %>% mutate(Q_ver = as.double(hw$건강기록지.버전)) %>%
   mutate(index = seq(1, nrow(hw), 1)) %>% 
@@ -584,6 +619,13 @@ pc3 %>%
 # CONCLUSION
 df3 <- rbind(hw3_change, pc3_change)
 
+# 12.24 merging을 위한 NO 추가 
+df3 %>% 
+  mutate(NO_v) %>% 
+  arrange(NO_v) %>% 
+  select(NO_v, everything()) %>% 
+  rename(NO = NO_v) -> df3
+
 
 #### 4. JOB 
 # rawdatset의 codebook을 체크해보니 사용할 수 있는 변수가 "JOB" 밖에 없음
@@ -613,6 +655,23 @@ pc4 %>% mutate(JOB_index = JOB + 0.2) -> pc4_change
 # 4.4 rbind
 # CONCLUSION
 df4 <- rbind(hw4_change, pc4_change)
+
+# 12.24 merging을 위한 NO 추가 
+# add index부분부터 바로 NO를 추가하는 방식으로 하면 될 듯 
+
+hw4 %>% 
+  mutate(NO = hw$NO) %>% 
+  type_convert(cols(JOB = col_double())) -> hw4_change
+
+pc4 %>% 
+  mutate(NO = pc$NO) %>% 
+  type_convert(cols(JOB = col_double())) -> pc4_change
+
+hw4_change %>%
+  rbind(pc4_change) %>% 
+  arrange(NO) %>% 
+  select(NO, JOB) -> df4
+
 
 #### 5. 약 관련 변수
 
@@ -713,6 +772,15 @@ pc5 %>% rename(OC_A = OCAGE,
 
 # CONCLUSION
 df5 <- rbind(hw5_change, pc5_change)
+
+# 12.24 merging을 위한 NO 추가 
+df5 %>% 
+  # select(-c(Q_ver, index)) %>% 
+  mutate(NO_v) %>% 
+  arrange(NO_v) %>% 
+  select(NO_v, everything()) %>% 
+  rename(NO = NO_v) -> df5
+
 
 #### 6. 개인정보 (1)
 # 6.1 extract
@@ -824,7 +892,15 @@ sum_of_each_category_element(pc6, list("MARRIG", "EDULEV", "ECOST")) # 변경 �
 # CONCLUSION
 df6 <- rbind(hw6, pc6)
 
-
+# 12.24 merging을 위한 NO 추가 
+df6 %>% 
+  select(-index) %>% 
+  mutate(NO_v) %>% 
+  arrange(NO_v) %>% 
+  select(NO_v, everything()) %>% 
+  rename(NO = NO_v) -> df6
+  
+  
 
 #### 7. MENA 관련 정보
 # 7.1 extract
@@ -889,7 +965,16 @@ pc7_change %>%
 
 #### 7.5 rbind
 df7 <- rbind(hw7, pc7_change)
+
+# 12.24 merging을 위한 NO 추가 
+df7 %>% 
+  # select(-index) %>% 
+  mutate(NO_v) %>% 
+  arrange(NO_v) %>% 
+  select(NO_v, everything()) %>% 
+  rename(NO = NO_v) -> df7
 # CONCLUSION
+
 #### CAUTION ####
 # variable scaling을 하지 않음.
 # MENA, HORMONE에 대한 의사결정 필요함. 
@@ -979,6 +1064,14 @@ pc8_change %>%
 
 # 8.4 rbind
 df8 <- rbind(hw8, pc8_change)
+# 12.24 merging을 위한 NO 추가 
+df8 %>% 
+  select(-index) %>% 
+  mutate(NO_v) %>% 
+  arrange(NO_v) %>% 
+  select(NO_v, everything()) %>% 
+  rename(NO = NO_v) -> df8
+  
 
 # BOSS's COMMENT
 # Just doing pre-processing. Don't proecssing too detailed
@@ -1164,7 +1257,8 @@ pc %>%
   as.tibble() -> df19  
 
 
-
+# 12.24 Merge를 위한 column, NO 통일
+# 추후 NO을 by arg로 선언해 merge하면 됨. 
 
 
 
