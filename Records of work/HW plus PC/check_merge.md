@@ -980,7 +980,8 @@ pc8_change %>%
 # 8.4 rbind
 df8 <- rbind(hw8, pc8_change)
 
-
+# BOSS's COMMENT
+# Just doing pre-processing. Don't proecssing too detailed
 #### 9. HCDX 
 # 9.1 extracting 
 hw %>% 
