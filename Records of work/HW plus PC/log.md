@@ -52,3 +52,8 @@ Rprofile
 [select columns based on multiple strings with dplyr matches()](https://stackoverflow.com/questions/29018292/select-columns-based-on-multiple-strings-with-dplyr-contains)  
 
 
+# 12/24
+[How do I combine two data-frames based on two columns? [duplicate]](https://stackoverflow.com/questions/6709151/how-do-i-combine-two-data-frames-based-on-two-columns)   
+[How to join (merge) data frames (inner, outer, left, right)](https://stackoverflow.com/questions/1299871/how-to-join-merge-data-frames-inner-outer-left-right)  
+
+
