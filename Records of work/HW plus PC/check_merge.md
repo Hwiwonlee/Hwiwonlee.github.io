@@ -1,3 +1,7 @@
+TO DO  
+1. Be functional  
+2. Check inefficiency
+
 
 comment's legend  
 TRY : Just give it a try, just.   
