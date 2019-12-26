@@ -1,3 +1,45 @@
+# LOG
+# ROC와 AUC의 개념 
+### **[ROC와 AUC의 기본 컨셉](https://nittaku.tistory.com/297)**  
+### **[ROC curve analysis](https://rpubs.com/cardiomoon/64987)**  
+#### [ROC Curve and AUC](https://m.cafe.daum.net/biometrika/P8TH/31)
+### **[ggroc: Plot a ROC curve with ggplot2](https://rdrr.io/cran/pROC/man/ggroc.html)**  
+### **[roc: Build a ROC curve](https://rdrr.io/cran/pROC/man/roc.html)**    
+[Package, pROC](https://cran.r-project.org/web/packages/pROC/pROC.pdf)  
+
+
+# ROC, optimal cut-off value에 대해
+[ROC and multiROC analysis: how to calculate optimal cutpoint?](https://stats.stackexchange.com/questions/67560/roc-and-multiroc-analysis-how-to-calculate-optimal-cutpoint)  
+[How are the threshold or cutoff points in {Epi} R package selected?](https://stackoverflow.com/questions/38529914/how-are-the-threshold-or-cutoff-points-in-epi-r-package-selected/38532555#38532555)  
+[How can I get The optimal cutoff point of the ROC in logistic regression as a number](https://stackoverflow.com/questions/23131897/how-can-i-get-the-optimal-cutoff-point-of-the-roc-in-logistic-regression-as-a-nu)  
+
+
+
+
+
+# ggplot에서 condition에 따라 color를 다르게 주는 방법
+### [ggplot with conditions](https://community.rstudio.com/t/ggplot-with-conditions/17352)  
+[ggplot2: doughnuts, how to conditional color fill with if_else](https://stackoverflow.com/questions/45490075/ggplot2-doughnuts-how-to-conditional-color-fill-with-if-else)  
+
+
+# ggplot에서 그래프 여러개 그리기
+#### [동시에 여러 개의 ggplot2 그래프 패널 보여주기](https://m.blog.naver.com/PostView.nhn?blogId=definitice&logNo=221165151283&proxyReferer=https%3A%2F%2Fwww.google.com%2F) : 맨날 까먹음  
+
+
+# Formula 선언에서 자주 보는 문자 정리
+#### [R에서 모델적합에 사용되는 formula 인자식 사용부분에 대한 고찰](https://lovetoken.github.io/r/2016/12/06/formula_usage.html)  
+
+
+
+
+
+### 못 읽은 것들
+[Conditional ggplot2 geoms in functions (QTL plots)](https://shiring.github.io/ggplot2/2017/02/12/qtl_plots)  
+[Data Visualization in R](https://rpubs.com/JohnBernau/datavizr4)  
+[R Tip: How to Pass a formula to lm](http://www.win-vector.com/blog/2018/09/r-tip-how-to-pass-a-formula-to-lm/)  
+[Tweaking R colours with the shades package](http://hughjonesd.github.io/tweaking-colours-with-the-shades-package.html)
+
+
 ```r
 #### 1. OLD - Draw ROC curve using identified positive polar metabolites ####
 rm(list=ls())
