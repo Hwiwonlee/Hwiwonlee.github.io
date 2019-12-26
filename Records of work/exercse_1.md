@@ -3,7 +3,7 @@
 rm(list=ls())
 
 
-data<-read.csv("C:/Users/75533/Working/Exercise/구강암+Metabolics/positive_polar.csv")
+data<-read.csv(".../positive_polar.csv")
 
 ## Normal vs CX CAN ROC
 
