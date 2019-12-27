@@ -136,13 +136,380 @@ ggroc(roc.metabolites, legacy.axes = TRUE) +
 # 조건에 따른 line color setting 
 ## 가령, AUC가 0.5 미만이면 옅은 색깔, lr.eta가 특정 조건을 만족하지 않으면 옅은 색깔. 등등
 ### lr.eta : predicted values 중 optimum cut-off value 
+## Q. lr.eta가 크면 AUC가 큰가? lr.eta가 크면 좋은가? AUC가 크면 좋은가? 
+
+
+roc.metabolites <- roc(group1 ~ . - (group+ID+group1), data = data1)
+
+ggroc(roc.metabolites[1], legacy.axes = TRUE) +
+  theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  scale_colour_hue(c = 45, l = 95)
 
 ggroc(roc.metabolites, legacy.axes = TRUE) +
   theme_minimal() + ggtitle("Positive polar") + 
   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") + 
-  geom_col(fill = ifelse(perf.project.tdy$perf>0,"green",
-                        ifelse(perf.project.tdy$perf<=-4,"red","orange")),
-          width = barwidth)
+  geom_line(colour = ifelse("AUC" > 0,"green",
+                            ifelse("AUC" > 0.5, "orange", "red")))
+
+y <- sapply(roc.metabolites[,1:4], function(x) {x > 3})
+
+
+lapply(roc.metabolites, summary)
+
+
+roc.metabolites[[1]]$auc
+
+auc_print(roc.metabolites)
+c(rep(NA, length(roc.metabolites)))
+
+
+a <- conditional_ggplot(roc.metabolites)
+
+a[[1]] + a[[2]]
+
+
+
+#### TRY ####
+conditional_ggplot = function(roc_result){
+  
+  plots <- list()
+  position_1st <- c(rep(NA, length(roc_result)))
+  position_2nd <- c(rep(NA, length(roc_result)))
+  position_3nd <- c(rep(NA, length(roc_result)))
+  position_4th <- c(rep(NA, length(roc_result)))
+  x <- NULL
+  for (i in 1:length(roc_result)) {
+    
+    # base ggroc call
+    p <- ggroc(roc_result[i], legacy.axes = TRUE) +
+      theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+      geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") 
+    
+    # add geom layer based on content of argument:
+    ## AUC가 0.3 미만이면 drop
+    ## AUC가 0.3 이상, 0.5미만이면 흐리게
+    ## AUC가 0.5 이상, 0.7미만이면 기본
+    ## AUC가 0.7 이상이면 진하게 
+    if(as.numeric(roc_result[[i]]$auc) < 0.3){
+      p <- p + scale_colour_hue(l = 100)
+      position_1st[i] <- i
+    }
+    if(as.numeric(roc_result[[i]]$auc) < 0.5){
+      p <- p + scale_colour_hue(l = 80)
+      position_2nd[i] <- i
+    }
+    if(as.numeric(roc_result[[i]]$auc) < 0.7){
+      p <- p + scale_colour_hue(l = 65)
+      position_3nd[i] <- i
+    }
+    if(as.numeric(roc_result[[i]]$auc) < 1){
+      p <- p + scale_colour_hue(l = 45)
+      position_4th[i] <- i
+    }
+
+    
+          
+    # 'plus'로 plot이 합쳐지진 않네
+    # IDEA. 그럼 roc result dataframe으로 합쳐서 그냥 그리는 건 어떨까? 
+    # plots[[i]] <- p
+    # if(i == 1){
+    #   x <- p} else
+    #     x <- x + p
+    
+    #...
+  }
+  return(x)
+  # ...
+}
+
+
+#### Wiggling problem ####
+# sensitivity와 1-spectificity로 그려서 ggroc와 같은지 확인해보자. 
+plot(y = roc.metabolites[[1]]$sensitivities, x = 1-roc.metabolites[[1]]$specificities, type = "l")
+# plot()으로 그렸더니 대충 비슷한 것 같은데? 
+
+# ggplot + geom_line()으로 그려서 확인해보자. 
+fafa = as.data.frame(cbind(1-roc.metabolites[[1]]$specificities, roc.metabolites[[1]]$sensitivities))
+
+plot(y = fafa$V2, x = fafa$V1, type = "l")
+
+c <- ggplot(data = fafa, aes(x = V1, y = V2)) +
+  geom_line() + 
+  # geom_point() +  
+  theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed")
+
+b <- ggroc(roc.metabolites[1], legacy.axes = TRUE) +
+  theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed")
+
+# c : result를 그대로 이용, b : ggroc을 이용함. 
+grid.arrange(c, b, nrow = 1, ncol = 2)
+
+
+# Q. 왜 plot에서는 안보이던 wiggling이 ggplot에서는 보이지?
+## 이걸로 2시간 날림. 더 날릴 수도? 
+
+# V1 : 1-spec에서 이전 값보다 커지는 경우가 있는가? 
+t <- c()
+for(i in 1:nrow(fafa)){
+  if(fafa$V1[i+1] > fafa$V1[i]){
+    t[i] <- i
+  } else t[i] <- NA
+}
+
+length(na.omit(t)) # 없음 
+
+# V2 : sens에서 이전 값보다 커지는 경우가 있는가? 
+r <- c()
+for(i in 1:nrow(fafa)){
+  if(fafa$V2[i+1] > fafa$V2[i]){
+    r[i] <- i
+  } else r[i] <- NA
+}
+
+length(na.omit(r)) # 없음
+
+## 중간 CONCLUSION : dataset을 잘못 넣은게 아니라 ggplot 상의 문제이다. 
+## 사실, plot()을 이용한 그림에서는 정상적으로 나오는데 ggplot()을 이용한 그림에선 흔들림이 생기는 것이 문제. 
+
+# 그럼 ggplot이 어떻게 그려지는 거야? 
+ggplot(data = fafa[1:10, ], aes(x = V1, y = V2)) +
+  geom_line() +
+  geom_point() + geom_text(aes(V1, V2, label=paste(round(V1, 2), round(V2, 2), sep=",")), hjust=0, vjust=0)
+
+round(fafa[1:10, ], 2)
+
+# SOLVE!
+# ggplot이 row 순서대로 그려지지 않고 있었다. 
+# 가령 4th (0.98, 1) 후 5th (0,97, 1)로 line이 이어져야하는데 7th(0.97, 0.98)로 이어지고 있다. 
+
+# Q. 그래서 이걸 어떻게 풀어야하나? 
+# geom_path를 이용해보라는 SOF의 답변을 참고
+ggplot(data = fafa, aes(x = V1, y = V2)) +
+  geom_path() 
+#### SOLVE. 근데 이거 왜 되냐. 아깐 안됐는데...? 억울하다..........#####
+
+ggplot(data = fafa, aes(x = V1, y = V2)) +
+  geom_path() 
+
+
+
+rs_1 <- as.tbl(as.data.frame(matrix(0, nrow = length(roc.metabolites[[1]]$sensitivities), ncol = 2)))
+rs_2 <- as.tbl(as.data.frame(matrix(0, nrow = length(roc.metabolites[[1]]$sensitivities), ncol = length(roc.metabolites)*2)))
+for(i in 1:length(roc.metabolites)){
+  rs_1[, 1] <- 1-roc.metabolites[[i]]$specificities
+  rs_1[, 2] <- roc.metabolites[[i]]$sensitivities
+  rs_2[, ((2*i)-1) : (2*i)] <- rs_1
+}
+# 이것보단 그냥 concat해서 index단위로 붙이는 게 나을 것 같은데. 
+
+
+#### prefaring Function ####
+group_auc_rs <- c(NA, length(roc.metabolites))
+
+rs_1 <- as.tbl(as.data.frame(matrix(0, nrow = length(roc.metabolites[[1]]$sensitivities), ncol = 5)))
+rs_2 <- as.tbl(as.data.frame(matrix(0, nrow = 0, ncol = 5)))
+
+for(i in 1:length(roc.metabolites)){
+  rs_1[, 1] <- names(roc.metabolites)[i]
+  rs_1[, 2] <- 1-roc.metabolites[[i]]$specificities
+  rs_1[, 3] <- roc.metabolites[[i]]$sensitivities
+  rs_1[, 4] <- as.numeric(roc.metabolites[[i]]$auc)
+  
+  # auc에 따른 group을 만들기 
+  rs_1[, 5] <- if(rs_1[, 4] < 0.3){
+    "less than 0.3"
+  } else if(rs_1[, 4] < 0.5) {
+    "less than 0.5"
+  } else if(rs_1[, 4] < 0.6) {
+    "less than 0.6"
+  } else if(rs_1[, 4] < 0.7){
+    "less than 0.7"
+  } else {
+    "more than 0.7"
+  }
+  
+  # row-wise dataset 저장 
+  rs_2 <- rbind(rs_2, rs_1)
+  
+}
+
+0 < rs_2[, 4] & rs_2[, 4] <= 0.584
+
+rs_2 %>% 
+  rename(Var = V1, 
+         Spec = V2, 
+         Sens = V3,
+         AUC = V4, 
+         Group = V5) -> rs_2
+
+rs_2 %>% arrange(desc(AUC)) -> rs_2
+
+ggplot(rs_2, aes(x=Spec, y=Sens, col = Var)) + 
+  geom_path() # 까지 성공 
+
+
+# 이제 auc에 따라 투명도를 조절해보자. 
+ggplot(rs_2, aes(x=Spec, y=Sens, col = Var, alpha = Group, order=AUC)) + 
+  geom_path() # Group 별로 alpha를 다르게 줌. 
+
+
+# 하나의 공간에 모든 그래프, group별로 나뉜 그래프를 그려보자. 
+t1 <- ggplot(rs_2, aes(x=Spec, y=Sens, alpha = Group)) + 
+  geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") 
+
+
+t2 <- ggplot(rs_2 %>% 
+         dplyr::filter(Group == "less than 0.6"),
+       aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  scale_color_brewer(palette = "RdYlBu")
+
+t3 <- ggplot(rs_2 %>% 
+         dplyr::filter(Group == "less than 0.7"),
+       aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  scale_color_brewer(palette = "RdYlBu")
+
+t4 <- ggplot(rs_2 %>% 
+         dplyr::filter(Group == "more than 0.7"),
+       aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  scale_color_brewer(palette = "RdYlBu")
+
+
+# grid.arrange를 이용한 공간분할 
+grid.arrange(
+  grobs = list(t1, t2, t3, t4),
+  layout_matrix = rbind(c(1,1,1),
+                        c(2,3,4))
+)
+
+## 일단 완성. 이제 Function으로 바꿔보자. 
+proto_roc_curve_HW <- function(roc.result){
+  ## pROC::roc의 결과를 이용해 ROC curve를 AUC에 근거한 "group"으로 나눠 그려주는 함수 ##
+  ## Function that draws ROC curve seperating with group based on AUC ##
+  
+  # 1. Generate result space 
+  plots <- list()
+  rs_1 <- as.tbl(as.data.frame(matrix(0, nrow = length(roc.result[[1]]$sensitivities), ncol = 5)))
+  rs_2 <- as.tbl(as.data.frame(matrix(0, nrow = 0, ncol = 5)))
+  
+  
+  # 2. Generate tbl with storing values 
+  for(i in 1:length(roc.result)){
+    rs_1[, 1] <- names(roc.result)[i] # Variable name 
+    rs_1[, 2] <- 1-roc.result[[i]]$specificities # 1-specificy
+    rs_1[, 3] <- roc.result[[i]]$sensitivities # sencsitivity
+    rs_1[, 4] <- as.numeric(roc.result[[i]]$auc) # AUC 
+    
+    # Grouping based on AUC
+    rs_1[, 5] <- if(rs_1[, 4] < 0.3){
+      "less than 0.3"
+    } else if(rs_1[, 4] < 0.5) {
+      "less than 0.5"
+    } else if(rs_1[, 4] < 0.6) {
+      "less than 0.6"
+    } else if(rs_1[, 4] < 0.7){
+      "less than 0.7"
+    } else {
+      "more than 0.7"
+    }
+    
+    # Store row-wise dataset 
+    rs_2 <- rbind(rs_2, rs_1)
+    
+  }
+  
+  # Renaming 
+  rs_2 %>% 
+    rename(Var = V1, 
+           Spec = V2, 
+           Sens = V3,
+           AUC = V4, 
+           Group = V5) -> rs_2
+
+  
+  
+  # 3. Plotting one space with using whole variables and each group's variables 
+  plots[[1]] <- ggplot(rs_2, aes(x=Spec, y=Sens, alpha = Group)) + 
+    geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+    geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") 
+  
+  
+  for(j in 1:length(unique(rs_2$Group))){
+  plots[[j+1]] <- ggplot(rs_2 %>% 
+             dplyr::filter(Group == unique(Group)[j]),
+           aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+      geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+      geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+      scale_color_brewer(palette = "RdYlBu")
+  }
+  
+  # t2 <- ggplot(rs_2 %>% 
+  #                dplyr::filter(Group == "less than 0.6"),
+  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  #   scale_color_brewer(palette = "RdYlBu")
+  # 
+  # t3 <- ggplot(rs_2 %>% 
+  #                dplyr::filter(Group == "less than 0.7"),
+  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  #   scale_color_brewer(palette = "RdYlBu")
+  # 
+  # t4 <- ggplot(rs_2 %>% 
+  #                dplyr::filter(Group == "more than 0.7"),
+  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  #   scale_color_brewer(palette = "RdYlBu")
+  
+  
+  # grid.arrange를 이용한 공간분할 
+  result <- grid.arrange(
+  grobs = plots,
+  layout_matrix = rbind(rep(1, length(unique(rs_2$Group))),
+                        seq(2, length(unique(rs_2$Group))+1))
+  )
+  
+  return(result)
+}
+
+
+# Q. 아래 두 개가 똑같은데 왜 2번은 실행이 안되는걸까? 
+grid.arrange(
+  grobs = proto_roc_curve_HW(roc.metabolites),
+  layout_matrix = rbind(c(1,1,1),
+                        c(2,3,4))
+)  
+grid.arrange(
+  grobs = proto_roc_curve_HW(roc.metabolites),
+  layout_matrix = rbind(rep(1, length(unique(rs_2$Group))),
+                        seq(2, length(unique(rs_2$Group)))+1)
+)
+# SOLVE! 
+# seq(2, length(unique(rs_2$Group)))+1) != seq(2, length(unique(rs_2$Group))+1)
+
+
+#### END : Function, proto_roc_curve_HW ####
+proto_roc_curve_HW(roc.metabolites) # 결과 확인 
+
+
+
+#### ####
+
+
+
+
 
 
 ## AUC check function 
@@ -172,6 +539,13 @@ optimal_lr.eta=function(rec_result){
   # result
 }
 print(optimal_lr.eta(roc.metabolites))
+
+
+
+
+#### ####
+
+
 
 
 ```
