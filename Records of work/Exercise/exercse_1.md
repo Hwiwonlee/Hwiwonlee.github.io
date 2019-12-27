@@ -24,12 +24,34 @@
 
 # ggplot에서 그래프 여러개 그리기
 #### [동시에 여러 개의 ggplot2 그래프 패널 보여주기](https://m.blog.naver.com/PostView.nhn?blogId=definitice&logNo=221165151283&proxyReferer=https%3A%2F%2Fwww.google.com%2F) : 맨날 까먹음  
+### **[Laying out multiple plots on a page](https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html)**  
+
+# ggplot, aes, order를 주는 방법
+### **[How do you order the fill-colours within ggplot2 geom_bar](https://stackoverflow.com/questions/15251816/how-do-you-order-the-fill-colours-within-ggplot2-geom-bar)**  
+
+# ggplot, aes, alpha, group에 따라 투명도 조정
+### **[R ggplot transparency - alpha values conditional on other variable](https://stackoverflow.com/questions/24800626/r-ggplot-transparency-alpha-values-conditional-on-other-variable)**  
+
+# ggplot, line graph, row 순서에 맞게 그리기
+## **[Make a ggplot line plot where lines follow row order](https://stackoverflow.com/questions/20526618/make-a-ggplot-line-plot-where-lines-follow-row-order)**  
+
+# ggplot, plot 안에 value 넣기 
+[How to add X and Y point coordinates in ggplot2?](https://stackoverflow.com/questions/49945120/how-to-add-x-and-y-point-coordinates-in-ggplot2/49949059)  
+[Label points in geom_point](https://stackoverflow.com/questions/15624656/label-points-in-geom-point)
+
+# ggplot, color
+[R - ggplot2 - colors/ palette](http://blog.naver.com/PostView.nhn?blogId=coder1252&logNo=220945693871&parentCategoryNo=&categoryNo=1&viewDate=&isShowPopularPosts=true&from=search)  
+
 
 
 # Formula 선언에서 자주 보는 문자 정리
 #### [R에서 모델적합에 사용되는 formula 인자식 사용부분에 대한 고찰](https://lovetoken.github.io/r/2016/12/06/formula_usage.html)  
 
+# row-wise dataset
+[Row_wise dataset](https://statkclee.github.io/r-novice-gapminder/14-tidyr-kr.html)  
 
+# applys 
+[apply function 정리 ](https://3months.tistory.com/389)  
 
 
 
@@ -39,6 +61,10 @@
 [R Tip: How to Pass a formula to lm](http://www.win-vector.com/blog/2018/09/r-tip-how-to-pass-a-formula-to-lm/)  
 [Tweaking R colours with the shades package](http://hughjonesd.github.io/tweaking-colours-with-the-shades-package.html)
 
+[1](https://stackoverflow.com/questions/22915337/if-else-condition-in-ggplot-to-add-an-extra-layer)  
+[2](https://stackoverflow.com/questions/41666078/ggplot-for-loop-outputs-all-the-same-graph)  
+[3](https://stackoverflow.com/questions/31321734/ggplot-line-or-point-plotting-conditionally)  
+[4](https://stackoverflow.com/questions/46570609/iteratively-apply-ggplot-function-within-a-map-function)  
 
 ```r
 #### 1. OLD - Draw ROC curve using identified positive polar metabolites ####
