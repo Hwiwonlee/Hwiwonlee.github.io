@@ -477,28 +477,9 @@ proto_roc_curve_HW <- function(roc.result){
       geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
       scale_color_brewer(palette = "RdYlBu")
   }
-  
-  # t2 <- ggplot(rs_2 %>% 
-  #                dplyr::filter(Group == "less than 0.6"),
-  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
-  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
-  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
-  #   scale_color_brewer(palette = "RdYlBu")
-  # 
-  # t3 <- ggplot(rs_2 %>% 
-  #                dplyr::filter(Group == "less than 0.7"),
-  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
-  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
-  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
-  #   scale_color_brewer(palette = "RdYlBu")
-  # 
-  # t4 <- ggplot(rs_2 %>% 
-  #                dplyr::filter(Group == "more than 0.7"),
-  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
-  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
-  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
-  #   scale_color_brewer(palette = "RdYlBu")
-  
+  ## "RdYlBu"의 색깔 조합이 너무 혼란스러운 것 같다.
+  ## palette를 사용하면 한 plot의 Varaible의 순서대로 진하게 -> 옅게로 바뀌는게 싫음.
+  ## Q. 그럼 어떻게 바꿔줘야할까? 
   
   # grid.arrange를 이용한 공간분할 
   result <- grid.arrange(
