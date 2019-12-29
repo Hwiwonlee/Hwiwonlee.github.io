@@ -13,5 +13,11 @@
 [minimal mistakes 테마를 이용해 github.io 블로그 구축하기](https://imreplay.com/blogging/minimal-mistakes-%ED%85%8C%EB%A7%88%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%B4-githubio-%EB%B8%94%EB%A1%9C%EA%B7%B8-%EA%B5%AC%EC%B6%95%ED%95%98%EA%B8%B0/)  
 [Minimal mistake page](https://mmistakes.github.io/minimal-mistakes/)  
 
+---------------------------------------
+
+## Git 문법을 처음 접해보았다. 
+대다수의 블로그들이 **Git**을 이미 알고 있다는 전제하고 글을 쓰고 있어서 블로그에서 나오는 코드를 어디에 입력하는지조차 몰랐던 나는 gitpage를 만들면서 꽤 높은 진입장벽을 느꼈다. 아마 운영체제의 차이도 있었던 것 같다. 혹시나 나중에라도 Git page를 만드는 게시물을 쓰게 된다면 Git 설치부터 시작해야겠다.  
+
+### 참고 링크
 [Git 간편 사용 설명서](https://takeuu.tistory.com/103)  
 [git update 받기(pull, fetch, merge)](https://lee-mandu.tistory.com/300?category=715432)
