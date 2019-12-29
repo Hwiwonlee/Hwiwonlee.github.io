@@ -4,6 +4,7 @@
 
 ### 문제 및 해결
 1. Minimal mistake테마를 적용한 gitpage의 home에서 rencet posts가 출력이 안됨 : 해결함   
-&nbsp;&nbsp;&nbsp;&nbsp; 해결 방법 : gitpage repository 최상위 디렉토리에 존재하는 index.markdown을 제거함. 
-&nbsp;&nbsp;&nbsp;&nbsp; 문제 설명 : Recent posts가 놓인 **home layout**에 게시물이 보이게 해주는 index.html과 같은 이름의 **index.markdown**이 같은 directory에 존재, index.html의 작동을 막았기 때문에 발생하는 문제였다.  
-&nbsp;&nbsp;&nbsp;&nbsp; 참고 링크 : [Disabling Recent Posts feature](https://github.com/mmistakes/minimal-mistakes/issues/1740)
+    1. 해결 방법 : gitpage repository 최상위 디렉토리에 존재하는 index.markdown을 제거함.  
+    2. 문제 설명 : Recent posts가 놓인 **home layout**에 게시물이 보이게 해주는 index.html과 같은 이름의 **index.markdown**이 같은 directory에 존재, index.html의 작동을 막았기 때문에 발생하는 문제였다.  
+    3. 참고 링크 : [Disabling Recent Posts feature](https://github.com/mmistakes/minimal-mistakes/issues/1740)
+  
