@@ -12,3 +12,6 @@
 [Jekyll을 이용해 GitHub에 블로그 만들기](https://jetalog.net/86?category=808871)  
 [minimal mistakes 테마를 이용해 github.io 블로그 구축하기](https://imreplay.com/blogging/minimal-mistakes-%ED%85%8C%EB%A7%88%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%B4-githubio-%EB%B8%94%EB%A1%9C%EA%B7%B8-%EA%B5%AC%EC%B6%95%ED%95%98%EA%B8%B0/)  
 [Minimal mistake page](https://mmistakes.github.io/minimal-mistakes/)  
+
+[Git 간편 사용 설명서](https://takeuu.tistory.com/103)  
+[git update 받기(pull, fetch, merge)](https://lee-mandu.tistory.com/300?category=715432)
