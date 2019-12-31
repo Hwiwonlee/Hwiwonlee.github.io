@@ -25,8 +25,16 @@
 ## 19.12.31. [Metabolic reprograming](http://ar.iiarjournals.org/content/35/11/5789.full)  
 **Metabolic reprogramming** refers to the ability of cancer cells to alter their metabolism in order to support the increased energy request due to continuous growth, rapid proliferation, and other characteristics typical of neoplastic cells.  
 
+------------------------------------------------------------------------------------
+
 ## 20.01.02. [Fold change](https://en.wikipedia.org/wiki/Fold_change)
 &nbsp;&nbsp;&nbsp;&nbsp;**Fold change** is a measure describing how much a quantity changes between an original and a subsequent measurement. It is defined as the ratio between the two quantities; for quantities A and B, then the fold change of B with respect to A is B/A. Fold change is often used when analysing multiple measurements of a biological system taken at different times as the change described by the ratio between the time points is easier to interpret than the difference. [참고](http://blog.genoglobe.com/2017/10/fold-change.html)  
-일단 링크랑 복붙만 해놓음. 
+
+## 20.01.03. [Polar and Non-polar metabolites](https://jgi.doe.gov/our-science/science-programs/metabolomics-technology/metabolite-analyses/)  
+1. polar and nonpolar metabolites
+1. What is the polarity
+1. Is Non-polarity the same as lipid? Yes or not, anyway, What is the lipid
+
+
 
 
