@@ -32,9 +32,9 @@
 &nbsp;&nbsp;&nbsp;&nbsp;**Fold change** is a measure describing how much a quantity changes between an original and a subsequent measurement. It is defined as the ratio between the two quantities; for quantities A and B, then the fold change of B with respect to A is B/A. Fold change is often used when analysing multiple measurements of a biological system taken at different times as the change described by the ratio between the time points is easier to interpret than the difference. [참고](http://blog.genoglobe.com/2017/10/fold-change.html)  
 
 ## 20.01.03. [Polar and Non-polar metabolites](https://jgi.doe.gov/our-science/science-programs/metabolomics-technology/metabolite-analyses/)  
-1. polar and nonpolar metabolites
-1. What is the polarity
-1. Is Non-polarity the same as lipid? Yes or not, anyway, What is the lipid
+1. polar and nonpolar metabolites(https://jgi.doe.gov/our-science/science-programs/metabolomics-technology/metabolite-analyses/)
+1. What is the polarity(https://en.wikipedia.org/wiki/Chemical_polarity)
+1. Is Non-polarity the same as lipid? Yes or not, anyway, What is the lipid(https://en.wikipedia.org/wiki/Lipid)
 
 
 
