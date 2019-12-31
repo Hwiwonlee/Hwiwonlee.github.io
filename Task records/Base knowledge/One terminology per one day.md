@@ -26,6 +26,7 @@
 **Metabolic reprogramming** refers to the ability of cancer cells to alter their metabolism in order to support the increased energy request due to continuous growth, rapid proliferation, and other characteristics typical of neoplastic cells.  
 
 ------------------------------------------------------------------------------------
+또 찾을 것 같아서 일단 복붙만 해놓음. 
 
 ## 20.01.02. [Fold change](https://en.wikipedia.org/wiki/Fold_change)
 &nbsp;&nbsp;&nbsp;&nbsp;**Fold change** is a measure describing how much a quantity changes between an original and a subsequent measurement. It is defined as the ratio between the two quantities; for quantities A and B, then the fold change of B with respect to A is B/A. Fold change is often used when analysing multiple measurements of a biological system taken at different times as the change described by the ratio between the time points is easier to interpret than the difference. [참고](http://blog.genoglobe.com/2017/10/fold-change.html)  
