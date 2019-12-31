@@ -59,7 +59,13 @@
 
 12.31
 ## 8. Capillary electrophoresis mass spectrometry-based saliva metabolomics identified oral, breast and pancreatic cancer-specific profiles
-### Summary
+### Summary  
+&nbsp;&nbsp;&nbsp;&nbsp;3개의 암종(oral, breast, pancreatic)과 치주질환(periodontal disease) 환자와 Heathy control group 사이, saliva의 metabolites를 MS 및 statistical analysis로 분석해 principal metabolites와 biomarkers를 찾아냈다.  
 
-### Statistical method 
-
+### Statistical method  
+- PCA  
+- PLS-DA
+- MLR
+- CV
+- Mann-Whitney test
+- Steel-Dwas test
