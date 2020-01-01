@@ -553,6 +553,28 @@ print(optimal_lr.eta(roc.metabolites))
 #### ####
 
 
+# MetaboAnalystR installation
+## Step 1. 
+install.packages("pacman")
+
+library(pacman)
+
+pacman::p_load(Rserve, ellipse, scatterplot3d, Cairo, randomForest, caTools, e1071, som, impute, pcaMethods, RJSONIO, ROCR, globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, Rcpp, pROC, data.table, limma, car, fitdistrplus, lars, Hmisc, magrittr, methods, xtable, pls, caret, lattice, igraph, gplots, KEGGgraph, reshape, RColorBrewer, tibble, siggenes, plotly, xcms, CAMERA, fgsea, MSnbase, BiocParallel, metap, reshape2, scales)
+
+
+## Step 2.
+# Step 1: Install devtools
+install.packages("devtools")
+library(devtools)
+
+# Step 2: Install MetaboAnalystR without documentation
+devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
+
+# 참고할 sites
+https://academic.oup.com/bioinformatics/article/34/24/4313/5046255
+https://github.com/xia-lab/MetaboAnalystR'
+https://en.wikipedia.org/wiki/MetaboAnalyst
+https://rdrr.io/github/xia-lab/MetaboAnalystR/
 
 
 ```
