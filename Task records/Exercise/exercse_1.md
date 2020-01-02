@@ -578,3 +578,2165 @@ https://rdrr.io/github/xia-lab/MetaboAnalystR/
 
 
 ```
+
+
+```r
+data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/negative_polar.csv")
+
+data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+## CINs vs CX CAN ROC
+
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+## Normal +CIN1 vs CIN2/3 + CX CAN ROC
+
+data1<-data
+data1$group1<-ifelse(data1$group=="CX CAN"|data1$group=="CIN2/3",1,0)
+
+
+
+ROC(form=group1~Lactate,data=data1,plot="ROC")
+ROC(form=group1~Dimethylglycine,data=data1,plot="ROC")
+ROC(form=group1~X3.Hydroxybutyric.acid,data=data1,plot="ROC")
+ROC(form=group1~Malate,data=data1,plot="ROC")
+
+#######################################################################################
+
+
+options(java.parameters = "-Xmx4g")
+polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+
+
+x<-c()
+p<-c()
+
+for( i in 3:2565){
+  x[i]<-colnames(polar_negative[i])
+  p[i]<-round(kruskal.test(polar_negative[,i]~polar_negative$group)$p.value,5)
+  data<-data.frame(x,p)
+}
+
+write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_kw.csv")
+
+polar_positive<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive.csv")
+
+x<-c()
+p<-c()
+for( i in 3:1928){
+  x[i]<-colnames(polar_positive[i])
+  p[i]<-round(kruskal.test(polar_positive[,i]~polar_positive$group)$p.value,5)
+  data<-data.frame(x,p)
+}
+
+write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_kw.csv")
+
+
+lipid_positive<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_positive.csv")
+
+x<-c()
+p<-c()
+for( i in 3:4357){
+  x[i]<-colnames(lipid_positive[i])
+  p[i]<-round(kruskal.test(lipid_positive[,i]~lipid_positive$group)$p.value,5)
+  data<-data.frame(x,p)
+}
+
+write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_positive_kw.csv")
+
+lipid_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_negative.csv")
+
+x<-c()
+p<-c()
+for( i in 3:3840){
+  x[i]<-colnames(lipid_negative[i])
+  p[i]<-round(kruskal.test(lipid_negative[,i]~lipid_negative$group)$p.value,5)
+  data<-data.frame(x,p)
+}
+
+write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/llipid_negative_kw.csv")
+
+#################################################################################################################
+#################################################################################################################
+
+rm(list=ls())
+
+data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/polar_negative_for_heatmap.csv")
+rownames(data)<-data[,1]
+data<-data[,-1]
+
+install.packages("gplots")
+library(gplots)
+
+
+heatmap1<-as.matrix(scale(data)) #?젙洹쒗솕
+heatmap1<-as.matrix(scale(log(data))) #?젙洹쒗솕
+
+for(i in 1:202){data[,i]<-ifelse(data[,i]<0,0,data[,i])}
+for(i in 1:202){data[,i]<-log10(as.numeric(data[,i])) }  
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap1)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap1)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap1)),"red","black")))))
+
+
+heatmap.2(heatmap1, scale='none',
+          trace="none",cexRow=1,keysize=0.75,ColSideColors=colCols,labCol=NA, margins = c(10, 20))
+
+par(lend = 1)
+legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
+       lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+
+
+
+hc.rows <- hclust(dist(heatmap1))
+plot(hc.rows)
+table(cutree(hc.rows,k=5))
+
+hc.cols <- hclust(dist(t(heatmap1)))
+plot(hc.cols)
+table(cutree(hc.cols,k=3))
+
+
+
+#################################################################################################################
+
+# AUC 洹몃━湲?
+
+rm(list=ls())
+
+data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+
+# Normal vs CX cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+library(Epi)
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal_CXCAN_auc.csv")
+
+# Normal vs CIN1
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1")
+data1$group1<-ifelse(data1$group=="CIN1",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal_CIN1.csv")
+
+
+# Normal vs CIN2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal_CIN2.3.csv")
+
+# Normal,C1 vs CIN2/3,cx can
+data1<-data
+data1$group1<-ifelse(data1$group=="CIN2/3"|data1$group=="CX CAN",1,0)
+x<-c()
+auc<-c()
+
+library(Epi)
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal c1_CIN2.3 cx.csv")
+
+# CIN1 vs CIN2/3
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN1_CIN2.3.csv")
+
+# CIN1 vs CX CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+install.packages("MASS")
+library(Epi)
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X2767,data=data1,plot="ROC")
+ROC(form=group1~X57+X938+X2767,data=data1,plot="ROC")
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN1_CXCAN.csv")
+
+
+# CIN2/3 vs CX CAN
+data1<-subset(data,data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN2.3_CXCAN.csv")
+
+
+
+# Normal vs CIN1,2,3, Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal vs abnormal.csv")
+
+
+
+# Normal , CIN1 vs  CIN 2,3, Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="Normal"|data1$group=="CIN1",0,1)
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
+
+
+# Normal , CIN1   CIN 2,3, vs Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal,CIN1,2,3 vs Cx cAN.csv")
+
+# C1,2,3 vs Cx CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN1.2.3 vs CXCAN.csv")
+
+
+# C1 vs C2,3 Cx CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CIN1",0,1)
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X2767,data=data1,plot="ROC")
+ROC(form=group1~X57+X938+X2767,data=data1,plot="ROC")
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN1 vs CIN 2.3 CXCAN.csv")
+
+
+# Normal, CIn1 vs CIN2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_ne_Normal,c1 vs C2.3.csv")
+
+
+# Normal vs CIM1/2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_ne_Normal vs CIM123.csv")
+
+# Normal,C1 vs Cx cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_ne_Normal,C1 vs Cx cAN.csv")
+
+
+# Normal vs CIN2/3 Cx cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+
+ROC(form=group1~X57,data=data1,plot="ROC")
+ROC(form=group1~X51,data=data1,plot="ROC")
+ROC(form=group1~X938,data=data1,plot="ROC")
+ROC(form=group1~X928,data=data1,plot="ROC")
+ROC(form=group1~X957,data=data1,plot="ROC")
+ROC(form=group1~X318,data=data1,plot="ROC")
+ROC(form=group1~X57+X51+X938+X928+X957+X318,data=data1,plot="ROC")
+
+
+
+x<-c()
+auc<-c()
+for( i in 3:2565){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_ne_Normal vs CIN2.3 Cx cAN.csv")
+
+###################################################
+
+rm(list=ls())
+
+data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive.csv")
+
+# Normal vs CX cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+library(Epi)
+
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal_CXCAN_auc.csv")
+
+# Normal vs CIN1
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1")
+data1$group1<-ifelse(data1$group=="CIN1",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal_CIN1.csv")
+
+
+# Normal vs CIN2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+
+ROC(form=group1~X1538,data=data1,plot="ROC")
+ROC(form=group1~X1923,data=data1,plot="ROC")
+ROC(form=group1~X1696,data=data1,plot="ROC")
+ROC(form=group1~X1619,data=data1,plot="ROC")
+ROC(form=group1~X1538+X1923+X1696+X1619,data=data1,plot="ROC")
+
+library(Epi)
+
+ROC(form=group1~X770,data=data1,plot="ROC")
+ROC(form=group1~X2020,data=data1,plot="ROC")
+ROC(form=group1~X1723,data=data1,plot="ROC")
+ROC(form=group1~X770+X2020+X1723,data=data1,plot="ROC")
+
+
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal_CIN2.3.csv")
+
+# CIN1 vs CIN2/3
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+
+ROC(form=group1~X1538,data=data1,plot="ROC")
+ROC(form=group1~X1923,data=data1,plot="ROC")
+ROC(form=group1~X1696,data=data1,plot="ROC")
+ROC(form=group1~X1619,data=data1,plot="ROC")
+ROC(form=group1~X1538+X1923+X1696+X1619,data=data1,plot="ROC")
+
+ROC(form=group1~X770,data=data1,plot="ROC")
+ROC(form=group1~X2020,data=data1,plot="ROC")
+ROC(form=group1~X1723,data=data1,plot="ROC")
+ROC(form=group1~X770+X2020+X1723,data=data1,plot="ROC")
+
+
+
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN1_CIN2.3.csv")
+
+# CIN1 vs CX CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN1_CXCAN.csv")
+
+
+# CIN2/3 vs CX CAN
+data1<-subset(data,data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN2.3_CXCAN.csv")
+
+
+
+# Normal vs CIN1,2,3, Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="Normal"|data1$group=="CIN1",0,1)
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal vs abnormal.csv")
+
+
+
+# Normal , CIN1 vs  CIN 2,3, Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="Normal"|data1$group=="CIN1",0,1)
+
+
+
+
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
+
+
+# Normal , CIN1   CIN 2,3, vs Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal,CIN1,2,3 vs Cx cAN.csv")
+
+# C1,2,3 vs Cx CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN1.2.3 vs CXCAN.csv")
+
+
+# C1 vs C2,3 Cx CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CIN1",0,1)
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN1 vs CIN 2.3 CXCAN.csv")
+
+options(java.parameters = "-Xmx4g")
+polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+
+
+
+
+library(Epi)
+
+# Normal, CIn1 vs CIN2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+
+
+ROC(form=group1~X1538,data=data1,plot="ROC")
+ROC(form=group1~X1923,data=data1,plot="ROC")
+ROC(form=group1~X1696,data=data1,plot="ROC")
+ROC(form=group1~X1619,data=data1,plot="ROC")
+ROC(form=group1~X1538+X1923+X1696+X1619,data=data1,plot="ROC")
+
+
+ROC(form=group1~X770,data=data1,plot="ROC")
+ROC(form=group1~X2020,data=data1,plot="ROC")
+ROC(form=group1~X1723,data=data1,plot="ROC")
+ROC(form=group1~X770+X2020+X1723,data=data1,plot="ROC")
+
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal,c1 vs C2.3.csv")
+
+
+# Normal vs CIM1/2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal vs CIM123.csv")
+
+# Normal,C1 vs Cx cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal,C1 vs Cx cAN.csv")
+
+
+# Normal vs CIN2/3 Cx cAN
+
+data1<-subset(data,data$group=="Normal"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+
+
+ROC(form=group1~X1538,data=data1,plot="ROC")
+ROC(form=group1~X1923,data=data1,plot="ROC")
+ROC(form=group1~X1696,data=data1,plot="ROC")
+ROC(form=group1~X1619,data=data1,plot="ROC")
+ROC(form=group1~X1538+X1923+X1696+X1619,data=data1,plot="ROC")
+
+ROC(form=group1~X770,data=data1,plot="ROC")
+ROC(form=group1~X2020,data=data1,plot="ROC")
+ROC(form=group1~X1723,data=data1,plot="ROC")
+ROC(form=group1~X770+X2020+X1723,data=data1,plot="ROC")
+
+
+x<-c()
+auc<-c()
+for( i in 3:1928){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal vs CIN2.3 Cx cAN.csv")
+
+
+
+
+############################################# with VIP
+
+
+polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+
+polar_negative1<-polar_negative[-203,]
+
+x<-c()
+p<-c()
+vip<-c()
+
+for( i in 3:2565){
+  x[i]<-colnames(polar_negative1[i])
+  p[i]<-round(kruskal.test(polar_negative1[,i]~polar_negative1$group)$p.value,5)
+  vip[i]<-polar_negative[203,i]
+  data<-data.frame(x,p,vip)
+}
+
+write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_kw_VIP.csv")
+
+polar_positive<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive.csv")
+
+polar_positive1<-polar_positive[-206,]
+
+x<-c()
+p<-c()
+vip<-c()
+
+for( i in 3:1928){
+  x[i]<-colnames(polar_positive1[i])
+  p[i]<-round(kruskal.test(polar_positive1[,i]~polar_positive1$group)$p.value,5)
+  vip[i]<-polar_positive[206,i]
+  data<-data.frame(x,p,vip)
+}
+
+write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_kw_VIP.csv")
+
+
+
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+
+
+rm(list=ls())
+
+
+data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_for_heatmap_se1.csv")
+
+
+rownames(data)<-data[,1]
+data<-data[,-1]
+
+library(gplots)
+
+
+heatmap2<-data[c("51","57","284","318","327","399","792","928","938","957","967","1311","1312","1588","1602","2767","3047","3053","3368","3803","3829","4026"),]
+heatmap2<-data[c("51","57","93","278","284","318","327","392","399","436","486","504","792","850","897","906","925","928","938","957","967","1047","1068","1074","1084","1092","1118","1250","1276","1311","1312","1354","1434","1454","1555","1588","1602","1610","1611","1685","1760","1841","1937","1947","2031","2092","2103","2111","2145","2204","2251","2320","2331","2382","2387","2429","2436","2443","2451","2491","2652","2663","2671","2710","2713","2716","2729","2738","2754","2767","2791","2799","2904","2930","2931","2947","2965","2988","2995","3000","3002","3008","3009","3021","3028","3047","3052","3053","3057","3061","3072","3102","3129","3142","3217","3218","3271","3292","3293","3302","3338","3347","3349","3350","3353","3354","3364","3368","3386","3417","3418","3423","3468","3470","3499","3501","3505","3506","3510","3531","3532","3578","3582","3589","3600","3601","3609","3618","3627","3642","3648","3650","3697","3700","3707","3724","3727","3744","3759","3763","3771","3803","3810","3818","3828","3829","3843","3852","3857","3872","3882","3885","3900","3946","3956","3971","3972","3974","3975","3991","4005","4007","4013","4026","4028","4037","4041","4064","4068","4072","4073","4076","4094","4102","4114","4128","4136","4148","4153","4154","4158","4169","4172","4179","4181","4183","4195","4202"),]
+heatmap2<-data[c("51","57","64","65","66","198","221","268","276","278","284","307","308","318","327","348","392","399","412","659","745","749","777","778","792","821","860","877","888","897","928","938","957","967","995","1030","1047","1068","1074","1084","1118","1141","1154","1230","1311","1312","1354","1401","1419","1434","1454","1483","1537","1555","1588","1602","1635","1636","1748","1760","1820","1841","1855","1886","1914","1918","1937","1947","1989","2012","2111","2145","2159","2179","2214","2274","2286","2300","2320","2330","2331","2337","2359","2375","2382","2387","2432","2451","2491","2606","2619","2635","2652","2663","2671","2699","2713","2716","2717","2729","2767","2785","2799","2892","2904","2914","2930","2931","2947","2988","3000","3008","3009","3021","3072","3081","3082","3088","3102","3129","3142","3188","3199","3207","3216","3217","3218","3225","3257","3259","3263","3271","3286","3292","3293","3302","3307","3338","3347","3348","3349","3350","3353","3354","3364","3368","3378","3386","3417","3423","3429","3462","3468","3470","3475","3499","3501","3502","3505","3506","3510","3531","3532","3578","3582","3589","3600","3601","3609","3618","3620","3621","3627","3638","3639","3642","3648","3650","3697","3707","3724","3727","3741","3744","3759","3763","3771","3788","3803","3810","3818","3828","3829","3843","3847","3852","3857","3872","3882","3885","3889","3894","3900","3921","3930","3940","3946","3948","3956","3971","3972","3974","3975","3991","4005","4007","4013","4026","4028","4037","4041","4058","4064","4068","4070","4072","4073","4076","4086","4102","4106","4108","4114","4126","4128","4136","4140","4147","4148","4153","4154","4158","4166","4169","4172","4176","4179","4181","4183","4184","4195","4202"),]
+heatmap2<-data[c("51","57","278","284","318","327","392","399","792","897","928","938","957","967","1047","1068","1074","1084","1118","1311","1312","1354","1434","1454","1555","1588","1602","1760","1841","1937","1947","2111","2145","2320","2331","2382","2387","2451","2491","2652","2663","2671","2713","2716","2729","2767","2799","2904","2930","2931","2947","2988","3000","3008","3009","3021","3072","3102","3129","3142","3217","3218","3271","3292","3293","3302","3338","3347","3349","3350","3353","3354","3364","3368","3386","3417","3423","3468","3470","3499","3501","3505","3506","3510","3531","3532","3578","3582","3589","3600","3601","3609","3618","3627","3642","3648","3650","3697","3707","3724","3727","3744","3759","3763","3771","3803","3810","3818","3828","3829","3843","3852","3857","3872","3882","3885","3900","3946","3956","3971","3972","3974","3975","3991","4005","4007","4013","4026","4028","4037","4041","4064","4068","4072","4073","4076","4102","4114","4128","4136","4148","4153","4154","4158","4169","4172","4179","4181","4183","4195","4202"),]
+heatmap2<-data[c("51","57","284","318","327","399","792","928","938","957","967","1311","1312","1588","1602","2767","3368","3803","3829","4026"),]
+
+wssplot <- function(data, nc=205, seed=1234){
+  wss <- (nrow(data)-1)*sum(apply(data,2,var))
+  for (i in 2:nc){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab="Within groups sum of squares")}
+
+wssplot(heatmap2, nc=14)
+
+d <- dist(heatmap2, method = "euclidean") # Euclidean distance matrix.
+H.fit <- hclust(d)
+plot(H.fit)
+rect.hclust(H.fit, k=3, border="red") 
+
+
+
+heatmap2<-as.matrix(scale(log(heatmap2))) #?젙洹쒗솕
+for(i in 1:202){heatmap2[,i]<-ifelse(heatmap2[,i]<0,0,as.numeric(heatmap2[,i]))}
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap2)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap2)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap2)),"red","black")))))
+heatmap.2(heatmap2, scale='none',
+          trace="none",cexRow=1,keysize=0.75,ColSideColors=colCols,labCol=NA, margins = c(10, 20))
+par(lend = 1)
+legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
+       lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+
+
+hc.rows <- hclust(dist(heatmap2))
+plot(hc.rows)
+table(cutree(hc.rows,k=5))
+
+hc.cols <- hclust(dist(t(heatmap1)))
+plot(hc.cols)
+table(cutree(hc.cols,k=3))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rm(list=ls())
+
+data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_for_heatmap_se1.csv")
+data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/positive_polar.csv")
+
+summary(data)
+dat<-data[,-1:-2]
+
+
+rownames(data)<-data[,1]
+data<-data[,-1]
+
+library(gplots)
+head(data)
+
+heatmap2<-dat[,c("X522","X781","X1213","X1227","X1538","X1593","X1605","X1619","X1696","X1741","X1769","X1792","X1886","X1888","X1923","X1939","X1981","X1992","X2474")]
+heatmap2<-data[,c("X522","X665","X781","X895","X1149","X1168","X1209","X1213","X1215","X1225","X1227","X1308","X1315","X1322","X1349","X1383","X1458","X1527","X1538","X1593","X1605","X1606","X1619","X1679","X1696","X1735","X1741","X1742","X1769","X1784","X1792","X1866","X1886","X1888","X1923","X1928","X1939","X1974","X1981","X1992","X2020","X2063","X2182","X2400","X2442","X2474","X2608")]
+heatmap2<-data[,c("X317","X741","X769","X770","X771","X895","X965","X1215","X1225","X1227","X1349","X1383","X1527","X1538","X1605","X1606","X1619","X1664","X1666","X1696","X1712","X1718","X1723","X1730","X1735","X1741","X1742","X1789","X1792","X1793","X1853","X1888","X1904","X1923","X1939","X1974","X1980","X1981","X1992","X2020","X2033","X2053","X2109","X2166","X2384","X2400","X2442","X2524","X2588","X2713","X2776","X2799","X2847","X2868","X2915","X2925","X3083","X3185","X3204","X3424","X3425","X3456","X3458")]
+heatmap2<-data[,c("X895","X1215","X1225","X1227","X1349","X1383","X1527","X1538","X1605","X1606","X1619","X1696","X1735","X1741","X1742","X1792","X1888","X1923","X1939","X1974","X1981","X1992","X2020","X2400","X2442")]
+heatmap2<-data[,c("X1227","X1538","X1605","X1619","X1696","X1741","X1792","X1888","X1923","X1939","X1981","X1992")]
+
+heatmap2<-data[c("522","781","1213","1227","1538","1593","1605","1619","1696","1741","1769","1792","1886","1888","1923","1939","1981","1992","2474"),]
+heatmap2<-data[c("522","665","781","895","1149","1168","1209","1213","1215","1225","1227","1308","1315","1322","1349","1383","1458","1527","1538","1593","1605","1606","1619","1679","1696","1735","1741","1742","1769","1784","1792","1866","1886","1888","1923","1928","1939","1974","1981","1992","2020","2063","2182","2400","2442","2474","2608"),]
+heatmap2<-data[c("317","741","769","770","771","895","965","1215","1225","1227","1349","1383","1527","1538","1605","1606","1619","1664","1666","1696","1712","1718","1723","1730","1735","1741","1742","1789","1792","1793","1853","1888","1904","1923","1939","1974","1980","1981","1992","2020","2033","2053","2109","2166","2384","2400","2442","2524","2588","2713","2776","2799","2847","2868","2915","2925","3083","3185","3204","3424","3425","3456","3458"),]
+heatmap2<-data[c("895","1215","1225","1227","1349","1383","1527","1538","1605","1606","1619","1696","1735","1741","1742","1792","1888","1923","1939","1974","1981","1992","2020","2400","2442"),]
+heatmap2<-data[c("1227","1538","1605","1619","1696","1741","1792","1888","1923","1939","1981","1992"),]
+
+wssplot <- function(data, nc=205, seed=1234){
+  wss <- (nrow(data)-1)*sum(apply(data,2,var))
+  for (i in 2:nc){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab="Within groups sum of squares")}
+
+wssplot(heatmap2, nc=14)
+
+d <- dist(heatmap2, method = "euclidean") # Euclidean distance matrix.
+H.fit <- hclust(d)
+plot(H.fit)
+rect.hclust(H.fit, k=3, border="red") 
+
+
+
+head(heatmap2)
+
+heatmap2<-as.matrix(scale(log(heatmap2))) #?젙洹쒗솕
+for(i in 1:202){heatmap2[,i]<-ifelse(heatmap2[,i]<0,0,as.numeric(heatmap2[,i]))}
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap2)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap2)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap2)),"red","black")))))
+heatmap.2(heatmap2, scale='none',
+          trace="none",cexRow=1,keysize=0.75,ColSideColors=colCols,labCol=NA, margins = c(10, 20))
+par(lend = 1)
+legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
+       lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+hc.rows <- hclust(dist(heatmap2))
+plot(hc.rows)
+table(cutree(hc.rows,k=5))
+
+
+#####################################################################################
+
+
+
+
+install.packages("PMCMR")
+require(PMCMR)
+
+
+polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+
+polar_negative<-polar_negative[-203,]
+
+table(polar_negative$group)
+
+posthoc.kruskal.dunn.test(polar_negative$X51, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X57, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X284, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X381, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X327, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X399, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X792, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X928, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X938, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X957, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X967, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X1311, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X1312, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X1588, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X1602, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X2767, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X3047, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X3053, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X3368, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X3803, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X3829, polar_negative$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_negative$X4026, polar_negative$group, p.adjust.method="bonferroni")
+
+library(ggplot2)
+
+ggplot(polar_negative, aes(x=group,y=X51,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_51.png"))
+
+ggplot(polar_negative, aes(x=group,y=X57,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_57.png"))
+
+ggplot(polar_negative, aes(x=group,y=X284,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_284.png"))
+
+ggplot(polar_negative, aes(x=group,y=X318,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_318.png"))
+
+ggplot(polar_negative, aes(x=group,y=X327,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_327.png"))
+
+ggplot(polar_negative, aes(x=group,y=X399,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_399.png"))
+
+ggplot(polar_negative, aes(x=group,y=X792,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_792.png"))
+
+ggplot(polar_negative, aes(x=group,y=X928,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_928.png"))
+
+ggplot(polar_negative, aes(x=group,y=X938,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_938.png"))
+
+ggplot(polar_negative, aes(x=group,y=X957,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_957.png"))
+
+ggplot(polar_negative, aes(x=group,y=X967,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_967.png"))
+
+ggplot(polar_negative, aes(x=group,y=X1311,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_1311.png"))
+
+ggplot(polar_negative, aes(x=group,y=X1312,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_1312.png"))
+
+ggplot(polar_negative, aes(x=group,y=X1588,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_1588.png"))
+
+ggplot(polar_negative, aes(x=group,y=X1602,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_1602.png"))
+
+ggplot(polar_negative, aes(x=group,y=X2767,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_2767.png"))
+
+ggplot(polar_negative, aes(x=group,y=X3047,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3047.png"))
+
+ggplot(polar_negative, aes(x=group,y=X3053,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3053.png"))
+
+ggplot(polar_negative, aes(x=group,y=X3368,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3368.png"))
+
+ggplot(polar_negative, aes(x=group,y=X3803,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3803.png"))
+
+ggplot(polar_negative, aes(x=group,y=X3829,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3829.png"))
+
+ggplot(polar_negative, aes(x=group,y=X4026,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_4026.png"))
+
+
+
+#####################################################################################
+
+
+
+
+install.packages("PMCMR")
+require(PMCMR)
+
+
+polar_positive<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive.csv")
+
+polar_positive<-polar_positive[-206,]
+
+table(polar_positive$group)
+
+
+posthoc.kruskal.dunn.test(polar_positive$X522, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X781, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1213, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1227, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1538, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1593, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1605, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1619, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1696, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1741, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1769, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1792, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1886, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1888, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1923, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1939, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1981, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X1992, polar_positive$group, p.adjust.method="bonferroni")
+posthoc.kruskal.dunn.test(polar_positive$X2474, polar_positive$group, p.adjust.method="bonferroni")
+
+library(ggplot2)
+
+ggplot(polar_positive, aes(x=group,y=X522,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_522.png"))
+
+ggplot(polar_positive, aes(x=group,y=X781,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_781.png"))
+
+ggplot(polar_positive, aes(x=group,y=X1213,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1213.png"))
+
+ggplot(polar_positive, aes(x=group,y=X1227,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1227.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1538,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1538.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1593,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1593.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1605,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1605.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1619,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1619.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1696,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1696.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1741,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1741.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1769,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1769.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1792,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1792.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1886,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1886.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1888,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1888.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1923,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1923.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1939,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1939.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1981,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1981.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X1992,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1992.png"))
+
+
+ggplot(polar_positive, aes(x=group,y=X2474,fill=group))+geom_boxplot()+theme_bw()+
+  theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
+  theme(text = element_text(size=20),axis.title.x=element_blank())
+ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_2474.png"))
+
+
+
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+
+# AUC 洹몃━湲?
+
+rm(list=ls())
+
+install.packages("Epi")
+library(Epi)
+
+data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_negative.csv")
+
+# Normal vs CX cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal_CXCAN_auc.csv")
+
+# Normal vs CIN1
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1")
+data1$group1<-ifelse(data1$group=="CIN1",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal_CIN1.csv")
+
+
+# Normal vs CIN2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal_CIN2.3.csv")
+
+# CIN1 vs CIN2/3
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN1_CIN2.3.csv")
+
+# CIN1 vs CX CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN1_CXCAN.csv")
+
+
+# CIN2/3 vs CX CAN
+data1<-subset(data,data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN2.3_CXCAN.csv")
+
+
+
+# Normal vs CIN1,2,3, Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal vs abnormal.csv")
+
+
+
+# Normal , CIN1 vs  CIN 2,3, Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="Normal"|data1$group=="CIN1",0,1)
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
+
+
+# Normal , CIN1   CIN 2,3, vs Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal,CIN1,2,3 vs Cx cAN.csv")
+
+# C1,2,3 vs Cx CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN1.2.3 vs CXCAN.csv")
+
+
+# C1 vs C2,3 Cx CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CIN1",0,1)
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN1 vs CIN 2.3 CXCAN.csv")
+
+
+# Normal, CIn1 vs CIN2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal,c1 vs C2.3.csv")
+
+
+# Normal vs CIM1/2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal vs CIM123.csv")
+
+# Normal,C1 vs Cx cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal,C1 vs Cx cAN.csv")
+
+
+# Normal vs CIN2/3 Cx cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+
+x<-c()
+auc<-c()
+for( i in 3:3840){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal vs CIN2.3 Cx cAN.csv")
+
+###################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
+
+# AUC 洹몃━湲?
+
+rm(list=ls())
+
+install.packages("Epi")
+library(Epi)
+
+data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_positive.csv")
+
+# Normal vs CX cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal_CXCAN_auc.csv")
+
+# Normal vs CIN1
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1")
+data1$group1<-ifelse(data1$group=="CIN1",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal_CIN1.csv")
+
+
+# Normal vs CIN2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal_CIN2.3.csv")
+
+# CIN1 vs CIN2/3
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN1_CIN2.3.csv")
+
+# CIN1 vs CX CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN1_CXCAN.csv")
+
+
+# CIN2/3 vs CX CAN
+data1<-subset(data,data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN2.3_CXCAN.csv")
+
+
+
+# Normal vs CIN1,2,3, Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal vs abnormal.csv")
+
+
+
+# Normal , CIN1 vs  CIN 2,3, Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="Normal"|data1$group=="CIN1",0,1)
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
+
+
+# Normal , CIN1   CIN 2,3, vs Cx CAN
+
+data1<-data
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal,CIN1,2,3 vs Cx cAN.csv")
+
+# C1,2,3 vs Cx CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN1.2.3 vs CXCAN.csv")
+
+
+# C1 vs C2,3 Cx CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CIN1",0,1)
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN1 vs CIN 2.3 CXCAN.csv")
+
+
+# Normal, CIn1 vs CIN2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="CIN2/3",1,0)
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal,c1 vs C2.3.csv")
+
+
+# Normal vs CIM1/2/3
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CIN2/3")
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal vs CIM123.csv")
+
+# Normal,C1 vs Cx cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal,C1 vs Cx cAN.csv")
+
+
+# Normal vs CIN2/3 Cx cAN
+data1<-subset(data,data$group=="Normal"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="Normal",0,1)
+
+x<-c()
+auc<-c()
+for( i in 3:4357){
+  x[i]<-colnames(data1[i])
+  auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
+  data2<-data.frame(x,auc)
+}
+write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal vs CIN2.3 Cx cAN.csv")
+
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+
+
+rm(list=ls())
+
+data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/20171214_polar positive name_ heatmap.csv")
+rownames(data)<-data[,1]
+data<-data[,-1]
+
+install.packages("gplots")
+library(gplots)
+
+heatmap1<-as.matrix(scale(data)) #?젙洹쒗솕
+heatmap1<-as.matrix(scale(log2(data))) #?젙洹쒗솕
+
+for(i in 1:205){data[,i]<-ifelse(data[,i]<0,0,data[,i])}
+#for(i in 1:205){data[,i]<-log10(as.numeric(data[,i])) }  
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap1)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap1)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap1)),"red","black")))))
+
+
+heatmap.2(heatmap1, scale='none',
+          trace="none",cexRow=1,keysize=0.75,ColSideColors=colCols,labCol=NA, margins = c(10, 20))
+
+par(lend = 1)
+legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
+       lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+
+
+
+hc.rows <- hclust(dist(heatmap1))
+plot(hc.rows)
+table(cutree(hc.rows,k=3))
+rect.hclust(hc.rows, k=3, border="red") 
+
+####
+
+rownames(data)
+
+data_2<-data[c("3-Indolepropionic acid","Alanine","AMP","Aspartate","Caffeine","Carnitine (C5) 2","Fructose 6-phosphate","Glutamate","Hippuric acid","Hypoxanthine","Inosine","Isoleucine","Nonanoylcarnitine","Phenylalanine","Pipecolic acid","Proline","sn-glycero-3-Phosphocholine","Taurine","Creatine"),]
+
+data_2<-data[c("3-Indolepropionic acid","Alanine","AMP","Aspartate","Caffeine","Carnitine (C5) 2","Fructose 6-phosphate","Glutamate","Hippuric acid","Hypoxanthine","Inosine","Isoleucine","Nonanoylcarnitine","Phenylalanine","Pipecolic acid","Proline","sn-glycero-3-Phosphocholine","Taurine"),]
+
+data_2<-data[c("3-Indolepropionic acid","Alanine","AMP","Aspartate","Caffeine","Carnitine (C5) 2","Glutamate","Hippuric acid","Hypoxanthine","Inosine","Isoleucine","Nonanoylcarnitine","Phenylalanine","Pipecolic acid","Proline","sn-glycero-3-Phosphocholine","Taurine"),]
+
+data_2<-data[c("3-Indolepropionic acid","Alanine","AMP","Aspartate","Caffeine","Glutamate","Hippuric acid","Hypoxanthine","Inosine","Nonanoylcarnitine","Pipecolic acid","sn-glycero-3-Phosphocholine","Taurine"),]
+
+
+heatmap1<-as.matrix(scale(data_2)) #?젙洹쒗솕
+heatmap1<-as.matrix(scale(log(data_2))) #?젙洹쒗솕
+
+for(i in 1:205){heatmap1[,i]<-ifelse(heatmap1[,i]<0,0,heatmap1[,i])}
+#for(i in 1:205){heatmap1[,i]<-log10(as.numeric(heatmap1[,i])) }  
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap1)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap1)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap1)),"red","black")))))
+
+
+heatmap.2(heatmap1, scale='none',
+          trace="none",cexRow=1,keysize=0.75,ColSideColors=colCols,labCol=NA, margins = c(10, 20))
+
+par(lend = 1)
+legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
+       lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+
+
+
+hc.rows <- hclust(dist(heatmap1))
+plot(hc.rows)
+table(cutree(hc.rows,k=3))
+rect.hclust(hc.rows, k=3, border="red") 
+
+###
+
+
+#######################################################################################
+
+install.packages("Epi")
+library(Epi)
+
+data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/20171214_polar positive name.csv")
+
+
+str(data)
+
+# CIN1 vs CX CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+ROC(form=group1~Phenylalanine,data=data1,plot="ROC")
+ROC(form=group1~Hypoxanthine,data=data1,plot="ROC")
+ROC(form=group1~Phenylalanine+Hypoxanthine,data=data1,plot="ROC")
+ROC(form=group1~Phenylalanine+Hypoxanthine+Proline,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Hypoxanthine+AMP,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+AMP+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+AMP,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
+
+
+# No CAN vs CX CAN
+data1<-data
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+ROC(form=group1~Phenylalanine,data=data1,plot="ROC")
+ROC(form=group1~Hypoxanthine,data=data1,plot="ROC")
+ROC(form=group1~Phenylalanine+Hypoxanthine,data=data1,plot="ROC")
+ROC(form=group1~Phenylalanine+Hypoxanthine+Proline,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Hypoxanthine+AMP,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+AMP+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+AMP,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
+
+
+# CIN1 vs CX CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+ROC(form=group1~Phenylalanine,data=data1,plot="ROC")
+ROC(form=group1~Hypoxanthine,data=data1,plot="ROC")
+ROC(form=group1~Phenylalanine+Hypoxanthine,data=data1,plot="ROC")
+ROC(form=group1~Phenylalanine+Hypoxanthine+Proline,data=data1,plot="ROC")$AUC
+
+
+ROC(form=group1~Hypoxanthine+AMP,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+AMP+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+AMP,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
+
+
+
+# Normal+CIN1 vs CX CAN
+data1<-subset(data,data$group=="CIN1"|data$group=="Normal"|data$group=="CX CAN")
+data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+
+ROC(form=group1~Phenylalanine,data=data1,plot="ROC")
+ROC(form=group1~Hypoxanthine,data=data1,plot="ROC")
+ROC(form=group1~Phenylalanine+Hypoxanthine,data=data1,plot="ROC")
+ROC(form=group1~Phenylalanine+Hypoxanthine+Proline,data=data1,plot="ROC")$AUC
+
+
+ROC(form=group1~Hypoxanthine+AMP,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+AMP+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+AMP,data=data1,plot="ROC")$AUC
+ROC(form=group1~Hypoxanthine+Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
+
+
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+###################################################
+
+
+rm(list=ls())
+
+data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/20171219_polar negative name heatmap.csv")
+rownames(data)<-data[,1]
+data<-data[,-1]
+
+install.packages("gplots")
+library(gplots)
+
+heatmap1<-as.matrix(scale(data)) #?젙洹쒗솕
+#heatmap1<-as.matrix(scale(log(data))) #?젙洹쒗솕
+
+for(i in 1:205){data[,i]<-ifelse(data[,i]<0,0,data[,i])}
+#for(i in 1:205){data[,i]<-log10(as.numeric(data[,i])) }  
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap1)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap1)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap1)),"red","black")))))
+
+
+heatmap.2(heatmap1, scale='none',
+          trace="none",cexRow=1,keysize=0.75,ColSideColors=colCols,labCol=NA, margins = c(10, 20))
+
+par(lend = 1)
+legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
+       lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+
+
+
+hc.rows <- hclust(dist(heatmap1))
+plot(hc.rows)
+table(cutree(hc.rows,k=3))
+rect.hclust(hc.rows, k=3, border="red") 
+
+####
+
+rownames(data)
+
+data_2<-data[c("3-Hydroxybutyric acid","Hippuric acid","3-Indolepropionic acid","Inosine","Lactate","Dimethylglycine","Taurine","Pyroglutamic acid","Aspartate","Malate","Glutamate","Histidine","Phenylalanine","Gluconic acid","Tryptophan","Ribose 5-phosphate"),]
+
+data_2<-data[c("Lactate","Dimethylglycine","Taurine","Pyroglutamic acid","Aspartate","Malate","Glutamate","Histidine","Phenylalanine","Gluconic acid","Tryptophan","Ribose 5-phosphate"),]
+
+data_2<-data[c("3-Hydroxybutyric acid","Hippuric acid","Lactate","Dimethylglycine","Taurine","Pyroglutamic acid","Aspartate","Malate","Glutamate","Histidine","Phenylalanine","Gluconic acid","Tryptophan","Ribose 5-phosphate"),]
+
+data_2<-data[c("3-Hydroxybutyric acid","Hippuric acid","3-Indolepropionic acid","Inosine","Lactate","Dimethylglycine","Taurine","Pyroglutamic acid","Aspartate","Malate","Glutamate","Phenylalanine","Gluconic acid","Ribose 5-phosphate"),]
+
+data_2<-data[c("3-Hydroxybutyric acid","Hippuric acid","3-Indolepropionic acid","Inosine","Lactate","Dimethylglycine","Taurine","Pyroglutamic acid","Aspartate","Malate","Glutamate","Ribose 5-phosphate"),]
+
+heatmap1<-as.matrix(scale(data_2)) #?젙洹쒗솕
+#heatmap1<-as.matrix(scale(log(data_2))) #?젙洹쒗솕
+
+for(i in 1:203){heatmap1[,i]<-ifelse(heatmap1[,i]<0,0,heatmap1[,i])}
+#for(i in 1:205){heatmap1[,i]<-log10(as.numeric(heatmap1[,i])) }  
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap1)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap1)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap1)),"red","black")))))
+
+library(gplots)
+heatmap.2(heatmap1, scale='none',
+          trace="none",cexRow=1,keysize=0.75,ColSideColors=colCols,labCol=NA, margins = c(10, 20))
+
+par(lend = 1)
+legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
+       lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+
+
+
+hc.rows <- hclust(dist(heatmap1))
+plot(hc.rows)
+table(cutree(hc.rows,k=2))
+rect.hclust(hc.rows, k=3, border="red") 
+###
+
+
+#######################################################################################
+
+install.packages("Epi")
+library(Epi)
+
+rm(list=ls())
+data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/20171219_polar negative name.csv")
+
+
+str(data)
+
+
+
+# Normal vs CX CAN
+data1<-subset(data,data$Metabolite=="Normal"|data$Metabolite=="CX CAN")
+data1$group1<-ifelse(data1$Metabolite=="CX CAN",1,0)
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+
+
+
+
+
+
+# CIN1 vs CX CAN
+data1<-subset(data,data$Metabolite=="CIN1"|data$Metabolite=="CX CAN")
+data1$group1<-ifelse(data1$Metabolite=="CX CAN",1,0)
+
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+
+
+
+
+
+# CIN2/3 vs CX CAN
+data1<-subset(data,data$Metabolite=="CIN2/3"|data$Metabolite=="CX CAN")
+data1$group1<-ifelse(data1$Metabolite=="CX CAN",1,0)
+
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+
+
+
+
+# N,C1 vs C2/3, CX CAN
+data1<-data
+data1$group1<-ifelse(data1$Metabolite=="CIN2/3"|data1$Metabolite=="CX CAN",1,0)
+
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+
+
+# No can vs CX CAN
+data1<-data
+data1$group1<-ifelse(data1$Metabolite=="CX CAN",1,0)
+
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+
+
+
+
+# CINs vs CX CAN
+data1<-subset(data,data$Metabolite=="CIN1"|data$Metabolite=="CIN2/3"|data$Metabolite=="CX CAN")
+data1$group1<-ifelse(data1$Metabolite=="CX CAN",1,0)
+
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+
+
+
+# CIN1 vs CIN2/3, CX CAN
+data1<-subset(data,data$Metabolite=="CIN1"|data$Metabolite=="CIN2/3"|data$Metabolite=="CX CAN")
+data1$group1<-ifelse(data1$Metabolite=="CIN1",0,1)
+
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+
+
+
+
+# N, CIN1 vs CX CAN
+data1<-subset(data,data$Metabolite=="CIN1"|data$Metabolite=="Normal"|data$Metabolite=="CX CAN")
+data1$group1<-ifelse(data1$Metabolite=="CX CAN",1,0)
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+
+
+# N vs C2/3, CX CAN
+data1<-subset(data,data$Metabolite=="Normal"|data$Metabolite=="CIN2/3"|data$Metabolite=="CX CAN")
+data1$group1<-ifelse(data1$Metabolite=="Normal",0,1)
+
+
+ROC(form=group1~Lactate+Aspartate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+ROC(form=group1~Lactate+Aspartate+Pyroglutamic.acid+Glutamate+Ribose.5.phosphate,data=data1,plot="ROC")$AUC
+```
