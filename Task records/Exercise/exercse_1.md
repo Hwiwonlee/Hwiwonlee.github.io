@@ -551,33 +551,22 @@ print(optimal_lr.eta(roc.metabolites))
 
 
 #### ####
-
-
-# MetaboAnalystR installation
-## Step 1. 
-install.packages("pacman")
-
-library(pacman)
-
-pacman::p_load(Rserve, ellipse, scatterplot3d, Cairo, randomForest, caTools, e1071, som, impute, pcaMethods, RJSONIO, ROCR, globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, SSPA, sva, Rcpp, pROC, data.table, limma, car, fitdistrplus, lars, Hmisc, magrittr, methods, xtable, pls, caret, lattice, igraph, gplots, KEGGgraph, reshape, RColorBrewer, tibble, siggenes, plotly, xcms, CAMERA, fgsea, MSnbase, BiocParallel, metap, reshape2, scales)
-
-
-## Step 2.
-# Step 1: Install devtools
-install.packages("devtools")
-library(devtools)
-
-# Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
-
+ANCHOR 
+PLEASE ADD CODE FOR INSTALL "MetaboAnalystR"
 ```
 
 
 ```r
-data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/negative_polar.csv")
 
-data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
-data1$group1<-ifelse(data1$group=="CX CAN",1,0)
+#### 2. OLD Draw ROC curve using identified negative polar metabolites ####
+#### Part 1. ####
+# This Part use the identified metabolites. So, actually this part should move to behind part 2 in "2. OLD section".
+# But i don't want to mess this "OLD" legacy. Therefore I do not handle this.
+
+data <- read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/negative_polar.csv")
+
+data1 <- subset(data,data$group=="Normal"|data$group=="CX CAN")
+data1$group1 <- ifelse(data1$group=="CX CAN",1,0)
 
 ## CINs vs CX CAN ROC
 
@@ -595,9 +584,11 @@ ROC(form=group1~Lactate,data=data1,plot="ROC")
 ROC(form=group1~Dimethylglycine,data=data1,plot="ROC")
 ROC(form=group1~X3.Hydroxybutyric.acid,data=data1,plot="ROC")
 ROC(form=group1~Malate,data=data1,plot="ROC")
+#### ####
 
-#######################################################################################
-
+#### Part 2. ####
+# This Part use the un-identified metabolites. That means, this is the real first step on the 3. OLD using rawdataset.
+# But as I wrote before, I don't take this sequence for preserve original legacy
 
 options(java.parameters = "-Xmx4g")
 polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
@@ -651,9 +642,126 @@ for( i in 3:3840){
 
 write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/llipid_negative_kw.csv")
 
-#################################################################################################################
-#################################################################################################################
+#### ####
 
+#### 2. New Draw ROC curve using identified negative polar metabolites #####
+#### Part 1. #### 
+# load csv file and store to 'data'
+data <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/negative_polar.csv"))
+
+# OLD version would be some comparison rearch using grouping 
+## 1) Normal vs CX CAN / 2) CIN1 + CIN2/2 vs CX CAN / 3) Normal + CIN1 vs CIN2/3 + CX CAN 
+
+# exercise about filtering
+## value of group column equals to "Normal" or "CX CAN"
+data %>% 
+  dplyr::filter(group == "Normal" | group == "CX CAN") %>% # -> data1_NEW, data1 totally equals to data1_NEW
+  mutate(group1 = ifelse(group == "CX CAN", 1, 0)) -> data1_NEW # data1 totally equals to data1_NEW
+
+## check the equality data1 and data1_NEW
+sum(data1 != data1_NEW)
+
+# Actually, I do not have to make some different versions like OLD. 
+data %>% 
+  ### 1) Normal vs CX CAN
+  dplyr::filter(group == "Normal" | group == "CX CAN") %>%
+  mutate(group1 = ifelse(group == "CX CAN", 1, 0)) %>% 
+  
+  
+  ### 2) CIN1 + CIN2/2 vs CX CAN
+  dplyr::filter(group=="CIN1"|group=="CIN2/3"|group=="CX CAN") %>% 
+  mutate(group1 = ifelse(group == "CX CAN", 1, 0)) %>% 
+  
+  
+  ### 3) Normal + CIN1 vs CIN2/3 + CX CAN
+  mutate(group1 = ifelse(group=="CX CAN"|group=="CIN2/3",1,0)) %>% 
+  
+  ### Drawing ROC curve
+  ROC(form = group1~Lactate, data=., plot="ROC") %>% 
+  ROC(form = group1 ~ Dimethylglycine , data = ., plot="ROC") %>% 
+  ROC(form=group1~X3.Hydroxybutyric.acid,data=data1,plot="ROC") %>% 
+  ROC(form=group1~Malate,data=data1,plot="ROC")
+
+# <TO DO> Covert more convenient
+
+#### ####
+
+#### Part 2. ####
+# options(java.parameters = "-Xmx4g") remove
+
+# Load rawdata and store to 'polar_negative'
+polar_negative <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_negative.csv"))
+
+x<-c()
+p<-c()
+
+for( i in 3:2565){
+  x[i]<-colnames(polar_negative[i])
+  p[i]<-round(kruskal.test(polar_negative[,i]~polar_negative$group)$p.value,5)
+  data<-data.frame(x,p)
+}
+
+write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_negative_kw.csv")
+
+
+# Load rawdata and store to 'polar_positive'
+polar_positive <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_positive.csv"))
+
+x<-c()
+p<-c()
+for( i in 3:1928){
+  x[i]<-colnames(polar_positive[i])
+  p[i]<-round(kruskal.test(polar_positive[,i]~polar_positive$group)$p.value,5)
+  data<-data.frame(x,p)
+}
+
+write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_positive_kw.csv")
+
+
+
+# Load rawdata and store to 'lipid_positive'
+lipid_positive <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_positive.csv"))
+
+x<-c()
+p<-c()
+for( i in 3:4357){
+  x[i]<-colnames(lipid_positive[i])
+  p[i]<-round(kruskal.test(lipid_positive[,i]~lipid_positive$group)$p.value,5)
+  data<-data.frame(x,p)
+}
+
+write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_positive_kw.csv")
+
+
+
+# Load rawdata and store to 'lipid_negative'
+lipid_negative <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_negative.csv"))
+
+x<-c()
+p<-c()
+for( i in 3:3840){
+  x[i]<-colnames(lipid_negative[i])
+  p[i]<-round(kruskal.test(lipid_negative[,i]~lipid_negative$group)$p.value,5)
+  data<-data.frame(x,p)
+}
+
+write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/llipid_negative_kw.csv")
+
+# It seems like newbie's coding but very intuitive style.
+# However it needs to commit more efficient using 'user def function' to reduce repeatation code. 
+
+# <TO DO> def function and test 
+#### ####
+
+  
+
+
+
+
+#### 3. OLD Heatmap plot and HCA using identified negative polar metabolites ####
+# HCA means 'Hierarchical cluster analysis'
+
+#### Part 1. Draw heatmap plot #### 
 rm(list=ls())
 
 data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/polar_negative_for_heatmap.csv")
@@ -682,9 +790,9 @@ par(lend = 1)
 legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
        lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
 
+#### ####
 
-
-
+#### Part 2. Hierarchical cluster analysis ####
 hc.rows <- hclust(dist(heatmap1))
 plot(hc.rows)
 table(cutree(hc.rows,k=5))
@@ -692,6 +800,11 @@ table(cutree(hc.rows,k=5))
 hc.cols <- hclust(dist(t(heatmap1)))
 plot(hc.cols)
 table(cutree(hc.cols,k=3))
+#### ####
+
+
+
+
 
 
 
