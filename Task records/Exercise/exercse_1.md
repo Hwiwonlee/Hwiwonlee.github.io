@@ -570,13 +570,6 @@ library(devtools)
 # Step 2: Install MetaboAnalystR without documentation
 devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
 
-# 참고할 sites
-https://academic.oup.com/bioinformatics/article/34/24/4313/5046255
-https://github.com/xia-lab/MetaboAnalystR'
-https://en.wikipedia.org/wiki/MetaboAnalyst
-https://rdrr.io/github/xia-lab/MetaboAnalystR/
-
-
 ```
 
 
