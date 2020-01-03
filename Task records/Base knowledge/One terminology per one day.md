@@ -25,9 +25,6 @@
 ## 19.12.31. [Metabolic reprograming](http://ar.iiarjournals.org/content/35/11/5789.full)  
 **Metabolic reprogramming** refers to the ability of cancer cells to alter their metabolism in order to support the increased energy request due to continuous growth, rapid proliferation, and other characteristics typical of neoplastic cells.  
 
-------------------------------------------------------------------------------------
-또 찾을 것 같아서 일단 복붙만 해놓음. 
-
 ## 20.01.02. [Fold change](https://en.wikipedia.org/wiki/Fold_change)
 &nbsp;&nbsp;&nbsp;&nbsp;**Fold change** is a measure describing how much a quantity changes between an original and a subsequent measurement. It is defined as the ratio between the two quantities; for quantities A and B, then the fold change of B with respect to A is B/A. Fold change is often used when analysing multiple measurements of a biological system taken at different times as the change described by the ratio between the time points is easier to interpret than the difference. [참고](http://blog.genoglobe.com/2017/10/fold-change.html)  
 
@@ -36,6 +33,12 @@
 1. What is the polarity(https://en.wikipedia.org/wiki/Chemical_polarity)
 1. Is Non-polarity the same as lipid? Yes or not, anyway, What is the lipid(https://en.wikipedia.org/wiki/Lipid)
 
+## 20.01.03. [Cohort Study and Case-Control Study](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2998589/)
+&nbsp;&nbsp;&nbsp;&nbsp;**Cohort Study**와 **Case-Control Study**는 observational study라는 큰 범주 안에 속하는 분석 방법으로 bio 혹은 medical 저널에서 흔히 볼 수 있는 방법론들이다. 많이는 봤지만 볼 때마다 두 연구 방법 사이에 어떤 차이점이 있는지 궁금했었기 때문에 구체적으로 알아보려고 한다. 
+&nbsp;&nbsp;&nbsp;&nbsp;직관적인 설명을 위해 연구 목적을 음주에 따른 암 발생 요인 규명으로 가정하겠다. **Cohort Study**란 연구 시작 시점에 보유하고 있는 연구 집단(Study population)을 음주에 대한 노출/비노출 집단(exposure/unexposure group)으로 구분한 후, 각 그룹에 대해 암 발생이 나타나는지 추적, 관찰하여 음주에 대한 노출/비노출이 암 발병과 연관이 있는지 밝혀내고자 하는 연구방법이다. **Case-Control Study**는 이미 암 발생이 일어난 집단(암환자)과 암 발병이 일어나지 않은 집단(정상군 혹은 대조군)을 선정, 과거부터 현재까지의 두 집단이 갖고 있는 음주에 대한 노출/비노출 정도 차이를 비교해 음주에 대한 노출이 암 발생과 연관이 있는지 밝혀내고자 하는 연구방법이다. 
+&nbsp;&nbsp;&nbsp;&nbsp;각 정의의 마지막 부분을 보면 알겠지만 두 연구 방법의 목적은 같다. 두 연구 방법 사이의 가장 큰 차이는 노출/비노출 집단의 구분이 연구 과정 안에 포함되느냐 포함되지 않느냐이다. 포함된다면 Cohort Study, 포함되지 않는다면 Case-Control Study이다. ~~두 방법의 차이점은 나중에 추가하도록 하겠다.~~ 덧붙여 Cohort Study는 Prospective와 Retrospective로 구분되는데 보통 Cohort Study라 하면 Retrospective cohort study를 말하는 것으로 이해하면 된다. 
+
+plus information : [코호트 연구와 환자-대조군연구](https://hineca.kr/1846)
 
 
 
