@@ -690,7 +690,33 @@ data %>%
 # options(java.parameters = "-Xmx4g") remove
 
 # Load rawdata and store to 'polar_negative'
-polar_negative <- as.tibble(read.csv("...polar_negative.csv"))
+polar_negative <- read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_negative.csv")
+## I forced to use 'data.frame' format, non-tibble. beacause of kruskal.test function 
+
+# Generatign function for sum up part 2
+## In this Part 2, acutually, just repeat iteration code using kruskal.test over and over again
+## So the thing is only changed input dataset for  using kruskal.test
+
+kruskal_test <- function(df, start, end){
+  ### function that kruskal test  ###
+  ### df : input dataset ###
+  ### start, end : points of variables start and end 
+  
+  # store space 
+  x <- c()
+  p <- c()
+  
+  # iteration part for kruskal.test
+  for (i in start:end){
+    x[i] <- colnames(df[i])
+    p[i] <- round(kruskal.test(df[,i] ~ df$group)$p.value, 5)
+    result <- tibble(x, p)
+  }
+  # return result 
+  return(result)
+}
+
+# Just comparison New and Old
 
 x<-c()
 p<-c()
@@ -701,56 +727,32 @@ for( i in 3:2565){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"...polar_negative_kw.csv")
+# check the same result 
+head(kruskal_test(polar_negative, 3, length(polar_negative)), 10)
 
+# To save the result to new csv file 
+write.csv(kruskal_test(polar_negative, 3, length(polar_negative)),"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_negative_kw.csv")
 
-# Load rawdata and store to 'polar_positive'
-polar_positive <- as.tibble(read.csv("...polar_positive.csv"))
+# This is the process of making a function and checking the results
+# In now, use the function for more smart
 
-x<-c()
-p<-c()
-for( i in 3:1928){
-  x[i]<-colnames(polar_positive[i])
-  p[i]<-round(kruskal.test(polar_positive[,i]~polar_positive$group)$p.value,5)
-  data<-data.frame(x,p)
-}
+# polar_positive dataset 
+polar_positive <- read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_positive.csv")
+write.csv(kruskal_test(polar_positive, 3, length(polar_positive)),"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_positive_kw.csv")
 
-write.csv(data,"...polar_positive_kw.csv")
+# lipid_positive dataset
+lipid_positive <- read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_positive.csv")
+write.csv(kruskal_test(lipid_positive, 3, length(lipid_positive)),"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_positive_kw.csv")
 
+# lipid_negative dataset
+lipid_negative <- read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_negative.csv")
+write.csv(kruskal_test(lipid_negative, 3, length(lipid_negative)),"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/llipid_negative_kw.csv")
 
-
-# Load rawdata and store to 'lipid_positive'
-lipid_positive <- as.tibble(read.csv("...lipid_positive.csv"))
-
-x<-c()
-p<-c()
-for( i in 3:4357){
-  x[i]<-colnames(lipid_positive[i])
-  p[i]<-round(kruskal.test(lipid_positive[,i]~lipid_positive$group)$p.value,5)
-  data<-data.frame(x,p)
-}
-
-write.csv(data,"...lipid_positive_kw.csv")
-
-
-
-# Load rawdata and store to 'lipid_negative'
-lipid_negative <- as.tibble(read.csv("...lipid_negative.csv"))
-
-x<-c()
-p<-c()
-for( i in 3:3840){
-  x[i]<-colnames(lipid_negative[i])
-  p[i]<-round(kruskal.test(lipid_negative[,i]~lipid_negative$group)$p.value,5)
-  data<-data.frame(x,p)
-}
-
-write.csv(data,"...llipid_negative_kw.csv")
-
-# It seems like newbie's coding but very intuitive style.
-# However it needs to commit more efficient using 'user def function' to reduce repeatation code. 
+# It seems like newbie's coding but very intuitive style
+# However it needs to commit more efficient using 'user def function' to reduce repeatation code 
 
 # <TO DO> def function and test 
+# <END> I create function, kruskal_test. The messy code was neatly organized with a kruskal_test function
 #### ####
 
   
