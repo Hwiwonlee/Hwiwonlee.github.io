@@ -647,7 +647,7 @@ write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/llipid_n
 #### 2. New Draw ROC curve using identified negative polar metabolites #####
 #### Part 1. #### 
 # load csv file and store to 'data'
-data <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/negative_polar.csv"))
+data <- as.tibble(read.csv("...negative_polar.csv"))
 
 # OLD version would be some comparison rearch using grouping 
 ## 1) Normal vs CX CAN / 2) CIN1 + CIN2/2 vs CX CAN / 3) Normal + CIN1 vs CIN2/3 + CX CAN 
@@ -690,7 +690,7 @@ data %>%
 # options(java.parameters = "-Xmx4g") remove
 
 # Load rawdata and store to 'polar_negative'
-polar_negative <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_negative.csv"))
+polar_negative <- as.tibble(read.csv("...polar_negative.csv"))
 
 x<-c()
 p<-c()
@@ -701,11 +701,11 @@ for( i in 3:2565){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_negative_kw.csv")
+write.csv(data,"...polar_negative_kw.csv")
 
 
 # Load rawdata and store to 'polar_positive'
-polar_positive <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_positive.csv"))
+polar_positive <- as.tibble(read.csv("...polar_positive.csv"))
 
 x<-c()
 p<-c()
@@ -715,12 +715,12 @@ for( i in 3:1928){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_positive_kw.csv")
+write.csv(data,"...polar_positive_kw.csv")
 
 
 
 # Load rawdata and store to 'lipid_positive'
-lipid_positive <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_positive.csv"))
+lipid_positive <- as.tibble(read.csv("...lipid_positive.csv"))
 
 x<-c()
 p<-c()
@@ -730,12 +730,12 @@ for( i in 3:4357){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_positive_kw.csv")
+write.csv(data,"...lipid_positive_kw.csv")
 
 
 
 # Load rawdata and store to 'lipid_negative'
-lipid_negative <- as.tibble(read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_negative.csv"))
+lipid_negative <- as.tibble(read.csv("...lipid_negative.csv"))
 
 x<-c()
 p<-c()
@@ -745,7 +745,7 @@ for( i in 3:3840){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/llipid_negative_kw.csv")
+write.csv(data,"...llipid_negative_kw.csv")
 
 # It seems like newbie's coding but very intuitive style.
 # However it needs to commit more efficient using 'user def function' to reduce repeatation code. 
@@ -764,7 +764,7 @@ write.csv(data,"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/llipi
 #### Part 1. Draw heatmap plot #### 
 rm(list=ls())
 
-data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/polar_negative_for_heatmap.csv")
+data<-read.csv("...polar_negative_for_heatmap.csv")
 rownames(data)<-data[,1]
 data<-data[,-1]
 
@@ -2399,7 +2399,7 @@ write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_p
 
 rm(list=ls())
 
-data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/20171214_polar positive name_ heatmap.csv")
+data<-read.csv("...20171214_polar positive name_ heatmap.csv")
 rownames(data)<-data[,1]
 data<-data[,-1]
 
@@ -2479,7 +2479,7 @@ rect.hclust(hc.rows, k=3, border="red")
 install.packages("Epi")
 library(Epi)
 
-data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/20171214_polar positive name.csv")
+data<-read.csv("...20171214_polar positive name.csv")
 
 
 str(data)
@@ -2586,7 +2586,7 @@ ROC(form=group1~Aspartate+AMP+Glutamate,data=data1,plot="ROC")$AUC
 
 rm(list=ls())
 
-data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/20171219_polar negative name heatmap.csv")
+data<-read.csv("...20171219_polar negative name heatmap.csv")
 rownames(data)<-data[,1]
 data<-data[,-1]
 
@@ -2667,7 +2667,7 @@ install.packages("Epi")
 library(Epi)
 
 rm(list=ls())
-data<-read.csv("//172.20.213.44/연구서버/Metabolomics/분석/2차분석/20171219_polar negative name.csv")
+data<-read.csv("...20171219_polar negative name.csv")
 
 
 str(data)
