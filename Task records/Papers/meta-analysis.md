@@ -1,5 +1,10 @@
 # Goal : Find and select paper subject 
 
+> **SUMMARY NOTE**  
+> &nbsp;&nbsp;&nbsp;&nbsp;meta analysis, network meta analysis가 cancer 혹은 disease 분야에서 어떻게 사용되는지 확인하기 위해 여러 논문을 골랐고 읽은 것들 중에 몇 편을 추려 기록했다. 보면서 이론적인 접근보다는 data를 이용한 실습 혹은 연구적인 측면이 강하다는 생각이 들었다. I-square가 0.5가 넘어가도 의미있다고 하거나 result에 대한 추가적인 error test를 하지 않는 부분들 때문이었다.  
+> &nbsp;&nbsp;&nbsp;&nbsp;추후 해야할 것은 1) 어떤 주제로 2) 어떤 방법을 사용할 것인지 정하는 것이고 더불어 3) DII에 대한 간단한 조사해보고 정의와 도출 및 쓰임에 대해 알아봐야할 것이다. 
+
+
 ## 01.03
 ## 1. Dose-reponse meta-analysis of coffee consumption and risk of colorectal adenoma
 ### Abstract 
