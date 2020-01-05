@@ -565,7 +565,7 @@ PLEASE ADD CODE FOR INSTALL "MetaboAnalystR"
 # This Part use the identified metabolites. So, actually this part should move to behind part 2 in "2. OLD section".
 # But i don't want to mess this "OLD" legacy. Therefore I do not handle this.
 
-data <- read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/negative_polar.csv")
+data <- read.csv("...negative_polar.csv")
 
 data1 <- subset(data,data$group=="Normal"|data$group=="CX CAN")
 data1$group1 <- ifelse(data1$group=="CX CAN",1,0)
@@ -593,7 +593,7 @@ ROC(form=group1~Malate,data=data1,plot="ROC")
 # But as I wrote before, I don't take this sequence for preserve original legacy
 
 options(java.parameters = "-Xmx4g")
-polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+polar_negative<-read.csv("...polar_negative.csv")
 
 
 x<-c()
@@ -605,9 +605,9 @@ for( i in 3:2565){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_kw.csv")
+write.csv(data,"...polar_negative_kw.csv")
 
-polar_positive<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive.csv")
+polar_positive<-read.csv("...polar_positive.csv")
 
 x<-c()
 p<-c()
@@ -617,10 +617,10 @@ for( i in 3:1928){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_kw.csv")
+write.csv(data,"...polar_positive_kw.csv")
 
 
-lipid_positive<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_positive.csv")
+lipid_positive<-read.csv("...lipid_positive.csv")
 
 x<-c()
 p<-c()
@@ -630,9 +630,9 @@ for( i in 3:4357){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_positive_kw.csv")
+write.csv(data,"...lipid_positive_kw.csv")
 
-lipid_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_negative.csv")
+lipid_negative<-read.csv("...lipid_negative.csv")
 
 x<-c()
 p<-c()
@@ -642,7 +642,7 @@ for( i in 3:3840){
   data<-data.frame(x,p)
 }
 
-write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/llipid_negative_kw.csv")
+write.csv(data,"...llipid_negative_kw.csv")
 
 #### ####
 
@@ -692,7 +692,7 @@ data %>%
 # options(java.parameters = "-Xmx4g") remove
 
 # Load rawdata and store to 'polar_negative'
-polar_negative <- read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_negative.csv")
+polar_negative <- read.csv("...polar_negative.csv")
 ## I forced to use 'data.frame' format, non-tibble. beacause of kruskal.test function 
 
 # Generatign function for sum up part 2
@@ -733,22 +733,22 @@ for( i in 3:2565){
 head(kruskal_test(polar_negative, 3, length(polar_negative)), 10)
 
 # To save the result to new csv file 
-write.csv(kruskal_test(polar_negative, 3, length(polar_negative)),"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_negative_kw.csv")
+write.csv(kruskal_test(polar_negative, 3, length(polar_negative)),"...polar_negative_kw.csv")
 
 # This is the process of making a function and checking the results
 # In now, use the function for more smart
 
 # polar_positive dataset 
-polar_positive <- read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_positive.csv")
-write.csv(kruskal_test(polar_positive, 3, length(polar_positive)),"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/polar_positive_kw.csv")
+polar_positive <- read.csv("...polar_positive.csv")
+write.csv(kruskal_test(polar_positive, 3, length(polar_positive)),"...polar_positive_kw.csv")
 
 # lipid_positive dataset
-lipid_positive <- read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_positive.csv")
-write.csv(kruskal_test(lipid_positive, 3, length(lipid_positive)),"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_positive_kw.csv")
+lipid_positive <- read.csv("...lipid_positive.csv")
+write.csv(kruskal_test(lipid_positive, 3, length(lipid_positive)),"C:...lipid_positive_kw.csv")
 
 # lipid_negative dataset
-lipid_negative <- read.csv("C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/lipid_negative.csv")
-write.csv(kruskal_test(lipid_negative, 3, length(lipid_negative)),"C:/Users/twingster/Documents/R_exer/NCC/Dataset/exercise_1/llipid_negative_kw.csv")
+lipid_negative <- read.csv("...lipid_negative.csv")
+write.csv(kruskal_test(lipid_negative, 3, length(lipid_negative)),"...llipid_negative_kw.csv")
 
 # It seems like newbie's coding but very intuitive style
 # However it needs to commit more efficient using 'user def function' to reduce repeatation code 
@@ -818,7 +818,7 @@ table(cutree(hc.cols,k=3))
 
 rm(list=ls())
 
-data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+data<-read.csv("...polar_negative.csv")
 
 # Normal vs CX cAN
 data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
@@ -843,7 +843,7 @@ for( i in 3:2565){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal_CXCAN_auc.csv")
+write.csv(data2,"...polar_negative_Normal_CXCAN_auc.csv")
 
 # Normal vs CIN1
 data1<-subset(data,data$group=="Normal"|data$group=="CIN1")
@@ -856,7 +856,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal_CIN1.csv")
+write.csv(data2,"...polar_negative_Normal_CIN1.csv")
 
 
 # Normal vs CIN2/3
@@ -870,7 +870,7 @@ for( i in 3:2565){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal_CIN2.3.csv")
+write.csv(data2,"...polar_negative_Normal_CIN2.3.csv")
 
 # Normal,C1 vs CIN2/3,cx can
 data1<-data
@@ -885,7 +885,7 @@ for( i in 3:2565){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal c1_CIN2.3 cx.csv")
+write.csv(data2,"...polar_negative_Normal c1_CIN2.3 cx.csv")
 
 # CIN1 vs CIN2/3
 data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3")
@@ -907,7 +907,7 @@ for( i in 3:2565){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN1_CIN2.3.csv")
+write.csv(data2,"...polar_negative_CIN1_CIN2.3.csv")
 
 # CIN1 vs CX CAN
 data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
@@ -937,7 +937,7 @@ for( i in 3:2565){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN1_CXCAN.csv")
+write.csv(data2,"...polar_negative_CIN1_CXCAN.csv")
 
 
 # CIN2/3 vs CX CAN
@@ -950,7 +950,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN2.3_CXCAN.csv")
+write.csv(data2,"...polar_negative_CIN2.3_CXCAN.csv")
 
 
 
@@ -965,7 +965,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal vs abnormal.csv")
+write.csv(data2,"...polar_negative_Normal vs abnormal.csv")
 
 
 
@@ -990,7 +990,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
+write.csv(data2,"...polar_negative_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
 
 
 # Normal , CIN1   CIN 2,3, vs Cx CAN
@@ -1013,7 +1013,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_Normal,CIN1,2,3 vs Cx cAN.csv")
+write.csv(data2,"...polar_negative_Normal,CIN1,2,3 vs Cx cAN.csv")
 
 # C1,2,3 vs Cx CAN
 data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
@@ -1035,7 +1035,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN1.2.3 vs CXCAN.csv")
+write.csv(data2,"...polar_negative_CIN1.2.3 vs CXCAN.csv")
 
 
 # C1 vs C2,3 Cx CAN
@@ -1064,7 +1064,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_CIN1 vs CIN 2.3 CXCAN.csv")
+write.csv(data2,"...polar_negative_CIN1 vs CIN 2.3 CXCAN.csv")
 
 
 # Normal, CIn1 vs CIN2/3
@@ -1077,7 +1077,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_ne_Normal,c1 vs C2.3.csv")
+write.csv(data2,"...polar_ne_Normal,c1 vs C2.3.csv")
 
 
 # Normal vs CIM1/2/3
@@ -1090,7 +1090,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_ne_Normal vs CIM123.csv")
+write.csv(data2,"...polar_ne_Normal vs CIM123.csv")
 
 # Normal,C1 vs Cx cAN
 data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CX CAN")
@@ -1113,7 +1113,7 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_ne_Normal,C1 vs Cx cAN.csv")
+write.csv(data2,"...polar_ne_Normal,C1 vs Cx cAN.csv")
 
 
 # Normal vs CIN2/3 Cx cAN
@@ -1137,13 +1137,13 @@ for( i in 3:2565){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_ne_Normal vs CIN2.3 Cx cAN.csv")
+write.csv(data2,"...polar_ne_Normal vs CIN2.3 Cx cAN.csv")
 
 ###################################################
 
 rm(list=ls())
 
-data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive.csv")
+data<-read.csv("...polar_positive.csv")
 
 # Normal vs CX cAN
 data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
@@ -1159,7 +1159,7 @@ for( i in 3:1928){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal_CXCAN_auc.csv")
+write.csv(data2,"...polar_positive_Normal_CXCAN_auc.csv")
 
 # Normal vs CIN1
 data1<-subset(data,data$group=="Normal"|data$group=="CIN1")
@@ -1172,7 +1172,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal_CIN1.csv")
+write.csv(data2,"...polar_positive_Normal_CIN1.csv")
 
 
 # Normal vs CIN2/3
@@ -1201,7 +1201,7 @@ for( i in 3:1928){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal_CIN2.3.csv")
+write.csv(data2,"...polar_positive_Normal_CIN2.3.csv")
 
 # CIN1 vs CIN2/3
 data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3")
@@ -1228,7 +1228,7 @@ for( i in 3:1928){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN1_CIN2.3.csv")
+write.csv(data2,"...polar_positive_CIN1_CIN2.3.csv")
 
 # CIN1 vs CX CAN
 data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
@@ -1242,7 +1242,7 @@ for( i in 3:1928){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN1_CXCAN.csv")
+write.csv(data2,"...polar_positive_CIN1_CXCAN.csv")
 
 
 # CIN2/3 vs CX CAN
@@ -1255,7 +1255,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN2.3_CXCAN.csv")
+write.csv(data2,"...polar_positive_CIN2.3_CXCAN.csv")
 
 
 
@@ -1270,7 +1270,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal vs abnormal.csv")
+write.csv(data2,"...polar_positive_Normal vs abnormal.csv")
 
 
 
@@ -1289,7 +1289,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
+write.csv(data2,"...polar_positive_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
 
 
 # Normal , CIN1   CIN 2,3, vs Cx CAN
@@ -1303,7 +1303,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal,CIN1,2,3 vs Cx cAN.csv")
+write.csv(data2,"...polar_positive_Normal,CIN1,2,3 vs Cx cAN.csv")
 
 # C1,2,3 vs Cx CAN
 data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
@@ -1315,7 +1315,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN1.2.3 vs CXCAN.csv")
+write.csv(data2,"...polar_positive_CIN1.2.3 vs CXCAN.csv")
 
 
 # C1 vs C2,3 Cx CAN
@@ -1328,10 +1328,10 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_CIN1 vs CIN 2.3 CXCAN.csv")
+write.csv(data2,"...polar_positive_CIN1 vs CIN 2.3 CXCAN.csv")
 
 options(java.parameters = "-Xmx4g")
-polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+polar_negative<-read.csv("...polar_negative.csv")
 
 
 
@@ -1362,7 +1362,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal,c1 vs C2.3.csv")
+write.csv(data2,"...polar_positive_Normal,c1 vs C2.3.csv")
 
 
 # Normal vs CIM1/2/3
@@ -1375,7 +1375,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal vs CIM123.csv")
+write.csv(data2,"...polar_positive_Normal vs CIM123.csv")
 
 # Normal,C1 vs Cx cAN
 data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CX CAN")
@@ -1387,7 +1387,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal,C1 vs Cx cAN.csv")
+write.csv(data2,"...polar_positive_Normal,C1 vs Cx cAN.csv")
 
 
 # Normal vs CIN2/3 Cx cAN
@@ -1415,7 +1415,7 @@ for( i in 3:1928){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_Normal vs CIN2.3 Cx cAN.csv")
+write.csv(data2,"...polar_positive_Normal vs CIN2.3 Cx cAN.csv")
 
 
 
@@ -1423,7 +1423,7 @@ write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_p
 ############################################# with VIP
 
 
-polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+polar_negative<-read.csv("...polar_negative.csv")
 
 polar_negative1<-polar_negative[-203,]
 
@@ -1438,9 +1438,9 @@ for( i in 3:2565){
   data<-data.frame(x,p,vip)
 }
 
-write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_kw_VIP.csv")
+write.csv(data,"...polar_negative_kw_VIP.csv")
 
-polar_positive<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive.csv")
+polar_positive<-read.csv("...polar_positive.csv")
 
 polar_positive1<-polar_positive[-206,]
 
@@ -1455,7 +1455,7 @@ for( i in 3:1928){
   data<-data.frame(x,p,vip)
 }
 
-write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_kw_VIP.csv")
+write.csv(data,"...polar_positive_kw_VIP.csv")
 
 
 
@@ -1487,7 +1487,7 @@ write.csv(data,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_po
 rm(list=ls())
 
 
-data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative_for_heatmap_se1.csv")
+data<-read.csv("...polar_negative_for_heatmap_se1.csv")
 
 
 rownames(data)<-data[,1]
@@ -1560,8 +1560,8 @@ table(cutree(hc.cols,k=3))
 
 rm(list=ls())
 
-data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive_for_heatmap_se1.csv")
-data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/positive_polar.csv")
+data<-read.csv("...polar_positive_for_heatmap_se1.csv")
+data<-read.csv("...positive_polar.csv")
 
 summary(data)
 dat<-data[,-1:-2]
@@ -1630,7 +1630,7 @@ install.packages("PMCMR")
 require(PMCMR)
 
 
-polar_negative<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_negative.csv")
+polar_negative<-read.csv("...polar_negative.csv")
 
 polar_negative<-polar_negative[-203,]
 
@@ -1664,112 +1664,112 @@ library(ggplot2)
 ggplot(polar_negative, aes(x=group,y=X51,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_51.png"))
+ggsave(sprintf("...negative_51.png"))
 
 ggplot(polar_negative, aes(x=group,y=X57,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_57.png"))
+ggsave(sprintf("...negative_57.png"))
 
 ggplot(polar_negative, aes(x=group,y=X284,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_284.png"))
+ggsave(sprintf("...negative_284.png"))
 
 ggplot(polar_negative, aes(x=group,y=X318,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_318.png"))
+ggsave(sprintf("...negative_318.png"))
 
 ggplot(polar_negative, aes(x=group,y=X327,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_327.png"))
+ggsave(sprintf("...negative_327.png"))
 
 ggplot(polar_negative, aes(x=group,y=X399,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_399.png"))
+ggsave(sprintf("...negative_399.png"))
 
 ggplot(polar_negative, aes(x=group,y=X792,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_792.png"))
+ggsave(sprintf("...negative_792.png"))
 
 ggplot(polar_negative, aes(x=group,y=X928,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_928.png"))
+ggsave(sprintf("..negative_928.png"))
 
 ggplot(polar_negative, aes(x=group,y=X938,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_938.png"))
+ggsave(sprintf("...negative_938.png"))
 
 ggplot(polar_negative, aes(x=group,y=X957,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_957.png"))
+ggsave(sprintf("...negative_957.png"))
 
 ggplot(polar_negative, aes(x=group,y=X967,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_967.png"))
+ggsave(sprintf("...negative_967.png"))
 
 ggplot(polar_negative, aes(x=group,y=X1311,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_1311.png"))
+ggsave(sprintf("...negative_1311.png"))
 
 ggplot(polar_negative, aes(x=group,y=X1312,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_1312.png"))
+ggsave(sprintf("...negative_1312.png"))
 
 ggplot(polar_negative, aes(x=group,y=X1588,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_1588.png"))
+ggsave(sprintf("...negative_1588.png"))
 
 ggplot(polar_negative, aes(x=group,y=X1602,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_1602.png"))
+ggsave(sprintf("...negative_1602.png"))
 
 ggplot(polar_negative, aes(x=group,y=X2767,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_2767.png"))
+ggsave(sprintf("...negative_2767.png"))
 
 ggplot(polar_negative, aes(x=group,y=X3047,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3047.png"))
+ggsave(sprintf("...negative_3047.png"))
 
 ggplot(polar_negative, aes(x=group,y=X3053,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3053.png"))
+ggsave(sprintf("...negative_3053.png"))
 
 ggplot(polar_negative, aes(x=group,y=X3368,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3368.png"))
+ggsave(sprintf("...negative_3368.png"))
 
 ggplot(polar_negative, aes(x=group,y=X3803,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3803.png"))
+ggsave(sprintf("...negative_3803.png"))
 
 ggplot(polar_negative, aes(x=group,y=X3829,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_3829.png"))
+ggsave(sprintf("...negative_3829.png"))
 
 ggplot(polar_negative, aes(x=group,y=X4026,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/negative_4026.png"))
+ggsave(sprintf("...negative_4026.png"))
 
 
 
@@ -1782,7 +1782,7 @@ install.packages("PMCMR")
 require(PMCMR)
 
 
-polar_positive<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/polar_positive.csv")
+polar_positive<-read.csv("...polar_positive.csv")
 
 polar_positive<-polar_positive[-206,]
 
@@ -1814,112 +1814,112 @@ library(ggplot2)
 ggplot(polar_positive, aes(x=group,y=X522,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_522.png"))
+ggsave(sprintf("...positive_522.png"))
 
 ggplot(polar_positive, aes(x=group,y=X781,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_781.png"))
+ggsave(sprintf("...positive_781.png"))
 
 ggplot(polar_positive, aes(x=group,y=X1213,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1213.png"))
+ggsave(sprintf("...positive_1213.png"))
 
 ggplot(polar_positive, aes(x=group,y=X1227,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1227.png"))
+ggsave(sprintf("...positive_1227.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1538,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1538.png"))
+ggsave(sprintf("...positive_1538.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1593,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1593.png"))
+ggsave(sprintf("...positive_1593.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1605,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1605.png"))
+ggsave(sprintf("...positive_1605.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1619,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1619.png"))
+ggsave(sprintf("...positive_1619.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1696,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1696.png"))
+ggsave(sprintf("...positive_1696.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1741,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1741.png"))
+ggsave(sprintf("...positive_1741.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1769,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1769.png"))
+ggsave(sprintf("...positive_1769.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1792,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1792.png"))
+ggsave(sprintf("...positive_1792.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1886,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1886.png"))
+ggsave(sprintf("...positive_1886.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1888,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1888.png"))
+ggsave(sprintf("...positive_1888.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1923,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1923.png"))
+ggsave(sprintf("...positive_1923.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1939,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1939.png"))
+ggsave(sprintf("...positive_1939.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1981,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1981.png"))
+ggsave(sprintf("...positive_1981.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X1992,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_1992.png"))
+ggsave(sprintf("...positive_1992.png"))
 
 
 ggplot(polar_positive, aes(x=group,y=X2474,fill=group))+geom_boxplot()+theme_bw()+
   theme(legend.position='none')+scale_x_discrete(limits=c("Normal","CIN1","CIN2/3","CX CAN"))+
   theme(text = element_text(size=20),axis.title.x=element_blank())
-ggsave(sprintf("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/Rplot(2李?)/positive_2474.png"))
+ggsave(sprintf("...positive_2474.png"))
 
 
 
@@ -1939,7 +1939,7 @@ rm(list=ls())
 install.packages("Epi")
 library(Epi)
 
-data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_negative.csv")
+data<-read.csv("...lipid_negative.csv")
 
 # Normal vs CX cAN
 data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
@@ -1953,7 +1953,7 @@ for( i in 3:3840){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal_CXCAN_auc.csv")
+write.csv(data2,"...lipid_ne_Normal_CXCAN_auc.csv")
 
 # Normal vs CIN1
 data1<-subset(data,data$group=="Normal"|data$group=="CIN1")
@@ -1966,7 +1966,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal_CIN1.csv")
+write.csv(data2,"...lipid_ne_Normal_CIN1.csv")
 
 
 # Normal vs CIN2/3
@@ -1980,7 +1980,7 @@ for( i in 3:3840){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal_CIN2.3.csv")
+write.csv(data2,"...lipid_ne_Normal_CIN2.3.csv")
 
 # CIN1 vs CIN2/3
 data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3")
@@ -1995,7 +1995,7 @@ for( i in 3:3840){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN1_CIN2.3.csv")
+write.csv(data2,"...lipid_ne_CIN1_CIN2.3.csv")
 
 # CIN1 vs CX CAN
 data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
@@ -2010,7 +2010,7 @@ for( i in 3:3840){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN1_CXCAN.csv")
+write.csv(data2,"...lipid_ne_CIN1_CXCAN.csv")
 
 
 # CIN2/3 vs CX CAN
@@ -2023,7 +2023,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN2.3_CXCAN.csv")
+write.csv(data2,"...lipid_ne_CIN2.3_CXCAN.csv")
 
 
 
@@ -2038,7 +2038,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal vs abnormal.csv")
+write.csv(data2,"...lipid_ne_Normal vs abnormal.csv")
 
 
 
@@ -2054,7 +2054,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
+write.csv(data2,"...lipid_ne_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
 
 
 # Normal , CIN1   CIN 2,3, vs Cx CAN
@@ -2069,7 +2069,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal,CIN1,2,3 vs Cx cAN.csv")
+write.csv(data2,"...lipid_ne_Normal,CIN1,2,3 vs Cx cAN.csv")
 
 # C1,2,3 vs Cx CAN
 data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
@@ -2082,7 +2082,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN1.2.3 vs CXCAN.csv")
+write.csv(data2,"...lipid_ne_CIN1.2.3 vs CXCAN.csv")
 
 
 # C1 vs C2,3 Cx CAN
@@ -2096,7 +2096,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_CIN1 vs CIN 2.3 CXCAN.csv")
+write.csv(data2,"...lipid_ne_CIN1 vs CIN 2.3 CXCAN.csv")
 
 
 # Normal, CIn1 vs CIN2/3
@@ -2109,7 +2109,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal,c1 vs C2.3.csv")
+write.csv(data2,"...lipid_ne_Normal,c1 vs C2.3.csv")
 
 
 # Normal vs CIM1/2/3
@@ -2122,7 +2122,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal vs CIM123.csv")
+write.csv(data2,"...lipid_ne_Normal vs CIM123.csv")
 
 # Normal,C1 vs Cx cAN
 data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CX CAN")
@@ -2135,7 +2135,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal,C1 vs Cx cAN.csv")
+write.csv(data2,"...lipid_ne_Normal,C1 vs Cx cAN.csv")
 
 
 # Normal vs CIN2/3 Cx cAN
@@ -2149,7 +2149,7 @@ for( i in 3:3840){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_ne_Normal vs CIN2.3 Cx cAN.csv")
+write.csv(data2,"...lipid_ne_Normal vs CIN2.3 Cx cAN.csv")
 
 ###################################################
 #################################################################################################################
@@ -2168,7 +2168,7 @@ rm(list=ls())
 install.packages("Epi")
 library(Epi)
 
-data<-read.csv("//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_positive.csv")
+data<-read.csv("...lipid_positive.csv")
 
 # Normal vs CX cAN
 data1<-subset(data,data$group=="Normal"|data$group=="CX CAN")
@@ -2182,7 +2182,7 @@ for( i in 3:4357){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal_CXCAN_auc.csv")
+write.csv(data2,"...lipid_po_Normal_CXCAN_auc.csv")
 
 # Normal vs CIN1
 data1<-subset(data,data$group=="Normal"|data$group=="CIN1")
@@ -2195,7 +2195,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal_CIN1.csv")
+write.csv(data2,"...lipid_po_Normal_CIN1.csv")
 
 
 # Normal vs CIN2/3
@@ -2209,7 +2209,7 @@ for( i in 3:4357){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal_CIN2.3.csv")
+write.csv(data2,"...lipid_po_Normal_CIN2.3.csv")
 
 # CIN1 vs CIN2/3
 data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3")
@@ -2224,7 +2224,7 @@ for( i in 3:4357){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN1_CIN2.3.csv")
+write.csv(data2,"...lipid_po_CIN1_CIN2.3.csv")
 
 # CIN1 vs CX CAN
 data1<-subset(data,data$group=="CIN1"|data$group=="CX CAN")
@@ -2239,7 +2239,7 @@ for( i in 3:4357){
   data2<-data.frame(x,auc)
 }
 
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN1_CXCAN.csv")
+write.csv(data2,"...lipid_po_CIN1_CXCAN.csv")
 
 
 # CIN2/3 vs CX CAN
@@ -2252,7 +2252,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN2.3_CXCAN.csv")
+write.csv(data2,"...lipid_po_CIN2.3_CXCAN.csv")
 
 
 
@@ -2267,7 +2267,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal vs abnormal.csv")
+write.csv(data2,"...lipid_po_Normal vs abnormal.csv")
 
 
 
@@ -2283,7 +2283,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
+write.csv(data2,"...lipid_po_Normal,CIN1 vs CIn2,3, Cx cAN.csv")
 
 
 # Normal , CIN1   CIN 2,3, vs Cx CAN
@@ -2298,7 +2298,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal,CIN1,2,3 vs Cx cAN.csv")
+write.csv(data2,"...lipid_po_Normal,CIN1,2,3 vs Cx cAN.csv")
 
 # C1,2,3 vs Cx CAN
 data1<-subset(data,data$group=="CIN1"|data$group=="CIN2/3"|data$group=="CX CAN")
@@ -2311,7 +2311,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN1.2.3 vs CXCAN.csv")
+write.csv(data2,"...lipid_po_CIN1.2.3 vs CXCAN.csv")
 
 
 # C1 vs C2,3 Cx CAN
@@ -2325,7 +2325,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_CIN1 vs CIN 2.3 CXCAN.csv")
+write.csv(data2,"...lipid_po_CIN1 vs CIN 2.3 CXCAN.csv")
 
 
 # Normal, CIn1 vs CIN2/3
@@ -2338,7 +2338,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal,c1 vs C2.3.csv")
+write.csv(data2,"...lipid_po_Normal,c1 vs C2.3.csv")
 
 
 # Normal vs CIM1/2/3
@@ -2351,7 +2351,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal vs CIM123.csv")
+write.csv(data2,"...lipid_po_Normal vs CIM123.csv")
 
 # Normal,C1 vs Cx cAN
 data1<-subset(data,data$group=="Normal"|data$group=="CIN1"|data$group=="CX CAN")
@@ -2364,7 +2364,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal,C1 vs Cx cAN.csv")
+write.csv(data2,"...lipid_po_Normal,C1 vs Cx cAN.csv")
 
 
 # Normal vs CIN2/3 Cx cAN
@@ -2378,7 +2378,7 @@ for( i in 3:4357){
   auc[i]<-ROC(form=group1~data1[,i],data=data1,plot="ROC")$AUC
   data2<-data.frame(x,auc)
 }
-write.csv(data2,"//172.20.213.44/?뿰援ъ꽌踰?/Metabolomics/遺꾩꽍/lipid_po_Normal vs CIN2.3 Cx cAN.csv")
+write.csv(data2,"...lipid_po_Normal vs CIN2.3 Cx cAN.csv")
 
 ###################################################
 ###################################################
