@@ -1,3 +1,5 @@
+log 목록을 따로 떼어놓을까 고민 중. 
+
 # LOG
 # ROC와 AUC의 개념 
 ### **[ROC와 AUC의 기본 컨셉](https://nittaku.tistory.com/297)**  
