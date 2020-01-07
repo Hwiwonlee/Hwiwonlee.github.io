@@ -4,3 +4,7 @@
 ## 3. Some tests(almost non-parametric test. Mann-Whitney test, Wilcox matched pair signed rank test...etc)  
 ## 4. About ratios, OR, RR, HR...
 ## 5. Canonical correlation analysis  
+## 6. [rank statitics method](https://en.wikipedia.org/wiki/Jonckheere%27s_trend_test)  
+하단 참조
+
+
