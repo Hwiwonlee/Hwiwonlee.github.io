@@ -760,8 +760,6 @@ write.csv(kruskal_test(lipid_negative, 3, length(lipid_negative)),"...llipid_neg
   
 
 
-
-
 #### 3. OLD Heatmap plot and HCA using identified negative polar metabolites ####
 # HCA means 'Hierarchical cluster analysis'
 
@@ -806,6 +804,65 @@ plot(hc.cols)
 table(cutree(hc.cols,k=3))
 #### ####
 
+
+#### 3. NEW Heatmap plot and HCA using identified negative polar metabolites ####
+# HCA means 'Hierarchical cluster analysis'
+
+#### Part 1. Draw heatmap plot #### 
+
+# polar_negative_for_heatmap.csv과 polar_negative의 차이?
+# kruskal test 후 0.03 이하의 p-value를 갖는 X만을 take한 것
+# 그렇다면 .csv file을 따로 만들지 않고 polar_negative를 편집해서 하는게 더 나을 것. 
+
+data <- read.csv("C:/Users/75533/Working/Exercise/구강암+Metabolics/polar_negative.csv")
+colnames(data)
+rownames(data)
+# kruskal_test 후 결과를 re_krus에 저장 
+kruskal_test(data, 3, length(data)) %>% 
+  mutate(sig = ifelse(p <= 0.03, 1, 0)) -> re_krus
+
+# tanspose re_krus
+t_re_krus <- as_tibble(cbind(nms = names(re_krus[, -1]), t(re_krus[, -1])))[, -1]
+
+# change t_re_krus's column names same as data's things
+names(t_re_krus) <- names(data)
+
+rbind(data, t_re_krus) %>% # data와 kruscal test 결과 bind
+  as_tibble() %>% 
+  # kruscal test에서 p value가 0.03 이하인 것만 select
+  select(group, id, which(.[nrow(.),] == 1)) %>% # 205 x 1004
+  ## <TO DO> column name을 각 group_N으로 바꾸고 1st row 삭제
+  ## <TO DO> add column about variable index(left out the alphabet in X1, X2, X17,...)
+  ## <TO DO> Transpose dataset 
+  cbind(cnames = names(.), t(.))
+  
+
+#### Transpose ####
+mtcars %>%
+  rownames_to_column %>% 
+  gather(var, value, -rowname) %>% 
+  spread(rowname, value) 
+#### ####
+
+
+
+  
+rbind(data, t_re_krus) %>% # data와 kruscal test 결과 bind
+  as_tibble() %>% 
+  # kruscal test에서 p value가 0.03 이하인 것만 select
+  select(group, id, which(.[nrow(.),] == 1)) -> filter_result # 205 x 1006
+
+filter_result %>%
+  rownames_to_column %>% 
+  gather(var, value, -rowname) %>%
+  # dplyr::filter(rowname == 1) # 1st_obs 선택
+  spread(rowname, value) -> test_res # 1006 x 206
+
+test_res[,1] <- colnames(filter_result) # colnamse을 col1로 가져옴 
+test_res # 1st row를 보니 순서가 섞임 
+t(as.data.frame(test_res[1, ])) 
+# 확인, 1, 10, 100, 101 이런 식으로 인덱싱이 되버려서 섞임
+# 이거 어떻게 바꾸지? 
 
 
 
