@@ -844,7 +844,39 @@ mtcars %>%
   spread(rowname, value) 
 #### ####
 
+  
+rbind(data, t_re_krus) %>% # data와 kruscal test 결과 bind
+  as_tibble() %>% 
+  # kruscal test에서 p value가 0.03 이하인 것만 select
+  select(group, id, which(.[nrow(.),] == 1)) -> filter_result # 205 x 1006
 
+filter_result %>%
+  rownames_to_column %>% 
+  gather(var, value, -rowname) %>%
+  # dplyr::filter(rowname == 1) # 1st_obs 선택
+  pivot_wider(names_from = "rowname", values_from = "value") -> test_res
+  # spread(rowname, value) -> test_res # 1006 x 206
+  ## <PROBLEM> spread를 사용하면 X, id, variable의 indexing이 모두 꼬여버림.
+  ## <SOLVE> spread가 아니라 pivot_wider를 사용했더니 제대로 나옴. 
+  
+# test_res의 column name 바꾸기 
+# <GOAL> test_res의 column name을 group+id의 꼴로 바꿔보자. 
+names(test_res) # 현재 column name 
+data[50:70, 1:2] # dataset의 group과 id 확인
+
+coln <- c()
+for(i in 1:nrow(data)) {
+  coln[i] <- paste0(data[i, 1], data[i, 2])
+}
+length(coln)
+
+names(test_res)[2:204] <- coln
+names(test_res)[205:206] <- c("p_kruscal" ,"<=0.03")
+
+last_res <- test_res[-1, ]
+
+# 일단 last_res로 결과 저장함.
+# <HERE!!> 확인해볼 것
 
   
 rbind(data, t_re_krus) %>% # data와 kruscal test 결과 bind
