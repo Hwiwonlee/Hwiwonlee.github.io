@@ -55,7 +55,12 @@ log 목록을 따로 떼어놓을까 고민 중.
 # applys 
 [apply function 정리 ](https://3months.tistory.com/389)  
 
-
+# Heatmap.2 function
+[heatmap.2() 그림을 그릴때 성가신 것 바로잡기](http://blog.genoglobe.com/2018/05/r-heatmap2.html)
+[heatmap.2 그림을 조정해 보자](http://blog.genoglobe.com/2015/08/r-heatmap2.html)
+[Tutorial by Examples: 히트맵](https://thebook.io/006723/ch09/02/01/)
+[efg’s R Notes: gplots: heatmap.2](http://earlglynn.github.io/RNotes/package/gplots/heatmap2.html)
+[heatmap.2 from R doucuments](https://www.rdocumentation.org/packages/gplots/versions/3.0.1.1/topics/heatmap.2)
 
 ### 못 읽은 것들
 [Conditional ggplot2 geoms in functions (QTL plots)](https://shiring.github.io/ggplot2/2017/02/12/qtl_plots)  
@@ -67,6 +72,8 @@ log 목록을 따로 떼어놓을까 고민 중.
 [2](https://stackoverflow.com/questions/41666078/ggplot-for-loop-outputs-all-the-same-graph)  
 [3](https://stackoverflow.com/questions/31321734/ggplot-line-or-point-plotting-conditionally)  
 [4](https://stackoverflow.com/questions/46570609/iteratively-apply-ggplot-function-within-a-map-function)  
+
+
 
 ```r
 #### 1. OLD - Draw ROC curve using identified positive polar metabolites ####
