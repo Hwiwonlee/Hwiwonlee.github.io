@@ -814,7 +814,7 @@ table(cutree(hc.cols,k=3))
 # kruskal test 후 0.03 이하의 p-value를 갖는 X만을 take한 것
 # 그렇다면 .csv file을 따로 만들지 않고 polar_negative를 편집해서 하는게 더 나을 것. 
 
-data <- read.csv("C:/Users/75533/Working/Exercise/구강암+Metabolics/polar_negative.csv")
+data <- read.csv("...polar_negative.csv")
 colnames(data)
 rownames(data)
 # kruskal_test 후 결과를 re_krus에 저장 
@@ -837,14 +837,6 @@ rbind(data, t_re_krus) %>% # data와 kruscal test 결과 bind
   cbind(cnames = names(.), t(.))
   
 
-#### Transpose ####
-mtcars %>%
-  rownames_to_column %>% 
-  gather(var, value, -rowname) %>% 
-  spread(rowname, value) 
-#### ####
-
-  
 rbind(data, t_re_krus) %>% # data와 kruscal test 결과 bind
   as_tibble() %>% 
   # kruscal test에서 p value가 0.03 이하인 것만 select
@@ -866,7 +858,7 @@ data[50:70, 1:2] # dataset의 group과 id 확인
 
 coln <- c()
 for(i in 1:nrow(data)) {
-  coln[i] <- paste0(data[i, 1], data[i, 2])
+  coln[i] <- paste0(data[i, 1],"_", data[i, 2])
 }
 length(coln)
 
@@ -877,24 +869,130 @@ last_res <- test_res[-1, ]
 
 # 일단 last_res로 결과 저장함.
 # <HERE!!> 확인해볼 것
+# heat_map용으로 편집된 data_c와 last_res의 결과 확인 
+data_c <- read.csv("...polar_negative_for_heatmap.csv")
+dim(data_c) # 1004 x 205, X를 제대로 뽑아낸 것 확인  
 
-  
-rbind(data, t_re_krus) %>% # data와 kruscal test 결과 bind
-  as_tibble() %>% 
-  # kruscal test에서 p value가 0.03 이하인 것만 select
-  select(group, id, which(.[nrow(.),] == 1)) -> filter_result # 205 x 1006
+dim(last_res[2:nrow(last_res), 2:ncol(last_res)-2])
 
-filter_result %>%
-  rownames_to_column %>% 
-  gather(var, value, -rowname) %>%
-  # dplyr::filter(rowname == 1) # 1st_obs 선택
-  spread(rowname, value) -> test_res # 1006 x 206
+# group별 몇 개씩 있는 지 확인 
+data %>% as_tibble() %>% group_by(group) %>% summarise(n = n())
 
-test_res[,1] <- colnames(filter_result) # colnamse을 col1로 가져옴 
-test_res # 1st row를 보니 순서가 섞임 
-t(as.data.frame(test_res[1, ])) 
-# 확인, 1, 10, 100, 101 이런 식으로 인덱싱이 되버려서 섞임
-# 이거 어떻게 바꾸지? 
+sum(last_res[2:nrow(last_res), 2:69] != data_c[, 2:69])
+sum(last_res[2:nrow(last_res), 70:122] != data_c[, 70:122])
+sum(last_res[2:nrow(last_res), 123:149] != data_c[, 123:149])
+sum(last_res[2:nrow(last_res), 150:203] != data_c[, 150:203]) 
+# <CLEAR>
+# <NOTE> data_c에는 VIP가 없음. 딱 obs만큼의 data만 존재
+
+
+
+
+# <RROLBEM> rownames이 바뀌지 않음. 
+# rownames(last_res_2) <- last_res_2[, 1]
+# <SOLVE> last_res_2[, 1]를 쓰면 return이 matrix형태로 옴
+# rownames에 넣으려면 vector여야하므로 $ indexing을 해야함
+rownames(last_res_2) <- last_res_2$var
+
+last_res_2 <- last_res_2[, -1]
+last_res_2
+
+
+# 이제 heatmap을 만들어보자.
+library(gplots)
+# legacy에서 사용했던 형태대로 하려면 뒤의 3개의 열을 빼야한다. 
+last_res_2[, 200:205]
+heatmap_data <- last_res_2[, -(203:205)]
+
+
+# legacy code 
+#### Part 1. Draw heatmap plot #### 
+rm(list=ls())
+
+data<-read.csv("...polar_negative_for_heatmap.csv")
+rownames(data)<-data[,1]
+data<-data[,-1]
+
+install.packages("gplots")
+library(gplots)
+
+
+heatmap1 <- as.matrix(scale(data)) #?젙洹쒗솕
+heatmap1 <- as.matrix(scale(log(data))) #?젙洹쒗솕
+
+for(i in 1:202){data[,i]<-ifelse(data[,i]<0,0,data[,i])}
+for(i in 1:202){data[,i]<-log10(as.numeric(data[,i])) }  
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap1)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap1)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap1)),"red","black")))))
+
+
+heatmap.2(heatmap1, scale='none',
+          trace="none",cexRow=1,keysize=0.75,ColSideColors=colCols,labCol=NA, margins = c(10, 20))
+
+par(lend = 1)
+legend("topright",legend = c("Normal", "CIN1", "CIN2/3","Cancer"),col = c("purple", "lightblue","red", "black"),
+       lty=1,lwd =2,border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+#### ####
+
+
+
+# scaleing을 위한 obs의 type convert 
+heatmap_data %>% 
+  type_convert(cols(Normal_1 = col_double())) -> heatmap_data
+
+# heatmap_data obs 중 음수를 0으로 바꿔줌. 음수가 정의되지 않나봄 
+
+for(i in 1:ncol(heatmap_data)){
+  for(j in 1:nrow(heatmap_data)){
+    heatmap_data[j, i] <- ifelse(heatmap_data[j, i] <= 0, 0.0000001, heatmap_data[j, i])
+  }
+}
+
+
+
+heatmap_scale <- as.matrix(scale(heatmap_data)) # 평균-표준편차를 이용한 scaling
+heatmap_scale_log <- as.matrix(scale(log(heatmap_data))) # log를 이용한 scaling 
+
+colCols <- ifelse(grepl("Normal",colnames(heatmap_scale)),"purple",
+                  (ifelse(grepl("CIN1",colnames(heatmap_scale)),"lightblue",
+                          (ifelse(grepl("CIN2",colnames(heatmap_scale)),"red","black")))))
+
+
+heatmap.2(heatmap_scale, scale='none',
+          trace="none", cexRow=1, keysize=0.75, ColSideColors=colCols, labCol=NA, margins = c(10, 20))
+
+heatmap.2(heatmap_scale_log, scale='none',
+          trace="none", cexRow=1, keysize=0.75, ColSideColors=colCols, labCol=NA, margins = c(10, 20))
+
+
+# To solve the error in plot.new() : figure margins too large
+# 그러나 효과는 미비했다. 
+par("mar")
+par(mar = c(0.1,0.1,0.1,0.1))
+
+# legend를 붙이기 위한 cdoe 
+par(lend = 1)
+legend("topright", legend = c("Normal", "CIN1", "CIN2/3","Cancer"), col = c("purple", "lightblue","red", "black"),
+       lty=1, lwd =2, border=FALSE, bty="n", y.intersp = 0.7, cex=0.7)
+
+# <CHECK> 이 로직이 맞나? heatmap.2에 대한 공부가 필요하다. 일단 계속해보자. 
+
+#### ####
+
+#### Part 2. Hierarchical cluster analysis ####
+hc.rows <- hclust(dist(heatmap_scale_log))
+plot(hc.rows)
+table(cutree(hc.rows,k=5))
+
+hc.cols <- hclust(dist(t(heatmap_scale_log)))
+plot(hc.cols)
+table(cutree(hc.cols,k=3))
+
+# 그려지긴 하는데 이게 의미가 있나? 
+#### ####
 
 
 
