@@ -1852,8 +1852,111 @@ all_comb_comparison <- function(group_value){
   
 all_comb_comparison(group_value) # 확인. 1.12 문제없이 돌아감. 
 
+#### <TO DO> all_comb_comparison의 결과로 dplyr::filter를 할 수 있도록 만들기 ####
+
+filter_subgroup <- list()
+filter_group <- list()
+for( m in 1 : floor(length(group_value)/2) ) {
+  
+  for( k in m : (length(group_value)-m) ) {
+    
+    filter_subgroup[[k]] <- matrix(group_value[result[[m]][[k]]], nrow(result[[m]][[k]]))
+  }
+  filter_group[[m]] <- filter_subgroup
+  filter_subgroup <- list() # reset subgroup  
+}
+
+filter_group # 결과, 이 결과를 이용해서 dplyr::filter에 comparison pair 맞게 집어넣기
+
+for( m in 1 : floor(length(group_value)/2) ) {
+  
+  for( k in m : (length(group_value)-m) ) {
+    
+    filter_subgroup[[k]] <- matrix(group_value[result[[m]][[k]]], nrow(result[[m]][[k]]))
+  }
+  filter_group[[m]] <- filter_subgroup
+  filter_subgroup <- list() # reset subgroup  
+}
+
+comparison_A <- filter_group
+comparison_B <- filter_group
+
+for( m in 1 : floor(length(group_value)/2) ) {
+  
+  for( k in m : (length(group_value)-m) ) {
+    
+    comparison_a <- matrix(0, nrow(filter_group[[m]][[k]]), k)
+    comparison_b <- matrix(0, nrow(filter_group[[m]][[k]]), m)
+    if ( is.null(filter_group[[m]][[k]]) == FALSE ) { 
+      for(j in 1:nrow(filter_group[[m]][[k]])) { 
+        comparison_a[j, ] <- filter_group[[m]][[k]][j, 1:k]
+        comparison_b[j, ] <- filter_group[[m]][[k]][j, (k+1):ncol(filter_group[[m]][[k]])]
+      }
+    }
+    comparison_A[[m]][[k]] <- comparison_a
+    comparison_B[[m]][[k]] <- comparison_b
+  }
+}
+
+comparison_A # 분할 체크 완료 
+comparison_B # 분할 체크 완료 
 
 
+data %>% 
+  as_tibble() %>% 
+  group_by(group) %>% summarise(n = n())
+
+# some candidated metabolites 
+cm <- c("X57", "X51", "X938", "X928", "X957", "X318")
+
+# set names for saving plots 
+folder_name <- "C:/Users/twingster/Documents/R_exer/NCC/graph_output/"
+file_name <- "testplot"
+
+for( m in 1 : floor(length(group_value)/2) ) {
+  
+  for( k in m : (length(group_value)-m) ) {
+    for (j in 1:nrow(filter_group[[m]][[k]])) {
+    
+      data %>% 
+        as_tibble() %>% 
+        dplyr::filter(group %in% filter_group[[m]][[k]][j, ]) %>% 
+        mutate(group1 = ifelse(group %in% comparison_A[[m]][[k]][j, ], 0, 1)) %>% 
+        select(group, group1, id, everything()) %>% 
+        select(group1, cm) -> data_1 
+      for( i in 1:length(cm) ) {
+      #   if( i != length(cm) ) {
+      #     numbering <- i
+      #     png_name <- paste0(folder_name, file_name, "_" , paste(c(comparison_A[[m]][[k]][j, ]), collapse = ", "),
+      #                        " VS ", paste(c(comparison_B[[m]][[k]][j, ]), collapse = ", "), "_", numbering, ".png")
+      # 
+      #     png(png_name, width = 750, height = 750)
+      # 
+      #     ROC(form = as.formula(paste(colnames(data_1)[1], "~", cm[i])), data = data_1, plot="ROC")
+      # 
+      #     dev.off()
+      #   } else {
+        
+        
+        numbering <- i
+        png_name <- paste0(folder_name, file_name, "_" , paste(c(comparison_A[[m]][[k]][j, ]), collapse = ", "),
+                           "_VS_", paste(c(comparison_B[[m]][[k]][j, ]), collapse = ", "), "_", numbering, ".png")
+            
+        png(png_name, width = 750, height = 750)
+            
+        ROC(form = as.formula(paste(colnames(data_1)[1], "~", cm[i])), data = data_1, plot="ROC")
+        
+        dev.off()
+        }
+        
+      }
+      
+          
+    }
+  }
+# }
+
+# 수정사항 : comparison의 경우의 수에 따라 각각의 folder로 넣었으면 좋겠는데...? 
 #### ####
 
 
