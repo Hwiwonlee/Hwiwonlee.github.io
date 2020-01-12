@@ -1416,9 +1416,444 @@ fruit_basket
 res
 
 
+
 # Using rolldie https://rdrr.io/github/GabauerDavid/WVPU/man/rolldie.html
-group_value = c("Normal", "CIN1", "CIN2/3", "CX CAN")
-result_list <- list()
+group_value = c("Normal", "CIN1", "CIN2/3", "CX CAN") # 4
+group_value = c("Red", "Blue", "Yellow","Green","Black") # 5
+group_value = c("apple", "grapes", "banana", "mangoes","ananas","mandarin") # 6 
+group_value = c("A", "B", "C", "D","E","F", "G", "H", "I", "J") # 10 
+group_value = c("A", "B", "C", "D","E","F", "G", "H", "I", "J", "K") # 11 
+
+
+
+
+
+#### description ####
+# n개의 group_value를 갖고 있다고 가정하면 
+# 1 vs 1, 2 vs 1, 3 vs 1, ...., n-1 vs 1 (rep, n-1)
+# 2 vs 2, 3 vs 2, 4 vs 2, ...., n-2 vs 2 (rep, n-2)
+# 3 vs 3, 4 vs 3, 5 vs 3, ...., n-3 vs 3 (rep, n-3)
+# ....
+# round(n/2)-1 vs drop(n/2)+1 (rep, 1, this is last step in case of odd n)
+# n/2 vs n/2 (rep, 1, this is last step in case of even n)
+# 를 반복하고 위의 과정에서 '중복'이 없어야 함. 
+
+
+
+#### Step 1. (rep, n-1) inner pairing하고 저장하기 ####
+# a vs b, b = 1의 경우
+
+### 1 vs 1, 4C2
+combn(x = group_value, m = 2)
+
+#### TEST k vs 1 nCk * (n-k) (k goes 1 to n-1) ####
+### 2 vs 1, 4C2 * 2
+h1 <- combn(x = group_value, m = 2) # 4C2
+h2 <- do.call(paste, c(as.data.frame(t(h1)), sep=" plus ")) # 2개씩 뽑은 것을 하나의 string으로 합침 
+h3 <- str_split(h2, pattern = " plus ", n = 2, simplify = TRUE) # 하나의 obs로 다시 분리 
+
+filter2_1 <- matrix(sapply(h3, function(x) {which(x == group_value)}), nrow(h3), 2) # 2 equal to m in line 1360
+filter2_2 = matrix(0, nrow(filter2_1), length(group_value)-2) # 2 equal to m in line 160
+
+for(i in 1:nrow(filter2_1)){
+  # for(j in 1:ncol(h3)){
+  #   filter2[i, j] = which(h3[i, j] == group_value) 
+  #   
+  # }
+    filter2_2[i, ] = combn(x = group_value[-filter2_1[i,]], m = 1)
+}
+
+filter2_2 = matrix(sapply(filter2_2, function(x) {which(x == group_value)}), nrow(filter2_1), length(group_value)-2)
+
+
+
+# 제대로 됐는지 check 
+unique(cbind(filter2_1, filter2_2)) == cbind(filter2_1, filter2_2) # 확인
+
+
+### 3 vs 1 nC3 * (n-3)
+g1 <- combn(x = group_value, m = 3) # 4C2
+g2 <- do.call(paste, c(as.data.frame(t(g1)), sep=" plus ")) # 2개씩 뽑은 것을 하나의 string으로 합침 
+g3 <- str_split(g2, pattern = " plus ", n = 3, simplify = TRUE) # 하나의 obs로 다시 분리 
+
+filter3_1 <- matrix(sapply(g3, function(x) {which(x == group_value)}), nrow(g3), 3) # 2 equal to m in line 1360
+filter3_2 = matrix(0, nrow(filter3_1), length(group_value)-3) # 2 equal to m in line 160
+
+for(i in 1:nrow(filter3_1)){
+  # for(j in 1:ncol(h3)){
+  #   filter2[i, j] = which(h3[i, j] == group_value) 
+  #   
+  # }
+  filter3_2[i, ] = combn(x = group_value[-filter3_1[i,]], m = 1)
+}
+
+filter3_2 = matrix(sapply(filter3_2, function(x) {which(x == group_value)}), nrow(filter3_1), length(group_value)-3)
+
+filter3_2
+
+# 제대로 됐는지 check 
+unique(cbind(filter3_1, filter3_2)) == cbind(filter3_1, filter3_2) # 확인
+
+#### TEST 끝 ####
+
+#### k vs 1 nCk * (n-k) (k goes 1 to n-1) ####
+result_list_1 <- list()
+result_list_2 <- list()
+for (q in 1:length(group_value)-1) {
+  
+  if (q == 1) { 
+    h1 <- combn(x = group_value, m = 2)
+    filter2_1 <- matrix(sapply(t(h1), function(x) {which(x == group_value)}), nrow(t(h1)), ncol(t(h1))) 
+    
+    result_list_1[[q]] <- filter2_1
+    result_list_2[[q]] <- 0
+    } else { 
+      
+      for (k in 2:(length(group_value)-1)) {
+        ### n개의 category에서 묶을 k개를 선택한 후 따로 저장하기 ### 
+        # n개의 category에서 묶을 k개를 선택
+        h1 <- combn(x = group_value, m = k)
+        # k개를 뽑은 것을 하나의 string으로 합침 
+        h2 <- do.call(paste, c(as.data.frame(t(h1)), sep=" plus "))
+        # k개의 obs로 다시 분리 
+        h3 <- str_split(h2, pattern = " plus ", n = k, simplify = TRUE)
+        # h3의 value를 group_value의 index value로 다시 저장
+        filter2_1 <- matrix(sapply(h3, function(x) {which(x == group_value)}), nrow(h3), k) 
+        
+        ### n개의 category에서 묶인 k개를 제외한 n-k개 중에서 하나씩 선택 ###
+        filter2_2 = matrix(0, nrow(filter2_1), length(group_value)-k) # length(group_value)-k mean 'n-k'
+        
+        # for iteration, k개를 제외한 n-k개 중에서 하나씩 선택
+        for(i in 1:nrow(filter2_1)){
+          # k개를 제외 : -filter2_1[i,]]
+          # 1개씩 선택 : combn(,...m = 1)
+          filter2_2[i, ] = combn(x = group_value[-filter2_1[i,]], m = 1)
+        }
+        
+        # 하나씩 선택된 값들을 group_value의 index value로 다시 저장 
+        filter2_2 = matrix(sapply(filter2_2, function(x) {which(x == group_value)}), nrow(filter2_1), length(group_value)-k)
+        
+        # iteration이 제대로 되고 있는지 확인 + k개 선택된 값과 n-k개 남은 값이 중복되고 있는지 확인 
+        # print(paste(k, sum(unique(cbind(filter2_1, filter2_2)) != cbind(filter2_1, filter2_2))))
+        
+        result_list_1[[k]] <- filter2_1
+        result_list_2[[k]] <- filter2_2
+    
+    }
+  }
+}
+
+# 결과 정리
+# (1) k개 선택 
+# (2) n-k에서 l개 선택 결과를 l개 선택 당 1행으로 분배해서 넣는게 더 나은 것 같음. 
+#     이렇게 되면 '결과' 수 만큼 result_matrix를 만들어야 함. 
+#     for문이 여러개 들어가겠는데? 일단 만들어보고 편집하자. 
+
+
+result_list_3 = list()
+result_list_3[[1]] <- result_list_1[[1]]
+
+for(w in 2:(length(group_value)-1)){
+  result_vec = c()
+  for(e in 1:nrow(result_list_2[[w]])){
+    if(e == 1) { 
+      result_vec[ 1 : (ncol(result_list_2[[w]])*e) ] <- result_list_2[[w]][e, ]
+    } else {
+      result_vec[ (1+(ncol(result_list_2[[w]])*(e-1))) : (ncol(result_list_2[[w]])*e) ] <- result_list_2[[w]][e, ]
+    }
+  }
+  result_list_3[[w]] <- result_vec
+}
+
+
+# 제대로 펼쳐졌는지 확인 
+(nrow(result_list_2[[2]]) * ncol(result_list_2[[2]])) == length(result_list_3[[2]])
+(nrow(result_list_2[[3]]) * ncol(result_list_2[[3]])) == length(result_list_3[[3]])
+(nrow(result_list_2[[4]]) * ncol(result_list_2[[4]])) == length(result_list_3[[4]])
+(nrow(result_list_2[[5]]) * ncol(result_list_2[[5]])) == length(result_list_3[[5]])
+
+# result_list_1
+# result_list_2[[t]]의 row만큼 result_list_1[[t]]의 row를 반복시켜야 함
+
+
+# 결과는 result_list_4로 저장하고 result_list_1과 같은지 확인 후 result_list_3의 vector들과 결합할 예정 
+
+result_list_4 <- list()
+result_list_4[[1]] <- result_list_3[[1]]
+
+for(t in 2:(length(group_value)-1)){
+  
+  for(y in 1:nrow(result_list_1[[t]])){
+    
+    if (y == 1){
+      a <- matrix(rep(result_list_1[[t]][y, ], ncol(result_list_2[[t]])), ncol(result_list_2[[t]]), byrow = T) # 4는 뭐지? 
+    } else {
+      b <- matrix(rep(result_list_1[[t]][y, ], ncol(result_list_2[[t]])), ncol(result_list_2[[t]]), byrow = T) # 4는 뭐지? 
+      a <- rbind(a, b)
+      result_list_4[[t]] <- a 
+      
+    }
+  }
+}
+
+result_list_4
+
+result_list_5 <- list()
+result_list_5[[1]] <- result_list_3[[1]]
+for (u in 2:(length(group_value)-1)){
+  result_list_5[[u]] <- cbind(result_list_4[[u]], result_list_3[[u]])
+}
+
+#### k vs 1 nCk * (n-k) (k goes 1 to n-1) 최종 결과 ####
+result_list_5  # 경우의 수 체크까지 완료, 개수 맞음. 
+
+
+
+
+#### k vs m nCk * (n-k)Cm (m goes 2 to n/2, k goes m to n-m) ####
+# m이 2 이상일 때를 한번에 만들 수 있지 않을까? 
+
+result_list_f1 <- list(0)
+result_list_f2 <- list(0)
+result_list_f3 <- list(0)
+for (m in 2 : floor(length(group_value)/2)) { # floor : 버림 
+  result_list_6 <- list(0)
+  result_list_7 <- list(0)
+  result_list_8 <- list(0)
+  
+
+  for ( k in m : (length(group_value)-m) ) {
+    h1 <- combn(x = group_value, m = k)
+    # k개를 뽑은 것을 하나의 string으로 합침 
+    h2 <- do.call(paste, c(as.data.frame(t(h1)), sep=" plus "))
+    # k개의 obs로 다시 분리 
+    h3 <- str_split(h2, pattern = " plus ", n = k, simplify = TRUE)
+    
+    
+    # h3의 value를 group_value의 index value로 다시 저장
+    filter2_1 <- matrix(sapply(h3, function(x) {which(x == group_value)}), nrow(h3), k) 
+    
+    ### n개의 category에서 묶인 k개를 제외한 n-k개 중에서 하나씩 선택 ###
+    filter2_2 = matrix(0, nrow(filter2_1)*choose(length(group_value)-k, m), m)
+    
+    # for iteration, k개를 제외한 n-k개 중에서 하나씩 선택
+    for( i in 1 : nrow(filter2_1) ){
+      # k개를 제외 : -filter2_1[i,]]
+      # 1개씩 선택 : combn(,...m = 1)
+      if ( i == 1 ) {
+        filter2_2[i:nrow(t(combn(x = group_value[-filter2_1[i,]], m = m))), ] = t(combn(x = group_value[-filter2_1[i,]], m = m))
+        
+        a <- matrix(rep(filter2_1[i, ], nrow(t(combn(x = group_value[-filter2_1[i,]], m = m)))), nrow(t(combn(x = group_value[-filter2_1[i,]], m = m))), byrow = T)
+        
+      } else {
+        filter2_2[ ((1+(i-1)*nrow(t(combn(x = group_value[-filter2_1[i,]], m = m))))) : (i*nrow(t(combn(x = group_value[-filter2_1[i,]], m = m)))), ] = t(combn(x = group_value[-filter2_1[i,]], m = m))  
+        b <- matrix(rep(filter2_1[i, ], nrow(t(combn(x = group_value[-filter2_1[i,]], m = m)))), nrow(t(combn(x = group_value[-filter2_1[i,]], m = m))), byrow = T)
+        a <- rbind(a, b)
+        filter2_3 <- a
+      } 
+      
+    }
+    
+    # 하나씩 선택된 값들을 group_value의 index value로 다시 저장 
+    filter2_2 = matrix(sapply(filter2_2, function(x) {which(x == group_value)}), nrow(filter2_1)*choose(length(group_value)-k, m), nrow(combn(x = group_value[-filter2_1[i, ]], m = m)))
+    
+    
+    # filter2_2의 row와 filter2_1의 row를 맞춰주기 위한 과정
+    ## filter2_1의 row를 filter2_2의 한 경우의 반복 수 만큼 복사할 것
+    
+    
+    result_list_6[[k]] <- filter2_3
+    result_list_7[[k]] <- filter2_2
+    
+    if ((sum(filter2_3 == 0) + is.null(filter2_3) + sum(filter2_2 == 0)  +is.null(filter2_3)) > 0) {
+      result_list_8[[k]] <- 0
+    } else {
+      result_list_8[[k]] <- cbind(filter2_3, filter2_2)
+    }
+    
+  }
+  
+  result_list_f1[[m]] <- result_list_6
+  result_list_f2[[m]] <- result_list_7
+  result_list_f3[[m]] <- result_list_8
+}
+
+#### k vs m nCk * (n-k)Cm (m goes 2 to n/2, k goes m to n-m) 최종결과 ####
+result_list_f3 # 최종 결과 
+
+
+# function of all combination with comparison, proto type 
+# <TO DO> 1.12. 줄 맞추기, 현재 줄이 꼬인 상태라 알아보기 힘듦 
+all_comb_comparison <- function(group_value){
+  result_list_1 <- list() # m == 1일 때의 결과 저장 
+  result_list_2 <- list() # m == 1일 때의 결과 저장 
+  
+  result_list_f1 <- list(0) # != 1일 때의 결과 저장 
+  result_list_f2 <- list(0) # != 1일 때의 결과 저장 
+  result_list_f3 <- list(0) # != 1일 때의 결과 저장 
+  
+  for (m in 1 : floor(length(group_value)/2)) {
+    
+    if (m == 1){
+      for (q in 1:length(group_value)-1) {
+        
+        if (q == 1) { 
+          h1 <- combn(x = group_value, m = 2)
+          filter2_1 <- matrix(sapply(t(h1), function(x) {which(x == group_value)}), nrow(t(h1)), ncol(t(h1))) 
+          
+          result_list_1[[q]] <- filter2_1
+          result_list_2[[q]] <- 0
+        } else { 
+          
+          for (k in 2:(length(group_value)-1)) {
+            ### n개의 category에서 묶을 k개를 선택한 후 따로 저장하기 ### 
+            # n개의 category에서 묶을 k개를 선택
+            h1 <- combn(x = group_value, m = k)
+            # k개를 뽑은 것을 하나의 string으로 합침 
+            h2 <- do.call(paste, c(as.data.frame(t(h1)), sep=" plus "))
+            # k개의 obs로 다시 분리 
+            h3 <- str_split(h2, pattern = " plus ", n = k, simplify = TRUE)
+            # h3의 value를 group_value의 index value로 다시 저장
+            filter2_1 <- matrix(sapply(h3, function(x) {which(x == group_value)}), nrow(h3), k) 
+            
+            ### n개의 category에서 묶인 k개를 제외한 n-k개 중에서 하나씩 선택 ###
+            filter2_2 = matrix(0, nrow(filter2_1), length(group_value)-k) # length(group_value)-k mean 'n-k'
+            
+            # for iteration, k개를 제외한 n-k개 중에서 하나씩 선택
+            for(i in 1:nrow(filter2_1)){
+              # k개를 제외 : -filter2_1[i,]]
+              # 1개씩 선택 : combn(,...m = 1)
+              filter2_2[i, ] = combn(x = group_value[-filter2_1[i,]], m = 1)
+            }
+            
+            # 하나씩 선택된 값들을 group_value의 index value로 다시 저장 
+            filter2_2 = matrix(sapply(filter2_2, function(x) {which(x == group_value)}), nrow(filter2_1), length(group_value)-k)
+            
+            # iteration이 제대로 되고 있는지 확인 + k개 선택된 값과 n-k개 남은 값이 중복되고 있는지 확인 
+            # print(paste(k, sum(unique(cbind(filter2_1, filter2_2)) != cbind(filter2_1, filter2_2))))
+            
+            result_list_1[[k]] <- filter2_1
+            result_list_2[[k]] <- filter2_2
+            
+          }
+        }
+      }
+  
+      result_list_3 = list()
+      result_list_3[[1]] <- result_list_1[[1]]
+      
+      for(w in 2:(length(group_value)-1)){
+        result_vec = c()
+        for(e in 1:nrow(result_list_2[[w]])){
+          if(e == 1) { 
+            result_vec[ 1 : (ncol(result_list_2[[w]])*e) ] <- result_list_2[[w]][e, ]
+          } else {
+            result_vec[ (1+(ncol(result_list_2[[w]])*(e-1))) : (ncol(result_list_2[[w]])*e) ] <- result_list_2[[w]][e, ]
+          }
+        }
+        result_list_3[[w]] <- result_vec
+      }
+      
+      
+      result_list_4 <- list()
+      result_list_4[[1]] <- result_list_3[[1]]
+      
+      for(t in 2:(length(group_value)-1)){
+        
+        for(y in 1:nrow(result_list_1[[t]])){
+          
+          if (y == 1){
+            a <- matrix(rep(result_list_1[[t]][y, ], ncol(result_list_2[[t]])), ncol(result_list_2[[t]]), byrow = T) # 4는 뭐지? 
+          } else {
+            b <- matrix(rep(result_list_1[[t]][y, ], ncol(result_list_2[[t]])), ncol(result_list_2[[t]]), byrow = T) # 4는 뭐지? 
+            a <- rbind(a, b)
+            result_list_4[[t]] <- a 
+            
+          }
+        }
+      }
+      
+      result_list_4
+      
+      result_list_5 <- list()
+      result_list_5[[1]] <- result_list_3[[1]]
+      for (u in 2:(length(group_value)-1)){
+        result_list_5[[u]] <- cbind(result_list_4[[u]], result_list_3[[u]])
+      }
+      
+    } else {
+      result_list_6 <- list(0)
+      result_list_7 <- list(0)
+      result_list_8 <- list(0)
+      
+      for ( k in m : (length(group_value)-m) ) {
+      h1 <- combn(x = group_value, m = k)
+      # k개를 뽑은 것을 하나의 string으로 합침 
+      h2 <- do.call(paste, c(as.data.frame(t(h1)), sep=" plus "))
+      # k개의 obs로 다시 분리 
+      h3 <- str_split(h2, pattern = " plus ", n = k, simplify = TRUE)
+      
+      
+      # h3의 value를 group_value의 index value로 다시 저장
+      filter2_1 <- matrix(sapply(h3, function(x) {which(x == group_value)}), nrow(h3), k) 
+      
+      ### n개의 category에서 묶인 k개를 제외한 n-k개 중에서 하나씩 선택 ###
+      filter2_2 = matrix(0, nrow(filter2_1)*choose(length(group_value)-k, m), m)
+      
+      # for iteration, k개를 제외한 n-k개 중에서 하나씩 선택
+      for( i in 1 : nrow(filter2_1) ){
+        # k개를 제외 : -filter2_1[i,]]
+        # 1개씩 선택 : combn(,...m = 1)
+        if ( i == 1 ) {
+          filter2_2[i:nrow(t(combn(x = group_value[-filter2_1[i,]], m = m))), ] = t(combn(x = group_value[-filter2_1[i,]], m = m))
+          
+          a <- matrix(rep(filter2_1[i, ], nrow(t(combn(x = group_value[-filter2_1[i,]], m = m)))), nrow(t(combn(x = group_value[-filter2_1[i,]], m = m))), byrow = T)
+          
+        } else {
+          filter2_2[ ((1+(i-1)*nrow(t(combn(x = group_value[-filter2_1[i,]], m = m))))) : (i*nrow(t(combn(x = group_value[-filter2_1[i,]], m = m)))), ] = t(combn(x = group_value[-filter2_1[i,]], m = m))  
+          b <- matrix(rep(filter2_1[i, ], nrow(t(combn(x = group_value[-filter2_1[i,]], m = m)))), nrow(t(combn(x = group_value[-filter2_1[i,]], m = m))), byrow = T)
+          a <- rbind(a, b)
+          filter2_3 <- a
+        } 
+        
+      }
+      
+      # 하나씩 선택된 값들을 group_value의 index value로 다시 저장 
+      filter2_2 = matrix(sapply(filter2_2, function(x) {which(x == group_value)}), nrow(filter2_1)*choose(length(group_value)-k, m), nrow(combn(x = group_value[-filter2_1[i, ]], m = m)))
+      
+      
+      # filter2_2의 row와 filter2_1의 row를 맞춰주기 위한 과정
+      ## filter2_1의 row를 filter2_2의 한 경우의 반복 수 만큼 복사할 것
+      
+      
+      result_list_6[[k]] <- filter2_3
+      result_list_7[[k]] <- filter2_2
+      
+      if ((sum(filter2_3 == 0) + is.null(filter2_3) + sum(filter2_2 == 0)  +is.null(filter2_3)) > 0) {
+        result_list_8[[k]] <- 0
+      } else {
+        result_list_8[[k]] <- cbind(filter2_3, filter2_2)
+      }
+      
+      }
+    
+    result_list_f1[[m]] <- result_list_6
+    result_list_f2[[m]] <- result_list_7
+    result_list_f3[[m]] <- result_list_8
+    }
+  }
+  
+  result_list_f3[[1]] <- result_list_5
+  result_list_final <- result_list_f3
+  
+  return(result_list_final)  
+}
+
+  
+all_comb_comparison(group_value) # 확인. 1.12 문제없이 돌아감. 
+
+
+
 #### ####
 
 
