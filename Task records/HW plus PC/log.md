@@ -57,3 +57,4 @@ Rprofile
 [How to join (merge) data frames (inner, outer, left, right)](https://stackoverflow.com/questions/1299871/how-to-join-merge-data-frames-inner-outer-left-right)  
 
 
+[R Studio 단축키 및 팁](http://the-r.kr/2019/06/07/r-studio-%EB%B0%94%EB%A1%9C-%EA%B0%80%EA%B8%B0-%EB%B0%8F-%ED%8C%81-appsilon-data-science-%EC%97%94%EB%93%9C-%ED%88%AC-%EC%97%94%EB%93%9C-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EA%B3%BC%ED%95%99-%EC%86%94/)
