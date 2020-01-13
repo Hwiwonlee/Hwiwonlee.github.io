@@ -9,6 +9,9 @@
 ## 4. About ratios, OR, RR, HR...
 ## 5. Canonical correlation analysis  
 ## 6. [rank statitics method](https://en.wikipedia.org/wiki/Jonckheere%27s_trend_test)  
-하단 참조
-
+하단 참조  
+## 7. [CLR, Conditional Logistic Regression](https://en.wikipedia.org/wiki/Conditional_logistic_regression)
+- [1](https://rcompanion.org/rcompanion/e_07.html)
+- [2](https://ncss-wpengine.netdna-ssl.com/wp-content/themes/ncss/pdf/Procedures/NCSS/Conditional_Logistic_Regression.pdf)
+- [3](https://3months.tistory.com/320)
 
