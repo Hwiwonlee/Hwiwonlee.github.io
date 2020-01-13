@@ -910,8 +910,8 @@ last_res_2[, 200:205]
 heatmap_data <- last_res_2[, -(203:205)]
 
 
-#### legacy code ####
-#### Part 1. Draw heatmap plot #### 
+
+#### legacy code, Part 1. Draw heatmap plot #### 
 rm(list=ls())
 
 data<-read.csv(".../polar_negative_for_heatmap.csv")
