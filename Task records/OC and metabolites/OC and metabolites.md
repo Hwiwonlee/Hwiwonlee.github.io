@@ -1,6 +1,6 @@
 ```r
-data_BN <- read.xlsx("C:/Users/75533/Working/dataset/Oral cancer normalization data/BN_NCC_mastersheet.xlsx", sheetIndex = 1)
-data_MN <- read.xlsx("C:/Users/75533/Working/dataset/Oral cancer normalization data/MN_NCC_mastersheet.xlsx", sheetIndex = 1)
+data_BN <- read.xlsx("...BN_mastersheet.xlsx", sheetIndex = 1)
+data_MN <- read.xlsx("...MN_mastersheet.xlsx", sheetIndex = 1)
 
 
 colnames(data_BN)[1:6] <- c("Name", "NO", "Group", "Group_RN", "Batch", "Order")
@@ -28,7 +28,7 @@ data_BN %>%
   group_by(Group) %>%  summarise(n=n())
 
 
-data_info <- read.xlsx("C:/Users/75533/Working/dataset/Oral cancer normalization data/환자정보 mastersheet_matching.xlsx", header=FALSE, sheetIndex = 1)
+data_info <- read.xlsx("info_mastersheet.xlsx", header=FALSE, sheetIndex = 1)
 data_info <- data_info[-1, ]
 names(data_info) <- c("NCC_num", "Group_RN", "TB_num", "NO", "sex", "age", "smoking", "alcohol", "주장기", "stage_raw", "stage", "box", "위치")
 
@@ -325,7 +325,7 @@ cat(gsub(".Results$", "", names(data_BN[, 7:97])), fill=1)
 # a lots of undefined metabolites 
 
 # after modification
-metabolites_list <- read.xlsx("C:/Users/75533/Working/dataset/Oral cancer normalization data/name_map.xlsx", sheetIndex = 1)
+metabolites_list <- read.xlsx("...name_map.xlsx", sheetIndex = 1)
 
 # HMDB ID 기준 추출 
 length(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")])
