@@ -175,7 +175,7 @@ a <- ".Results"
 cm <- paste0(cm, a)
 
 # set names for saving plots 
-folder_name <- "C:/Users/75533/Working/R/graph_output/"
+folder_name <- "...graph_output/"
 file_name <- "testplot"
 
 data_BN %>% 
