@@ -28,7 +28,7 @@ data_BN %>%
   group_by(Group) %>%  summarise(n=n())
 
 
-data_info <- read.xlsx("info_mastersheet.xlsx", header=FALSE, sheetIndex = 1)
+data_info <- read.xlsx("...info_mastersheet.xlsx", header=FALSE, sheetIndex = 1)
 data_info <- data_info[-1, ]
 names(data_info) <- c("NCC_num", "Group_RN", "TB_num", "NO", "sex", "age", "smoking", "alcohol", "주장기", "stage_raw", "stage", "box", "위치")
 
@@ -39,9 +39,9 @@ data_info %>%
   group_by(smoking, alcohol) %>% 
   summarise(n = n())
 
-dim(data_info)
-dim(data_MN)
-dim(data_BN)
+metabolites_list <- read.xlsx("...name_map.xlsx", sheetIndex = 1)
+metabolites_list$Match -> metabolites_name
+
 #### ####
 
 #### <TO do> Oral cancer & metabolites는 1:2 matching이니까 set value를 하나 만들자. ####
@@ -102,12 +102,27 @@ data_BN %>%
   mutate(set = matching_set_num(data_BN[1:546, ], 3, 3, 1)[, 2]) %>% # mutate 'set' part
   select(set, everything()) %>% 
   arrange(set) %>% 
-  select(set, Group, NO, sex, age, smoking, alcohol, stage_raw, stage, everything()) %>%
+  select(set, Group, NO, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_BN
+
+# change row name & delete dummy metabolites
+names(data_BN) <- c("set", "Group", "NO", "sex", "age", "smoking", "alcohol",
+                    "stage_raw", "stage", "set_pre", "Name", "Group_RN.x",
+                    "Batch", "order", metabolites_name, 
+                    "NCC_num", "Group_RN.y", "TB_num", "주장기", "box", "위치")
+
+#### <TO DO> rename_all을 이용한 이름 바꾸기 ####
+  # rename_all(funs(gsub("[[:alpha:]]", "", make.names("set", "Group", "NO", "sex", "age", "smoking", "alcohol", 
+  #                                                    "stage_raw", "stage", "set_pre", "Name", "Group_RN.x",
+  #                                                    "Batch", "order", metabolites_name))))
+#### ####
   
   ## stage 수정 전 stage 별 n개 체크
   # group_by(stage) %>% summarise(n = n())
   ## 1a, 4a, 4b 발견 
-  
+data_BN <- data_BN[, -which(names(data_BN) == 'NA')]
+
+
+data_BN %>% 
   mutate(stage = gsub("^4[a-z]", "4", stage)) %>% 
   mutate(stage = gsub("^1[a-z]", "1", stage)) %>% 
   
@@ -186,19 +201,9 @@ for( i in 1:length(cm) ) {
 #### ####
 
 #### CLR ####
-
-library(Epi)
-data(bdendo)
-data(bdendo11)
-
-bdendo %>% as_tibble() # 1:4 매칭, case 1, control 2 
-bdendo11 # 1:1 매칭, case 1, control 2 
-help(bdendo)
-
-
 BN_info %>% 
   select(-c(stage_raw, NO, Name, set_pre, Group_RN.x,
-            Batch, Order, NCC_num, Group_RN.y, TB_num, 주장기, box, 위치)) -> BN_info
+            Batch, order, NCC_num, Group_RN.y, TB_num, 주장기, box, 위치)) -> BN_info
 
 
 # metabolites들의 scale이 너무 큼. log scale로 바꿔보자. 
@@ -209,30 +214,21 @@ length(which(log_BN_info == 0)) # 675
 length(which(log_BN_info > 0 & log_BN_info < 1)) # 269 
 
 # Use logarithm
-BN_info <- cbind(BN_info[, 1:7], log(BN_info[, 8:98]))
-BN_info[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info[, -(1:7)])
-BN_info %>% as_tibble()
+BN_info_log <- cbind(BN_info[, 1:7], log2(BN_info[, 8:88]))
+BN_info_log[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_log[, -(1:7)])
+BN_info_log %>% as_tibble()
 
-
-
-
-
-res_clogistic <- clogistic(Group ~ .-set, strata = set, data = BN_info, iter.max=30)
-
-res_clogistic
-
-
-coef(summary(res_clogistic))[,4]
-
-coef(res_clogistic)[2]
-
-str(summary(res_clogistic), max = 1)
-str(res_clogistic, max = 1)
+# Use Standardization
+BN_info_st <- cbind(BN_info[, 1:7], scale((BN_info[, 8:88])))
+BN_info_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_st[, -(1:7)])
+BN_info_st %>% as_tibble()
 
 
 #### <TO DO> clogit 사용해보기 ####
 library(survival)
 library(lme4)
+library(metafor)
+
 
 #### SOME test ####
 n <- 100
@@ -249,6 +245,13 @@ id    <- rep(1:n, each=2)
 
 summary(clogit(event ~ group + strata(id)))
 
+library(Epi)
+data(bdendo)
+data(bdendo11)
+
+bdendo %>% as_tibble() # 1:4 매칭, case 1, control 2 
+bdendo11 # 1:1 매칭, case 1, control 2 
+help(bdendo)
 
 summary(clogit(d ~ cest + dur + strata(set), bdendo)) # clogit == clogistic 
 clogistic(d ~ cest + dur, strata = set, data = bdendo) ## clogit == clogistic
@@ -269,36 +272,39 @@ clogit(case ~ tocc + tocc:education + strata(id), logan2)
 
 #### ####
 
+base_var = colnames(BN_info_st)[3:6]
+all_metabolites = colnames(BN_info_st)[8:98]
 
-
-base_var = colnames(BN_info[3:6])
 formula = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
                            paste(cm, collapse = " + "), "+ strata(set)"))
 
+formula = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
+                           paste(all_metabolites, collapse = " + "), "+ strata(set)"))
 
 
 
-BN_info %>% as_tibble()
+BN_info %>% as_tibble() %>% 
+  select(smoking) %>% 
+  group_by(smoking) %>% 
+  summarise(n = n())
 
 
-summary(clogit(Group ~ sex + age + smoking + alcohol + Acetylcarnitine.Results + 
-                 Deca.carnitine.Results + Hex.carnitine.Results + Iso.carnitine.Results + 
-                 Oct.carnitine.Results + Glutamate.Results + sn.glycerol.3.phosphocholine.Results + 
-                 TMAO.Results + strata(set), data = BN_info))
+summary(clogit(Group ~ sex + age + smoking + alcohol + ... + strata(set), data = BN_info_st))
 
-result_glmer <- glmer(Group ~  sex + age + smoking + alcohol + Acetylcarnitine.Results + 
-                        Deca.carnitine.Results + Hex.carnitine.Results + Iso.carnitine.Results + 
-                        Oct.carnitine.Results + Glutamate.Results + sn.glycerol.3.phosphocholine.Results + 
+summary(clogit(Group ~ smoking + ... + strata(set), data = BN_info_st))
+
+
+
+
+summary(glmer(Group ~  sex + age + smoking + ... + (1 | set), 
+              data = BN_info_st, family=binomial, nAGQ = 100))
+
+summary(glmer(Group ~ Oct.carnitine.Results + Glutamate.Results + sn.glycerol.3.phosphocholine.Results + 
                         TMAO.Results + (1 | set), 
-                      data = BN_info, family=binomial(link=probit), nAGQ = 100)
-
-step(result_glmer)
+                      data = BN_info, family=binomial, nAGQ = 100))
 
 
-clogistic(Group ~ sex + age + smoking + alcohol + Acetylcarnitine.Results + 
-            Deca.carnitine.Results + Hex.carnitine.Results + Iso.carnitine.Results + 
-            Oct.carnitine.Results + Glutamate.Results + sn.glycerol.3.phosphocholine.Results + 
-            TMAO.Results, strata = set, data = BN_info, iter.max = 20)
+clogistic(Group ~ smoking + ..., strata = set, data = BN_info_st, iter.max = 17)
 
 
 
@@ -325,7 +331,7 @@ cat(gsub(".Results$", "", names(data_BN[, 7:97])), fill=1)
 # a lots of undefined metabolites 
 
 # after modification
-metabolites_list <- read.xlsx("...name_map.xlsx", sheetIndex = 1)
+metabolites_list <- read.xlsx("C:/Users/75533/Working/dataset/Oral cancer normalization data/name_map.xlsx", sheetIndex = 1)
 
 # HMDB ID 기준 추출 
 length(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")])
@@ -342,6 +348,123 @@ cat(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")], fill = 1)
 cat(gsub(".Results$", "", names(data_BN[, 7:97])), fill=1)
 
 #### ####
+
+#### Comparison with C and OC group ####
+
+BN_info %>%
+  as_tibble() %>% 
+  select(-c(1,3:7)) %>% 
+  group_by(Group) %>% 
+  summarise_all(funs(mean, median, sd)) -> test
+
+
+test_t <- as_tibble(cbind(nms = names(test), t(test)))
+test_t <- test_t[-1, ]
+names(test_t) <- c("Names", "C", "OC")
+
+test_t$Names[1:81]
+length(test_t$Names)
+index <- c(rep("Mean", 81), rep("Median", 81), rep("sd", 81))
+
+test_t <- cbind(test_t, index)
+test_t$Names <- gsub("_mean$", "", test_t$Names)
+test_t$Names <- gsub("_median$", "", test_t$Names)
+test_t$Names <- gsub("_sd$", "", test_t$Names)
+
+test_t %>% 
+  write.xlsx("table.xlsx")
+
+
+candidate_metabo <- c(...)
+
+
+
+
+special_metabo <- c(...)
+
+length(candidate_metabo)
+length(special_metabo)
+
+
+BN_info[, which(names(BN_info) == candidate_metabo)]
+
+position_cm <- c()
+for(i in 1:ncol(BN_info[, -c(1,3:7)])) {
+  for( j in 1:length(candidate_metabo)) {
+    if(names(BN_info[, -c(1,3:7)])[i] == candidate_metabo[j]) {
+      position_cm <- c(position_cm, i)
+    }
+  }
+}
+
+position_sm <- c()
+for(i in 1:ncol(BN_info[, -c(1,3:7)])) {
+  for( j in 1:length(special_metabo)) {
+    if(names(BN_info[, -c(1,3:7)])[i] == special_metabo[j]) {
+      position_sm <- c(position_sm, i)
+    }
+  }
+}
+
+colnames(BN_info[, -c(1,3:7)][, position_cm])
+colnames(BN_info[, -c(1,3:7)][, position_sm])
+
+BN_info[, -c(1,3:7)][, c(1, position_sm)] %>%
+  as_tibble() %>% 
+  group_by(Group) %>% 
+  summarise_all(funs(mean, median, sd)) -> test
+
+
+test_t <- as_tibble(cbind(nms = names(test), t(test)))
+test_t <- test_t[-1, ]
+names(test_t) <- c("Names", "C", "OC")
+
+test_t$Names[1:length(position_sm)]
+length(test_t$Names)
+index <- c(rep("Mean", length(position_sm)), rep("Median", length(position_sm)), rep("sd", length(position_sm)))
+
+test_t <- cbind(test_t, index)
+test_t$Names <- gsub("_mean$", "", test_t$Names)
+test_t$Names <- gsub("_median$", "", test_t$Names)
+test_t$Names <- gsub("_sd$", "", test_t$Names)
+
+test_t %>% 
+  write.xlsx("table_sm.xlsx")
+
+
+#### <TO DO> Function 만들기 ####
+compare_summary_stat <- function(data, ){}
+
+BN_info[, -c(1,3:7)][, c(1, position_sm)] %>%
+  as_tibble() %>% 
+  group_by(Group) %>% 
+  summarise_all(funs(mean, median, sd)) -> test
+
+
+test_t <- as_tibble(cbind(nms = names(test), t(test)))
+test_t <- test_t[-1, ]
+names(test_t) <- c("Names", "C", "OC")
+
+test_t$Names[1:length(position_sm)]
+length(test_t$Names)
+index <- c(rep("Mean", length(position_sm)), rep("Median", length(position_sm)), rep("sd", length(position_sm)))
+
+test_t <- cbind(test_t, index)
+test_t$Names <- gsub("_mean$", "", test_t$Names)
+test_t$Names <- gsub("_median$", "", test_t$Names)
+test_t$Names <- gsub("_sd$", "", test_t$Names)
+
+test_t %>% 
+  write.xlsx("table_sm.xlsx")
+
+#### ####
+
+length(candidate_metabo)
+length(special_metabo)
+
+#### ####
+
+
 
 #### <TO DO> Function 만들기 ####
 matching_set_num <- function(data, Group_var_position, case_interval, control_interval) {
@@ -375,7 +498,20 @@ matching_set_num <- function(data, Group_var_position, case_interval, control_in
   return(result)
   
 }
-#### <TO DO> Fuctnion 만들기 #### 
+#### <TO DO> Fuctnion 만들기 끝 #### 
 matching_set_num(data_BN[1:546, ], 3, 3, 1)[, 1]
 matching_set_num(data_BN[1:546, ], 3, 3, 1)[, 2]
+
+library(MetaboAnalystR)
+
+mSet <- InitDataObjects("conc", "pathora", FALSE)
+cmpd.vec <- c(..)
+
+mSet <- Setup.MapData(mSet, cmpd.vec);
+mSet <- CrossReferencing(mSet, "hmdb");
+mSet <- CreateMappingResultTable(mSet)
+mSet <- SetKEGG.PathLib(mSet, "hsa")
+mSet <- SetMetabolomeFilter(mSet, F);
+mSet <- CalculateOraScore(mSet, "rbc", "hyperg")
+mSet <- PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
 ```
