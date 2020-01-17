@@ -433,26 +433,36 @@ test_t %>%
 
 
 #### <TO DO> Function 만들기 ####
-compare_summary_stat <- function(data, ){}
+compare_summary_stat <- function(data, Group_postion, position_sm){
+  data[, c(Group_postion, position_sm)] %>%
+    as_tibble() %>% 
+    group_by(Group) %>% 
+    summarise_all(funs(mean, median, sd)) -> test
+  
+  test_t <- as_tibble(cbind(nms = names(test), t(test)))
+  test_t <- test_t[-Group_postion, ]
+  
+  index <- c(rep("Mean", length(position_sm)), rep("Median", length(position_sm)), rep("sd", length(position_sm)))
 
-BN_info[, -c(1,3:7)][, c(1, position_sm)] %>%
-  as_tibble() %>% 
-  group_by(Group) %>% 
-  summarise_all(funs(mean, median, sd)) -> test
+  cbind(test_t, index) %>% 
+    mutate(nms = ifelse(grepl("_mean$", nms)|
+                          grepl("_median$", nms)|
+                          grepl("_sd$", nms), 
+                        gsub("_mean$|_median$|_sd$", "", nms), "ERROR")) -> test_t
+  
+  if(grepl("ERROR", test_t$nms) == TRUE) {
+    stop("In dropping summary stat tag process, occured error. So please check mutate step")
+  }
+  
+  return(test_t)
+}
 
+test_function <- compare_summary_stat(BN_info[, -c(1,3:7)], 1, position_sm)
+test_function
 
-test_t <- as_tibble(cbind(nms = names(test), t(test)))
-test_t <- test_t[-1, ]
-names(test_t) <- c("Names", "C", "OC")
+## Plus, Compare_summary_stat function의 argument 중 dataset의 group column을 따로 줄 수는 없을까? 
+## group_by(Group)이 아니라 Group를 argument로 commit 할 수 있을까? 
 
-test_t$Names[1:length(position_sm)]
-length(test_t$Names)
-index <- c(rep("Mean", length(position_sm)), rep("Median", length(position_sm)), rep("sd", length(position_sm)))
-
-test_t <- cbind(test_t, index)
-test_t$Names <- gsub("_mean$", "", test_t$Names)
-test_t$Names <- gsub("_median$", "", test_t$Names)
-test_t$Names <- gsub("_sd$", "", test_t$Names)
 
 test_t %>% 
   write.xlsx("table_sm.xlsx")
