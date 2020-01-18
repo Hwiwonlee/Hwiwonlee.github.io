@@ -520,8 +520,16 @@ cmpd.vec <- c(..)
 mSet <- Setup.MapData(mSet, cmpd.vec);
 mSet <- CrossReferencing(mSet, "hmdb");
 mSet <- CreateMappingResultTable(mSet)
+
+#### ERROR ####
+
 mSet <- SetKEGG.PathLib(mSet, "hsa")
+
+#### ERROR ####
+
 mSet <- SetMetabolomeFilter(mSet, F);
 mSet <- CalculateOraScore(mSet, "rbc", "hyperg")
 mSet <- PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
+
+
 ```
