@@ -48,7 +48,10 @@ data_info %>%
   summarise(n = n())
 
 metabolites_list <- read.xlsx("...name_map.xlsx", sheetIndex = 1)
-metabolites_list$Match -> metabolites_name
+
+# 공백 제거 
+metabolites_name <- gsub(" $", "", metabolites_list$Match)
+length(metabolites_list$Match[-which(metabolites_list$Match == "NA")]) # 81개 
 
 #### ####
 
@@ -148,7 +151,7 @@ data_BN %>%
   
   # metabolites 이름 및 개수 체크  
   metabolites_name[-which(metabolites_name == "NA")] == colnames(BN_info)[8:88]
-
+  org_metabolites_nanme <- metabolites_name[-which(metabolites_name == "NA")] 
   
   
   
@@ -344,7 +347,7 @@ pro1_2 <- BN_info$Group[19:21] # OC가 없다.
 # matching_set_num가 틀렸거나 merge나 pre-processing 단계에서 pairing을 해줘야할 것 같다. 
 # Fail 
 
-#### <PROBLEM> an id statement is required for multi-state models ####
+#### <PROBLEM> an id statement is required for multi-state models ####  
 
 BN_info$set[19:21]
 BN_info$Group[19:21]
@@ -360,17 +363,24 @@ cat(gsub(".Results$", "", names(data_BN[, 7:97])), fill=1)
 # a lots of undefined metabolites 
 
 # after modification
-metabolites_list <- read.xlsx("...name_map.xlsx", sheetIndex = 1, stringsAsFactors=FALSE)
+metabolites_list <- read.xlsx(paste(dir, "name_map.xlsx", sep = "/"), stringsAsFactor = FALSE, sheetIndex = 1,)
 
 # HMDB ID 기준 추출 
-length(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")])
+metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")]
+length(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")]) # 80개 
+
+# Compound name 기준 추출
+metabolites_list$Match[which(metabolites_list$Match != "NA")]
+length(metabolites_list$Match[which(metabolites_list$Match != "NA")]) # 81개 
+
 
 # 중복 검사 
 length(unique(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")]))
 sum(duplicated(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")]))  
 
 # copy & paste를 위한 cat
-cat(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")], fill = 1)
+cat(as.character(metabolites_list$HMDB[which(metabolites_list$HMDB != "NA")]), fill = 1)
+cat(as.character(metabolites_list$Match[which(metabolites_list$Match != "NA")]), fill = 1)
 
 
 # list of metabolites
@@ -380,9 +390,9 @@ cat(gsub(".Results$", "", names(data_BN[, 7:97])), fill=1)
 
 #### Comparison with C and OC group ####
 
-BN_info %>%
+data_BN_ready %>%
   as_tibble() %>% 
-  select(-c(1,3:7)) %>% 
+  select(Group, org_metabolites_nanme) %>% 
   group_by(Group) %>% 
   summarise_all(funs(mean, median, sd)) -> test
 
@@ -404,41 +414,48 @@ test_t %>%
   write.xlsx("table.xlsx")
 
 
-candidate_metabo <- c(...)
+candidate_metabo <- c("3-Hydroxybutyric acid ", "Acetylcholine", "L-Alanine", "L-Arginine", "L-Aspartic acid","L-Asparagine",
+                      "L-Carnitine", "Choline" ,"Creatinine", "Dimethylglycine", "Gamma-Aminobutyric acid","Betaine",
+                      "L-Glutamine", "Glycine", "L-Isoleucine", "L-Kynurenine", "L-Leucine", "L-Lysine", "L-Methionine", 
+                      "Nicotinic acid", "L-Phenylalanine", "L-Proline", "Pyridoxamine", "Pyridoxine", "L-Serine", 
+                      "Taurine", "L-Threonine", "4-Hydroxyproline " , "Urea", "L-Valine",
+                      "L-Acetylcarnitine", "Decanoylcarnitine", "L-Glutamic acid", "Hexanoylcarnitine", 
+                       "Isovalerylcarnitine ", "L-Octanoylcarnitine", "Glycerophosphocholine", "Trimethylamine N-oxide")
 
 
 
 
-special_metabo <- c(...)
+special_metabo <- c("L-Acetylcarnitine", "Decanoylcarnitine", "L-Glutamic acid", "Hexanoylcarnitine", 
+                    "Isovalerylcarnitine ", "L-Octanoylcarnitine", "Glycerophosphocholine", "Trimethylamine N-oxide")
 
 length(candidate_metabo)
 length(special_metabo)
 
 
-BN_info[, which(names(BN_info) == candidate_metabo)]
+data_BN_ready[, which(names(data_BN_ready) == candidate_metabo)]
 
 position_cm <- c()
-for(i in 1:ncol(BN_info[, -c(1,3:7)])) {
+for(i in 1:data_BN_ready(BN_info[, -c(1,3:7)])) {
   for( j in 1:length(candidate_metabo)) {
-    if(names(BN_info[, -c(1,3:7)])[i] == candidate_metabo[j]) {
+    if(names(data_BN_ready[, -c(1,3:7)])[i] == candidate_metabo[j]) {
       position_cm <- c(position_cm, i)
     }
   }
 }
 
 position_sm <- c()
-for(i in 1:ncol(BN_info[, -c(1,3:7)])) {
+for(i in 1:ncol(data_BN_ready[, -c(1,3:7)])) {
   for( j in 1:length(special_metabo)) {
-    if(names(BN_info[, -c(1,3:7)])[i] == special_metabo[j]) {
+    if(names(data_BN_ready[, -c(1,3:7)])[i] == special_metabo[j]) {
       position_sm <- c(position_sm, i)
     }
   }
 }
 
-colnames(BN_info[, -c(1,3:7)][, position_cm])
-colnames(BN_info[, -c(1,3:7)][, position_sm])
+colnames(data_BN_ready[, -c(1,3:7)][, position_cm])
+colnames(data_BN_ready[, -c(1,3:7)][, position_sm])
 
-BN_info[, -c(1,3:7)][, c(1, position_sm)] %>%
+data_BN_ready[, -c(1,3:7)][, c(1, position_sm)] %>%
   as_tibble() %>% 
   group_by(Group) %>% 
   summarise_all(funs(mean, median, sd)) -> test
@@ -460,6 +477,50 @@ test_t$Names <- gsub("_sd$", "", test_t$Names)
 test_t %>% 
   write.xlsx("table_sm.xlsx")
 
+
+#### <TO DO> Function 만들기 ####
+compare_summary_stat <- function(data, cadidated_name_lists, grouping_value_name){
+
+  grouping_value_name <- enquo(grouping_value_name)
+  
+  data %>% 
+    select(c(!!grouping_value_name, cadidated_name_lists)) -> function_data
+  
+  position <- c()
+  for(i in 1 : ncol(function_data)) {
+    for( j in 1 : length(cadidated_name_lists)) {
+      if(names(function_data)[i] == cadidated_name_lists[j]) {
+        position <- c(position, i)
+      }
+    }
+  }
+  
+  function_data %>% 
+    group_by(!!grouping_value_name) %>% 
+    summarise_all(funs(mean, median, sd)) -> test
+  
+  test_t <- as_tibble(cbind(nms = names(test), t(test)))
+  test_t <- test_t[-1, ]
+  
+  names(test_t) <- c("Names", "C", "OC")
+  
+  index <- c(rep("Mean", length(position)), rep("Median", length(position)), rep("sd", length(position)))
+  
+  test_t <- cbind(test_t, index)
+  test_t$Names <- gsub("_mean$", "", test_t$Names)
+  test_t$Names <- gsub("_median$", "", test_t$Names)
+  test_t$Names <- gsub("_sd$", "", test_t$Names)
+  
+  return(test_t)
+}
+
+compare_summary_stat(data_BN_ready, org_metabolites_nanme, Group)
+
+
+test_t %>% 
+  write.xlsx("table_sm.xlsx")
+
+#### ####
 
 #### <TO DO> Function 만들기 ####
 compare_summary_stat <- function(data, cadidated_name_lists, grouping_value_name){
