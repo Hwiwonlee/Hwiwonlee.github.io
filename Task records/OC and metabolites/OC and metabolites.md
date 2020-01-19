@@ -144,7 +144,7 @@ data_BN %>%
   mutate(stage = replace_na(stage, "0")) %>% 
   type_convert(cols(X3_hydroxybutyrate.Results = col_double())) %>% 
   mutate(age = as.numeric(cut_number(.$age, 3)))%>% 
-  mutate(Group = ifelse(Group == "OC", 1, 0)) -> BN_info
+  mutate(Group = ifelse(Group == "OC", 1, 0)) -> data_BN_ready
   
   # metabolites 이름 및 개수 체크  
   metabolites_name[-which(metabolites_name == "NA")] == colnames(BN_info)[8:88]
@@ -218,9 +218,20 @@ for( i in 1:length(cm) ) {
 #### ####
 
 #### CLR ####
-BN_info %>% 
+data_BN_ready %>% 
   select(-c(stage_raw, NO, Name, set_pre, Group_RN.x,
-            Batch, order, NCC_num, Group_RN.y, TB_num, 주장기, box, 위치)) -> BN_info
+            Batch, order, NCC_num, Group_RN.y, TB_num, 주장기, box, 위치))
+            
+            
+  # formula를 위해 X value names에 공백 제거 
+  rename_at(vars(matches(" ")), funs(str_replace(., " ", "_"))) %>% 
+  # formula를 위해 X value names에 dash 제거 
+  rename_at(vars(matches("-")), funs(str_replace_all(., "-", "_"))) %>% 
+  # 숫자가 포함되어있는 metabolites를 HMDB를 참고, 이름 바꿔줌
+  rename(beta_Hydroxybutyric_acid = '3_Hydroxybutyric_acid', 
+         Methyl_folate = '5_Methyltetrahydrofolic_acid',
+         Hydroxy_L_proline = '4_Hydroxyproline') -> BN_info
+
 
 
 # metabolites들의 scale이 너무 큼. log scale로 바꿔보자. 
