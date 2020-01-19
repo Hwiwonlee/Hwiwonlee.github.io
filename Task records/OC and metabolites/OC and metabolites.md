@@ -1,3 +1,8 @@
+LOG
+
+[Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)
+
+
 ```r
 data_BN <- read.xlsx("...BN_mastersheet.xlsx", sheetIndex = 1, stringsAsFactors=FALSE)
 data_MN <- read.xlsx("...MN_mastersheet.xlsx", sheetIndex = 1, stringsAsFactors=FALSE)
