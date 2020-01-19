@@ -126,10 +126,14 @@ names(data_BN) <- c("set", "Group", "NO", "sex", "age", "smoking", "alcohol",
   
   ## stage 수정 전 stage 별 n개 체크
   # group_by(stage) %>% summarise(n = n())
-  ## 1a, 4a, 4b 발견 
+  
+## metabolites name matching 이후 사용할 수 없는 metabolites의 이름이 NA로 바뀜 
+## NA의 이름을 가진 metabolites 제거 
 data_BN <- data_BN[, -which(names(data_BN) == 'NA')]
 
 
+## 1a, 4a, 4b 발견
+## 4a, 4b는 4로 1a는 1로 수정
 data_BN %>% 
   mutate(stage = gsub("^4[a-z]", "4", stage)) %>% 
   mutate(stage = gsub("^1[a-z]", "1", stage)) %>% 
