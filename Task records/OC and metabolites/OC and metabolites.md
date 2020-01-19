@@ -12,6 +12,10 @@ data_MN <- data_MN[-1, ]
 data_BN %>% 
   as_tibble() %>% 
   type_convert(cols(NO = col_double())) %>% 
+  
+  # metabolites 결과에서 붙어나온 .Results를 삭제 
+  rename_at(vars(matches(".Results$")), funs(str_replace(., ".Result", ""))) %>% 
+  
   mutate(Group = replace(Group, str_detect(Group, "-131"), "OC")) %>% 
   mutate(Group = replace(Group, str_detect(Group, "-51"), "OC")) -> data_BN
   # group_by(Group) %>% summarise(n = n())
@@ -19,6 +23,10 @@ data_BN %>%
 data_MN %>% 
   as_tibble() %>% 
   type_convert(cols(NO = col_double())) %>% 
+  
+  # metabolites 결과에서 붙어나온 .Results를 삭제 
+  rename_at(vars(matches(".Results$")), funs(str_replace(., ".Result", ""))) %>% 
+  
   mutate(Group = replace(Group, str_detect(Group, "-131"), "OC")) %>% 
   mutate(Group = replace(Group, str_detect(Group, "-51"), "OC")) -> data_MN
 
