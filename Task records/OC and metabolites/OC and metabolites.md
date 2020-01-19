@@ -311,28 +311,29 @@ formula = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
 
 
 
-BN_info %>% as_tibble() %>% 
-  select(smoking) %>% 
-  group_by(smoking) %>% 
-  summarise(n = n())
+# Activate but not convergence 
+summary(clogit(formula, data = BN_info_log))
 
+# control arg를 이용해 iteration 횟수 증가시킴
+# + coxph와 clogit의 동일성 파악
+coxph(formula = Surv(rep(1, 546L), Group) ~ sex + age + smoking + 
+        alcohol + beta_Hydroxybutyric_acid + Methyl_folate + Acetoacetic_acid + 
+        L_Acetylcarnitine + Acetylcholine + Adenine + Adenosine + 
+        Asymmetric_dimethylarginine + L_Alanine + Adenosine_monophosphate + 
+        Hydroxy_L_proline + Trigonelline + L_Tryptophan + L_Tyrosine + 
+        Uracil + Urea + Uric_acid + Uridine + L_Valine + Xanthine + 
+        Xanthosine + strata(set), data = BN_info_log, method = "exact", control = coxph.control(iter.max = 20000))
 
-summary(clogit(Group ~ sex + age + smoking + alcohol + ... + strata(set), data = BN_info_st))
+# coxph == clogit 
+summary(clogit(formula = Group ~ sex + age + smoking + 
+                 alcohol + beta_Hydroxybutyric_acid + Methyl_folate + Acetoacetic_acid + 
+                 L_Acetylcarnitine + Acetylcholine + Adenine + Adenosine + 
+                 Asymmetric_dimethylarginine + L_Alanine + Adenosine_monophosphate + 
+                 Hydroxy_L_proline + Trigonelline + L_Tryptophan + L_Tyrosine + 
+                 Uracil + Urea + Uric_acid + Uridine + L_Valine + Xanthine + 
+                 Xanthosine + strata(set), data = BN_info_log, control = coxph.control(iter.max = 20000)))
 
-summary(clogit(Group ~ smoking + ... + strata(set), data = BN_info_st))
-
-
-
-
-summary(glmer(Group ~  sex + age + smoking + ... + (1 | set), 
-              data = BN_info_st, family=binomial, nAGQ = 100))
-
-summary(glmer(Group ~ Oct.carnitine.Results + Glutamate.Results + sn.glycerol.3.phosphocholine.Results + 
-                        TMAO.Results + (1 | set), 
-                      data = BN_info, family=binomial, nAGQ = 100))
-
-
-clogistic(Group ~ smoking + ..., strata = set, data = BN_info_st, iter.max = 17)
+# iteration을 2만 번까지 늘려도 convergence가 안됨. 
 
 
 
