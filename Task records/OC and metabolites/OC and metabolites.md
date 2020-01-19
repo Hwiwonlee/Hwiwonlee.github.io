@@ -461,35 +461,42 @@ test_t %>%
 
 
 #### <TO DO> Function 만들기 ####
-compare_summary_stat <- function(data, Group_postion, position_sm){
-  data[, c(Group_postion, position_sm)] %>%
-    as_tibble() %>% 
-    group_by(Group) %>% 
+compare_summary_stat <- function(data, cadidated_name_lists, grouping_value_name){
+
+  grouping_value_name <- enquo(grouping_value_name)
+  
+  data %>% 
+    select(c(!!grouping_value_name, cadidated_name_lists)) -> function_data
+  
+  position <- c()
+  for(i in 1 : ncol(function_data)) {
+    for( j in 1 : length(cadidated_name_lists)) {
+      if(names(function_data)[i] == cadidated_name_lists[j]) {
+        position <- c(position, i)
+      }
+    }
+  }
+  
+  function_data %>% 
+    group_by(!!grouping_value_name) %>% 
     summarise_all(funs(mean, median, sd)) -> test
   
   test_t <- as_tibble(cbind(nms = names(test), t(test)))
-  test_t <- test_t[-Group_postion, ]
+  test_t <- test_t[-1, ]
   
-  index <- c(rep("Mean", length(position_sm)), rep("Median", length(position_sm)), rep("sd", length(position_sm)))
-
-  cbind(test_t, index) %>% 
-    mutate(nms = ifelse(grepl("_mean$", nms)|
-                          grepl("_median$", nms)|
-                          grepl("_sd$", nms), 
-                        gsub("_mean$|_median$|_sd$", "", nms), "ERROR")) -> test_t
+  names(test_t) <- c("Names", "C", "OC")
   
-  if(grepl("ERROR", test_t$nms) == TRUE) {
-    stop("In dropping summary stat tag process, occured error. So please check mutate step")
-  }
+  index <- c(rep("Mean", length(position)), rep("Median", length(position)), rep("sd", length(position)))
+  
+  test_t <- cbind(test_t, index)
+  test_t$Names <- gsub("_mean$", "", test_t$Names)
+  test_t$Names <- gsub("_median$", "", test_t$Names)
+  test_t$Names <- gsub("_sd$", "", test_t$Names)
   
   return(test_t)
 }
 
-test_function <- compare_summary_stat(BN_info[, -c(1,3:7)], 1, position_sm)
-test_function
-
-## Plus, Compare_summary_stat function의 argument 중 dataset의 group column을 따로 줄 수는 없을까? 
-## group_by(Group)이 아니라 Group를 argument로 commit 할 수 있을까? 
+compare_summary_stat(data_BN_ready, org_metabolites_nanme, Group)
 
 
 test_t %>% 
