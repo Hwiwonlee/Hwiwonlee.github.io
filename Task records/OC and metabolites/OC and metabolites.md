@@ -146,6 +146,11 @@ data_BN %>%
   mutate(age = as.numeric(cut_number(.$age, 3)))%>% 
   mutate(Group = ifelse(Group == "OC", 1, 0)) -> BN_info
   
+  # metabolites 이름 및 개수 체크  
+  metabolites_name[-which(metabolites_name == "NA")] == colnames(BN_info)[8:88]
+
+  
+  
   
   ## change type of some variables to FACTOR ##
   mutate(Group = as.factor(.$Group)) %>% 
