@@ -308,14 +308,17 @@ clogit(case ~ tocc + tocc:education + strata(id), logan2)
 
 #### ####
 
-base_var = colnames(BN_info_st)[3:6]
-all_metabolites = colnames(BN_info_st)[8:98]
+base_var = colnames(BN_info_log)[3:6]
+all_metabolites = colnames(BN_info_log)[8:88]
 
-formula = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
-                           paste(cm, collapse = " + "), "+ strata(set)"))
+formula_special = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
+                           paste(Change_names(special_metabo), collapse = " + "), "+ strata(set)"))
 
-formula = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
+formula_all = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
                            paste(all_metabolites, collapse = " + "), "+ strata(set)"))
+
+formula_candi = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
+                           paste(Change_names(candidate_metabo), collapse = " + "), "+ strata(set)"))
 
 
 
@@ -343,7 +346,70 @@ summary(clogit(formula = Group ~ sex + age + smoking +
 
 # iteration을 2만 번까지 늘려도 convergence가 안됨. 
 
+summary(clogit(formula = formula_special, data = BN_info_log))
+summary(clogit(formula = formula_candi, data = BN_info_log, control = coxph.control(iter.max = 20000, T)))
+summary(clogit(formula = formula_all, data = BN_info_log, control = coxph.control(iter.max = 20000, T)))
 
+
+#### Univariate conditional logistic regression ####
+
+UCLR <- function(data, target_position) {
+  
+  result <- list(NULL, NULL)
+  summary_UCLR <- c()
+  
+  
+  list <- names(data[-target_position])
+  
+  for (i in 1 : length(list)){
+    formula <- as.formula(paste("Group ~", list[i], "+ strata(set)"))
+    result_ith_UCLR <- round(summary(clogit(formula = formula, data = data))$coefficients, 4)
+    summary_UCLR <- rbind(summary_UCLR, result_ith_UCLR)
+  }
+  
+  summary_UCLR <- as.data.frame(summary_UCLR)
+  
+  #### <TO DO> rename으로바꿔보기 ####
+  colnames(summary_UCLR)[5] <- "p_value"
+  
+  summary_UCLR %>% 
+    tibble::rownames_to_column(., "Name") %>% 
+    dplyr::arrange(p_value) %>% 
+    dplyr::filter(p_value <= 0.05) -> result[[1]]
+  
+  
+  summary_UCLR %>% 
+    tibble::rownames_to_column(., "Name") %>% 
+    dplyr::arrange(p_value) -> result[[2]]
+    
+  return(result)
+}
+
+#### ####
+
+raw_result <- UCLR(BN_info_log, c(1,2,7))
+
+
+raw_result[[1]]
+
+
+
+
+
+colnames(raw_result)[5] <- "p value"
+
+subset(round(raw_result , 3), select = colnames(raw_result), subset = ("Pr(>|z|)" < 0.05))
+
+# A == B
+sum(raw_result[which(raw_result[, 5] <= 0.05), ][, 5] <= 0.05) # A
+length(raw_result[which(raw_result[, 5] <= 0.05), ][, 5]) # B
+
+
+sort(round(raw_result[which(raw_result[, 5] <= 0.05), ], 3))
+round(raw_result[which(raw_result[, 5] <= 0.05), ], 3)
+
+round(raw_result[which(raw_result[, 5] <= 0.05), ], 3) %>% 
+  write.xlsx("UCLR.xlsx")
 
 #### <PROBLEM> an id statement is required for multi-state models ####
 pro1_1 <- set[19:21] # 7번째 match
@@ -419,11 +485,11 @@ test_t %>%
   write.xlsx("table.xlsx")
 
 
-candidate_metabo <- c("3-Hydroxybutyric acid ", "Acetylcholine", "L-Alanine", "L-Arginine", "L-Aspartic acid","L-Asparagine",
+candidate_metabo <- c("beta-Hydroxybutyric acid ", "Acetylcholine", "L-Alanine", "L-Arginine", "L-Aspartic acid","L-Asparagine",
                       "L-Carnitine", "Choline" ,"Creatinine", "Dimethylglycine", "Gamma-Aminobutyric acid","Betaine",
                       "L-Glutamine", "Glycine", "L-Isoleucine", "L-Kynurenine", "L-Leucine", "L-Lysine", "L-Methionine", 
                       "Nicotinic acid", "L-Phenylalanine", "L-Proline", "Pyridoxamine", "Pyridoxine", "L-Serine", 
-                      "Taurine", "L-Threonine", "4-Hydroxyproline " , "Urea", "L-Valine",
+                      "Taurine", "L-Threonine", "Hydroxy_L_proline " , "Urea", "L-Valine",
                       "L-Acetylcarnitine", "Decanoylcarnitine", "L-Glutamic acid", "Hexanoylcarnitine", 
                        "Isovalerylcarnitine ", "L-Octanoylcarnitine", "Glycerophosphocholine", "Trimethylamine N-oxide")
 
