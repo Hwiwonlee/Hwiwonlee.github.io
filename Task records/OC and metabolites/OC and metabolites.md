@@ -56,8 +56,8 @@ metabolites_list <- read.xlsx("...name_map.xlsx", sheetIndex = 1)
 
 # 공백 제거 
 metabolites_name <- gsub(" $", "", metabolites_list$Match)
-length(metabolites_list$Match[-which(metabolites_list$Match == "NA")]) # 81개 
-
+length(metabolites_name) # 91개  
+length(metabolites_name[-which(metabolites_list$Match == "NA")]) # 81개
 #### ####
 
 #### <TO do> Oral cancer & metabolites는 1:2 matching이니까 set value를 하나 만들자. ####
@@ -155,7 +155,7 @@ data_BN %>%
   mutate(Group = ifelse(Group == "OC", 1, 0)) -> data_BN_ready
   
   # metabolites 이름 및 개수 체크  
-  metabolites_name[-which(metabolites_name == "NA")] == colnames(BN_info)[8:88]
+  metabolites_name[-which(metabolites_name == "NA")] == colnames(data_BN_ready)[15:95]
   org_metabolites_nanme <- metabolites_name[-which(metabolites_name == "NA")] 
   
   
@@ -613,6 +613,19 @@ matching_set_num <- function(data, Group_var_position, case_interval, control_in
 #### <TO DO> Fuctnion 만들기 끝 #### 
 matching_set_num(data_BN[1:546, ], 3, 3, 1)[, 1]
 matching_set_num(data_BN[1:546, ], 3, 3, 1)[, 2]
+
+#### <TO DO> metabolites 이름 바꿔주는 function 만들기 ####
+Change_names <- function(list){
+  list <- gsub("^ | $", "", list)
+  list <- gsub(" ", "_", list)
+  list <- gsub("-", "_", list)
+  
+  return(list)
+}
+
+Change_names(special_metabo)
+
+#### <DONE, TO DO> metabolites 이름 바꿔주는 function 만들기 ####
 
 library(MetaboAnalystR)
 
