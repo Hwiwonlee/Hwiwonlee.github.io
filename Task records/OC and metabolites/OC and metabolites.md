@@ -387,29 +387,183 @@ UCLR <- function(data, target_position) {
 
 #### ####
 
-raw_result <- UCLR(BN_info_log, c(1,2,7))
+raw_result_unscale <- UCLR(BN_info, c(1,2,7))
+
+#### Write xlsx ####
+raw_result_unscale[[1]] %>% 
+  write.xlsx("UCLR_sig_unscale.xlsx")
+
+raw_result_unscale[[2]] %>% 
+  write.xlsx("UCLR_all_unscale.xlsx")
+
+raw_result_unscale[[2]][filtering, ] %>% 
+  write.xlsx("UCLR_filtering_unscale.xlsx")
+
+# 이렇게 여러 번 할 게 아니라 각각 index를 만들어서 excel로 편하게 볼 수 있게 하는 게 좋겠는데 
+
+#### write xlsx ####
+
+raw_result_unscale[[2]][filtering, ]
+
+BN_info$L_Acetylcarnitine
 
 
-raw_result[[1]]
+
+
+filtering = c()
+
+for(i in 1:length(raw_result_unscale[[2]][1][, 1])){
+  for(j in 1:length(Change_names(candidate_metabo))){
+    if (Change_names(candidate_metabo)[j] == raw_result_unscale[[2]][1][, 1][i]) {
+      filtering <- c(filtering, i)
+      
+    }
+  }
+  
+}
+
+raw_result[[2]][filtering, ]
+
+#### (Be in Use) <PROBLEM< scailing을 해야하나? 해야하면 어떤 scailing을 해야 하나? ####
+
+Drawing_hist_each_var <- function(data, target_var_list){
+  # 1. data를 받고
+  # 2. column에 따라 histogram을 그리고
+  #    - 전체적인 개형을 판단하기 위함이므로 여러 개를 한 화면에 그려도 될 것 같음
+  #    - 색 등으로 grouping을 해볼 수도 있겠다. 
+  # 3. 저장한다.
+  
+  sub_data <- data[target_var_list]
+  
+  for( i in 1:ncol(sub_data)){
+    ggplot
+  }
+  
+}
+
+# https://stackoverflow.com/questions/13035834/plot-every-column-in-a-data-frame-as-a-histogram-on-one-page-using-ggplot # 
+library(reshape2)
+library(ggplot2)
+
+sub_data <- melt(BN_info[, -c(1:7)])
+
+cut_point_col <- round(length(unique(sub_data$variable)) / 2)
+
+cut_point <- (cut_point_col * nrow(BN_info[, -c(1:7)]))
+sub_data[cut_point+1, ]
+
+
+
+
+ggplot(sub_data[1:cut_point, ], aes(x = value)) + 
+  facet_wrap( ~ variable, scales = "free_x") + 
+  geom_histogram()
+
+ggplot(sub_data[cut_point+1 : nrow(sub_data), ], aes(x = value)) + 
+  facet_wrap( ~ variable, scales = "free_x") + 
+  geom_histogram()
+
+
+
+proto_roc_curve_HW <- function(roc.result){
+  ## pROC::roc의 결과를 이용해 ROC curve를 AUC에 근거한 "group"으로 나눠 그려주는 함수 ##
+  ## Function that draws ROC curve seperating with group based on AUC ##
+  
+  # 1. Generate result space 
+  plots <- list()
+  rs_1 <- as.tbl(as.data.frame(matrix(0, nrow = length(roc.result[[1]]$sensitivities), ncol = 5)))
+  rs_2 <- as.tbl(as.data.frame(matrix(0, nrow = 0, ncol = 5)))
+  
+  
+  # 2. Generate tbl with storing values 
+  for(i in 1:length(roc.result)){
+    rs_1[, 1] <- names(roc.result)[i] # Variable name 
+    rs_1[, 2] <- 1-roc.result[[i]]$specificities # 1-specificy
+    rs_1[, 3] <- roc.result[[i]]$sensitivities # sencsitivity
+    rs_1[, 4] <- as.numeric(roc.result[[i]]$auc) # AUC 
+    
+    # Grouping based on AUC
+    rs_1[, 5] <- if(rs_1[, 4] < 0.3){
+      "less than 0.3"
+    } else if(rs_1[, 4] < 0.5) {
+      "less than 0.5"
+    } else if(rs_1[, 4] < 0.6) {
+      "less than 0.6"
+    } else if(rs_1[, 4] < 0.7){
+      "less than 0.7"
+    } else {
+      "more than 0.7"
+    }
+    
+    # Store row-wise dataset 
+    rs_2 <- rbind(rs_2, rs_1)
+    
+  }
+  
+  # Renaming 
+  rs_2 %>% 
+    rename(Var = V1, 
+           Spec = V2, 
+           Sens = V3,
+           AUC = V4, 
+           Group = V5) -> rs_2
+  
+  
+  
+  # 3. Plotting one space with using whole variables and each group's variables 
+  plots[[1]] <- ggplot(rs_2, aes(x=Spec, y=Sens, alpha = Group)) + 
+    geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+    geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") 
+  
+  
+  for(j in 1:length(unique(rs_2$Group))){
+    plots[[j+1]] <- ggplot(rs_2 %>% 
+                             dplyr::filter(Group == unique(Group)[j]),
+                           aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+      geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+      geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+      scale_color_brewer(palette = "RdYlBu")
+  }
+  
+  # t2 <- ggplot(rs_2 %>% 
+  #                dplyr::filter(Group == "less than 0.6"),
+  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  #   scale_color_brewer(palette = "RdYlBu")
+  # 
+  # t3 <- ggplot(rs_2 %>% 
+  #                dplyr::filter(Group == "less than 0.7"),
+  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  #   scale_color_brewer(palette = "RdYlBu")
+  # 
+  # t4 <- ggplot(rs_2 %>% 
+  #                dplyr::filter(Group == "more than 0.7"),
+  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
+  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
+  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
+  #   scale_color_brewer(palette = "RdYlBu")
+  
+  
+  # grid.arrange를 이용한 공간분할 
+  result <- grid.arrange(
+    grobs = plots,
+    layout_matrix = rbind(rep(1, length(unique(rs_2$Group))),
+                          seq(2, length(unique(rs_2$Group))+1))
+  )
+  
+  return(result)
+}
+
+#### PROBLEM scailing을 해야하나? 해야하면 어떤 scailing을 해야 하나? ####
 
 
 
 
 
-colnames(raw_result)[5] <- "p value"
 
-subset(round(raw_result , 3), select = colnames(raw_result), subset = ("Pr(>|z|)" < 0.05))
-
-# A == B
-sum(raw_result[which(raw_result[, 5] <= 0.05), ][, 5] <= 0.05) # A
-length(raw_result[which(raw_result[, 5] <= 0.05), ][, 5]) # B
-
-
-sort(round(raw_result[which(raw_result[, 5] <= 0.05), ], 3))
-round(raw_result[which(raw_result[, 5] <= 0.05), ], 3)
-
-round(raw_result[which(raw_result[, 5] <= 0.05), ], 3) %>% 
-  write.xlsx("UCLR.xlsx")
 
 #### <PROBLEM> an id statement is required for multi-state models ####
 pro1_1 <- set[19:21] # 7번째 match
