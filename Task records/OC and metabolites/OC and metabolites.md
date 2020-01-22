@@ -426,22 +426,6 @@ for(i in 1:length(raw_result_unscale[[2]][1][, 1])){
 raw_result[[2]][filtering, ]
 
 #### (Be in Use) <PROBLEM< scailing을 해야하나? 해야하면 어떤 scailing을 해야 하나? ####
-
-Drawing_hist_each_var <- function(data, target_var_list){
-  # 1. data를 받고
-  # 2. column에 따라 histogram을 그리고
-  #    - 전체적인 개형을 판단하기 위함이므로 여러 개를 한 화면에 그려도 될 것 같음
-  #    - 색 등으로 grouping을 해볼 수도 있겠다. 
-  # 3. 저장한다.
-  
-  sub_data <- data[target_var_list]
-  
-  for( i in 1:ncol(sub_data)){
-    ggplot
-  }
-  
-}
-
 library(reshape2)
 library(ggplot2)
 
