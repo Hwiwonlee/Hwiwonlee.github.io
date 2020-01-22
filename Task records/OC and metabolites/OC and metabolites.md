@@ -465,97 +465,55 @@ ggplot(sub_data[cut_point+1 : nrow(sub_data), ], aes(x = value)) +
 
 
 
-proto_roc_curve_HW <- function(roc.result){
-  ## pROC::roc의 결과를 이용해 ROC curve를 AUC에 근거한 "group"으로 나눠 그려주는 함수 ##
-  ## Function that draws ROC curve seperating with group based on AUC ##
+explore_hist <- function(data, divived_num, folder_name, file_name, width, height){
   
-  # 1. Generate result space 
-  plots <- list()
-  rs_1 <- as.tbl(as.data.frame(matrix(0, nrow = length(roc.result[[1]]$sensitivities), ncol = 5)))
-  rs_2 <- as.tbl(as.data.frame(matrix(0, nrow = 0, ncol = 5)))
+  sub_data <- melt(data)
+  cut_point_col <- round(length(unique(sub_data$variable)) / divived_num)  
+  cut_point <- (cut_point_col * nrow(data))
   
-  
-  # 2. Generate tbl with storing values 
-  for(i in 1:length(roc.result)){
-    rs_1[, 1] <- names(roc.result)[i] # Variable name 
-    rs_1[, 2] <- 1-roc.result[[i]]$specificities # 1-specificy
-    rs_1[, 3] <- roc.result[[i]]$sensitivities # sencsitivity
-    rs_1[, 4] <- as.numeric(roc.result[[i]]$auc) # AUC 
-    
-    # Grouping based on AUC
-    rs_1[, 5] <- if(rs_1[, 4] < 0.3){
-      "less than 0.3"
-    } else if(rs_1[, 4] < 0.5) {
-      "less than 0.5"
-    } else if(rs_1[, 4] < 0.6) {
-      "less than 0.6"
-    } else if(rs_1[, 4] < 0.7){
-      "less than 0.7"
+  for(i in 1:divived_num){
+    if(i == 1){
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      print(ggplot(sub_data[1:cut_point, ], aes(x = value)) + 
+        facet_wrap( ~ variable, scales = "free_x") + 
+        geom_histogram())
+      
+      dev.off()    
+      
+      
+    } else if(i != 1 | i != divived_num) {
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : (cut_point*(divived_num+1)), ], aes(x = value)) + 
+        facet_wrap( ~ variable, scales = "free_x") + 
+        geom_histogram())
+      
+      dev.off()    
+      
     } else {
-      "more than 0.7"
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      
+      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : nrow(sub_data), ], aes(x = value)) + 
+        facet_wrap( ~ variable, scales = "free_x") + 
+        geom_histogram())
+      
+      dev.off()    
     }
-    
-    # Store row-wise dataset 
-    rs_2 <- rbind(rs_2, rs_1)
-    
+      
   }
-  
-  # Renaming 
-  rs_2 %>% 
-    rename(Var = V1, 
-           Spec = V2, 
-           Sens = V3,
-           AUC = V4, 
-           Group = V5) -> rs_2
-  
-  
-  
-  # 3. Plotting one space with using whole variables and each group's variables 
-  plots[[1]] <- ggplot(rs_2, aes(x=Spec, y=Sens, alpha = Group)) + 
-    geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
-    geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") 
-  
-  
-  for(j in 1:length(unique(rs_2$Group))){
-    plots[[j+1]] <- ggplot(rs_2 %>% 
-                             dplyr::filter(Group == unique(Group)[j]),
-                           aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
-      geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
-      geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
-      scale_color_brewer(palette = "RdYlBu")
-  }
-  
-  # t2 <- ggplot(rs_2 %>% 
-  #                dplyr::filter(Group == "less than 0.6"),
-  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
-  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
-  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
-  #   scale_color_brewer(palette = "RdYlBu")
-  # 
-  # t3 <- ggplot(rs_2 %>% 
-  #                dplyr::filter(Group == "less than 0.7"),
-  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
-  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
-  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
-  #   scale_color_brewer(palette = "RdYlBu")
-  # 
-  # t4 <- ggplot(rs_2 %>% 
-  #                dplyr::filter(Group == "more than 0.7"),
-  #              aes(x=Spec, y=Sens, col = Var, order=AUC)) + 
-  #   geom_path() + theme_minimal() + ggtitle("ROC curves of Positive polar metabolites") + 
-  #   geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color="red", linetype="dashed") +
-  #   scale_color_brewer(palette = "RdYlBu")
-  
-  
-  # grid.arrange를 이용한 공간분할 
-  result <- grid.arrange(
-    grobs = plots,
-    layout_matrix = rbind(rep(1, length(unique(rs_2$Group))),
-                          seq(2, length(unique(rs_2$Group))+1))
-  )
-  
-  return(result)
 }
+
+explore_hist(BN_info[, -c(1:7)], 2, "...", "histogram")
+explore_hist(BN_info_log[, -c(1:7)], 2, "...", "histogram_log")
+explore_hist(BN_info_st[, -c(1:7)], 2, "...", "histogram_st")
 
 #### PROBLEM scailing을 해야하나? 해야하면 어떤 scailing을 해야 하나? ####
 
