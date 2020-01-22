@@ -1,6 +1,6 @@
 LOG
 
-[Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)
+[Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
 [Plot every column in a data frame as a histogram on one page using ggplot](https://stackoverflow.com/questions/13035834/plot-every-column-in-a-data-frame-as-a-histogram-on-one-page-using-ggplot)
 
 
@@ -260,6 +260,10 @@ BN_info_st <- cbind(BN_info[, 1:7], scale((BN_info[, 8:88])))
 BN_info_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_st[, -(1:7)])
 BN_info_st %>% as_tibble()
 
+# Use rescaling [0-1], https://gist.github.com/Nicktz/b06e7afcb52db888a10ee28da3d2f589
+BN_info %>% 
+  mutate_each_(funs(rescale), vars = names(.)[-(1:7)]) -> BN_info_re
+
 
 #### <TO DO> clogit 사용해보기 ####
 library(survival)
@@ -389,6 +393,26 @@ UCLR <- function(data, target_position) {
 #### ####
 
 raw_result_unscale <- UCLR(BN_info, c(1,2,7))
+raw_result_log <- UCLR(BN_info_log, c(1,2,7))
+raw_result_st <- UCLR(BN_info_st, c(1,2,7))
+
+raw_result_st[[1]]
+raw_result_log[[1]]
+raw_result_unscale[[1]]
+
+
+
+
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info_log)
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info)
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info_st)
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info_re)
+
+summary(BN_info$L_Glutamine)
+
+boxplot(BN_info$L_Glutamine)
+boxplot(BN_info_re$L_Glutamine)
+
 
 #### Write xlsx ####
 raw_result_unscale[[1]] %>% 
@@ -424,6 +448,7 @@ for(i in 1:length(raw_result_unscale[[2]][1][, 1])){
 }
 
 raw_result[[2]][filtering, ]
+#### #####
 
 #### (Be in Use) <PROBLEM< scailing을 해야하나? 해야하면 어떤 scailing을 해야 하나? ####
 library(reshape2)
