@@ -263,6 +263,13 @@ BN_info_st %>% as_tibble()
 # Use rescaling [0-1], https://gist.github.com/Nicktz/b06e7afcb52db888a10ee28da3d2f589
 BN_info %>% 
   mutate_each_(funs(rescale), vars = names(.)[-(1:7)]) -> BN_info_re
+  
+# Use log + Standardization
+BN_info_log_st <- cbind(BN_info[, 1:7], log(BN_info[, 8:88]))
+BN_info_log_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_log_st[, -(1:7)])
+BN_info_log_st[, -(1:7)] <- scale(BN_info_log_st[, -(1:7)], T, T)
+
+BN_info_log_st %>% as_tibble()
 
 
 #### <TO DO> clogit 사용해보기 ####
@@ -401,17 +408,23 @@ raw_result_log[[1]]
 raw_result_unscale[[1]]
 
 
+#### <TO DO> 설명할 수 있는 이유 찾기 ####
+# scaling을 하지 않고 raw data로 univariate conditional logistic을 시행하면 차이 없음으로 나옴.
+# 어떤 scaling이라도 하기만 하면 엄청 큰 차이가 있다고 나옴.
+# 왜? scaline으로 결과가 바뀔 수 있는 건 알고 있지만 이렇게까지 바뀔 수 있나? 
 
-
-clogit(Group ~ L_Glutamine + strata(set), data = BN_info_log)
-clogit(Group ~ L_Glutamine + strata(set), data = BN_info)
-clogit(Group ~ L_Glutamine + strata(set), data = BN_info_st)
-clogit(Group ~ L_Glutamine + strata(set), data = BN_info_re)
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info) # 차이없음 
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info_log) # 차이 큼 
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info_st) # 차이 큼 
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info_re) # 차이 큼 
+clogit(Group ~ L_Glutamine + strata(set), data = BN_info_log_st) # 차이 큼 
 
 summary(BN_info$L_Glutamine)
 
 boxplot(BN_info$L_Glutamine)
 boxplot(BN_info_re$L_Glutamine)
+
+#### <TO DO> 설명할 수 있는 이유 찾기 ####
 
 
 #### Write xlsx ####
@@ -523,6 +536,8 @@ explore_hist <- function(data, divived_num, folder_name, file_name, width, heigh
 explore_hist(BN_info[, -c(1:7)], 2, "...", "histogram")
 explore_hist(BN_info_log[, -c(1:7)], 2, "...", "histogram_log")
 explore_hist(BN_info_st[, -c(1:7)], 2, "...", "histogram_st")
+explore_hist(BN_info_re[, -c(1:7)], 2, "C:/Users/75533/Working/R/graph_output/hist/", "histogram_re")
+explore_hist(BN_info_log_st[, -c(1:7)], 2, "C:/Users/75533/Working/R/graph_output/hist/", "histogram_log_st")
 
 #### PROBLEM scailing을 해야하나? 해야하면 어떤 scailing을 해야 하나? ####
 
