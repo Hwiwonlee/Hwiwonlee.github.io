@@ -1,0 +1,41 @@
+# options(papersize="a4")
+# options(editor="notepad")
+# options(pager="internal")
+# options(prompt="> ")
+
+# set the default help type
+# options(help_type="text")
+options(help_type="html")
+
+# General options
+
+# options(encoding = 'UTF-8') 
+
+options(continue="...")
+
+options(width = 100)
+
+options(stringsAsFactors=FALSE)
+
+options(max.print=100)
+
+setwd('C:/Users/75533/Working/R')
+
+.First <- function(){
+  library(xlsx)
+  library(tidyverse)
+  library(stringr)
+  library(comprehenr)
+  library(BiocManager)
+  library(gridExtra)
+  library(Epi)
+  library(pROC)
+  library(survival)
+  cat("\nWelcome at", date(), "\n") 
+
+}
+
+
+.Last <- function(){ 
+  cat("\nGoodbye at ", date(), "\n")
+}
