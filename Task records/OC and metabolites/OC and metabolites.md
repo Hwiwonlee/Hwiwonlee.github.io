@@ -59,10 +59,11 @@ metabolites_list <- read.xlsx("...name_map.xlsx", sheetIndex = 1)
 metabolites_name <- gsub(" $", "", metabolites_list$Match)
 length(metabolites_name) # 91개  
 length(metabolites_name[-which(metabolites_list$Match == "NA")]) # 81개
+
 #### ####
 
 #### <TO do> Oral cancer & metabolites는 1:2 matching이니까 set value를 하나 만들자. ####
-
+#### OLD ####
 case_interval = 3
 control_interval = 1
 
@@ -101,6 +102,162 @@ data_BN %>%
   mutate(set = set) %>%
   select(set, everything()) %>% 
   arrange(set) 
+#### OLD ####
+
+#### NEW ####
+# OC 기준, AGE와 SEX를 이용해 1:2 matching을 함. 
+# AGE의 matching 기준은 OC의 AGE +- 2 
+
+data_BN %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  merge(data_info, by = 'NO') %>% # Merge part 
+  as_tibble() %>%
+  select(NO, Group, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_BN
+
+# age merge 결과 체크 
+sum(data_BN$age != data_info$age) # 같음 
+
+#### age +-2의 match가 가능한 지 판단하자 ####
+data_BN %>% 
+  dplyr::filter(Group == "OC" & sex == 1) %>% 
+  arrange(age)
+
+data_BN %>% 
+  dplyr::filter(Group == "C" & sex == 1) %>% 
+  arrange(age)
+
+data_BN %>% 
+  dplyr::filter(Group == "OC" & sex == 2) %>% 
+  arrange(age)
+
+data_BN %>% 
+  dplyr::filter(Group == "C" & sex == 2) %>% 
+  arrange(age)
+# 아무리 봐도 +-2로 matching이 안되는데 
+
+# 시각화를 이용한 확인 
+data_BN %>% 
+  dplyr::filter(sex == 2) %>% 
+  ggplot(., aes(x = age, fill = Group)) +
+  geom_histogram(binwidth = 1)
+
+data_BN %>% 
+  dplyr::filter(sex == 1) %>% 
+  ggplot(., aes(x = age, fill = Group)) +
+  geom_histogram(binwidth = 1)
+# 역시나 +-2로 딱 떨어지는 matching이 안된다. 
+
+data_BN %>% 
+  dplyr::filter(sex == 1 & age < 35) %>% 
+  ggplot(., aes(x = age, fill = Group)) +
+  geom_histogram(binwidth = 1)
+
+#### age +-2로 딱 떨어지는 match는 불가능하다고 판단 ####
+
+#### 1차 시도, 쉽게 생각하는 matching 방법 ####
+# 동일 성별의 OC, C 그룹을 나이순으로 정렬하고 1:2매칭을 하면 되지 않을까? 
+
+# sex == 1의 경우
+
+data_BN %>% 
+  dplyr::filter(Group == "OC" & sex == 1) %>% 
+  arrange(age) %>% 
+  mutate(set = seq(1, nrow(.), 1)) %>% 
+  select(set, everything()) -> test1.1
+
+data_BN %>% 
+  dplyr::filter(Group == "C" & sex == 1) %>% 
+  arrange(age) %>% 
+  mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
+  select(set, everything()) -> test1.2
+
+data_BN %>% 
+  dplyr::filter(Group == "OC" & sex == 2) %>% 
+  arrange(age) %>% 
+  mutate(set = seq(1, nrow(.), 1)) %>% 
+  select(set, everything()) -> test2.1
+
+data_BN %>% 
+  dplyr::filter(Group == "C" & sex == 2) %>% 
+  arrange(age) %>% 
+  mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
+  select(set, everything()) -> test2.2
+
+test1.1 %>% 
+  rbind(test1.2) %>% 
+  arrange(set) %>% 
+  # select(set, age) %>% 
+  ggplot(., aes(x=set, y=age, colour = Group)) + 
+  geom_point()
+  
+test2.1 %>% 
+  rbind(test2.2) %>% 
+  arrange(set) %>% 
+  # select(set, age) %>% 
+  ggplot(., aes(x=set, y=age, colour = Group)) + 
+  geom_point()
+
+
+test2.1 %>% 
+  rbind(test2.2) %>% 
+  mutate(set = set + 121) %>% 
+  rbind(test1.1, test1.2) %>% 
+  arrange(set) -> data_BN_add_set
+
+data_BN_add_set %>% 
+  ggplot(., aes(x=set, y=age, colour = Group)) + 
+  geom_point()
+
+#### 1차 시도, 쉽게 생각하는 matching 방법 ####
+data_BN_add_set # 1차 시도 결과
+
+# 여기에서 handling까지 해보자. 
+data_BN_add_set %>% 
+  select(set, Group, NO, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_BN_add_set
+
+names(data_BN_add_set) <- c("set", "Group", "NO", "sex", "age", "smoking", "alcohol",
+                            "stage_raw", "stage", "Name", "Group_RN.x",
+                            "Batch", "order", metabolites_name, 
+                            "NCC_num", "Group_RN.y", "TB_num", "주장기", "box", "위치")
+
+data_BN_add_set <- data_BN_add_set[, -which(names(data_BN_add_set) == 'NA')]
+
+
+## 1a, 4a, 4b 발견 
+data_BN_add_set %>% 
+  mutate(stage = gsub("^4[a-z]", "4", stage)) %>% 
+  mutate(stage = gsub("^1[a-z]", "1", stage)) %>% 
+  
+  ## stage 수정 후 stage 별 n개 체크, 수정 완료 
+  # group_by(stage) %>% summarise(n = n())
+  mutate(stage = gsub("-", "0", stage)) %>% 
+  mutate(stage = replace_na(stage, "0")) %>% 
+  type_convert(cols(X3_hydroxybutyrate.Results = col_double())) %>% 
+  mutate(age = as.numeric(cut_number(.$age, 3)))%>% 
+  mutate(Group = ifelse(Group == "OC", 1, 0)) -> data_BN_add_set_ready
+
+data_BN_add_set_ready %>% 
+  
+  # 쓸모없는 변수 제거 
+  select(-c(stage_raw, NO, Name, Group_RN.x,
+            Batch, order, NCC_num, Group_RN.y, TB_num, 주장기, box, 위치)) %>% 
+  
+  # formula를 위해 X value names에 공백 제거 
+  rename_at(vars(matches(" ")), funs(str_replace(., " ", "_"))) %>% 
+  # formula를 위해 X value names에 dash 제거 
+  rename_at(vars(matches("-")), funs(str_replace_all(., "-", "_"))) %>% 
+  # 숫자가 포함되어있는 metabolites를 HMDB를 참고, 이름 바꿔줌
+  rename(beta_Hydroxybutyric_acid = '3_Hydroxybutyric_acid', 
+         Methyl_folate = '5_Methyltetrahydrofolic_acid',
+         Hydroxy_L_proline = '4_Hydroxyproline') -> BN_info_add_set
+
+
+
+
+summary(clogit(formula = formula_all, data = BN_info_add_set, method = "efron",
+               control = coxph.control(iter.max = 1000, T)))
+
+#### NEW ####
 
 #### ####
 
