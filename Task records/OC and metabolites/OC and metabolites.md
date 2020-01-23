@@ -209,7 +209,7 @@ data_BN_add_set %>%
   geom_point()
 
 #### 1차 시도, 쉽게 생각하는 matching 방법 ####
-data_BN_add_set # 1차 시도 결과
+data_BN_add_set # 1차 시도 결과 
 
 # 여기에서 handling까지 해보자. 
 data_BN_add_set %>% 
@@ -252,10 +252,120 @@ data_BN_add_set_ready %>%
          Hydroxy_L_proline = '4_Hydroxyproline') -> BN_info_add_set
 
 
+# Use logarithm
+BN_info_add_set_log <- cbind(BN_info_add_set[, 1:7], log(BN_info_add_set[, 8:88]))
+BN_info_add_set_log[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_add_set_log[, -(1:7)])
+
+# Use Standardization
+BN_info_add_set_st <- cbind(BN_info_add_set[, 1:7], scale((BN_info_add_set[, 8:88]), T, T))
+BN_info_add_set_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_add_set_st[, -(1:7)])
+
+# Use rescaling [0-1], https://gist.github.com/Nicktz/b06e7afcb52db888a10ee28da3d2f589
+BN_info_add_set %>% 
+  mutate_each_(funs(rescale), vars = names(.)[-(1:7)]) -> BN_info_add_set_re
+
+# Use log + Standardization
+BN_info_add_set_log_st <- cbind(BN_info_add_set[, 1:7], log(BN_info_add_set[, 8:88]))
+BN_info_add_set_log_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_add_set_log_st[, -(1:7)])
+BN_info_add_set_log_st[, -(1:7)] <- scale(BN_info_add_set_log_st[, -(1:7)], T, T)
+
+# simple 
+raw_result_add_set <- UCLR(BN_info_add_set, c(1,2,7))
+raw_result_add_set[[1]]
+
+# multiple
+summary(clogit(formula = formula_special, data = BN_info_add_set,
+               control = coxph.control(iter.max = 10000)))
 
 
-summary(clogit(formula = formula_all, data = BN_info_add_set, method = "efron",
-               control = coxph.control(iter.max = 1000, T)))
+BN_info_add_set %>% 
+  mutate(set = as.factor(set),
+         Group = as.factor(Group),
+         sex = as.factor(sex),
+         smoking = as.factor(smoking),
+         alcohol = as.factor(alcohol),
+         age = as.factor(age)) -> BN_info_add_set
+
+
+clogistic(Group ~ age + smoking + alcohol + beta_Hydroxybutyric_acid + 
+            Methyl_folate + Acetoacetic_acid + L_Acetylcarnitine + Acetylcholine + 
+            Adenine + Adenosine + Asymmetric_dimethylarginine + L_Alanine + 
+            Adenosine_monophosphate + L_Arginine + Ascorbic_acid + L_Asparagine + 
+            L_Aspartic_acid + Betaine + Butyrylcarnitine + L_Carnitine + 
+            Choline + Citrulline + Creatine + Creatinine + L_Cystathionine + 
+            L_Cysteine + Decanoylcarnitine + Dimethylglycine + Fumaric_acid + 
+            Gamma_Aminobutyric_acid + L_Glutamic_acid + L_Glutamine + 
+            Oxidized_glutathione + Glycine + Glycochenodeoxycholic_acid + 
+            Glycocholic_acid + Guanine + Hexanoylcarnitine + Hippuric_acid + 
+            L_Histidine + Hypoxanthine + Inosine + Isovalerylcarnitine + 
+            L_Isoleucine + L_Kynurenine + Lactate + Dodecanoylcarnitine + 
+            L_Leucine + L_Lysine + L_Methionine + N_Acetyl_L_aspartic_acid + 
+            NAD + Niacinamide + Nicotinic_acid + Nicotinuric_acid + Norepinephrine + 
+            L_Octanoylcarnitine + L_Phenylalanine + Propionylcarnitine + 
+            L_Proline + Pyridoxamine + Pyridoxine + Pyroglutamic_acid + 
+            Riboflavin + S_Adenosylhomocysteine + S_Adenosylmethionine + 
+            L_Serine + Glycerophosphocholine + Succinic_acid + Taurine + 
+            L_Threonine + Thymine + Trimethylamine_N_oxide + Hydroxy_L_proline + 
+            Trigonelline + L_Tryptophan + L_Tyrosine + Uracil + Urea + 
+            Uric_acid + Uridine + L_Valine + Xanthine + Xanthosine, strata = set, 
+          BN_info_add_set, iter.max = 5000)
+
+
+
+explore_box <- function(data, divived_num, folder_name, file_name, width, height){
+  
+  sub_data <- melt(data)
+  cut_point_col <- round(length(unique(sub_data$variable)) / divived_num)  
+  cut_point <- (cut_point_col * nrow(data))
+  
+  for(i in 1:divived_num){
+    if(i == 1){
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      print(ggplot(sub_data[1:cut_point, ], aes(x = 1, y = value)) + 
+              facet_wrap( ~ variable, scales = "free_x") + 
+              geom_boxplot())
+      
+      dev.off()    
+      
+      
+    } else if(i != 1 | i != divived_num) {
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : (cut_point*(divived_num+1)), ], aes(x = 1, y = value)) + 
+              facet_wrap( ~ variable, scales = "free_x") + 
+              geom_boxplot())
+      
+      dev.off()    
+      
+    } else {
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      
+      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : nrow(sub_data), ], aes(x = 1, y = value)) + 
+              facet_wrap( ~ variable, scales = "free_x") + 
+              geom_boxplot())
+      
+      dev.off()    
+    }
+    
+  }
+}
+
+explore_box(BN_info_add_set[, -c(1:7)], 2, "...hist/", "histogram", 1500, 1000)
+
+
+ggplot(melt(BN_info_add_set_log[, -c(1:7)]), aes(x = variable, y = value)) + 
+  geom_boxplot() + theme_minimal()
+
+
+#### NEW ####
 
 #### NEW ####
 
