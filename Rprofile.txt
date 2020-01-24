@@ -31,6 +31,7 @@ setwd('C:/Users/75533/Working/R')
   library(Epi)
   library(pROC)
   library(survival)
+  library(scales)
   cat("\nWelcome at", date(), "\n") 
 
 }
