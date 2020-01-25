@@ -1164,8 +1164,8 @@ explore_hist <- function(data, divived_num, folder_name, file_name, width, heigh
 explore_hist(BN_info[, -c(1:7)], 2, "...", "histogram")
 explore_hist(BN_info_log[, -c(1:7)], 2, "...", "histogram_log")
 explore_hist(BN_info_st[, -c(1:7)], 2, "...", "histogram_st")
-explore_hist(BN_info_re[, -c(1:7)], 2, "C:/Users/75533/Working/R/graph_output/hist/", "histogram_re")
-explore_hist(BN_info_log_st[, -c(1:7)], 2, "C:/Users/75533/Working/R/graph_output/hist/", "histogram_log_st")
+explore_hist(BN_info_re[, -c(1:7)], 2, "...hist/", "histogram_re")
+explore_hist(BN_info_log_st[, -c(1:7)], 2, "...hist/", "histogram_log_st")
 
 #### PROBLEM scailing을 해야하나? 해야하면 어떤 scailing을 해야 하나? ####
 
