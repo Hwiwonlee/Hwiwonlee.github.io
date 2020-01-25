@@ -4,6 +4,17 @@ LOG
 [Plot every column in a data frame as a histogram on one page using ggplot](https://stackoverflow.com/questions/13035834/plot-every-column-in-a-data-frame-as-a-histogram-on-one-page-using-ggplot)
 
 
+## 1. preprocessing
+
+## 2. EDA by visualization
+### 2.1 Check each variable's distribution using Histogram and boxplot
+
+## 3. Analysis
+### 3.1 Conditional Logistic Regression
+#### 3.1.1 Simple 
+#### 3.1.2 Multiple 
+
+
 ```r
 data_BN <- read.xlsx("...BN_mastersheet.xlsx", sheetIndex = 1, stringsAsFactors=FALSE)
 data_MN <- read.xlsx("...MN_mastersheet.xlsx", sheetIndex = 1, stringsAsFactors=FALSE)
