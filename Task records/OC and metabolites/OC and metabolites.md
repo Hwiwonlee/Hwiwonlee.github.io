@@ -1,7 +1,8 @@
 LOG
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
-[Plot every column in a data frame as a histogram on one page using ggplot](https://stackoverflow.com/questions/13035834/plot-every-column-in-a-data-frame-as-a-histogram-on-one-page-using-ggplot)
+[Plot every column in a data frame as a histogram on one page using ggplot](https://stackoverflow.com/questions/13035834/plot-every-column-in-a-data-frame-as-a-histogram-on-one-page-using-ggplot)  
+[Outlier detection and treatment with R](https://www.r-bloggers.com/outlier-detection-and-treatment-with-r/)
 
 
 ## 1. preprocessing
