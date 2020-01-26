@@ -700,29 +700,86 @@ ggplot(num_exoutlier_index, aes(x = index, y = num_exoutlier)) +
 summary(num_exoutlier_index) # median : 4, mean : 9.7
 num_exoutlier[which(num_exoutlier > 10)]
 nrow(num_exoutlier_index[which(num_exoutlier > 10), ])
+
+# 3. Group별로 분포보기 
+## 3.1 densitiy plot 
+BN_info_add_set %>% 
+  select(Group, beta_Hydroxybutyric_acid) %>% 
+  ggplot(., aes(beta_Hydroxybutyric_acid, fill = as.factor(Group), colour = as.factor(Group))) +
+  geom_density(alpha = 0.1)
+
+## 3.2 box plot 
+BN_info_add_set %>% 
+  select(Group, Guanine) %>% 
+  ggplot(., aes(y=Guanine, x = as.factor(Group), fill = as.factor(Group), colour = as.factor(Group))) +
 #### Find and count outliers ####
 
 
 
 #### outlier가 일정 기준 이상 존재하는 variable을 제외하고 돌려보자. ####
-# 1. extreme outlier를 제외한 full model
-no_exoutlier <- names(BN_info_add_set)[-(which(names(BN_info_add_set) %in% num_exoutlier_index[which(num_exoutlier > 10), ]$rowname))]
+# 1. outlier를 제외한 full model
 no_outlier <- names(BN_info_add_set)[-(which(names(BN_info_add_set) %in% num_outlier_index[which(num_outlier > 10), ]$rowname))]
-
-
-
 BN_info_add_set[, no_outlier]
 
-summary(clogit(formula = as.formula(paste("Group ~", paste(names(BN_info_add_set[, no_outlier][, -c(1,2,7)]), collapse = " + "), "+ strata(set)")),
-               data = BN_info_add_set_log[, no_outlier],
+summary(clogit(formula = as.formula(paste("Group ~", paste(names(BN_info_add_set[, no_outlier][, -c(1,2,3,4,5,6,7)]), collapse = " + "), "+ strata(set)")),
+               data = BN_info_add_set[, no_outlier],
                control = coxph.control(iter.max = 100)))
 
+summary(clogit(formula = Group ~ factor(smoking) + factor(alcohol) + 
+                 L_Acetylcarnitine + Acetylcholine + L_Alanine + Betaine + L_Carnitine + Creatine + 
+                 Creatinine + L_Kynurenine + L_Leucine + L_Methionine + L_Phenylalanine + 
+                 S_Adenosylhomocysteine + Urea + L_Valine + strata(set),
+               data = BN_info_add_set_st[, no_outlier],
+               control = coxph.control(iter.max = 100)))
+
+
+# 2. extreme outlier를 제외한 full model
+no_exoutlier <- names(BN_info_add_set)[-(which(names(BN_info_add_set) %in% num_exoutlier_index[which(num_exoutlier > 10), ]$rowname))]
 summary(clogit(formula = as.formula(paste("Group ~", paste(names(BN_info_add_set[, no_exoutlier][, -c(1,2,7)]), collapse = " + "), "+ strata(set)")),
                data = BN_info_add_set[, no_exoutlier],
                control = coxph.control(iter.max = 1000), method='breslow'))
 
+summary(clogit(formula = Group ~ sex + age + smoking + alcohol + Acetoacetic_acid + L_Acetylcarnitine + 
+                 Acetylcholine + L_Alanine + L_Arginine + L_Asparagine + L_Aspartic_acid + 
+                 Betaine + L_Carnitine + Choline + Citrulline + Creatine + 
+                 Creatinine + L_Cysteine + Decanoylcarnitine + Dimethylglycine + 
+                 Gamma_Aminobutyric_acid + L_Glutamine + Glycine + Hexanoylcarnitine + 
+                 L_Histidine + Isovalerylcarnitine + L_Isoleucine + L_Kynurenine + 
+                 Lactate + Dodecanoylcarnitine + L_Leucine + L_Lysine + L_Methionine + 
+                 NAD + Niacinamide + Nicotinic_acid + Norepinephrine + L_Octanoylcarnitine + 
+                 L_Phenylalanine + Propionylcarnitine + L_Proline + Pyridoxamine + 
+                 Pyridoxine + Pyroglutamic_acid + S_Adenosylhomocysteine + 
+                 S_Adenosylmethionine + L_Serine + Succinic_acid + L_Threonine + 
+                 Thymine + L_Tryptophan + L_Tyrosine + Uracil + Urea + Uric_acid + 
+                 Uridine + L_Valine + strata(set),
+               data = BN_info_add_set[, no_exoutlier],
+               control = coxph.control(iter.max = 3000), method='breslow'))
+
+# error "Loglik converged before variables ; coefficient may be infinite. 
+# Q. finite인 var은 뭘까? finite인 var은 계속 유효할까?
+# coef_inf의심 variables 
+coef_inf <- names(BN_info_add_set[, no_exoutlier][, -c(1,2,7)])[c(2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,40,41,43,47,57)]
+
+
+no_outlier %in% coef_inf
+no_outlier %in% names(BN_info_add_set[, no_exoutlier][, -c(1,2,7)])[-which(names(BN_info_add_set[, no_exoutlier][, -c(1,2,7)]) %in% coef_inf)]
+names(BN_info_add_set[, no_exoutlier][, -c(1,2,7)])[-which(names(BN_info_add_set[, no_exoutlier][, -c(1,2,7)]) %in% coef_inf)]
+
+summary(clogit(formula = Group ~ sex + L_Octanoylcarnitine + L_Phenylalanine +
+                 Pyridoxamine + Pyroglutamic_acid + S_Adenosylhomocysteine + 
+                 S_Adenosylmethionine + Succinic_acid + L_Threonine + 
+                 Thymine + L_Tryptophan + L_Tyrosine + Uracil + Urea + 
+                 Uric_acid + Uridine + strata(set),
+               data = BN_info_add_set[, no_exoutlier],
+               control = coxph.control(iter.max = 3000), method='exact'))
+
 
 #### outlier가 일정 기준 이상 존재하는 variable을 제외하고 돌려보자. ####
+
+#### test 1 : extreme outlier들을 95th, 5th으로 바꾸면? ####
+
+
+#### test 1 : extreme outlier들을 95th, 5th으로 바꾸면? ####
 
 
 
