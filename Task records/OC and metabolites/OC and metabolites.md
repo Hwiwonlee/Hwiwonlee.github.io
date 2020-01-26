@@ -17,26 +17,32 @@ LOG
 
 
 ```r
-data_BN <- read.xlsx("...BN_mastersheet.xlsx", sheetIndex = 1, stringsAsFactors=FALSE)
-data_MN <- read.xlsx("...MN_mastersheet.xlsx", sheetIndex = 1, stringsAsFactors=FALSE)
+dir = dir
+
+library(xlsx)
+data_BN <- read.xlsx(paste(dir, "BN_sheet.xlsx", sep= "/"), sheetIndex = 1, stringsAsFactors=FALSE)
+data_MN <- read.xlsx(paste(dir, "MN_sheet.xlsx", sep= "/"), sheetIndex = 1, stringsAsFactors=FALSE)
+data_raw <- read.xlsx(paste(dir, "RAW_sheet.xlsx", sep= "/"), sheetIndex = 1, stringsAsFactors=FALSE)
 
 
 colnames(data_BN)[1:6] <- c("Name", "NO", "Group", "Group_RN", "Batch", "Order")
 colnames(data_MN)[1:4] <- c("Name", "NO", "Group", "Group_RN")
+colnames(data_raw)[1:4] <- c("Name", "NO", "Group", "Group_RN")
 
 data_BN <- data_BN[-1, ]
 data_MN <- data_MN[-1, ]
+data_raw <- data_raw[-1, ]
+
 
 data_BN %>% 
   as_tibble() %>% 
-  type_convert(cols(NO = col_double())) %>% 
+  type_convert(cols(NO = col_double())) %>%
   
   # metabolites 결과에서 붙어나온 .Results를 삭제 
   rename_at(vars(matches(".Results$")), funs(str_replace(., ".Result", ""))) %>% 
   
   mutate(Group = replace(Group, str_detect(Group, "-131"), "OC")) %>% 
   mutate(Group = replace(Group, str_detect(Group, "-51"), "OC")) -> data_BN
-  # group_by(Group) %>% summarise(n = n())
 
 data_MN %>% 
   as_tibble() %>% 
@@ -48,13 +54,21 @@ data_MN %>%
   mutate(Group = replace(Group, str_detect(Group, "-131"), "OC")) %>% 
   mutate(Group = replace(Group, str_detect(Group, "-51"), "OC")) -> data_MN
 
-  # group_by(Group) %>% summarise(n = n())
+data_raw %>% 
+  as_tibble() %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  
+  # metabolites 결과에서 붙어나온 .Results를 삭제 
+  rename_at(vars(matches(".Results$")), funs(str_replace(., ".Result", ""))) %>% 
+  
+  mutate(Group = replace(Group, str_detect(Group, "-131"), "OC")) %>% 
+  mutate(Group = replace(Group, str_detect(Group, "-51"), "OC")) -> data_raw
 
 data_BN %>% 
   group_by(Group) %>%  summarise(n=n())
 
 
-data_info <- read.xlsx("...info_mastersheet.xlsx", header=FALSE, sheetIndex = 1, stringsAsFactors=FALSE)
+data_info <- read.xlsx(paste(dir, "info_sheet.xlsx", sep = "/"), header=FALSE, sheetIndex = 1, stringsAsFactors=FALSE)
 data_info <- data_info[-1, ]
 names(data_info) <- c("NCC_num", "Group_RN", "TB_num", "NO", "sex", "age", "smoking", "alcohol", "주장기", "stage_raw", "stage", "box", "위치")
 
@@ -65,12 +79,13 @@ data_info %>%
   group_by(smoking, alcohol) %>% 
   summarise(n = n())
 
-metabolites_list <- read.xlsx("...name_map.xlsx", sheetIndex = 1)
+metabolites_list <- read.xlsx(paste(dir, "name_map.xlsx", sep = "/"), sheetIndex = 1, stringsAsFactors=FALSE)
 
 # 공백 제거 
-metabolites_name <- gsub(" $", "", metabolites_list$Match)
+metabolites_name <- gsub(" $", "", metabolites_list$Match) 
 length(metabolites_name) # 91개  
 length(metabolites_name[-which(metabolites_list$Match == "NA")]) # 81개
+
 
 #### ####
 
@@ -126,269 +141,23 @@ data_BN %>%
   as_tibble() %>%
   select(NO, Group, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_BN
 
-# age merge 결과 체크 
-sum(data_BN$age != data_info$age) # 같음 
-
-#### age +-2의 match가 가능한 지 판단하자 ####
-data_BN %>% 
-  dplyr::filter(Group == "OC" & sex == 1) %>% 
-  arrange(age)
-
-data_BN %>% 
-  dplyr::filter(Group == "C" & sex == 1) %>% 
-  arrange(age)
-
-data_BN %>% 
-  dplyr::filter(Group == "OC" & sex == 2) %>% 
-  arrange(age)
-
-data_BN %>% 
-  dplyr::filter(Group == "C" & sex == 2) %>% 
-  arrange(age)
-# 아무리 봐도 +-2로 matching이 안되는데 
-
-# 시각화를 이용한 확인 
-data_BN %>% 
-  dplyr::filter(sex == 2) %>% 
-  ggplot(., aes(x = age, fill = Group)) +
-  geom_histogram(binwidth = 1)
-
-data_BN %>% 
-  dplyr::filter(sex == 1) %>% 
-  ggplot(., aes(x = age, fill = Group)) +
-  geom_histogram(binwidth = 1)
-# 역시나 +-2로 딱 떨어지는 matching이 안된다. 
-
-data_BN %>% 
-  dplyr::filter(sex == 1 & age < 35) %>% 
-  ggplot(., aes(x = age, fill = Group)) +
-  geom_histogram(binwidth = 1)
-
-#### age +-2로 딱 떨어지는 match는 불가능하다고 판단 ####
-
-#### 1차 시도, 쉽게 생각하는 matching 방법 ####
-# 동일 성별의 OC, C 그룹을 나이순으로 정렬하고 1:2매칭을 하면 되지 않을까? 
-
-# sex == 1의 경우
-
-data_BN %>% 
-  dplyr::filter(Group == "OC" & sex == 1) %>% 
-  arrange(age) %>% 
-  mutate(set = seq(1, nrow(.), 1)) %>% 
-  select(set, everything()) -> test1.1
-
-data_BN %>% 
-  dplyr::filter(Group == "C" & sex == 1) %>% 
-  arrange(age) %>% 
-  mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
-  select(set, everything()) -> test1.2
-
-data_BN %>% 
-  dplyr::filter(Group == "OC" & sex == 2) %>% 
-  arrange(age) %>% 
-  mutate(set = seq(1, nrow(.), 1)) %>% 
-  select(set, everything()) -> test2.1
-
-data_BN %>% 
-  dplyr::filter(Group == "C" & sex == 2) %>% 
-  arrange(age) %>% 
-  mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
-  select(set, everything()) -> test2.2
-
-test1.1 %>% 
-  rbind(test1.2) %>% 
-  arrange(set) %>% 
-  # select(set, age) %>% 
-  ggplot(., aes(x=set, y=age, colour = Group)) + 
-  geom_point()
-  
-test2.1 %>% 
-  rbind(test2.2) %>% 
-  arrange(set) %>% 
-  # select(set, age) %>% 
-  ggplot(., aes(x=set, y=age, colour = Group)) + 
-  geom_point()
-
-
-test2.1 %>% 
-  rbind(test2.2) %>% 
-  mutate(set = set + 121) %>% 
-  rbind(test1.1, test1.2) %>% 
-  arrange(set) -> data_BN_add_set
-
-data_BN_add_set %>% 
-  ggplot(., aes(x=set, y=age, colour = Group)) + 
-  geom_point()
-
-#### 1차 시도, 쉽게 생각하는 matching 방법 ####
-data_BN_add_set # 1차 시도 결과 
-
-# 여기에서 handling까지 해보자. 
-data_BN_add_set %>% 
-  select(set, Group, NO, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_BN_add_set
-
-names(data_BN_add_set) <- c("set", "Group", "NO", "sex", "age", "smoking", "alcohol",
-                            "stage_raw", "stage", "Name", "Group_RN.x",
-                            "Batch", "order", metabolites_name, 
-                            "NCC_num", "Group_RN.y", "TB_num", "주장기", "box", "위치")
-
-data_BN_add_set <- data_BN_add_set[, -which(names(data_BN_add_set) == 'NA')]
-
-
-## 1a, 4a, 4b 발견 
-data_BN_add_set %>% 
-  mutate(stage = gsub("^4[a-z]", "4", stage)) %>% 
-  mutate(stage = gsub("^1[a-z]", "1", stage)) %>% 
-  
-  ## stage 수정 후 stage 별 n개 체크, 수정 완료 
-  # group_by(stage) %>% summarise(n = n())
-  mutate(stage = gsub("-", "0", stage)) %>% 
-  mutate(stage = replace_na(stage, "0")) %>% 
-  type_convert(cols(X3_hydroxybutyrate.Results = col_double())) %>% 
-  mutate(age = as.numeric(cut_number(.$age, 3)))%>% 
-  mutate(Group = ifelse(Group == "OC", 1, 0)) -> data_BN_add_set_ready
-
-data_BN_add_set_ready %>% 
-  
-  # 쓸모없는 변수 제거 
-  select(-c(stage_raw, NO, Name, Group_RN.x,
-            Batch, order, NCC_num, Group_RN.y, TB_num, 주장기, box, 위치)) %>% 
-  
-  # formula를 위해 X value names에 공백 제거 
-  rename_at(vars(matches(" ")), funs(str_replace(., " ", "_"))) %>% 
-  # formula를 위해 X value names에 dash 제거 
-  rename_at(vars(matches("-")), funs(str_replace_all(., "-", "_"))) %>% 
-  # 숫자가 포함되어있는 metabolites를 HMDB를 참고, 이름 바꿔줌
-  rename(beta_Hydroxybutyric_acid = '3_Hydroxybutyric_acid', 
-         Methyl_folate = '5_Methyltetrahydrofolic_acid',
-         Hydroxy_L_proline = '4_Hydroxyproline') -> BN_info_add_set
-
-
-# Use logarithm
-BN_info_add_set_log <- cbind(BN_info_add_set[, 1:7], log(BN_info_add_set[, 8:88]))
-BN_info_add_set_log[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_add_set_log[, -(1:7)])
-
-# Use Standardization
-BN_info_add_set_st <- cbind(BN_info_add_set[, 1:7], scale((BN_info_add_set[, 8:88]), T, T))
-BN_info_add_set_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_add_set_st[, -(1:7)])
-
-# Use rescaling [0-1], https://gist.github.com/Nicktz/b06e7afcb52db888a10ee28da3d2f589
-BN_info_add_set %>% 
-  mutate_each_(funs(rescale), vars = names(.)[-(1:7)]) -> BN_info_add_set_re
-
-# Use log + Standardization
-BN_info_add_set_log_st <- cbind(BN_info_add_set[, 1:7], log(BN_info_add_set[, 8:88]))
-BN_info_add_set_log_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_add_set_log_st[, -(1:7)])
-BN_info_add_set_log_st[, -(1:7)] <- scale(BN_info_add_set_log_st[, -(1:7)], T, T)
-
-# simple 
-raw_result_add_set <- UCLR(BN_info_add_set, c(1,2,7))
-raw_result_add_set[[1]]
-
-# multiple
-summary(clogit(formula = formula_special, data = BN_info_add_set,
-               control = coxph.control(iter.max = 10000)))
-
-
-BN_info_add_set %>% 
-  mutate(set = as.factor(set),
-         Group = as.factor(Group),
-         sex = as.factor(sex),
-         smoking = as.factor(smoking),
-         alcohol = as.factor(alcohol),
-         age = as.factor(age)) -> BN_info_add_set
-
-
-clogistic(Group ~ age + smoking + alcohol + beta_Hydroxybutyric_acid + 
-            Methyl_folate + Acetoacetic_acid + L_Acetylcarnitine + Acetylcholine + 
-            Adenine + Adenosine + Asymmetric_dimethylarginine + L_Alanine + 
-            Adenosine_monophosphate + L_Arginine + Ascorbic_acid + L_Asparagine + 
-            L_Aspartic_acid + Betaine + Butyrylcarnitine + L_Carnitine + 
-            Choline + Citrulline + Creatine + Creatinine + L_Cystathionine + 
-            L_Cysteine + Decanoylcarnitine + Dimethylglycine + Fumaric_acid + 
-            Gamma_Aminobutyric_acid + L_Glutamic_acid + L_Glutamine + 
-            Oxidized_glutathione + Glycine + Glycochenodeoxycholic_acid + 
-            Glycocholic_acid + Guanine + Hexanoylcarnitine + Hippuric_acid + 
-            L_Histidine + Hypoxanthine + Inosine + Isovalerylcarnitine + 
-            L_Isoleucine + L_Kynurenine + Lactate + Dodecanoylcarnitine + 
-            L_Leucine + L_Lysine + L_Methionine + N_Acetyl_L_aspartic_acid + 
-            NAD + Niacinamide + Nicotinic_acid + Nicotinuric_acid + Norepinephrine + 
-            L_Octanoylcarnitine + L_Phenylalanine + Propionylcarnitine + 
-            L_Proline + Pyridoxamine + Pyridoxine + Pyroglutamic_acid + 
-            Riboflavin + S_Adenosylhomocysteine + S_Adenosylmethionine + 
-            L_Serine + Glycerophosphocholine + Succinic_acid + Taurine + 
-            L_Threonine + Thymine + Trimethylamine_N_oxide + Hydroxy_L_proline + 
-            Trigonelline + L_Tryptophan + L_Tyrosine + Uracil + Urea + 
-            Uric_acid + Uridine + L_Valine + Xanthine + Xanthosine, strata = set, 
-          BN_info_add_set, iter.max = 5000)
-
-
-
-explore_box <- function(data, divived_num, folder_name, file_name, width, height){
-  
-  sub_data <- melt(data)
-  cut_point_col <- round(length(unique(sub_data$variable)) / divived_num)  
-  cut_point <- (cut_point_col * nrow(data))
-  
-  for(i in 1:divived_num){
-    if(i == 1){
-      
-      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
-      png(png_name, width = width, height = height, pointsize = 20)
-      
-      print(ggplot(sub_data[1:cut_point, ], aes(x = 1, y = value)) + 
-              facet_wrap( ~ variable, scales = "free_x") + 
-              geom_boxplot())
-      
-      dev.off()    
-      
-      
-    } else if(i != 1 | i != divived_num) {
-      
-      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
-      png(png_name, width = width, height = height, pointsize = 20)
-      
-      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : (cut_point*(divived_num+1)), ], aes(x = 1, y = value)) + 
-              facet_wrap( ~ variable, scales = "free_x") + 
-              geom_boxplot())
-      
-      dev.off()    
-      
-    } else {
-      
-      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
-      png(png_name, width = width, height = height, pointsize = 20)
-      
-      
-      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : nrow(sub_data), ], aes(x = 1, y = value)) + 
-              facet_wrap( ~ variable, scales = "free_x") + 
-              geom_boxplot())
-      
-      dev.off()    
-    }
-    
-  }
-}
-
-explore_box(BN_info_add_set[, -c(1:7)], 2, "...hist/", "histogram", 1500, 1000)
-
-
-ggplot(melt(BN_info_add_set_log[, -c(1:7)]), aes(x = variable, y = value)) + 
-  geom_boxplot() + theme_minimal()
-
-
-#### NEW ####
-# OC 기준, AGE와 SEX를 이용해 1:2 matching을 함. 
-# AGE의 matching 기준은 OC의 AGE +- 2 
-
-data_BN %>% 
+data_MN %>% 
   type_convert(cols(NO = col_double())) %>% 
   merge(data_info, by = 'NO') %>% # Merge part 
   as_tibble() %>%
-  select(NO, Group, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_BN
+  select(NO, Group, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_MN
+
+data_raw %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  merge(data_info, by = 'NO') %>% # Merge part 
+  as_tibble() %>%
+  select(NO, Group, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_raw
+
 
 # age merge 결과 체크 
 sum(data_BN$age != data_info$age) # 같음 
+sum(data_MN$age != data_info$age) # 같음  
+sum(data_raw$age != data_info$age) # 같음 
 
 #### age +-2의 match가 가능한 지 판단하자 ####
 data_BN %>% 
@@ -456,6 +225,56 @@ data_BN %>%
   mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
   select(set, everything()) -> test2.2
 
+data_MN %>% 
+  dplyr::filter(Group == "OC" & sex == 1) %>% 
+  arrange(age) %>% 
+  mutate(set = seq(1, nrow(.), 1)) %>% 
+  select(set, everything()) -> test3.1
+
+data_MN %>% 
+  dplyr::filter(Group == "C" & sex == 1) %>% 
+  arrange(age) %>% 
+  mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
+  select(set, everything()) -> test3.2
+
+data_MN %>% 
+  dplyr::filter(Group == "OC" & sex == 2) %>% 
+  arrange(age) %>% 
+  mutate(set = seq(1, nrow(.), 1)) %>% 
+  select(set, everything()) -> test4.1
+
+data_MN %>% 
+  dplyr::filter(Group == "C" & sex == 2) %>% 
+  arrange(age) %>% 
+  mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
+  select(set, everything()) -> test4.2
+
+data_raw %>% 
+  dplyr::filter(Group == "OC" & sex == 1) %>% 
+  arrange(age) %>% 
+  mutate(set = seq(1, nrow(.), 1)) %>% 
+  select(set, everything()) -> test5.1
+
+data_raw %>% 
+  dplyr::filter(Group == "C" & sex == 1) %>% 
+  arrange(age) %>% 
+  mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
+  select(set, everything()) -> test5.2
+
+data_raw %>% 
+  dplyr::filter(Group == "OC" & sex == 2) %>% 
+  arrange(age) %>% 
+  mutate(set = seq(1, nrow(.), 1)) %>% 
+  select(set, everything()) -> test6.1
+
+data_raw %>% 
+  dplyr::filter(Group == "C" & sex == 2) %>% 
+  arrange(age) %>% 
+  mutate(set = rep(1:(nrow(.)/2), each = 2)) %>% 
+  select(set, everything()) -> test6.2
+
+
+
 test1.1 %>% 
   rbind(test1.2) %>% 
   arrange(set) %>% 
@@ -477,14 +296,36 @@ test2.1 %>%
   rbind(test1.1, test1.2) %>% 
   arrange(set) -> data_BN_add_set
 
+test4.1 %>% 
+  rbind(test4.2) %>% 
+  mutate(set = set + 121) %>% 
+  rbind(test3.1, test3.2) %>% 
+  arrange(set) -> data_MN_add_set
+
+test6.1 %>% 
+  rbind(test6.2) %>% 
+  mutate(set = set + 121) %>% 
+  rbind(test5.1, test5.2) %>% 
+  arrange(set) -> data_raw_add_set
+
 data_BN_add_set %>% 
+  ggplot(., aes(x=set, y=age, colour = Group)) + 
+  geom_point()
+
+data_MN_add_set %>% 
+  ggplot(., aes(x=set, y=age, colour = Group)) + 
+  geom_point()
+
+data_raw_add_set %>% 
   ggplot(., aes(x=set, y=age, colour = Group)) + 
   geom_point()
 
 #### 1차 시도, 쉽게 생각하는 matching 방법 ####
 data_BN_add_set # 1차 시도 결과 
+data_MN_add_set # 1차 시도 결과 
+data_raw_add_set # 1차 시도 결과 
 
-# 여기에서 handling까지 해보자. 
+#### BN handling ####
 data_BN_add_set %>% 
   select(set, Group, NO, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_BN_add_set
 
@@ -542,6 +383,7 @@ BN_info_add_set_log_st <- cbind(BN_info_add_set[, 1:7], log(BN_info_add_set[, 8:
 BN_info_add_set_log_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), BN_info_add_set_log_st[, -(1:7)])
 BN_info_add_set_log_st[, -(1:7)] <- scale(BN_info_add_set_log_st[, -(1:7)], T, T)
 
+# 새로 넣은 set을 이용한 CLR 
 # simple 
 raw_result_add_set <- UsCLR(BN_info_add_set, c(1,2,7))
 raw_result_add_set[[1]]
@@ -583,57 +425,276 @@ clogistic(Group ~ age + smoking + alcohol + beta_Hydroxybutyric_acid +
             Uric_acid + Uridine + L_Valine + Xanthine + Xanthosine, strata = set, 
           BN_info_add_set, iter.max = 5000)
 
+# 큰 의미 없음. 
 
-
-explore_box <- function(data, divived_num, folder_name, file_name, width, height){
-  
-  sub_data <- melt(data)
-  cut_point_col <- round(length(unique(sub_data$variable)) / divived_num)  
-  cut_point <- (cut_point_col * nrow(data))
-  
-  for(i in 1:divived_num){
-    if(i == 1){
-      
-      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
-      png(png_name, width = width, height = height, pointsize = 20)
-      
-      print(ggplot(sub_data[1:cut_point, ], aes(x = 1, y = value)) + 
-              facet_wrap( ~ variable, scales = "free_x") + 
-              geom_boxplot())
-      
-      dev.off()    
-      
-      
-    } else if(i != 1 | i != divived_num) {
-      
-      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
-      png(png_name, width = width, height = height, pointsize = 20)
-      
-      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : (cut_point*(divived_num+1)), ], aes(x = 1, y = value)) + 
-              facet_wrap( ~ variable, scales = "free_x") + 
-              geom_boxplot())
-      
-      dev.off()    
-      
-    } else {
-      
-      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
-      png(png_name, width = width, height = height, pointsize = 20)
-      
-      
-      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : nrow(sub_data), ], aes(x = 1, y = value)) + 
-              facet_wrap( ~ variable, scales = "free_x") + 
-              geom_boxplot())
-      
-      dev.off()    
-    }
-    
-  }
-}
-
-
+# boxplot 
 ggplot(melt(BN_info_add_set_re[, -c(1:7)]), aes(x = variable, y = value)) + 
   geom_boxplot() + theme_minimal()
+
+#### BN handling ####
+
+#### MN handling ####
+data_MN_add_set %>% 
+  select(set, Group, NO, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_MN_add_set
+
+names(data_MN_add_set) <- c("set", "Group", "NO", "sex", "age", "smoking", "alcohol",
+                            "stage_raw", "stage", "Name", "Group_RN.x",
+                            metabolites_name, 
+                            "NCC_num", "Group_RN.y", "TB_num", "주장기", "box", "위치")
+
+data_MN_add_set <- data_MN_add_set[, -which(names(data_MN_add_set) == 'NA')]
+
+
+## 1a, 4a, 4b 발견 
+data_MN_add_set %>% 
+  mutate(stage = gsub("^4[a-z]", "4", stage)) %>% 
+  mutate(stage = gsub("^1[a-z]", "1", stage)) %>% 
+  
+  ## stage 수정 후 stage 별 n개 체크, 수정 완료 
+  # group_by(stage) %>% summarise(n = n())
+  mutate(stage = gsub("-", "0", stage)) %>% 
+  mutate(stage = replace_na(stage, "0")) %>% 
+  type_convert(cols(X3_hydroxybutyrate.Results = col_double())) %>% 
+  mutate(age = as.numeric(cut_number(.$age, 3)))%>% 
+  mutate(Group = ifelse(Group == "OC", 1, 0)) -> data_MN_add_set_ready
+
+data_MN_add_set_ready %>% 
+  
+  # 쓸모없는 변수 제거 
+  select(-c(stage_raw, NO, Name, Group_RN.x,
+            NCC_num, Group_RN.y, TB_num, 주장기, box, 위치)) %>% 
+  
+  # formula를 위해 X value names에 공백 제거 
+  rename_at(vars(matches(" ")), funs(str_replace(., " ", "_"))) %>% 
+  # formula를 위해 X value names에 dash 제거 
+  rename_at(vars(matches("-")), funs(str_replace_all(., "-", "_"))) %>% 
+  # 숫자가 포함되어있는 metabolites를 HMDB를 참고, 이름 바꿔줌
+  rename(beta_Hydroxybutyric_acid = '3_Hydroxybutyric_acid', 
+         Methyl_folate = '5_Methyltetrahydrofolic_acid',
+         Hydroxy_L_proline = '4_Hydroxyproline') -> MN_info_add_set
+
+
+# Use logarithm
+MN_info_add_set_log <- cbind(MN_info_add_set[, 1:7], log(MN_info_add_set[, 8:88]))
+MN_info_add_set_log[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), MN_info_add_set_log[, -(1:7)])
+
+# Use Standardization
+MN_info_add_set_st <- cbind(MN_info_add_set[, 1:7], scale((MN_info_add_set[, 8:88]), T, T))
+MN_info_add_set_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), MN_info_add_set_st[, -(1:7)])
+
+# Use rescaling [0-1], https://gist.github.com/Nicktz/b06e7afcb52db888a10ee28da3d2f589
+MN_info_add_set %>% 
+  mutate_each_(funs(rescale), vars = names(.)[-(1:7)]) -> MN_info_add_set_re
+
+# Use log + Standardization
+MN_info_add_set_log_st <- cbind(MN_info_add_set[, 1:7], log(MN_info_add_set[, 8:88]))
+MN_info_add_set_log_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), MN_info_add_set_log_st[, -(1:7)])
+MN_info_add_set_log_st[, -(1:7)] <- scale(MN_info_add_set_log_st[, -(1:7)], T, T)
+
+# 새로 넣은 set을 이용한 CLR 
+# simple 
+raw_result_add_set <- UsCLR(MN_info_add_set, c(1,2,7))
+raw_result_add_set[[1]]
+
+# multiple
+summary(clogit(formula = formula_candi, data = MN_info_add_set,
+               control = coxph.control(iter.max = 1000)))
+
+
+MN_info_add_set %>% 
+  mutate(set = as.factor(set),
+         Group = as.factor(Group),
+         sex = as.factor(sex),
+         smoking = as.factor(smoking),
+         alcohol = as.factor(alcohol),
+         age = as.factor(age)) -> MN_info_add_set
+
+
+clogistic(Group ~ age + smoking + alcohol + beta_Hydroxybutyric_acid + 
+            Methyl_folate + Acetoacetic_acid + L_Acetylcarnitine + Acetylcholine + 
+            Adenine + Adenosine + Asymmetric_dimethylarginine + L_Alanine + 
+            Adenosine_monophosphate + L_Arginine + Ascorbic_acid + L_Asparagine + 
+            L_Aspartic_acid + Betaine + Butyrylcarnitine + L_Carnitine + 
+            Choline + Citrulline + Creatine + Creatinine + L_Cystathionine + 
+            L_Cysteine + Decanoylcarnitine + Dimethylglycine + Fumaric_acid + 
+            Gamma_Aminobutyric_acid + L_Glutamic_acid + L_Glutamine + 
+            Oxidized_glutathione + Glycine + Glycochenodeoxycholic_acid + 
+            Glycocholic_acid + Guanine + Hexanoylcarnitine + Hippuric_acid + 
+            L_Histidine + Hypoxanthine + Inosine + Isovalerylcarnitine + 
+            L_Isoleucine + L_Kynurenine + Lactate + Dodecanoylcarnitine + 
+            L_Leucine + L_Lysine + L_Methionine + N_Acetyl_L_aspartic_acid + 
+            NAD + Niacinamide + Nicotinic_acid + Nicotinuric_acid + Norepinephrine + 
+            L_Octanoylcarnitine + L_Phenylalanine + Propionylcarnitine + 
+            L_Proline + Pyridoxamine + Pyridoxine + Pyroglutamic_acid + 
+            Riboflavin + S_Adenosylhomocysteine + S_Adenosylmethionine + 
+            L_Serine + Glycerophosphocholine + Succinic_acid + Taurine + 
+            L_Threonine + Thymine + Trimethylamine_N_oxide + Hydroxy_L_proline + 
+            Trigonelline + L_Tryptophan + L_Tyrosine + Uracil + Urea + 
+            Uric_acid + Uridine + L_Valine + Xanthine + Xanthosine, strata = set, 
+          MN_info_add_set, iter.max = 5000)
+
+# 큰 의미 없음. 
+
+# boxplot 
+ggplot(melt(MN_info_add_set_re[, -c(1:7)]), aes(x = variable, y = value)) + 
+  geom_boxplot() + theme_minimal()
+#### MN handling ####
+
+#### raw handling ####
+data_raw_add_set %>% 
+  select(set, Group, NO, sex, age, smoking, alcohol, stage_raw, stage, everything()) -> data_raw_add_set
+
+names(data_raw_add_set) <- c("set", "Group", "NO", "sex", "age", "smoking", "alcohol",
+                            "stage_raw", "stage", "Name", "Group_RN.x",
+                            metabolites_name, 
+                            "NCC_num", "Group_RN.y", "TB_num", "주장기", "box", "위치")
+
+data_raw_add_set <- data_raw_add_set[, -which(names(data_raw_add_set) == 'NA')]
+
+
+## 1a, 4a, 4b 발견 
+data_raw_add_set %>% 
+  mutate(stage = gsub("^4[a-z]", "4", stage)) %>% 
+  mutate(stage = gsub("^1[a-z]", "1", stage)) %>% 
+  
+  ## stage 수정 후 stage 별 n개 체크, 수정 완료 
+  # group_by(stage) %>% summarise(n = n())
+  mutate(stage = gsub("-", "0", stage)) %>% 
+  mutate(stage = replace_na(stage, "0")) %>% 
+  type_convert(cols(X3_hydroxybutyrate.Results = col_double())) %>% 
+  mutate(age = as.numeric(cut_number(.$age, 3)))%>% 
+  mutate(Group = ifelse(Group == "OC", 1, 0)) -> data_raw_add_set_ready
+
+data_raw_add_set_ready %>% 
+  
+  # 쓸모없는 변수 제거 
+  select(-c(stage_raw, NO, Name, Group_RN.x,
+            NCC_num, Group_RN.y, TB_num, 주장기, box, 위치)) %>% 
+  
+  # formula를 위해 X value names에 공백 제거 
+  rename_at(vars(matches(" ")), funs(str_replace(., " ", "_"))) %>% 
+  # formula를 위해 X value names에 dash 제거 
+  rename_at(vars(matches("-")), funs(str_replace_all(., "-", "_"))) %>% 
+  # 숫자가 포함되어있는 metabolites를 HMDB를 참고, 이름 바꿔줌
+  rename(beta_Hydroxybutyric_acid = '3_Hydroxybutyric_acid', 
+         Methyl_folate = '5_Methyltetrahydrofolic_acid',
+         Hydroxy_L_proline = '4_Hydroxyproline') -> raw_info_add_set
+
+
+# Use logarithm
+raw_info_add_set_log <- cbind(raw_info_add_set[, 1:7], log(raw_info_add_set[, 8:88]))
+raw_info_add_set_log[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), raw_info_add_set_log[, -(1:7)])
+
+# Use Standardization
+raw_info_add_set_st <- cbind(raw_info_add_set[, 1:7], scale((raw_info_add_set[, 8:88]), T, T))
+raw_info_add_set_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), raw_info_add_set_st[, -(1:7)])
+
+# Use rescaling [0-1], https://gist.github.com/Nicktz/b06e7afcb52db888a10ee28da3d2f589
+raw_info_add_set %>% 
+  mutate_each_(funs(rescale), vars = names(.)[-(1:7)]) -> raw_info_add_set_re
+
+# Use log + Standardization
+raw_info_add_set_log_st <- cbind(raw_info_add_set[, 1:7], log(raw_info_add_set[, 8:88]))
+raw_info_add_set_log_st[, -(1:7)] <- Map(function(x) replace(x, is.infinite(x), 0.01), raw_info_add_set_log_st[, -(1:7)])
+raw_info_add_set_log_st[, -(1:7)] <- scale(raw_info_add_set_log_st[, -(1:7)], T, T)
+
+# 새로 넣은 set을 이용한 CLR 
+# simple 
+raw_result_add_set <- UsCLR(raw_info_add_set, c(1,2,7))
+raw_result_add_set[[1]]
+
+# multiple
+summary(clogit(formula = formula_candi, data = raw_info_add_set,
+               control = coxph.control(iter.max = 1000)))
+
+
+raw_info_add_set %>% 
+  mutate(set = as.factor(set),
+         Group = as.factor(Group),
+         sex = as.factor(sex),
+         smoking = as.factor(smoking),
+         alcohol = as.factor(alcohol),
+         age = as.factor(age)) -> raw_info_add_set
+
+
+clogistic(Group ~ age + smoking + alcohol + beta_Hydroxybutyric_acid + 
+            Methyl_folate + Acetoacetic_acid + L_Acetylcarnitine + Acetylcholine + 
+            Adenine + Adenosine + Asymmetric_dimethylarginine + L_Alanine + 
+            Adenosine_monophosphate + L_Arginine + Ascorbic_acid + L_Asparagine + 
+            L_Aspartic_acid + Betaine + Butyrylcarnitine + L_Carnitine + 
+            Choline + Citrulline + Creatine + Creatinine + L_Cystathionine + 
+            L_Cysteine + Decanoylcarnitine + Dimethylglycine + Fumaric_acid + 
+            Gamma_Aminobutyric_acid + L_Glutamic_acid + L_Glutamine + 
+            Oxidized_glutathione + Glycine + Glycochenodeoxycholic_acid + 
+            Glycocholic_acid + Guanine + Hexanoylcarnitine + Hippuric_acid + 
+            L_Histidine + Hypoxanthine + Inosine + Isovalerylcarnitine + 
+            L_Isoleucine + L_Kynurenine + Lactate + Dodecanoylcarnitine + 
+            L_Leucine + L_Lysine + L_Methionine + N_Acetyl_L_aspartic_acid + 
+            NAD + Niacinamide + Nicotinic_acid + Nicotinuric_acid + Norepinephrine + 
+            L_Octanoylcarnitine + L_Phenylalanine + Propionylcarnitine + 
+            L_Proline + Pyridoxamine + Pyridoxine + Pyroglutamic_acid + 
+            Riboflavin + S_Adenosylhomocysteine + S_Adenosylmethionine + 
+            L_Serine + Glycerophosphocholine + Succinic_acid + Taurine + 
+            L_Threonine + Thymine + Trimethylamine_N_oxide + Hydroxy_L_proline + 
+            Trigonelline + L_Tryptophan + L_Tyrosine + Uracil + Urea + 
+            Uric_acid + Uridine + L_Valine + Xanthine + Xanthosine, strata = set, 
+          raw_info_add_set, iter.max = 5000)
+
+# 큰 의미 없음. 
+
+# boxplot 
+ggplot(melt(raw_info_add_set_re[, -c(1:7)]), aes(x = variable, y = value)) + 
+  geom_boxplot() + theme_minimal()
+#### raw handling ####
+
+#### In pre-processing, fold change 확인하기 ####
+# boxplot으로 살펴본 결과 outliner들이 지나치게 많다. 
+# mean으로 계산한 fold-change가 의미가 있을까? median으로 다시 해보자. 
+
+# raw 
+raw_info_add_set %>% 
+  select(Group, Change_names(candidate_metabo)) %>% 
+  group_by(Group) %>% 
+  summarise_each(funs(median)) -> fc_median
+
+raw_info_add_set %>% 
+  select(Group, Change_names(candidate_metabo)) %>% 
+  group_by(Group) %>% 
+  summarise_each(funs(mean)) -> fc_mean
+
+# BN normalization 
+BN_info_add_set %>% 
+  select(Group, Change_names(candidate_metabo)) %>% 
+  group_by(Group) %>% 
+  summarise_each(funs(median)) -> fc_median
+
+BN_info_add_set %>% 
+  select(Group, Change_names(candidate_metabo)) %>% 
+  group_by(Group) %>% 
+  summarise_each(funs(mean)) -> fc_mean
+  
+# Median normalization
+MN_info_add_set %>% 
+  select(Group, Change_names(candidate_metabo)) %>% 
+  group_by(Group) %>% 
+  summarise_each(funs(median)) -> fc_median
+
+MN_info_add_set %>% 
+  select(Group, Change_names(candidate_metabo)) %>% 
+  group_by(Group) %>% 
+  summarise_each(funs(mean)) -> fc_mean
+
+
+which(t(as.data.frame(fc_median[2, ] / fc_median[1, ])[-1])[, 1] > 1.50 | 
+        t(as.data.frame(fc_median[2, ] / fc_median[1, ])[-1])[, 1] < 0.67)
+
+which(t(as.data.frame(fc_mean[2, ] / fc_mean[1, ])[-1])[, 1] > 1.50 | 
+        t(as.data.frame(fc_mean[2, ] / fc_mean[1, ])[-1])[, 1] < 0.67)
+
+
+#### In pre-processing, fold change 확인하기 ####
+
+
 
 
 #### Find and count outliers ####
@@ -713,17 +774,21 @@ BN_info_add_set %>%
 BN_info_add_set %>% 
   select(Group, Guanine) %>% 
   ggplot(., aes(y=Guanine, x = as.factor(Group), fill = as.factor(Group), colour = as.factor(Group))) +
+  geom_boxplot(alpha = 0.1)
+
 #### Find and count outliers ####
+
 
 
 
 #### outlier가 일정 기준 이상 존재하는 variable을 제외하고 돌려보자. ####
 # 1. outlier를 제외한 full model
-no_outlier <- names(BN_info_add_set)[-(which(names(BN_info_add_set) %in% num_outlier_index[which(num_outlier > 10), ]$rowname))]
-BN_info_add_set[, no_outlier]
+no_outlier <- names(BN_info_add_set)[-(which(names(BN_info_add_set) %in% num_outlier_index[which(num_outlier_index$num_outlier > 10), ]$rowname))]
 
-summary(clogit(formula = as.formula(paste("Group ~", paste(names(BN_info_add_set[, no_outlier][, -c(1,2,3,4,5,6,7)]), collapse = " + "), "+ strata(set)")),
-               data = BN_info_add_set[, no_outlier],
+candi_no_outlier <- no_outlier[8:length(no_outlier)][which(no_outlier[8:length(no_outlier)] %in% Change_names(candidate_metabo))]
+
+summary(clogit(formula = as.formula(paste("Group ~", paste(candi_no_outlier, collapse = " + "), "+ strata(set)")),
+               data = BN_info_add_set[, c("Group", "set", candi_no_exoutlier)],
                control = coxph.control(iter.max = 100)))
 
 summary(clogit(formula = Group ~ factor(smoking) + factor(alcohol) + 
@@ -735,9 +800,13 @@ summary(clogit(formula = Group ~ factor(smoking) + factor(alcohol) +
 
 
 # 2. extreme outlier를 제외한 full model
-no_exoutlier <- names(BN_info_add_set)[-(which(names(BN_info_add_set) %in% num_exoutlier_index[which(num_exoutlier > 10), ]$rowname))]
-summary(clogit(formula = as.formula(paste("Group ~", paste(names(BN_info_add_set[, no_exoutlier][, -c(1,2,7)]), collapse = " + "), "+ strata(set)")),
-               data = BN_info_add_set[, no_exoutlier],
+no_exoutlier <- names(BN_info_add_set)[-(which(names(BN_info_add_set) %in% 
+                                                 num_exoutlier_index[which(num_exoutlier_index$num_exoutlier > 10), ]$rowname))]
+
+candi_no_exoutlier <- no_exoutlier[8:length(no_exoutlier)][which(no_exoutlier[8:length(no_exoutlier)] %in% Change_names(candidate_metabo))]
+
+summary(clogit(formula = as.formula(paste("Group ~", paste(candi_no_exoutlier, collapse = " + "), "+ strata(set)")),
+               data = BN_info_add_set[, c("Group", "set", candi_no_exoutlier)],
                control = coxph.control(iter.max = 1000), method='breslow'))
 
 summary(clogit(formula = Group ~ sex + age + smoking + alcohol + Acetoacetic_acid + L_Acetylcarnitine + 
@@ -753,8 +822,10 @@ summary(clogit(formula = Group ~ sex + age + smoking + alcohol + Acetoacetic_aci
                  S_Adenosylmethionine + L_Serine + Succinic_acid + L_Threonine + 
                  Thymine + L_Tryptophan + L_Tyrosine + Uracil + Urea + Uric_acid + 
                  Uridine + L_Valine + strata(set),
-               data = BN_info_add_set[, no_exoutlier],
+               data = BN_info_add_set_[, no_exoutlier],
                control = coxph.control(iter.max = 3000), method='breslow'))
+
+candi_no_exoutlier[23]
 
 # error "Loglik converged before variables ; coefficient may be infinite. 
 # Q. finite인 var은 뭘까? finite인 var은 계속 유효할까?
@@ -778,15 +849,69 @@ summary(clogit(formula = Group ~ sex + L_Octanoylcarnitine + L_Phenylalanine +
 #### outlier가 일정 기준 이상 존재하는 variable을 제외하고 돌려보자. ####
 
 #### test 1 : extreme outlier들을 95th, 5th으로 바꾸면? ####
+Replace_extreme_outliers <- function(data) {
+  lowerq = quantile(data)[2]
+  upperq = quantile(data)[4]
+  iqr = upperq - lowerq #Or use IQR(data)
+  
+  # we identify extreme outliers
+  extreme.threshold.upper = (iqr * 3) + upperq
+  extreme.threshold.lower = lowerq - (iqr * 3)
+  
+  result1 <- which(data > extreme.threshold.upper)
+  data <- replace(data, result1, values=quantile(data, 0.95))
+  result2 <- which(data < extreme.threshold.lower)
+  data <- replace(data, result1, values=quantile(data, 0.05))
+}
 
+test_replace_ex <- apply(apply(BN_info_add_set[, -(1:7)], 2, Replace_extreme_outliers), 2, Find_extreme_outliers)
+  
+
+a <- apply(apply(BN_info_add_set[, -(1:7)], 2, Replace_extreme_outliers), 2, Find_extreme_outliers)
+b <- apply(BN_info_add_set[, -(1:7)], 2, Find_extreme_outliers)
+
+
+summary(a) # median : 0, mean : 2.7
+summary(b) # median : 4, mean : 9.7
+
+a[which(a > 3)]
+b[which(b > 10)]
+
+length(a[which(a > 3)]) # 4
+length(b[which(b > 10)]) # 28
+
+cbind(as.data.frame(a), 
+      index = seq(1, nrow(as.data.frame(a)), 1)) %>% 
+  rownames_to_column() %>% 
+  rename(num_exoutlier = a) %>% 
+  as_tibble() -> num_exoutlier_index_replace
+
+
+BN_info_add_set_replace_ex <- cbind(BN_info_add_set[, (1:7)], 
+                                    apply(BN_info_add_set[, -(1:7)], 2, Replace_extreme_outliers))
+
+
+no_exoutlier_replace_ex <- names(BN_info_add_set_replace_ex)[-(which(names(BN_info_add_set_replace_ex) %in% 
+                                                                       num_exoutlier_index_replace[which(num_exoutlier_index_replace$num_exoutlier > 3), ]$rowname))]
+# no_exoutlier와 개수 확인 완료 71 == 71
+length(names(BN_info_add_set_replace_ex)) - length(a[which(a > 3)])
+
+summary(clogit(formula = as.formula(paste("Group ~", 
+                                          paste(names(BN_info_add_set_replace_ex[, no_exoutlier_replace_ex][, -c(1,2,7)]), 
+                                                collapse = " + "), "+ strata(set)")),
+               data = BN_info_add_set_replace_ex[, no_exoutlier_replace_ex],
+               control = coxph.control(iter.max = 1000), method='approximate'))
+
+
+library(survminer)
+ggsurvplot(survfit(Surv(rep(1, 546L), Group) ~ 
+                     (beta_Hydroxybutyric_acid  > median(beta_Hydroxybutyric_acid , na.rm = T)), 
+                   data = BN_info_add_set_replace_ex), data = BN_info_add_set_replace_ex)
 
 #### test 1 : extreme outlier들을 95th, 5th으로 바꾸면? ####
 
 
-
-
-
-#### NEW ####
+### NEW ####
 
 #### ####
 
