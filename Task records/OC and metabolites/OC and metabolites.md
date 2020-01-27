@@ -1898,6 +1898,8 @@ lapply(Change_names(candidate_metabo), function(v) {
 # matching부터 다시 하자. 
 
 
+
+
 # 사용할 formula, significant한 metabolites + "sex", "age", "smoking", "alcohol"
 PSM_formula_candi = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
                                      paste(Change_names(candidate_metabo), collapse = " + "),
@@ -1905,6 +1907,55 @@ PSM_formula_candi = as.formula(paste("Group ~", paste(base_var, collapse = " + "
 
 
 # PSM1_raw_info_add_set을 이용한 CLR
+# 같은 Group과 같은 variable에 obs의 tie가 존재하므로 "exact"를 사용 할 수 없다. 
+summary(clogit(formula = Group ~ beta_Hydroxybutyric_acid + 
+                 Acetylcholine + L_Alanine + L_Arginine + L_Aspartic_acid + 
+                 L_Asparagine + L_Carnitine + Choline + Creatinine + Dimethylglycine + 
+                 Gamma_Aminobutyric_acid + Betaine + L_Glutamine + Glycine + 
+                 L_Isoleucine + L_Kynurenine + L_Leucine + L_Lysine + L_Methionine + 
+                 Nicotinic_acid + L_Phenylalanine + L_Proline + Pyridoxamine + 
+                 Pyridoxine + L_Serine + Taurine + L_Threonine + Hydroxy_L_proline + 
+                 Urea + L_Valine + L_Acetylcarnitine + Decanoylcarnitine + 
+                 L_Glutamic_acid + Hexanoylcarnitine + Isovalerylcarnitine + 
+                 L_Octanoylcarnitine + Glycerophosphocholine + Trimethylamine_N_oxide + strata(subclass), 
+               data = PSM1_raw_info_add_set, method='efron'))
+# not converge
+
+# iteration을 늘려서 다시 시도
+summary(clogit(formula = PSM_formula_candi, data = PSM1_raw_info_add_set, 
+               control = coxph.control(iter.max = 10000), method='efron'))
+# error : Loglik converged before variable; coefficient may be infinite.
+
+summary(clogit(formula = formula_special, 
+               data = raw_info_add_set, control = coxph.control(iter.max = 10000), method='efron'))
+
+summary(clogit(formula = Group ~ sex + age + smoking + 
+                 alcohol + L_Acetylcarnitine + Decanoylcarnitine + L_Glutamic_acid + 
+                 Hexanoylcarnitine + Isovalerylcarnitine + L_Octanoylcarnitine + 
+                 Glycerophosphocholine + Trimethylamine_N_oxide + 
+                 beta_Hydroxybutyric_acid + Acetylcholine + L_Alanine + 
+                 L_Aspartic_acid + L_Asparagine + strata(subclass), 
+               data = PSM1_raw_info_add_set, control = coxph.control(iter.max = 10000), method='efron'))
+
+# 변수가 18개 이상되는 순간부터 error가 난다.
+# 17개의 변수를 넣으면 모든 변수들이 유의하지 않게 된다. 
+# 사실 그 이전부터 변수를 추가하면 추가할수록 Wald test stat은 계속 증가했었다.
+
+
+summary(clogit(formula = Group ~ sex + age + smoking + 
+                 alcohol + L_Isoleucine + L_Kynurenine + L_Leucine + L_Lysine + L_Methionine + 
+                 L_Acetylcarnitine + Decanoylcarnitine + 
+                 L_Glutamic_acid + Hexanoylcarnitine + Isovalerylcarnitine + 
+                 L_Octanoylcarnitine + Glycerophosphocholine + Trimethylamine_N_oxide + strata(set), 
+               data = raw_info_add_set, control = coxph.control(iter.max = 10000), method='efron'))
+
+
+# Fold change가 큰 변수들의 개수를 줄이니까 18개 미만임에도 inf coef error가 난다. 
+# PSM, 내 임의 매칭 모두 같은 error 
+
+
+
+# PSM2_raw_info_add_set을 이용한 CLR
 summary(clogit(formula = Group ~ smoking + alcohol + beta_Hydroxybutyric_acid + 
                  Acetylcholine + L_Alanine + L_Arginine + L_Aspartic_acid + 
                  L_Asparagine + L_Carnitine + Choline + Creatinine + Dimethylglycine + 
@@ -1914,38 +1965,53 @@ summary(clogit(formula = Group ~ smoking + alcohol + beta_Hydroxybutyric_acid +
                  Pyridoxine + L_Serine + Taurine + L_Threonine + Hydroxy_L_proline + 
                  Urea + L_Valine + L_Acetylcarnitine + Decanoylcarnitine + 
                  L_Glutamic_acid + Hexanoylcarnitine + Isovalerylcarnitine + 
-                 L_Octanoylcarnitine + Glycerophosphocholine + Trimethylamine_N_oxide, 
-               data = PSM1_raw_info_add_set, method='exact'))
-
-summary(clogit(formula = PSM_formula_candi, data = PSM1_raw_info_add_set, 
-               control = coxph.control(iter.max = 10000), method='exact'))
-
-summary(clogit(formula = PSM_formula_candi, data = PSM1_raw_info_add_set, 
-               control = coxph.control(iter.max = 10000), method='breslow'))
-
-summary(clogit(formula = PSM_formula_candi, data = PSM1_raw_info_add_set, 
-               control = coxph.control(iter.max = 10000), method='approximate'))
-
-
-# PSM2_raw_info_add_set을 이용한 CLR
-summary(clogit(formula = PSM_formula_candi, 
+                 L_Octanoylcarnitine + Glycerophosphocholine + Trimethylamine_N_oxide + strata(subclass), 
                data = PSM2_raw_info_add_set, 
                control = coxph.control(iter.max = 10000), 
-               method='exact'))
+               method='efron'))
 
 summary(clogit(formula = as.formula(paste("Group ~ ", paste(a, collapse = " + "), "+ strata(subclass)")),
                data = PSM2_raw_info_add_set, 
                control = coxph.control(iter.max = 10000), 
-               method='exact'))
+               method='efron'))
 
 a <- c(base_var, Change_names(candidate_metabo))[-c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,29)]
 a %in% Change_names(special_metabo)
 
 
-clogistic(formula = Group ~ L_Acetylcarnitine + Decanoylcarnitine + L_Glutamic_acid + 
-                    Hexanoylcarnitine + Isovalerylcarnitine + L_Octanoylcarnitine + 
-                    Glycerophosphocholine + Trimethylamine_N_oxide,
-          strata = subclass, data = PSM2_raw_info_add_set, iter.max = 10000)
+summary(clogit(formula = Group ~ sex + age + smoking + 
+                 alcohol + L_Acetylcarnitine + Decanoylcarnitine + L_Glutamic_acid + 
+                 Hexanoylcarnitine + Isovalerylcarnitine + L_Octanoylcarnitine + 
+                 Glycerophosphocholine + Trimethylamine_N_oxide + 
+                 beta_Hydroxybutyric_acid + Acetylcholine + L_Alanine + 
+                 L_Aspartic_acid + L_Asparagine + L_Carnitine + Choline + Creatinine + Dimethylglycine + 
+                 Gamma_Aminobutyric_acid + Betaine + Taurine + Urea + 
+                 strata(subclass), 
+               data = PSM2_raw_info_add_set, control = coxph.control(iter.max = 10000), method='efron'))
+
+# PSM2_raw_info_add_set(all var을 이용한 PSM) 의 경우
+# 25개에서 에러 
+# 24개 째에서 어떤 것을 넣느냐에 따라 wald stat이 조금 달라지긴 함. 
+
+#### 결과보고를 위한 작성 ####
+
+
+# CLR의 method에 대한 note
+# CLR에서 arg로 등록되어 있는 method는 "exact", "efron", "approximate", "breslow" 등, 총 4개다. 
+# exact을 제외한 나머지 세 방법은 approximate method이다.
+# 'tie'에 대한 approximation 여부에 따라 exact vs non-exact로 나뉜다. 
+# 이 때, tie란 말 그대로 같은 group(categorical response var) level 하에서의 variable 중 똑같은 obs을 말한다. 
+# 4개의 방법 중 가장 대중적으로 쓰이는 것은 efron이다. 
+# R를 제외한 대부분의 S/W에서 CLR method의 default는 efron이다. R의 clogit의 default는 exact다. 
+
+larynx <- read.table( "http://www.ics.uci.edu/~dgillen/STAT255/Data/larynx.txt" )
+
+dim(larynx)
+unique(larynx$t2death[ larynx$death==1 ][which(duplicated(larynx$t2death[ larynx$death==1 ] ))])
+
+larynx[which(duplicated(larynx$t2death[ larynx$death==1 ] )), ]
+sum( duplicated(larynx$t2death[ larynx$death==1 ] ) )
+
 
 #### 결과보고를 위한 작성 ####
 
