@@ -1640,24 +1640,181 @@ Change_names(special_metabo)
 
 #### <DONE, TO DO> metabolites 이름 바꿔주는 function 만들기 ####
 
-library(MetaboAnalystR)
+#### 결과보고를 위한 작성 ####
 
-mSet <- InitDataObjects("conc", "pathora", FALSE)
-cmpd.vec <- c(..)
+# functionazation 
+report_result <- function(data, metabolites_name) {
+  
+  mean_t_test <- lapply(metabolites_name, function(v) {
+    t.test(as.data.frame(data)[, v] ~ as.data.frame(data)[, 'Group'])
+  })
+  
+  l <- list()
+  j <- 1
+  a <- c()
+  for( i in 1:length(mean_t_test) ) {
+    mean_t_test[[i]]$data.name <- paste(metabolites_name[i], "by Group" )
+    if ( mean_t_test[[i]]$p.value < 0.05 ) {
+      l[[j]] <- mean_t_test[[i]]
+      j <- j+1
+      a <- c(a, metabolites_name[i])
+    }
+  }
+}
 
-mSet <- Setup.MapData(mSet, cmpd.vec);
-mSet <- CrossReferencing(mSet, "hmdb");
-mSet <- CreateMappingResultTable(mSet)
 
-#### ERROR ####
+raw_info_add_set %>%
+  group_by(Group) %>%
+  summarise(n = n())
 
-mSet <- SetKEGG.PathLib(mSet, "hsa")
+raw_info_add_set %>%
+  group_by(Group) %>%
+  select(8:88) %>% 
+  summarise_all(funs(mean(., na.rm = T), median(., na.rm = T)))
 
-#### ERROR ####
+mean_t_test <- lapply(all_metabolites, function(v) {
+  t.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])
+})
 
-mSet <- SetMetabolomeFilter(mSet, F);
-mSet <- CalculateOraScore(mSet, "rbc", "hyperg")
-mSet <- PlotPathSummary(mSet, "path_view_0_", "png", 72, width=NA)
 
+
+l <- list()
+j <- 1
+a <- c()
+for( i in 1:length(mean_t_test) ) {
+  mean_t_test[[i]]$data.name <- paste(all_metabolites[i], "by Group" )
+  if ( mean_t_test[[i]]$p.value < 0.05 ) {
+    l[[j]] <- mean_t_test[[i]]
+    j <- j+1
+    a <- c(a, all_metabolites[i])
+  }
+}
+
+l # 총 55개의 metabolites들이 Group간 평균차이가 존재함. 
+a # 55개의 metabolites들의 이름 
+
+# candidate된 모든 metabolites들에서 Group간 평균차이가 존재함. 
+candidate_metabo[which(Change_names(candidate_metabo) %in% a)]
+
+# histogram으로 분포보여주기
+dir <- "C:/Users/twingster/Documents/R_exer/NCC/graph_output/hist/"
+explore_hist <- function(data, divived_num, folder_name, file_name, width, height){
+  
+  sub_data <- melt(data)
+  cut_point_col <- round(length(unique(sub_data$variable)) / divived_num)  
+  cut_point <- (cut_point_col * nrow(data))
+  
+  for(i in 1:divived_num){
+    if(i == 1){
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      print(ggplot(sub_data[1:cut_point, ], aes(x = value)) + 
+              facet_wrap( ~ variable, scales = "free_x") + 
+              geom_histogram()) + theme_minimal()
+      
+      dev.off()    
+      
+      
+    } else if(i != 1 | i != divived_num) {
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : (cut_point*(divived_num+1)), ], aes(x = value)) + 
+              facet_wrap( ~ variable, scales = "free_x") + 
+              geom_histogram()) + theme_minimal()
+      
+      dev.off()    
+      
+    } else {
+      
+      png_name <- paste0(folder_name, file_name, "_", paste(i), ".png")
+      png(png_name, width = width, height = height, pointsize = 20)
+      
+      
+      print(ggplot(sub_data[((cut_point*(divived_num-1))+1) : nrow(sub_data), ], aes(x = value)) + 
+              facet_wrap( ~ variable, scales = "free_x") + 
+              geom_histogram()) + theme_minimal()
+      
+      dev.off()    
+    }
+    
+  }
+}
+
+
+explore_hist(raw_info_add_set[, -c(1:7)], 2, dir, "histogram", 1500, 1000)
+explore_hist(raw_info_add_set[, Change_names(candidate_metabo)], 2, dir, "candi_histogram", 1500, 1000)
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(candidate_metabo)[1:19])], id.var = "Group"), 
+       aes(x = value, fill = factor(Group), colour = factor(Group))) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(candidate_metabo)[20:38])], id.var = "Group"), 
+       aes(x = value, fill = factor(Group), colour = factor(Group))) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_colour_discrete(guide=FALSE) + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)
+
+
+# box plot으로 분포 보여주기
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(candidate_metabo)[1:19])], id.var = "Group"), 
+       aes(x=variable, y=value)) + 
+  geom_boxplot(aes(fill=as.factor(Group))) + 
+  facet_wrap( ~ variable, scales="free")
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(candidate_metabo)[20:38])], id.var = "Group"), 
+       aes(x=variable, y=value)) + 
+  geom_boxplot(aes(fill=as.factor(Group))) + 
+  facet_wrap( ~ variable, scales="free")
+
+
+
+ggplot(melt(raw_info_add_set[,  Change_names(candidate_metabo)]), aes(x = variable, y = value)) + 
+  geom_boxplot() + theme_minimal()
+
+
+# 3. Group별로 분포보기 
+## 3.1 densitiy plot 
+BN_info_add_set %>% 
+  select(Group, beta_Hydroxybutyric_acid) %>% 
+  ggplot(., aes(beta_Hydroxybutyric_acid, fill = as.factor(Group), colour = as.factor(Group))) +
+  geom_density(alpha = 0.1)
+
+## 3.2 box plot 
+BN_info_add_set %>% 
+  select(Group, Guanine) %>% 
+  ggplot(., aes(y=Guanine, x = as.factor(Group), fill = as.factor(Group), colour = as.factor(Group))) +
+  geom_boxplot(alpha = 0.1)
+
+
+
+# fold change 
+raw_info_add_set %>% 
+  select(Group, Change_names(candidate_metabo)) %>% 
+  group_by(Group) %>% 
+  summarise_each(funs(median)) -> fc_median
+
+raw_info_add_set %>% 
+  select(Group, Change_names(candidate_metabo)) %>% 
+  group_by(Group) %>% 
+  summarise_each(funs(mean)) -> fc_mean
+
+# FC with median 
+which(t(as.data.frame(fc_median[2, ] / fc_median[1, ])[-1])[, 1] > 1.50 | 
+        t(as.data.frame(fc_median[2, ] / fc_median[1, ])[-1])[, 1] < 0.67)
+
+# FC with mean 
+which(t(as.data.frame(fc_mean[2, ] / fc_mean[1, ])[-1])[, 1] > 1.50 | 
+        t(as.data.frame(fc_mean[2, ] / fc_mean[1, ])[-1])[, 1] < 0.67)
+
+#### 결과보고를 위한 작성 ####
 
 ```
