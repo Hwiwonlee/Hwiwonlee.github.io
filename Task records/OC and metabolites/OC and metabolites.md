@@ -1740,7 +1740,7 @@ ggplot(melt(data_BN[, c("Group", "age")], id.var = "Group"),
 
 
 # 3. histogram으로 분포보여주기
-dir <- "C:/Users/twingster/Documents/R_exer/NCC/graph_output/hist/"
+dir <- "..."
 explore_hist <- function(data, divived_num, folder_name, file_name, width, height){
   
   sub_data <- melt(data)
