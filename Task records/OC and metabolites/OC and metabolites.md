@@ -2,7 +2,10 @@ LOG
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
 [Plot every column in a data frame as a histogram on one page using ggplot](https://stackoverflow.com/questions/13035834/plot-every-column-in-a-data-frame-as-a-histogram-on-one-page-using-ggplot)  
-[Outlier detection and treatment with R](https://www.r-bloggers.com/outlier-detection-and-treatment-with-r/)
+[Outlier detection and treatment with R](https://www.r-bloggers.com/outlier-detection-and-treatment-with-r/)  
+[GGPlot Legend Title, Position and Labels](https://www.datanovia.com/en/blog/ggplot-legend-title-position-and-labels/#change-legend-title)
+[Plot multiple boxplot in one graph](https://stackoverflow.com/questions/14604439/plot-multiple-boxplot-in-one-graph)  
+
 
 
 ## 1. preprocessing
