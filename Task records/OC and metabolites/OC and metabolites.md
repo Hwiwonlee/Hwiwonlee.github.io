@@ -1697,7 +1697,7 @@ a # 55개의 metabolites들의 이름
 candidate_metabo[which(Change_names(candidate_metabo) %in% a)]
 
 # histogram으로 분포보여주기
-dir <- "C:/Users/twingster/Documents/R_exer/NCC/graph_output/hist/"
+dir <- "..."
 explore_hist <- function(data, divived_num, folder_name, file_name, width, height){
   
   sub_data <- melt(data)
