@@ -1672,6 +1672,8 @@ raw_info_add_set %>%
   select(8:88) %>% 
   summarise_all(funs(mean(., na.rm = T), median(., na.rm = T)))
 
+
+# 1. Paired t-test 
 mean_t_test <- lapply(all_metabolites, function(v) {
   t.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])
 })
@@ -1696,8 +1698,49 @@ a # 55개의 metabolites들의 이름
 # candidate된 모든 metabolites들에서 Group간 평균차이가 존재함. 
 candidate_metabo[which(Change_names(candidate_metabo) %in% a)]
 
-# histogram으로 분포보여주기
-dir <- "..."
+
+# 2. 기본 변수 분포 보여주기 
+
+raw_info_add_set %>% 
+  group_by(Group, sex) %>% 
+  summarise(n = n()) %>% 
+  ggplot(., aes(x = factor(sex), y = n, fill = factor(Group))) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_x_discrete(labels=c("Male", "Female")) +
+  xlab("Gender") + ylab("Count") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)
+
+raw_info_add_set %>% 
+  group_by(Group, smoking) %>% 
+  summarise(n = n()) %>% 
+  ggplot(., aes(x = factor(smoking), y = n, fill = factor(Group))) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_x_discrete(labels=c("Null", "Yes", "No")) +
+  xlab("Smoking") + ylab("Count") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)
+
+raw_info_add_set %>% 
+  group_by(Group, alcohol) %>% 
+  summarise(n = n()) %>% 
+  ggplot(., aes(x = factor(alcohol), y = n, fill = factor(Group))) + 
+  geom_bar(stat = "identity", position = "dodge") + 
+  scale_x_discrete(labels=c("Null", "Yes", "No")) +
+  xlab("Alcohol") + ylab("Count") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)
+
+ggplot(melt(data_BN[, c("Group", "age")], id.var = "Group"), 
+       aes(x = value, fill = factor(Group), colour = factor(Group))) + 
+  geom_density(alpha = 0.5) +
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE) + 
+  xlab("Age")
+
+
+# 3. histogram으로 분포보여주기
+dir <- "C:/Users/twingster/Documents/R_exer/NCC/graph_output/hist/"
 explore_hist <- function(data, divived_num, folder_name, file_name, width, height){
   
   sub_data <- melt(data)
@@ -1759,44 +1802,36 @@ ggplot(melt(raw_info_add_set[,  c("Group", Change_names(candidate_metabo)[20:38]
        aes(x = value, fill = factor(Group), colour = factor(Group))) + 
   geom_density(alpha = 0.5) + 
   facet_wrap( ~ variable, scales="free") + 
-  scale_colour_discrete(guide=FALSE) + 
   scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
   scale_colour_discrete(guide=FALSE)
 
 
-# box plot으로 분포 보여주기
+# 4. box plot으로 분포 보여주기
 ggplot(melt(raw_info_add_set[,  c("Group", Change_names(candidate_metabo)[1:19])], id.var = "Group"), 
        aes(x=variable, y=value)) + 
   geom_boxplot(aes(fill=as.factor(Group))) + 
-  facet_wrap( ~ variable, scales="free")
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)
+
 
 ggplot(melt(raw_info_add_set[,  c("Group", Change_names(candidate_metabo)[20:38])], id.var = "Group"), 
        aes(x=variable, y=value)) + 
   geom_boxplot(aes(fill=as.factor(Group))) + 
-  facet_wrap( ~ variable, scales="free")
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)
 
 
 
-ggplot(melt(raw_info_add_set[,  Change_names(candidate_metabo)]), aes(x = variable, y = value)) + 
-  geom_boxplot() + theme_minimal()
+ggplot(melt(raw_info_add_set[,  c("Group", "sex", "age", "smoking", "alcohol")], id.var = "Group"), 
+       aes(x=variable, y = value, fill = factor(Group))) + 
+  geom_bar(stat = "identity", position = "dodge")  + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)
 
 
-# 3. Group별로 분포보기 
-## 3.1 densitiy plot 
-BN_info_add_set %>% 
-  select(Group, beta_Hydroxybutyric_acid) %>% 
-  ggplot(., aes(beta_Hydroxybutyric_acid, fill = as.factor(Group), colour = as.factor(Group))) +
-  geom_density(alpha = 0.1)
-
-## 3.2 box plot 
-BN_info_add_set %>% 
-  select(Group, Guanine) %>% 
-  ggplot(., aes(y=Guanine, x = as.factor(Group), fill = as.factor(Group), colour = as.factor(Group))) +
-  geom_boxplot(alpha = 0.1)
-
-
-
-# fold change 
+# 5. fold change 
 raw_info_add_set %>% 
   select(Group, Change_names(candidate_metabo)) %>% 
   group_by(Group) %>% 
@@ -1807,13 +1842,96 @@ raw_info_add_set %>%
   group_by(Group) %>% 
   summarise_each(funs(mean)) -> fc_mean
 
-# FC with median 
+## FC with median 
 which(t(as.data.frame(fc_median[2, ] / fc_median[1, ])[-1])[, 1] > 1.50 | 
         t(as.data.frame(fc_median[2, ] / fc_median[1, ])[-1])[, 1] < 0.67)
 
-# FC with mean 
+## FC with mean 
 which(t(as.data.frame(fc_mean[2, ] / fc_mean[1, ])[-1])[, 1] > 1.50 | 
         t(as.data.frame(fc_mean[2, ] / fc_mean[1, ])[-1])[, 1] < 0.67)
+
+
+# 6. PSM을 이용한 matching
+summary(matchit(Group ~ sex + age, method = "optimal", distance = "logit", data = raw_info_add_set, ratio = 2))
+
+# all variable을 이용한 PSM
+summary(matchit(formula = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+", paste(Change_names(candidate_metabo), collapse = " + ")))
+                ,method = "nearest", data = raw_info_add_set, ratio = 2))
+
+# 가독성을 위해 match 정보를 변수로 저장 
+PSM_all_variable <- matchit(formula = Group ~ sex + age + smoking + alcohol + beta_Hydroxybutyric_acid + 
+                              Acetylcholine + L_Alanine + L_Arginine + L_Aspartic_acid + 
+                              L_Asparagine + L_Carnitine + Choline + Creatinine + Dimethylglycine + 
+                              Gamma_Aminobutyric_acid + Betaine + L_Glutamine + Glycine + 
+                              L_Isoleucine + L_Kynurenine + L_Leucine + L_Lysine + L_Methionine + 
+                              Nicotinic_acid + L_Phenylalanine + L_Proline + Pyridoxamine + 
+                              Pyridoxine + L_Serine + Taurine + L_Threonine + Hydroxy_L_proline + 
+                              Urea + L_Valine + L_Acetylcarnitine + Decanoylcarnitine + 
+                              L_Glutamic_acid + Hexanoylcarnitine + Isovalerylcarnitine + 
+                              L_Octanoylcarnitine + Glycerophosphocholine + Trimethylamine_N_oxide,
+                            method = "optimal", distance = "logit", data = raw_info_add_set, ratio = 2)
+
+summary(PSM_all_variable)
+length(unique(PSM_all_variable$subclass))
+
+
+# sex, age를 이용한 PSM 결과를 저장, PSM1_raw_info...
+PSM1_raw_info_add_set <- match.data(matchit(Group ~ sex + age, 
+                                            method = "optimal", 
+                                            distance = "logit",
+                                            data = raw_info_add_set, ratio = 2))
+
+# 모든 variable을 이용한 PSM 결과를 저장, PSM2_raw_info...
+PSM2_raw_info_add_set <- match.data(PSM_all_variable)
+
+# 사용할 formula, significant한 metabolites + "sex", "age", "smoking", "alcohol"
+PSM_formula_candi = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
+                                     paste(Change_names(candidate_metabo), collapse = " + "),
+                                     "+ strata(subclass)"))
+
+
+# PSM1_raw_info_add_set을 이용한 CLR
+summary(clogit(formula = Group ~ smoking + alcohol + beta_Hydroxybutyric_acid + 
+                 Acetylcholine + L_Alanine + L_Arginine + L_Aspartic_acid + 
+                 L_Asparagine + L_Carnitine + Choline + Creatinine + Dimethylglycine + 
+                 Gamma_Aminobutyric_acid + Betaine + L_Glutamine + Glycine + 
+                 L_Isoleucine + L_Kynurenine + L_Leucine + L_Lysine + L_Methionine + 
+                 Nicotinic_acid + L_Phenylalanine + L_Proline + Pyridoxamine + 
+                 Pyridoxine + L_Serine + Taurine + L_Threonine + Hydroxy_L_proline + 
+                 Urea + L_Valine + L_Acetylcarnitine + Decanoylcarnitine + 
+                 L_Glutamic_acid + Hexanoylcarnitine + Isovalerylcarnitine + 
+                 L_Octanoylcarnitine + Glycerophosphocholine + Trimethylamine_N_oxide, 
+               data = PSM1_raw_info_add_set, method='exact'))
+
+summary(clogit(formula = PSM_formula_candi, data = PSM1_raw_info_add_set, 
+               control = coxph.control(iter.max = 10000), method='exact'))
+
+summary(clogit(formula = PSM_formula_candi, data = PSM1_raw_info_add_set, 
+               control = coxph.control(iter.max = 10000), method='breslow'))
+
+summary(clogit(formula = PSM_formula_candi, data = PSM1_raw_info_add_set, 
+               control = coxph.control(iter.max = 10000), method='approximate'))
+
+
+# PSM2_raw_info_add_set을 이용한 CLR
+summary(clogit(formula = PSM_formula_candi, 
+               data = PSM2_raw_info_add_set, 
+               control = coxph.control(iter.max = 10000), 
+               method='exact'))
+
+summary(clogit(formula = as.formula(paste("Group ~ ", paste(a, collapse = " + "), "+ strata(subclass)")),
+               data = PSM2_raw_info_add_set, 
+               control = coxph.control(iter.max = 10000), 
+               method='exact'))
+
+a <- c(base_var, Change_names(candidate_metabo))[-c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,29)]
+a %in% Change_names(special_metabo)
+
+
+clogistic(formula = Group ~ L_Acetylcarnitine + Decanoylcarnitine + L_Glutamic_acid + 
+                    Hexanoylcarnitine + Isovalerylcarnitine + L_Octanoylcarnitine + 
+                    Glycerophosphocholine + Trimethylamine_N_oxide,
+          strata = subclass, data = PSM2_raw_info_add_set, iter.max = 10000)
 
 #### 결과보고를 위한 작성 ####
 
