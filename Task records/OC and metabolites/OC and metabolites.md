@@ -1859,7 +1859,7 @@ summary(matchit(Group ~ sex + age, method = "optimal", distance = "logit", data 
 
 # all variable을 이용한 PSM
 summary(matchit(formula = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+", paste(Change_names(candidate_metabo), collapse = " + ")))
-                ,method = "nearest", data = raw_info_add_set, ratio = 2))
+                ,method = "optimal", data = raw_info_add_set, ratio = 2))
 
 # 가독성을 위해 match 정보를 변수로 저장 
 PSM_all_variable <- matchit(formula = Group ~ sex + age + smoking + alcohol + beta_Hydroxybutyric_acid + 
@@ -1872,7 +1872,7 @@ PSM_all_variable <- matchit(formula = Group ~ sex + age + smoking + alcohol + be
                               Urea + L_Valine + L_Acetylcarnitine + Decanoylcarnitine + 
                               L_Glutamic_acid + Hexanoylcarnitine + Isovalerylcarnitine + 
                               L_Octanoylcarnitine + Glycerophosphocholine + Trimethylamine_N_oxide,
-                            method = "optimal", distance = "logit", data = raw_info_add_set, ratio = 2)
+                            method = "subclass", distance = "logit", data = raw_info_add_set, ratio = 2)
 
 summary(PSM_all_variable)
 length(unique(PSM_all_variable$subclass))
@@ -1886,6 +1886,17 @@ PSM1_raw_info_add_set <- match.data(matchit(Group ~ sex + age,
 
 # 모든 variable을 이용한 PSM 결과를 저장, PSM2_raw_info...
 PSM2_raw_info_add_set <- match.data(PSM_all_variable)
+
+
+
+# t-test로 test 결과 matching이 이상한 것 같다. 
+lapply(Change_names(candidate_metabo), function(v) {
+  t.test(as.data.frame(PSM2_raw_info_add_set)[, v] ~ PSM2_raw_info_add_set$Group)
+})
+
+# 내가 지금 이쯤부터 뭔가를 잘못하고 있는 것 같은데?
+# matching부터 다시 하자. 
+
 
 # 사용할 formula, significant한 metabolites + "sex", "age", "smoking", "alcohol"
 PSM_formula_candi = as.formula(paste("Group ~", paste(base_var, collapse = " + "), "+",
