@@ -84,6 +84,12 @@ data_info %>%
 
 metabolites_list <- read.xlsx(paste(dir, "name_map.xlsx", sep = "/"), sheetIndex = 1, stringsAsFactors=FALSE)
 
+data_stage <- read.xlsx(paste(dir, "OC stage info.xlsx", sep = "/"), header=TRUE, sheetIndex = 1, stringsAsFactors=FALSE)
+data_stage %>% 
+  mutate(site = replace(site, site == "Buccal혻Mucosa", "Buccal Mucosa")) -> data_stage
+
+
+
 # 공백 제거 
 metabolites_name <- gsub(" $", "", metabolites_list$Match) 
 length(metabolites_name) # 91개  
@@ -1179,43 +1185,44 @@ summary(clogit(formula = formula_all, data = BN_info_log, control = coxph.contro
 
 #### Univariate conditional logistic regression ####
 
-UCLR <- function(data, target_position) {
+UsCLR <- function(data, target_position) {
   
   result <- list(NULL, NULL)
-  summary_UCLR <- c()
+  summary_UsCLR <- c()
   
   
   list <- names(data[-target_position])
   
   for (i in 1 : length(list)){
     formula <- as.formula(paste("Group ~", list[i], "+ strata(set)"))
-    result_ith_UCLR <- round(summary(clogit(formula = formula, data = data))$coefficients, 4)
-    summary_UCLR <- rbind(summary_UCLR, result_ith_UCLR)
+    result_ith_UsCLR <- round(summary(clogit(formula = formula, data = data, method = "efron"))$coefficients, 4)
+    summary_UsCLR <- rbind(summary_UsCLR, result_ith_UCLR)
   }
   
-  summary_UCLR <- as.data.frame(summary_UCLR)
+  summary_UsCLR <- as.data.frame(summary_UsCLR)
   
   #### <TO DO> rename으로바꿔보기 ####
-  colnames(summary_UCLR)[5] <- "p_value"
+  colnames(summary_UsCLR)[5] <- "p_value"
   
-  summary_UCLR %>% 
+  summary_UsCLR %>% 
     tibble::rownames_to_column(., "Name") %>% 
     dplyr::arrange(p_value) %>% 
     dplyr::filter(p_value <= 0.05) -> result[[1]]
   
   
-  summary_UCLR %>% 
+  summary_UsCLR %>% 
     tibble::rownames_to_column(., "Name") %>% 
     dplyr::arrange(p_value) -> result[[2]]
-    
+  
   return(result)
 }
 
 #### ####
 
-raw_result_unscale <- UCLR(BN_info, c(1,2,7))
-raw_result_log <- UCLR(BN_info_log, c(1,2,7))
-raw_result_st <- UCLR(BN_info_st, c(1,2,7))
+
+raw_result_unscale <- UsCLR(BN_info, c(1,2,7))
+raw_result_log <- UsCLR(BN_info_log, c(1,2,7))
+raw_result_st <- UsCLR(BN_info_st, c(1,2,7))
 
 raw_result_st[[1]]
 raw_result_log[[1]]
