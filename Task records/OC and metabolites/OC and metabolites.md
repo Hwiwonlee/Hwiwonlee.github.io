@@ -2022,4 +2022,5 @@ sum( duplicated(larynx$t2death[ larynx$death==1 ] ) )
 
 #### 결과보고를 위한 작성 ####
 
+# 결과 작성을 위한 함수 만들기
 ```
