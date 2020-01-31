@@ -2026,3 +2026,1231 @@ sum( duplicated(larynx$t2death[ larynx$death==1 ] ) )
 
 # 결과 작성을 위한 함수 만들기
 ```
+
+```r
+#### 1.30 ####
+
+#### 1. 정규성 검정 ####
+
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 1) %>% 
+  select(all_metabolites) %>% 
+  lapply(., shapiro.test) %>% 
+  unlist() %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  
+  # 정규성 검정 결과
+  dplyr::filter(grepl("p.value", rowname)) %>% 
+  write.xlsx("normal_test_case.xlsx")
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>% 
+  select(all_metabolites) %>% 
+  lapply(., shapiro.test) %>% 
+  unlist() %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  
+  # 정규성 검정 결과
+  dplyr::filter(grepl("p.value", rowname)) %>% 
+  write.xlsx("normal_test_control.xlsx")
+
+
+
+#### 1. 정규성 검정 ####
+
+#### Primary task, basical table ####
+#### base ####
+# gender
+raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, sex)) %>% 
+  dplyr::filter(Group == 0) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, sex)) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+# age, continuous
+raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, age)) %>% 
+  dplyr::filter(Group == 0) %>% 
+  summarise_all(funs(mean, sd))
+
+raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, age)) %>% 
+  dplyr::filter(Group == 1) %>% 
+  summarise_all(funs(mean, sd))
+#### base ####
+
+#### age ####
+raw_info_add_set %>% 
+  rownames_to_column() %>% 
+  type_convert(cols(rowname = col_double())) -> index_raw_info_add_set
+
+# control age 추출 
+index_raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>% 
+  select(rowname, age) -> control_age
+
+# case age 추출 
+index_raw_info_add_set %>% 
+  dplyr::filter(Group == 1) %>% 
+  select(rowname, age) -> case_age
+
+# 다시 한번 quantile 확인 
+round(quantile(as.data.frame(control_age)$age, probs = seq(0, 1, length = 5)))
+round(quantile(as.data.frame(case_age)$age, probs = seq(0, 1, length = 5)))
+
+# age를 categorical로 바꿔주는 함수 
+age_to_categorical <- function(data){
+  c <- as.vector(round(quantile(as.data.frame(data)$age, probs = seq(0, 1, length = 5))))
+  cate_age <- c()
+  
+  for(i in 1:nrow(data)){
+    if(as.data.frame(data)[i, "age"] <  c[2]) {
+      cate_age[i] <- 1
+    } else if(as.data.frame(data)[i, "age"] <  c[3]) {
+      cate_age[i] <- 2
+    } else if(as.data.frame(data)[i, "age"] <  c[4]) {
+      cate_age[i] <- 3
+    } else if (as.data.frame(data)[i, "age"] <=  c[5]) {
+      cate_age[i] <- 4
+    }
+  }
+  result <- cbind(rowname = data$rowname, cate_age)
+  return(result)
+}
+
+age_to_categorical_control <- function(data){
+  c <- as.vector(round(quantile(as.data.frame(control_age)$age, probs = seq(0, 1, length = 5))))
+  cate_age <- c()
+  
+  for(i in 1:nrow(data)){
+    if(as.data.frame(data)[i, "age"] <  c[2]) {
+      cate_age[i] <- 1
+    } else if(as.data.frame(data)[i, "age"] <  c[3]) {
+      cate_age[i] <- 2
+    } else if(as.data.frame(data)[i, "age"] <  c[4]) {
+      cate_age[i] <- 3
+    } else if (as.data.frame(data)[i, "age"] <=  c[5]) {
+      cate_age[i] <- 4
+    } else 
+      cate_age[i] <- 4
+  }
+  result <- cbind(rowname = data$rowname, cate_age)
+  return(result)
+}
+
+age_to_categorical_overall <- function(data){
+  c <- as.vector(round(quantile(as.data.frame(raw_info_add_set)$age, probs = seq(0, 1, length = 5))))
+  cate_age <- c()
+  
+  for(i in 1:nrow(data)){
+    if(as.data.frame(data)[i, "age"] <  c[2]) {
+      cate_age[i] <- 1
+    } else if(as.data.frame(data)[i, "age"] <  c[3]) {
+      cate_age[i] <- 2
+    } else if(as.data.frame(data)[i, "age"] <  c[4]) {
+      cate_age[i] <- 3
+    } else if (as.data.frame(data)[i, "age"] <=  c[5]) {
+      cate_age[i] <- 4
+    } else 
+      cate_age[i] <- 4
+  }
+  result <- cbind(rowname = data$rowname, cate_age)
+  return(result)
+}
+
+categorical_age <- rbind(age_to_categorical_overall(case_age), 
+                         age_to_categorical_overall(control_age))
+
+categorical_age %>% 
+  as.data.frame() %>% 
+  arrange(rowname) -> categorical_age
+
+# age를 categorical로 바꾼 dataset 
+index_raw_info_add_set %>% 
+  merge(categorical_age, by = "rowname") %>% 
+  select(rowname, set, Group, sex, age, cate_age, everything()) -> age_c_raw_info_add_set
+
+# 4분위수를 기준, categorical age의 갯수
+# control
+age_c_raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, cate_age)) %>% 
+  dplyr::filter(Group == 0) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+# case
+age_c_raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, cate_age)) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+#### age ####
+
+# smoking status
+raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, smoking)) %>% 
+  dplyr::filter(Group == 0) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, smoking)) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+# alcohol status
+raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, alcohol)) %>% 
+  dplyr::filter(Group == 0) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+raw_info_add_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, alcohol)) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+#### metabolites ####
+# control group mean by column-wise
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>%
+  select(Group, age, 8:88) %>% 
+  summarise_all(funs(q25 = quantile(., probs = .25),
+                     q50 = quantile(., probs = .5),
+                     q75 = quantile(., probs = .75))) %>% 
+  select(contains("_q25"))  %>% 
+  rename_at(vars(matches("_q25$")), funs(str_replace(., "_q25", ""))) %>% 
+  rownames_to_column %>%
+  gather(variable, value, -rowname)
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>%
+  select(Group, age, 8:88) %>% 
+  summarise_all(funs(q25 = quantile(., probs = .25),
+                     q50 = quantile(., probs = .5),
+                     q75 = quantile(., probs = .75))) %>% 
+  select(contains("_q50"))  %>% 
+  rename_at(vars(matches("_q50$")), funs(str_replace(., "_q50", ""))) %>% 
+  rownames_to_column %>%
+  gather(variable, value, -rowname)
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>%
+  select(Group, age, 8:88) %>% 
+  summarise_all(funs(q25 = quantile(., probs = .25),
+                     q50 = quantile(., probs = .5),
+                     q75 = quantile(., probs = .75))) %>% 
+  select(contains("_q75"))  %>% 
+  rename_at(vars(matches("_q75$")), funs(str_replace(., "_q75", ""))) %>% 
+  rownames_to_column %>%
+  gather(variable, value, -rowname)
+
+# caes group mean by column-wise
+raw_info_add_set %>% 
+  dplyr::filter(Group == 1) %>%
+  select(Group, age, 8:88) %>% 
+  summarise_all(funs(q25 = quantile(., probs = .25),
+                     q50 = quantile(., probs = .5),
+                     q75 = quantile(., probs = .75))) %>% 
+  select(contains("_q25"))  %>% 
+  rename_at(vars(matches("_q25$")), funs(str_replace(., "_q25", ""))) %>% 
+  rownames_to_column %>%
+  gather(variable, value, -rowname)
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 1) %>%
+  select(Group, age, 8:88) %>% 
+  summarise_all(funs(q25 = quantile(., probs = .25),
+                     q50 = quantile(., probs = .5),
+                     q75 = quantile(., probs = .75))) %>% 
+  select(contains("_q50"))  %>% 
+  rename_at(vars(matches("_q50$")), funs(str_replace(., "_q50", ""))) %>% 
+  rownames_to_column %>%
+  gather(variable, value, -rowname)
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 1) %>%
+  select(Group, age, 8:88) %>% 
+  summarise_all(funs(q25 = quantile(., probs = .25),
+                     q50 = quantile(., probs = .5),
+                     q75 = quantile(., probs = .75))) %>% 
+  select(contains("_q75"))  %>% 
+  rename_at(vars(matches("_q75$")), funs(str_replace(., "_q75", ""))) %>% 
+  rownames_to_column %>%
+  gather(variable, value, -rowname)
+
+#### metabolites ####
+
+#### function to show ####
+report_result_test <- function() {
+  # gender
+  raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, sex)) %>% 
+    dplyr::filter(Group == 0) %>% 
+    gather(Group, var) %>% 
+    count(Group, var) %>% 
+    spread(var, n, fill = 0) -> r1
+  
+  raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, sex)) %>% 
+    dplyr::filter(Group == 1) %>% 
+    gather(Group, var) %>% 
+    count(Group, var) %>% 
+    spread(var, n, fill = 0) -> r2
+  
+  # age, continuous
+  raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, age)) %>% 
+    dplyr::filter(Group == 0) %>% 
+    summarise_all(funs(mean, sd)) -> r3
+  
+  raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, age)) %>% 
+    dplyr::filter(Group == 1) %>% 
+    summarise_all(funs(mean, sd)) -> r4
+  
+  #### age ####
+  raw_info_add_set %>% 
+    rownames_to_column() %>% 
+    type_convert(cols(rowname = col_double())) -> index_raw_info_add_set
+  
+  # control age 추출 
+  index_raw_info_add_set %>% 
+    dplyr::filter(Group == 0) %>% 
+    select(rowname, age) -> control_age
+  
+  # case age 추출 
+  index_raw_info_add_set %>% 
+    dplyr::filter(Group == 1) %>% 
+    select(rowname, age) -> case_age
+  
+  # 다시 한번 quantile 확인 
+  round(quantile(as.data.frame(control_age)$age, probs = seq(0, 1, length = 5)))
+  round(quantile(as.data.frame(case_age)$age, probs = seq(0, 1, length = 5)))
+  
+  # age를 categorical로 바꿔주는 함수 
+  age_to_categorical <- function(data){
+    c <- as.vector(round(quantile(as.data.frame(data)$age, probs = seq(0, 1, length = 5))))
+    cate_age <- c()
+    
+    for(i in 1:nrow(data)){
+      if(as.data.frame(data)[i, "age"] <  c[2]) {
+        cate_age[i] <- 1
+      } else if(as.data.frame(data)[i, "age"] <  c[3]) {
+        cate_age[i] <- 2
+      } else if(as.data.frame(data)[i, "age"] <  c[4]) {
+        cate_age[i] <- 3
+      } else if (as.data.frame(data)[i, "age"] <=  c[5]) {
+        cate_age[i] <- 4
+      }
+    }
+    result <- cbind(rowname = data$rowname, cate_age)
+    return(result)
+  }
+  
+  age_to_categorical_control <- function(data){
+    c <- as.vector(round(quantile(as.data.frame(control_age)$age, probs = seq(0, 1, length = 5))))
+    cate_age <- c()
+    
+    for(i in 1:nrow(data)){
+      if(as.data.frame(data)[i, "age"] <  c[2]) {
+        cate_age[i] <- 1
+      } else if(as.data.frame(data)[i, "age"] <  c[3]) {
+        cate_age[i] <- 2
+      } else if(as.data.frame(data)[i, "age"] <  c[4]) {
+        cate_age[i] <- 3
+      } else if (as.data.frame(data)[i, "age"] <=  c[5]) {
+        cate_age[i] <- 4
+      } else 
+        cate_age[i] <- 4
+    }
+    result <- cbind(rowname = data$rowname, cate_age)
+    return(result)
+  }
+  
+  age_to_categorical_overall <- function(data){
+    c <- as.vector(round(quantile(as.data.frame(raw_info_add_set)$age, probs = seq(0, 1, length = 5))))
+    cate_age <- c()
+    
+    for(i in 1:nrow(data)){
+      if(as.data.frame(data)[i, "age"] <  c[2]) {
+        cate_age[i] <- 1
+      } else if(as.data.frame(data)[i, "age"] <  c[3]) {
+        cate_age[i] <- 2
+      } else if(as.data.frame(data)[i, "age"] <  c[4]) {
+        cate_age[i] <- 3
+      } else if (as.data.frame(data)[i, "age"] <=  c[5]) {
+        cate_age[i] <- 4
+      } else 
+        cate_age[i] <- 4
+    }
+    result <- cbind(rowname = data$rowname, cate_age)
+    return(result)
+  }
+  
+  categorical_age <- rbind(age_to_categorical_overall(case_age), 
+                           age_to_categorical_overall(control_age))
+  
+  categorical_age %>% 
+    as.data.frame() %>% 
+    arrange(rowname) -> categorical_age
+  
+  # age를 categorical로 바꾼 dataset 
+  index_raw_info_add_set %>% 
+    merge(categorical_age, by = "rowname") %>% 
+    select(rowname, set, Group, sex, age, cate_age, everything()) -> age_c_raw_info_add_set
+  
+  # 4분위수를 기준, categorical age의 갯수
+  # control
+  age_c_raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, cate_age)) %>% 
+    dplyr::filter(Group == 0) %>% 
+    gather(Group, var) %>% 
+    count(Group, var) %>% 
+    spread(var, n, fill = 0) -> r5
+  
+  # case
+  age_c_raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, cate_age)) %>% 
+    dplyr::filter(Group == 1) %>% 
+    gather(Group, var) %>% 
+    count(Group, var) %>% 
+    spread(var, n, fill = 0) -> r6
+  
+  #### age ####
+  
+  # smoking status
+  raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, smoking)) %>% 
+    dplyr::filter(Group == 0) %>% 
+    gather(Group, var) %>% 
+    count(Group, var) %>% 
+    spread(var, n, fill = 0) -> r7
+  
+  raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, smoking)) %>% 
+    dplyr::filter(Group == 1) %>% 
+    gather(Group, var) %>% 
+    count(Group, var) %>% 
+    spread(var, n, fill = 0) -> r8
+  
+  # alcohol status
+  raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, alcohol)) %>% 
+    dplyr::filter(Group == 0) %>% 
+    gather(Group, var) %>% 
+    count(Group, var) %>% 
+    spread(var, n, fill = 0) -> r9
+  
+  raw_info_add_set %>% 
+    group_by(Group) %>% 
+    select(c(Group, alcohol)) %>% 
+    dplyr::filter(Group == 1) %>% 
+    gather(Group, var) %>% 
+    count(Group, var) %>% 
+    spread(var, n, fill = 0) -> r10
+  
+  #### metabolites ####
+  # control group mean by column-wise
+  raw_info_add_set %>% 
+    dplyr::filter(Group == 0) %>%
+    select(Group, age, 8:88) %>% 
+    summarise_all(funs(q25 = quantile(., probs = .25),
+                       q50 = quantile(., probs = .5),
+                       q75 = quantile(., probs = .75))) %>% 
+    select(contains("_q25"))  %>% 
+    rename_at(vars(matches("_q25$")), funs(str_replace(., "_q25", ""))) %>% 
+    rownames_to_column %>%
+    gather(variable, value, -rowname) -> r11
+  
+  raw_info_add_set %>% 
+    dplyr::filter(Group == 0) %>%
+    select(Group, age, 8:88) %>% 
+    summarise_all(funs(q25 = quantile(., probs = .25),
+                       q50 = quantile(., probs = .5),
+                       q75 = quantile(., probs = .75))) %>% 
+    select(contains("_q50"))  %>% 
+    rename_at(vars(matches("_q50$")), funs(str_replace(., "_q50", ""))) %>% 
+    rownames_to_column %>%
+    gather(variable, value, -rowname) -> r12 
+  
+  raw_info_add_set %>% 
+    dplyr::filter(Group == 0) %>%
+    select(Group, age, 8:88) %>% 
+    summarise_all(funs(q25 = quantile(., probs = .25),
+                       q50 = quantile(., probs = .5),
+                       q75 = quantile(., probs = .75))) %>% 
+    select(contains("_q75"))  %>% 
+    rename_at(vars(matches("_q75$")), funs(str_replace(., "_q75", ""))) %>% 
+    rownames_to_column %>%
+    gather(variable, value, -rowname) -> r13 
+
+  # caes group mean by column-wise
+  raw_info_add_set %>% 
+    dplyr::filter(Group == 1) %>%
+    select(Group, age, 8:88) %>% 
+    summarise_all(funs(q25 = quantile(., probs = .25),
+                       q50 = quantile(., probs = .5),
+                       q75 = quantile(., probs = .75))) %>% 
+    select(contains("_q25"))  %>% 
+    rename_at(vars(matches("_q25$")), funs(str_replace(., "_q25", ""))) %>% 
+    rownames_to_column %>%
+    gather(variable, value, -rowname) -> r14
+  
+  raw_info_add_set %>% 
+    dplyr::filter(Group == 1) %>%
+    select(Group, age, 8:88) %>% 
+    summarise_all(funs(q25 = quantile(., probs = .25),
+                       q50 = quantile(., probs = .5),
+                       q75 = quantile(., probs = .75))) %>% 
+    select(contains("_q50"))  %>% 
+    rename_at(vars(matches("_q50$")), funs(str_replace(., "_q50", ""))) %>% 
+    rownames_to_column %>%
+    gather(variable, value, -rowname) -> r15 
+  
+  raw_info_add_set %>% 
+    dplyr::filter(Group == 1) %>%
+    select(Group, age, 8:88) %>% 
+    summarise_all(funs(q25 = quantile(., probs = .25),
+                       q50 = quantile(., probs = .5),
+                       q75 = quantile(., probs = .75))) %>% 
+    select(contains("_q75"))  %>% 
+    rename_at(vars(matches("_q75$")), funs(str_replace(., "_q75", ""))) %>% 
+    rownames_to_column %>%
+    gather(variable, value, -rowname) -> r16 
+
+  #### metabolites ####
+  
+  result <- list(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16)
+  return(result)
+}
+
+report_result_test() %>% 
+  write.xlsx("median_25_75.xlsx")
+#### function to show ####
+
+#### distribution test ####
+# age kruskal test 
+lapply("age", function(v) {
+  kruskal.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])
+})
+
+# metabolites kruskal test
+kruskal.test <- lapply(all_metabolites, function(v) {
+  kruskal.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])
+})
+
+dim(t(t(unlist(kruskal.test))))
+
+t(t(unlist(kruskal.test))) %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(grepl("^p.value", rowname)) %>% 
+  write.xlsx("kruskal_test_metabolites.xlsx")
+#### distribution test ####
+
+#### histogram #### 
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[1:19])], id.var = "Group"), 
+       aes(x = value, fill = factor(Group), colour = factor(Group))) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE) +
+  ggsave(paste0(dir, "/hist_1.jpg"), width=30, height=15, units=c("cm"))
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[20:38])], id.var = "Group"), 
+       aes(x = value, fill = factor(Group), colour = factor(Group))) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE) +
+  ggsave(paste0(dir, "/hist_2.jpg"), width=30, height=15, units=c("cm"))
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[39:57])], id.var = "Group"), 
+       aes(x = value, fill = factor(Group), colour = factor(Group))) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE) + 
+  ggsave(paste0(dir, "/hist_3.jpg"), width=30, height=15, units=c("cm"))
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[58:76])], id.var = "Group"), 
+       aes(x = value, fill = factor(Group), colour = factor(Group))) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE) + 
+  ggsave(paste0(dir, "/hist_4.jpg"), width=30, height=15, units=c("cm"))
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[77:81])], id.var = "Group"), 
+       aes(x = value, fill = factor(Group), colour = factor(Group))) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE) + 
+  ggsave(paste0(dir, "/hist_5.jpg"), width=30, height=15, units=c("cm"))
+#### histogram #### 
+
+#### box-plot #### 
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[1:19])], id.var = "Group"), 
+       aes(x=variable, y=value)) + 
+  geom_boxplot(aes(fill=as.factor(Group))) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)  + 
+  ggsave(paste0(dir, "/box_1.jpg"), width=30, height=15, units=c("cm"))
+
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[20:38])], id.var = "Group"), 
+       aes(x=variable, y=value)) + 
+  geom_boxplot(aes(fill=as.factor(Group))) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE) + 
+  ggsave(paste0(dir, "/box_2.jpg"), width=30, height=15, units=c("cm"))
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[39:57])], id.var = "Group"), 
+       aes(x=variable, y=value)) + 
+  geom_boxplot(aes(fill=as.factor(Group))) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)  + 
+  ggsave(paste0(dir, "/box_3.jpg"), width=30, height=15, units=c("cm"))
+
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[58:76])], id.var = "Group"), 
+       aes(x=variable, y=value)) + 
+  geom_boxplot(aes(fill=as.factor(Group))) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)  + 
+  ggsave(paste0(dir, "/box_4.jpg"), width=30, height=15, units=c("cm"))
+
+ggplot(melt(raw_info_add_set[,  c("Group", Change_names(all_metabolites)[77:81])], id.var = "Group"), 
+       aes(x=variable, y=value)) + 
+  geom_boxplot(aes(fill=as.factor(Group))) + 
+  facet_wrap( ~ variable, scales="free") + 
+  scale_fill_discrete(name = "C & OC", labels = c("C", "OC")) + 
+  scale_colour_discrete(guide=FALSE)  + 
+  ggsave(paste0(dir, "/box_5.jpg"), width=30, height=15, units=c("cm"))
+#### box-plot #### 
+
+#### Primary task, basical table ####
+
+
+
+
+
+#### 2. control의 median 기준으로 나눌 것 ####
+# 기존의 code, 전체를 기준으로 median으로 나눔
+raw_info_add_set %>% 
+  mutate_at(vars(8:88), list(~replace(., Group != 3, ntile(., 2)))) -> median_test_set
+
+# control 기준, median 계산 
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>% 
+  summarise_at(vars(8:88), funs(median)) -> median_standard
+
+
+replace.using.median <- function(data){ 
+  u <- matrix(0, nrow(data), ncol(data))
+  
+  for(i in 1:length(median_standard)){ 
+    for (j in 1:nrow(data)){
+      
+      ## median보다 작으면 1, median보다 크면 2
+      if(median_standard[, i] > data[j, i]) {
+        u[j, i] <- 1 
+      } else{
+        u[j, i] <- 2
+      }
+    }
+  }
+  u <- as.data.frame(u)
+  colnames(u) <- names(median_standard)
+  return(u)
+}
+
+u <- replace.using.median(raw_info_add_set[, all_metabolites])
+dim(u)
+
+#### 함수 결과 검증  ####
+u[, 1] # 함수를 이용한 beta_Hydroxy 변환 결과 
+as.numeric(as.vector((6388 > raw_info_add_set[, 8]))) # 직접 해본 beta_Hydroxy 변환 결과 
+## 같음 
+
+dim(cbind(raw_info_add_set[, 1:7], u))
+dim(raw_info_add_set)
+## 같음 
+
+# 새로운 data set으로 선언 
+median_data_set <- as.data.frame(cbind(raw_info_add_set[, 1:7], u))
+
+
+# 이전 code와 달라졌는지 확인 
+# old version
+median_test_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, Change_names(all_metabolites))) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+
+# new version
+median_data_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, Change_names(all_metabolites))) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  count(Group, var) %>% 
+  spread(var, n, fill = 0)
+# 달라졌음을 확인함 
+
+#### 함수 결과 검증 : 맞음 ####
+
+median_standard # Control group으로 계산한 median set
+replace.using.median() # median_standard를 이용, categorical로 변환시켜주는 함수
+median_data_set # 위의 두 object를 이용해 새로 선언한 dataset 
+
+CLR_mfactor_c_HW <- function(data, metabolites_name, strata_name, point) { 
+  
+  m1 <- list()
+  n <- c()
+  m1_j <- 1
+  
+  a1 <-list()
+  all_name <- c()
+  
+  for(i in 1:length(metabolites_name)) {
+    formula <- as.formula(paste("Group ~ ", 
+                                paste0("factor(", "sex)"),
+                                "+ age", 
+                                paste0("+ factor(", "smoking)"),
+                                paste0("+ factor(", "alcohol)"),
+                                paste0("+ factor(", metabolites_name[i], ")"),
+                                paste0("+ strata(", strata_name, ")") ))
+    
+    r1 <- summary(clogit(formula = formula, 
+                         data = data, control = coxph.control(iter.max = 100), method='exact'))
+    
+    # 모든 결과를 a1에 저장
+    a1[[i]] <- r1
+    all_name <- c(all_name, metabolites_name[i])
+    
+    # p-value, 0.05보다 작은 결과만 m1에 저장 
+    if(r1$coefficients[point,5] < 0.05) { 
+      m1[[m1_j]] <- r1
+      m1_j <- m1_j+1
+      n <- c(n, metabolites_name[i])
+      
+    }
+  }
+  
+  result <- list(a1, all_name, m1, n)
+  
+  return(result)
+}
+i <- 81
+#### Point 체크를 위한 따로 돌려보기 ####
+r1 <- summary(clogit(formula = formula, 
+                     data = median_data_set, control = coxph.control(iter.max = 100), method='exact'))
+
+r1$coefficients[7,5]
+#### Point 체크를 위한 따로 돌려보기 ####
+# median에서는 point 9
+
+CLR_median <- CLR_mfactor_c_HW(median_data_set, all_metabolites, "set", 7)
+
+table_gen <- function(result, point) {
+  
+  z <- result
+  q <- z[[2]]
+  
+  r <- matrix(0, length(z[[1]]), (length(z[[1]][[1]]$conf.int[point, ]))+1)
+  
+  for(i in 1:length(z[[1]])) {
+    r[i, ] <- c(z[[1]][[i]]$conf.int[point, ], z[[1]][[i]]$coefficients[point, 5])
+  }
+  
+  e <- as.data.frame(cbind(q, r))
+  
+  colnames(e) = c("Metabolites","exp(coef)", "exp(-coef)", "lower .95", "upper .95", "p-value")
+  
+  return(e)
+}
+
+table_gen(CLR_median, 7)
+
+#### median 기준의 simple CLR ####
+UsCLR <- function(data, target_position) {
+  
+  result <- list(NULL, NULL)
+  summary_UsCLR <- c()
+  
+  
+  list <- names(data[-target_position])
+  
+  for (i in 1 : length(list)){
+    formula <- as.formula(paste("Group ~", list[i], "+ strata(set)"))
+    
+    result_ith_UsCLR1 <- summary(clogit(formula = formula, data = data, method = "efron"))$coefficients
+    result_ith_UsCLR2 <- summary(clogit(formula = formula, data = data, method = "efron"))$conf.int
+    
+    
+    sub_result <- c(result_ith_UsCLR1, result_ith_UsCLR2)
+    
+    summary_UsCLR <- rbind(summary_UsCLR, c(list[i], result_ith_UsCLR1, result_ith_UsCLR2))
+  }
+  
+  summary_UsCLR <- as.data.frame(summary_UsCLR)
+  
+  #### <TO DO> rename으로바꿔보기 ####
+  colnames(summary_UsCLR) <- c("Metabolites","coef", "exp(coef)", "se(coef)", "z", "p_value", "exp(coef)_re", "exp(-coef)_re", "lower .95", "upper .95")
+  
+  summary_UsCLR -> result[[1]]
+  # tibble::rownames_to_column(., "Name") %>%
+  # dplyr::arrange(p_value) %>%
+  
+  
+  summary_UsCLR %>% 
+    tibble::rownames_to_column(., "Name") %>% 
+    dplyr::arrange(p_value) -> result[[2]]
+  
+  return(result)
+}
+
+SCLR_median <- UsCLR(median_data_set[, c("set","Group","sex","age","smoking","alcohol","stage", Change_names(all_metabolites))],
+                     c(1,2,7))[[1]] 
+
+
+#### median 기준의 simple CLR ####
+
+# MCLR + SCLR, 결과 joint
+table_gen(CLR_median, 7) %>% 
+  cbind(SCLR_median[-(1:4), ]) %>% 
+  as.data.frame() -> median_CLR
+
+# control group, median 기준 n개
+median_data_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, 8:88)) %>% 
+  dplyr::filter(Group == 0) %>% 
+  gather(Group, var) %>% 
+  cbind(index=rep(1:81, each = 364), .)%>% 
+  count(Group, var, index) %>% 
+  arrange(index) %>% 
+  as.data.frame() -> control_median_n
+
+# case group, median 기준 n개
+median_data_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, 8:88)) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  cbind(index=rep(1:81, each = 182), .)%>% 
+  count(Group, var, index) %>% 
+  arrange(index) %>% 
+  as.data.frame() -> case_median_n
+
+as.data.frame(median_standard) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  rename(metabolites = rowname, median = V1) -> median_criteria
+
+
+#### TO write table ####
+# 다시 체크 
+n2 <- c()
+for(i in 1:length(all_metabolites)) {
+  if( i%%2 != 0){ 
+    k <-  (i*2)-1
+    
+    b1 <- c(median_CLR[i, 1], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    b2 <- c("Low", median_criteria[i, 2], case_median_n[k, 4], control_median_n[k, 4], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    b3 <- c("High", median_criteria[i, 2], case_median_n[k+1, 4], control_median_n[k+1, 4],
+            median_CLR[i, ])
+    
+    n1 <- rbind(b1, b2, b3)    
+    
+    } else {
+      k <-  (i*2)-1
+      
+      b1 <- c(median_CLR[i, 1], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+      b2 <- c("Low", median_criteria[i, 2], case_median_n[k, 4], control_median_n[k, 4], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+      b3 <- c("High", median_criteria[i, 2], case_median_n[k+1, 4], control_median_n[k+2, 4],
+              median_CLR[i, ])
+      
+      n1 <- rbind(b1, b2, b3)
+    }
+  n2 <- rbind(n2, n1)
+    
+}
+
+# Check # 
+as.data.frame(n2)[1:9, 1:4]
+median_criteria[1:3, ]
+case_median_n[1:6, ]
+control_median_n[1:6, ]
+
+as.data.frame(n2)[10:18, 1:4]
+median_criteria[4:6, ]
+case_median_n[7:12, ]
+control_median_n[7:12, ]
+
+as.data.frame(n2)[1:9, 5:10]
+median_CLR[1:3, 1:6]
+
+as.data.frame(n2)[10:18, 5:10]
+median_CLR[4:6, 1:6]
+
+as.data.frame(n2)[1:9, 11:20]
+median_CLR[1:3, 7:16]
+
+as.data.frame(n2)[10:18, 11:20]
+median_CLR[4:6, 7:16]
+
+
+
+n2 %>% 
+  write.xlsx("median_result.xlsx")
+#### TO write table ####
+
+
+#### 2. control의 median 기준으로 나눌 것 ####
+
+
+
+
+#### 3. control을 기준으로 3분할 ####
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>%
+  select(8:88) %>% 
+  summarise_all(funs(q33 = quantile(., probs = .33),
+                     q66 = quantile(., probs = .66))) %>% 
+  select(contains("_q33"))  %>% 
+  rename_at(vars(matches("_q33$")), funs(str_replace(., "_q33", ""))) %>% 
+  rownames_to_column %>%
+  gather(variable, value, -rowname) -> mid_standard
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>%
+  select(8:88) %>% 
+  summarise_all(funs(q33 = quantile(., probs = .33),
+                     q66 = quantile(., probs = .66))) %>% 
+  select(contains("_q66"))  %>% 
+  rename_at(vars(matches("_q66$")), funs(str_replace(., "_q66", ""))) %>% 
+  rownames_to_column %>%
+  gather(variable, value, -rowname) -> high_standard
+
+
+
+replace.using.mid.high <- function(data){ 
+  u <- matrix(0, nrow(data), ncol(data))
+  
+  for(i in 1:nrow(mid_standard)){ 
+    for (j in 1:nrow(data)){
+      
+      ## 33th 보다 작으면 1, 
+      ## 1보다는 크고 66th보다 작으면 2
+      ## 66th보다 크면 3
+      if(mid_standard[i, 3] > data[j, i]) {
+        u[j, i] <- 1 
+      } else if(high_standard[i, 3] > data[j, i]) {
+        u[j, i] <- 2
+      } else {
+        u[j, i] <- 3
+      }
+    }
+  }
+  u <- as.data.frame(u)
+  colnames(u) <- all_metabolites
+  return(u)
+}
+
+u <- replace.using.mid.high(raw_info_add_set[, all_metabolites])
+
+#### 제대로 바뀌었는지 check ####
+u %>% 
+  as_tibble()
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>% 
+  mutate_at(vars(8:88), list(~replace(., Group == 0, ntile(., 3)))) %>% 
+  select(8) %>% as.data.frame() -> check_divided
+
+u[, 1] == as.vector(t(check_divided))
+raw_info_add_set[, 8]
+cbind(raw_info_add_set[, 8], u[, 1], check_divided)
+#### 완료 제대로 바뀌었는지 check ####
+
+mid_high_data_set <- as.data.frame(cbind(raw_info_add_set[, 1:7], u))
+
+
+CLR_mfactor_c_HW <- function(data, metabolites_name, strata_name, point) { 
+  
+  m1 <- list()
+  n <- c()
+  m1_j <- 1
+  
+  a1 <-list()
+  all_name <- c()
+  
+  for(i in 1:length(metabolites_name)) {
+    formula <- as.formula(paste("Group ~ ", 
+                                paste0("factor(", "sex)"),
+                                "+ age", 
+                                paste0("+ factor(", "smoking)"),
+                                paste0("+ factor(", "alcohol)"),
+                                paste0("+ factor(", metabolites_name[i], ")"),
+                                paste0("+ strata(", strata_name, ")") ))
+    
+    r1 <- summary(clogit(formula = formula, 
+                         data = data, control = coxph.control(iter.max = 100), method='exact'))
+    
+    # 모든 결과를 a1에 저장
+    a1[[i]] <- r1
+    all_name <- c(all_name, metabolites_name[i])
+    
+    # p-value, 0.05보다 작은 결과만 m1에 저장 
+    if(r1$coefficients[point,5] < 0.05) { 
+      m1[[m1_j]] <- r1
+      m1_j <- m1_j+1
+      n <- c(n, metabolites_name[i])
+      
+    }
+  }
+  
+  result <- list(a1, all_name, m1, n)
+  
+  return(result)
+}
+
+#### Point 체크를 위한 따로 돌려보기 ####
+r1 <- summary(clogit(formula = formula, 
+                     data = median_data_set, control = coxph.control(iter.max = 100), method='exact'))
+
+r1$coefficients[7,5]
+#### Point 체크를 위한 따로 돌려보기 ####
+# median에서는 point 9
+
+CLR_mid_high <- CLR_mfactor_c_HW(mid_high_data_set, all_metabolites, "set", 8)
+
+table_gen <- function(result, point) {
+  
+  z <- result
+  q <- z[[2]]
+  
+  r <- matrix(0, 2, (length(z[[1]][[1]]$conf.int[point, ]))+1)
+  r2 <- matrix(0, 2, (length(z[[1]][[1]]$conf.int[point, ]))+1)
+  for(i in 1:length(z[[1]])) {
+    r[1, ] <- c(z[[1]][[i]]$conf.int[point, ], z[[1]][[i]]$coefficients[point, 5])
+    r[2, ] <- c(z[[1]][[i]]$conf.int[point+1, ], z[[1]][[i]]$coefficients[point+1, 5])
+    
+    r2 <- rbind(r2, r)
+  }
+  r2 <- r2[-c(1:2), ]
+  
+  e <- as.data.frame(cbind(rep(q, each =2), r2))
+  
+  colnames(e) = c("Metabolites","exp(coef)", "exp(-coef)", "lower .95", "upper .95", "p-value")
+  
+  return(e)
+}
+
+table_gen(CLR_mid_high, 7)
+
+
+
+#### mid, high 기준의 simple CLR ####
+
+UsCLR_mid_high <- function(data, target_position) {
+  
+  result <- list(NULL, NULL)
+  summary_UsCLR <- c()
+  
+  list <- names(data[-target_position])
+  
+  for (i in 1 : length(list)){
+    formula <- as.formula(paste("Group ~", 
+                                paste0("factor(", list[i], ")"),
+                                "+ strata(set)"))
+    
+    result_ith_UsCLR1 <- summary(clogit(formula = formula, data = data, method = "efron"))$coefficients
+    result_ith_UsCLR2 <- summary(clogit(formula = formula, data = data, method = "efron"))$conf.int
+    
+    
+    sub_result <- cbind(result_ith_UsCLR1, result_ith_UsCLR2)
+    
+    summary_UsCLR <- rbind(summary_UsCLR, sub_result)
+  }
+  
+  as.data.frame(summary_UsCLR) %>% 
+    rownames_to_column() -> summary_UsCLR
+   
+  
+  #### <TO DO> rename으로바꿔보기 ####
+  colnames(summary_UsCLR) <- c("Metabolites","coef", "exp(coef)", "se(coef)", "z", "p_value", "exp(coef)_re", "exp(-coef)_re", "lower .95", "upper .95")
+  
+  summary_UsCLR -> result[[1]]
+  # tibble::rownames_to_column(., "Name") %>%
+  # dplyr::arrange(p_value) %>%
+  
+  
+  summary_UsCLR %>% 
+    tibble::rownames_to_column(., "Name") %>% 
+    dplyr::arrange(p_value) -> result[[2]]
+  
+  return(result)
+}
+
+SCLR_mid_high <- UsCLR_mid_high(mid_high_data_set[, c("set","Group","sex","age","smoking","alcohol","stage", Change_names(all_metabolites))],
+                       c(1,2,4,7))[[1]] 
+
+SCLR_mid_high # 체크 완료  
+
+
+
+# MCLR + SCLR, 결과 joint
+table_gen(CLR_mid_high, 7) %>% 
+  cbind(SCLR_mid_high[-(1:5), ]) %>% 
+  as.data.frame() -> mid_high_CLR
+
+# control group, mid,high 기준 n개
+mid_high_data_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, 8:88)) %>% 
+  dplyr::filter(Group == 0) %>% 
+  gather(Group, var) %>% 
+  cbind(index=rep(1:81, each = 364), .)%>% 
+  count(Group, var, index) %>% 
+  arrange(index) %>% 
+  as.data.frame() -> control_mid_high_n
+
+# case group, mid,high 기준 n개
+mid_high_data_set %>% 
+  group_by(Group) %>% 
+  select(c(Group, 8:88)) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  cbind(index=rep(1:81, each = 182), .)%>% 
+  count(Group, var, index) %>% 
+  arrange(index) %>% 
+  as.data.frame() -> case_mid_high_n
+
+as.data.frame(mid_standard) -> mid_criteria
+
+as.data.frame(high_standard) -> high_criteria
+
+
+
+
+i <- 2
+
+#### TO write table ####
+n2 <- c()
+for(i in 1:length(all_metabolites)) {
+  # 만약 4분할하면 3을 4로 바꿔주면 됨 
+  
+  # index가 홀수인 경우 
+  if( (((case_mid_high_n$index[i]+(3*as.numeric(i)))-3)%%2) != 0 ){
+
+    j <- (i*3)-2 # 만약 4분할하면 3 -> 4, 2 -> 3
+    k <-  (i*2)-1 # 만약 4분할하면 2 -> 3, 1 -> 2
+    b1 <- c(mid_high_CLR[k, 1], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    b2 <- c("Low", mid_criteria[i, 3], case_mid_high_n[j, 4], control_mid_high_n[j, 4], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    b3 <- c("Mid", high_criteria[i, 3], case_mid_high_n[j+1, 4], control_mid_high_n[j+1, 4], 
+            mid_high_CLR[k, ])
+    b4 <- c("High", high_criteria[i, 3], case_mid_high_n[j+2, 4], control_mid_high_n[j+2, 4],
+            mid_high_CLR[k+1, ])
+    
+    n1 <- rbind(b1, b2, b3, b4)    
+    
+    # index가 짝수인 경우 
+  } else {
+    j <- (i*3)-2
+    k <- (i*2)-1  
+    b1 <- c(mid_high_CLR[k, 1], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    b2 <- c("Low", mid_criteria[i, 3], case_mid_high_n[j, 4], control_mid_high_n[j, 4], "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "")
+    b3 <- c("Mid", high_criteria[i, 3], case_mid_high_n[j+1, 4], control_mid_high_n[j+1, 4], 
+            mid_high_CLR[k, ])
+    b4 <- c("High", high_criteria[i, 3], case_mid_high_n[j+2, 4], control_mid_high_n[j+2, 4],
+            mid_high_CLR[k+1, ])
+    
+    n1 <- rbind(b1, b2, b3, b4) 
+  }
+  n2 <- rbind(n2, n1)
+  
+}
+
+# Check #
+
+as.data.frame(n2)[1:20, 1:4]
+case_mid_high_n[1:18, ]
+control_mid_high_n[1:18, ]
+mid_criteria[1:5, ]
+high_criteria[1:5, ]
+
+as.data.frame(n2)[1:28, 5:10]
+as.data.frame(n2)[29:56, 5:10]
+as.data.frame(mid_high_CLR)[1:28, 1:6]
+
+
+as.data.frame(n2)[1:12, 11:20]
+as.data.frame(mid_high_CLR)[1:6, 7:16]
+
+as.data.frame(n2)[13:24, 11:20]
+as.data.frame(mid_high_CLR)[7:12, 7:16]
+
+
+
+n2 %>% 
+  write.xlsx("mid_high_result.xlsx")  
+
+#### TO write table ####
+
+#### 3. control을 기준으로 3분할 ####
+
+#### 1.30 ####
+
+```
