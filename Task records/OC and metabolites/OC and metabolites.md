@@ -1,5 +1,3 @@
-2.3 fold change plot 그림
-Lasso 추가 할 것
 1.30 내용 추가할 것  
 LOG
 
@@ -3258,6 +3256,74 @@ n2 %>%
 
 
 ```r
-#Lasso 추가
+#### fold change ####
+library(muma)
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>% 
+  select(all_metabolites) %>% 
+  apply(. ,2 , FUN=mean) -> group0mean
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 1) %>% 
+  select(all_metabolites) %>% 
+  apply(. ,2, FUN=mean) -> group1mean
+
+FC <- group0mean / group1mean
+log2FC <- log(FC, 2)
+
+pvalue <- lapply(all_metabolites, function(v) {
+  kruskal.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])$p.value
+})
+
+pvalue.BHcorr <- p.adjust(pvalue, method = "BH") # FDR
+pvalue.BHcorr.neglog <- -log10(pvalue.BHcorr)
+
+volcano.data <- data.frame(log2FC, pvalue.BHcorr.neglog)
+volcano.data %>% 
+  write.csv("vocano_data.csv")
+
+with(volcano.data, plot(log2FC, pvalue.BHcorr.neglog, pch=20, main=""))
+
+abline(h = 1.0, col = "blue", lty = 2, lwd = 1)
+abline(v = c(-1,1), col = "blue", lty = 2, lwd = 1)
+
+with(subset(volcano.data, pvalue.BHcorr.neglog < 1.0), points(log2FC, pvalue.BHcorr.neglog, pch=20, col="gray"))
+with(subset(volcano.data, log2FC < -1 & pvalue.BHcorr.neglog > 1.0), points(log2FC, pvalue.BHcorr.neglog, pch=20, col="red"))
+with(subset(volcano.data, log2FC > 1 & pvalue.BHcorr.neglog > 1.0), points(log2FC, pvalue.BHcorr.neglog, pch=20, col="green"))
+
+#### fold change ####
+
+
+#### Lasso ####
+
+x <- model.matrix(Group~., raw_info_add_set[, -c(1,3,4,5,6,7)])[,-1]
+y <- raw_info_add_set$Group
+
+set.seed(1575)
+train = sample(1:nrow(x), nrow(x)/2)
+test = (-train)
+ytest = y[test]
+
+cv.lasso <- cv.glmnet(x[train,], y[train], alpha=1)
+lasso.coef = predict(cv.lasso, type = "coefficients", s=cv.lasso$lambda.min) # coefficients
+lasso.prediction = predict(cv.lasso, s=cv.lasso$lambda.min, newx = x[test,]) # coefficients
+
+
+
+plot(cv.lasso) ## 1 
+plot(cv.lasso$glmnet.fit, xvar="lambda", label=TRUE) ## 2
+plot(cv.lasso$glmnet.fit, xvar="norm", label=TRUE) ## 3
+
+# lambda가 아래인것들에서 선택하면 됨 두번째플랏에서!
+a = cv.lasso$lambda.min
+b = cv.lasso$lambda.1se
+c = coef(cv.lasso, s=cv.lasso$lambda.min)
+
+# 계수 수동적으로 불러오는법.
+small.lambda.index <- which(cv$lambda == cv$lambda.min)
+small.lambda.betas <- cv$glmnet.fit$beta[, small.lambda.index]
+
+#### Lasoo ####
 
 ```
