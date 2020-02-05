@@ -3326,4 +3326,35 @@ small.lambda.betas <- cv$glmnet.fit$beta[, small.lambda.index]
 
 #### Lasoo ####
 
+
+#### Package "ropls" ####
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("ropls")
+
+data(sacurine)
+names(sacurine)
+attach(sacurine)
+strF(dataMatrix)
+strF(variableMetadata)
+
+sacurine.pca <- opls(dataMatrix)
+
+a <- as.matrix(raw_info_add_set[, -c(1:7)])
+rownames(a) <- g_index
+head(a)  
+
+test <- opls(a, crossvalI = 15)
+plot(test, typeVc = c("outlier", "predict-train", "xy-score", "xy-weight"))
+
+
+data(foods) ## see Eriksson et al. (2001); presence of 3 missing values (NA)
+head(foods)
+foodMN <- as.matrix(foods[, colnames(foods) != "Country"])
+rownames(foodMN) <- foods[, "Country"]
+head(foodMN)
+foo.pca <- opls(foodMN)
+#### Package "ropls" ####
+
 ```
