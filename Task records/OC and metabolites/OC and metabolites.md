@@ -3257,6 +3257,7 @@ n2 %>%
 
 ```r
 #### fold change ####
+#### fold change ####
 library(muma)
 
 raw_info_add_set %>% 
@@ -3283,14 +3284,32 @@ volcano.data <- data.frame(log2FC, pvalue.BHcorr.neglog)
 volcano.data %>% 
   write.csv("vocano_data.csv")
 
-with(volcano.data, plot(log2FC, pvalue.BHcorr.neglog, pch=20, main=""))
+volcano.data %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(log2FC < -1 & pvalue.BHcorr.neglog > 1.0) -> red_set
 
-abline(h = 1.0, col = "blue", lty = 2, lwd = 1)
-abline(v = c(-1,1), col = "blue", lty = 2, lwd = 1)
+volcano.data %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(log2FC > 1 & pvalue.BHcorr.neglog > 1.0) -> green_set
 
-with(subset(volcano.data, pvalue.BHcorr.neglog < 1.0), points(log2FC, pvalue.BHcorr.neglog, pch=20, col="gray"))
-with(subset(volcano.data, log2FC < -1 & pvalue.BHcorr.neglog > 1.0), points(log2FC, pvalue.BHcorr.neglog, pch=20, col="red"))
-with(subset(volcano.data, log2FC > 1 & pvalue.BHcorr.neglog > 1.0), points(log2FC, pvalue.BHcorr.neglog, pch=20, col="green"))
+volcano.data$pvalue.BHcorr <- pvalue.BHcorr
+
+volcano.data %>% 
+  rownames_to_column() -> volcano.data
+
+volcano.data$sig <- ifelse(volcano.data$pvalue.BHcorr.neglog < 1, "Not Sig",
+                           ifelse(volcano.data$log2FC < -1 & volcano.data$pvalue.BHcorr.neglog > 1.0, "log2(FC) ≤ -1", 
+                                  ifelse(volcano.data$log2FC > 1 & volcano.data$pvalue.BHcorr.neglog > 1.0, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
+
+volcanoEM <- ggplot(volcano.data, aes(x= log2FC, y=pvalue.BHcorr.neglog)) +  
+  geom_point(aes(color=sig)) + 
+  scale_color_manual(values = c("black", "red", "green","grey")) + 
+  theme_bw(base_size = 12) +  
+  theme(legend.position = "right") + 
+  geom_text_repel(data = subset(volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=5, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines"))
+plot(volcanoEM)
+
+#### fold change ####
 
 #### fold change ####
 
