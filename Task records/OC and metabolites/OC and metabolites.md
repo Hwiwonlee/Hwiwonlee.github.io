@@ -3345,6 +3345,90 @@ small.lambda.betas <- cv$glmnet.fit$beta[, small.lambda.index]
 
 #### Lasoo ####
 
+#### Heatmap ####
+library(gplots)
+data(mtcars)
+x  <- as.matrix(mtcars)
+rc <- rainbow(nrow(x), start=0, end=.3)
+cc <- rainbow(ncol(x), start=0, end=.3)
+
+##
+## demonstrate the effect of row and column dendrogram options
+##
+heatmap.2(x, key = T)
+heatmap.2(x, key=TRUE , key.xlab="New value", key.ylab="New count", margins = c(10,10))
+heatmap.2(x, margins = c(10,10), col = colorRampPalette(c('yellow','green','red'))(256), tracecol = FALSE, key = TRUE, keysize = 1.5, density.info="histogram") ## default - dendrogram plotted and reordering done.
+aheatmap.2(x, dendrogram="none") ##  no dendrogram plotted, but reordering done.
+heatmap.2(x, dendrogram="row")  ## row dendrogram plotted and row reordering done.
+heatmap.2(x, dendrogram="col")  ## col dendrogram plotted and col reordering done.
+
+
+t(raw_info_add_set[, -c(1,3:7)]) %>% 
+  as.data.frame() %>% 
+  rownames_to_column() -> omu_test_data
+
+colnames(omu_test_data) <- c("Metabolite", paste("Sample", seq(1,546, 1)))
+heatmap_test <- as.matrix(column_to_rownames(omu_test_data, var = "Metabolite"))
+
+
+raw_info_add_set[, -c(1,3:7)] %>% 
+  dplyr::arrange(Group) %>%
+  select(-Group) %>% 
+  t(.) %>% 
+  as.data.frame() %>% 
+  rownames_to_column() -> omu_test_data_arr
+
+colnames(omu_test_data_arr) <- c("Metabolite", paste("Sample", seq(1,546, 1)))
+heatmap_test_arr <- as.matrix(column_to_rownames(omu_test_data_arr, var = "Metabolite"))
+
+
+  
+# non-arrange version
+heatmap.2(heatmap_test[1:10, ], trace = "none", col =  colorRampPalette(c("darkblue","white","darkred"))(100),
+          margins=c(8,8)) #Colv=FALSE
+
+# arrange version
+heatmap.2(heatmap_test_arr[Change_names(candidate_metabo)[1:19], ], trace = "none", col =  colorRampPalette(c("darkblue","white","darkred"))(300),
+          margins=c(8,8))
+
+heatmap.2(heatmap_test_arr[Change_names(candidate_metabo)[20:38], ], trace = "none", col =  colorRampPalette(c("darkblue","white","darkred"))(300),
+          margins=c(8,8))
+
+heatmap.2(heatmap_test_arr[Change_names(special_metabo), ], trace = "none", col =  colorRampPalette(c("darkblue","white","darkred"))(300),
+          margins=c(8,20), key=TRUE, cexCol=1, cexRow=0.7, density.info="none",lwid = c(5,15), lhei = c(3,15))
+
+#### Example ####
+# install step 
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("leukemiasEset")
+library(leukemiasEset)
+
+pvalues <- c()
+for(i in 1:nrow(exprs(leukemiasEset))) { 
+  R <- t.test(exprs(leukemiasEset)[i, leukemiasEset$LeukemiaType == "ALL"],
+              exprs(leukemiasEset)[i, leukemiasEset$LeukemiaType == "CLL"], 
+              var.equal = TRUE) 
+  pvalues <- c(pvalues, R$p.value)
+}
+adjPval <- p.adjust(pvalues, method = "fdr")
+
+difexp <- exprs(leukemiasEset)[c(which(adjPval < 0.01)),c(1:12, 25:36)]
+
+heatmap.2(difexp,
+          trace = "none",
+          cexCol = 0.6,
+          ColSideColors = as.character(as.numeric(factor(leukemiasEset$LeukemiaType[c(1:12, 25:36)]))),
+          main = "Differentially expressed genes\nin ALL and CLL samples",
+          cex.main = 1.5,
+          key = TRUE,
+          keysize = 1.5,
+          col=bluered(256),
+          density.info = "histogram")
+
+#### Example ####
+#### Heatmap ####
 
 #### Package "ropls" ####
 if (!requireNamespace("BiocManager", quietly = TRUE))
