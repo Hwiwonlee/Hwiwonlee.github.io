@@ -3259,6 +3259,7 @@ n2 %>%
 #### fold change ####
 #### fold change ####
 library(muma)
+library(ggrepel)
 
 raw_info_add_set %>% 
   dplyr::filter(Group == 0) %>% 
@@ -3270,7 +3271,7 @@ raw_info_add_set %>%
   select(all_metabolites) %>% 
   apply(. ,2, FUN=mean) -> group1mean
 
-FC <- group0mean / group1mean
+FC <- group1mean / group0mean
 log2FC <- log(FC, 2)
 
 pvalue <- lapply(all_metabolites, function(v) {
@@ -3305,9 +3306,55 @@ volcanoEM <- ggplot(volcano.data, aes(x= log2FC, y=pvalue.BHcorr.neglog)) +
   geom_point(aes(color=sig)) + 
   scale_color_manual(values = c("black", "red", "green","grey")) + 
   theme_bw(base_size = 12) +  
-  theme(legend.position = "right") + 
-  geom_text_repel(data = subset(volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=5, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines"))
+  theme(legend.position = "right", legend.title = element_blank()) + 
+  geom_text_repel(data = subset(volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=3, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines")) +
+  ggtitle("Figure 1.1 Volcano plot using p-value of Kruskal test results") + labs(x=bquote(~log[2]~ "Fold change"), y=bquote(~-log[10]~adjusted-~italic(P))) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15, color = "black"))
+
+
 plot(volcanoEM)
+
+
+
+# K result 
+K_pvalue <- lapply(all_metabolites, function(v) {
+  t.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])$p.value
+})
+
+K_pvalue.BHcorr <- p.adjust(pvalue, method = "BH") # FDR
+K_pvalue.BHcorr.neglog <- -log10(pvalue.BHcorr)
+
+K_volcano.data <- data.frame(log2FC, K_pvalue.BHcorr.neglog)
+
+K_volcano.data %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(log2FC < -1 & K_pvalue.BHcorr.neglog > 1.0) -> red_set
+
+K_volcano.data %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(log2FC > 1 & K_pvalue.BHcorr.neglog > 1.0) -> green_set
+
+K_volcano.data$pvalue.BHcorr <- pvalue.BHcorr
+
+K_volcano.data %>% 
+  rownames_to_column() -> K_volcano.data
+
+K_volcano.data$sig <- ifelse(K_volcano.data$K_pvalue.BHcorr.neglog < 1, "Not Sig",
+                           ifelse(K_volcano.data$log2FC < -1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≤ -1", 
+                                  ifelse(K_volcano.data$log2FC > 1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
+
+K_volcano.data
+K_volcanoEM <- ggplot(K_volcano.data, aes(x= log2FC, y=K_pvalue.BHcorr.neglog)) +  
+  geom_point(aes(color=sig)) + 
+  scale_color_manual(values = c("black", "red", "green","grey")) + 
+  theme_bw(base_size = 12) +  
+  theme(legend.position = "right", legend.title = element_blank()) + 
+  geom_text_repel(data = subset(K_volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=3, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines")) +
+  ggtitle("Figure 1.2 Volcano plot using p-value of Student's t-test results") + labs(x=bquote(~log[2]~ "Fold change"), y=bquote(~-log[10]~adjusted-~italic(P))) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15, color = "black"))
+
+
+plot(K_volcanoEM)
 
 #### fold change ####
 
