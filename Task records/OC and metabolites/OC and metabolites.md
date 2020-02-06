@@ -3257,22 +3257,25 @@ n2 %>%
 
 ```r
 #### fold change ####
-#### fold change ####
+
+#### volcano plot ####
 library(muma)
 library(ggrepel)
 
+# Using median
 raw_info_add_set %>% 
   dplyr::filter(Group == 0) %>% 
   select(all_metabolites) %>% 
-  apply(. ,2 , FUN=mean) -> group0mean
+  apply(. ,2 , FUN=median) -> group0median
 
 raw_info_add_set %>% 
   dplyr::filter(Group == 1) %>% 
   select(all_metabolites) %>% 
-  apply(. ,2, FUN=mean) -> group1mean
+  apply(. ,2, FUN=median) -> group1median
 
-FC <- group1mean / group0mean
+FC <- group1median / group0median
 log2FC <- log(FC, 2)
+
 
 pvalue <- lapply(all_metabolites, function(v) {
   kruskal.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])$p.value
@@ -3307,8 +3310,8 @@ volcanoEM <- ggplot(volcano.data, aes(x= log2FC, y=pvalue.BHcorr.neglog)) +
   scale_color_manual(values = c("black", "red", "green","grey")) + 
   theme_bw(base_size = 12) +  
   theme(legend.position = "right", legend.title = element_blank()) + 
-  geom_text_repel(data = subset(volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=3, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines")) +
-  ggtitle("Figure 1.1 Volcano plot using p-value of Kruskal test results") + labs(x=bquote(~log[2]~ "Fold change"), y=bquote(~-log[10]~adjusted-~italic(P))) + 
+  geom_text_repel(data = subset(volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=5, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines")) +
+  ggtitle("Figure 1.1 Volcano plot using median fold change and p-value of Kruskal test results") + labs(x=bquote(~log[2]~ "Fold change"), y=bquote(~-log[10]~adjusted-~italic(P))) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15, color = "black"))
 
 
@@ -3317,12 +3320,26 @@ plot(volcanoEM)
 
 
 # K result 
+# Using mean 
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>% 
+  select(all_metabolites) %>% 
+  apply(. ,2 , FUN=mean) -> group0mean
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 1) %>% 
+  select(all_metabolites) %>% 
+  apply(. ,2, FUN=mean) -> group1mean
+
+FC <- group1mean / group0mean
+log2FC <- log(FC, 2)
+
 K_pvalue <- lapply(all_metabolites, function(v) {
   t.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])$p.value
 })
 
-K_pvalue.BHcorr <- p.adjust(pvalue, method = "BH") # FDR
-K_pvalue.BHcorr.neglog <- -log10(pvalue.BHcorr)
+K_pvalue.BHcorr <- p.adjust(K_pvalue, method = "BH") # FDR
+K_pvalue.BHcorr.neglog <- -log10(K_pvalue.BHcorr)
 
 K_volcano.data <- data.frame(log2FC, K_pvalue.BHcorr.neglog)
 
@@ -3334,7 +3351,7 @@ K_volcano.data %>%
   rownames_to_column() %>% 
   dplyr::filter(log2FC > 1 & K_pvalue.BHcorr.neglog > 1.0) -> green_set
 
-K_volcano.data$pvalue.BHcorr <- pvalue.BHcorr
+K_volcano.data$pvalue.BHcorr <- K_pvalue.BHcorr
 
 K_volcano.data %>% 
   rownames_to_column() -> K_volcano.data
@@ -3343,20 +3360,79 @@ K_volcano.data$sig <- ifelse(K_volcano.data$K_pvalue.BHcorr.neglog < 1, "Not Sig
                            ifelse(K_volcano.data$log2FC < -1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≤ -1", 
                                   ifelse(K_volcano.data$log2FC > 1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
 
-K_volcano.data
+
 K_volcanoEM <- ggplot(K_volcano.data, aes(x= log2FC, y=K_pvalue.BHcorr.neglog)) +  
   geom_point(aes(color=sig)) + 
   scale_color_manual(values = c("black", "red", "green","grey")) + 
   theme_bw(base_size = 12) +  
   theme(legend.position = "right", legend.title = element_blank()) + 
-  geom_text_repel(data = subset(K_volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=3, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines")) +
-  ggtitle("Figure 1.2 Volcano plot using p-value of Student's t-test results") + labs(x=bquote(~log[2]~ "Fold change"), y=bquote(~-log[10]~adjusted-~italic(P))) + 
+  geom_text_repel(data = subset(K_volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=5, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines")) +
+  ggtitle("Figure 1.2 Volcano plot using mean fold change p-value of Student's t-test results") + labs(x=bquote(~log[2]~ "Fold change"), y=bquote(~-log[10]~adjusted-~italic(P))) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15, color = "black"))
 
-
 plot(K_volcanoEM)
+#### volcano plot ####
 
-#### fold change ####
+#### comparison fold change direction ####
+volcano.data %>% 
+  mutate(index = seq(1, 81, 1)) %>%
+  select(index, everything()) -> volcano.data_dir
+
+colnames(volcano.data_dir) <- c("index", "metabolite", "log2medianFC", "-log10ad-p", "ad-p_kruskal", "sig_median")
+volcano.data_dir <- cbind(volcano.data_dir, dir_median =  as.numeric(volcano.data_dir$log2medianFC > 0))
+
+
+K_volcano.data %>% 
+  mutate(index = seq(1, 81, 1)) %>%
+  select(index, everything()) -> K_volcano.data_dir
+
+colnames(K_volcano.data_dir) <- c("index", "metabolite", "log2meanFC", "-log10ad-p", "ad-p_student_t", "sig_mean")
+K_volcano.data_dir <- cbind(K_volcano.data_dir, dir_mean =  as.numeric(K_volcano.data_dir$log2meanFC > 0))
+
+volcano.data_dir %>% 
+  merge(K_volcano.data_dir, by = "index") %>% 
+  arrange(desc(log2medianFC)) -> dir_test
+
+dir_test %>% 
+  write.csv("direction_FC.csv")
+
+
+kruskal.test <- lapply(all_metabolites, function(v) {
+  kruskal.test(as.data.frame(raw_info_add_set_log)[, v] ~ as.data.frame(raw_info_add_set_log)[, 'Group'])
+})
+
+m <- c()
+for(i in 1:81) {
+  if(kruskal.test[[i]]$p.value < 0.05) {
+    mm <- i
+    m <- c(m, mm)
+  }
+}
+# candidate metabolites after kruscal-wallis test 
+sig_kruscal_metabo <- all_metabolites[m]
+length(sig_kruscal_metabo)
+
+# candidate metabolites after student's t test
+length(Change_names(candidate_metabo))
+
+# metabolites that have significance in all result
+all_sig_result_metabolite <- c("...")
+length(all_sig_result_metabolite)
+
+# Remarkable metabolites using volcano plot
+remark_fc_metabo <- volcano.data[which(volcano.data$sig == "log2(FC) ≥ 1" | volcano.data$sig == "log2(FC) ≤ -1"), ][, 1]
+length(remark_fc_metabo)
+
+all_sig_result_metabolite[all_sig_result_metabolite %in% remark_fc_metabo]
+
+all_sig_result_metabolite 
+
+
+all_sig_result_metabolite[all_sig_result_metabolite %in% Change_names(candidate_metabo)]
+
+remark_fc_metabo[remark_fc_metabo %in% all_sig_result_metabolite]
+
+#### comparison fold change direction ####
 
 #### fold change ####
 
@@ -3476,6 +3552,38 @@ heatmap.2(difexp,
 
 #### Example ####
 #### Heatmap ####
+
+#### 02.06 ####
+#### Metaboanalyst test ####
+raw_info_add_set %>% 
+  select(-c(3:7)) %>% 
+  mutate(index = seq(1, 546, 1)) %>% 
+  select(index, everything()) %>% 
+  arrange(Group) -> metabo_test
+
+cbind(Sample = c(paste0("Control_", seq(1,364, 1)), paste0("Case_", seq(1,182, 1))), metabo_test[, 1]) %>% 
+  arrange(index) %>% 
+  select(index, Sample) -> id
+
+metabo_test <- cbind(Sample = c(paste0("Control_", seq(1,364, 1)), paste0("Case_", seq(1,182, 1))), metabo_test[, -1])
+colnames(metabo_test)[3] <- "Label" 
+metabo_test[, -2] %>% 
+  write.csv("metabo_test.csv",row.names = F)
+
+metabo_test[, -2] %>% 
+  select(Sample, Label, remark_fc_metabo) %>% 
+  write.csv("remark_fc_metabo.csv",row.names = F)
+
+metabo_test[, -2] %>% 
+  select(Sample, Label, all_sig_result_metabolite) %>% 
+  write.csv("all_sig_result_metabolite.csv",row.names = F)
+
+metabo_test[, -2] %>% 
+  select(Sample, Label, remark_fc_metabo[remark_fc_metabo %in% all_sig_result_metabolite]) %>% 
+  write.csv("remark_inter_all_sig.csv",row.names = F)
+#### Metaboanalyst test ####
+#### 02.06 ####
+
 
 #### Package "ropls" ####
 if (!requireNamespace("BiocManager", quietly = TRUE))
