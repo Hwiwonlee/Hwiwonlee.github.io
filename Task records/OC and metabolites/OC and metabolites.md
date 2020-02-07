@@ -3276,6 +3276,22 @@ raw_info_add_set %>%
 FC <- group1median / group0median
 log2FC <- log(FC, 2)
 
+# Using mean
+raw_info_add_set %>% 
+  dplyr::filter(Group == 0) %>% 
+  select(all_metabolites) %>% 
+  apply(. ,2 , FUN=mean) -> group0mean
+
+raw_info_add_set %>% 
+  dplyr::filter(Group == 1) %>% 
+  select(all_metabolites) %>% 
+  apply(. ,2, FUN=mean) -> group1mean
+
+FC <- group1mean / group0mean
+log2FC <- log(FC, 2)
+
+
+
 
 pvalue <- lapply(all_metabolites, function(v) {
   kruskal.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])$p.value
@@ -3284,9 +3300,7 @@ pvalue <- lapply(all_metabolites, function(v) {
 pvalue.BHcorr <- p.adjust(pvalue, method = "BH") # FDR
 pvalue.BHcorr.neglog <- -log10(pvalue.BHcorr)
 
-volcano.data <- data.frame(log2FC, pvalue.BHcorr.neglog)
-volcano.data %>% 
-  write.csv("vocano_data.csv")
+volcano.data <- data.frame(log2FC, FC, group1mean, group0mean, pvalue.BHcorr.neglog)
 
 volcano.data %>% 
   rownames_to_column() %>% 
@@ -3341,7 +3355,7 @@ K_pvalue <- lapply(all_metabolites, function(v) {
 K_pvalue.BHcorr <- p.adjust(K_pvalue, method = "BH") # FDR
 K_pvalue.BHcorr.neglog <- -log10(K_pvalue.BHcorr)
 
-K_volcano.data <- data.frame(log2FC, K_pvalue.BHcorr.neglog)
+K_volcano.data <- data.frame(log2FC, FC, group1mean, group0mean, K_pvalue.BHcorr.neglog)
 
 K_volcano.data %>% 
   rownames_to_column() %>% 
@@ -3357,8 +3371,8 @@ K_volcano.data %>%
   rownames_to_column() -> K_volcano.data
 
 K_volcano.data$sig <- ifelse(K_volcano.data$K_pvalue.BHcorr.neglog < 1, "Not Sig",
-                           ifelse(K_volcano.data$log2FC < -1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≤ -1", 
-                                  ifelse(K_volcano.data$log2FC > 1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
+                             ifelse(K_volcano.data$log2FC < -1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≤ -1", 
+                                    ifelse(K_volcano.data$log2FC > 1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
 
 
 K_volcanoEM <- ggplot(K_volcano.data, aes(x= log2FC, y=K_pvalue.BHcorr.neglog)) +  
@@ -3373,29 +3387,55 @@ K_volcanoEM <- ggplot(K_volcano.data, aes(x= log2FC, y=K_pvalue.BHcorr.neglog)) 
 plot(K_volcanoEM)
 #### volcano plot ####
 
+#### attach metabolite class ####
+library(omu)
+name_map <- read.csv("name_map.csv")
+name_map <- name_map[-8, ]
+name_map$KEGG
+
+test_kegg <- cbind(volcano.data_dir[, c(1,2)], KEGG = name_map$KEGG)
+
+
+test_kegg_class <- assign_hierarchy(test_kegg, keep_unknowns = TRUE, identifier = "KEGG") 
+dim(test_kegg_class)
+
+
+test_kegg_class$index[duplicated(test_kegg_class$index)]
+
+test_kegg_class[test_kegg_class$index == 53, ]
+
+assign_hierarchy(name_map, keep_unknowns = TRUE, identifier = "KEGG")
+#### attach metabolite class ####
+
+
+
 #### comparison fold change direction ####
 volcano.data %>% 
   mutate(index = seq(1, 81, 1)) %>%
   select(index, everything()) -> volcano.data_dir
 
-colnames(volcano.data_dir) <- c("index", "metabolite", "log2medianFC", "-log10ad-p", "ad-p_kruskal", "sig_median")
+# medain case 
+colnames(volcano.data_dir) <- c("index", "metabolite", "log2medianFC", "median FC", "-log10ad-p", "ad-p_kruskal", "sig_median")
 volcano.data_dir <- cbind(volcano.data_dir, dir_median =  as.numeric(volcano.data_dir$log2medianFC > 0))
+
+# mean case
+colnames(volcano.data_dir) <- c("index", "metabolite", "log2meanFC", "mean FC", "Case mean", "Control mean", "-log10ad-p", "ad-p_kruskal", "sig_median")
+volcano.data_dir <- cbind(volcano.data_dir, dir_median =  as.numeric(volcano.data_dir$log2meanFC > 0))
 
 
 K_volcano.data %>% 
   mutate(index = seq(1, 81, 1)) %>%
   select(index, everything()) -> K_volcano.data_dir
 
-colnames(K_volcano.data_dir) <- c("index", "metabolite", "log2meanFC", "-log10ad-p", "ad-p_student_t", "sig_mean")
+colnames(K_volcano.data_dir) <- c("index", "metabolite", "log2meanFC", "mean FC", "Case mean", "Control mean", "-log10ad-p", "ad-p_student_t", "sig_mean")
 K_volcano.data_dir <- cbind(K_volcano.data_dir, dir_mean =  as.numeric(K_volcano.data_dir$log2meanFC > 0))
 
 volcano.data_dir %>% 
   merge(K_volcano.data_dir, by = "index") %>% 
-  arrange(desc(log2medianFC)) -> dir_test
+  arrange(desc(log2meanFC.x)) -> dir_test
 
 dir_test %>% 
   write.csv("direction_FC.csv")
-
 
 kruskal.test <- lapply(all_metabolites, function(v) {
   kruskal.test(as.data.frame(raw_info_add_set_log)[, v] ~ as.data.frame(raw_info_add_set_log)[, 'Group'])
