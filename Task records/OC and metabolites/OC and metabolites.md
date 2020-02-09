@@ -3625,6 +3625,26 @@ metabo_test[, -2] %>%
 #### 02.06 ####
 
 
+#### 02.09 ####
+#### PCA ####
+library(ggfortify)
+
+raw_info_add_set_log[, c(8:88)] %>% 
+  mutate(Group = as.factor(rep(c("Case", "Control", "Control"), 182))) %>% 
+  select(Group, everything()) %>% 
+  autoplot(prcomp(.[, 2:82], center = T, scale. = T), 
+           data = ., colour = "Group", frame = T, frame.type = "norm") + 
+  theme_bw() + 
+  ggtitle("Figure 1. PCA plot with all metabolites") + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
+  scale_color_discrete(name = "Group")
+#### PCA ####
+
+
+
+BiocManager::install("mixOmics")
+#### 02.09 ####
+
 #### Package "ropls" ####
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
