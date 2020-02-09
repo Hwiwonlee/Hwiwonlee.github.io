@@ -13,6 +13,10 @@ LOG
 [ggplot2 point shapes](http://www.sthda.com/english/wiki/ggplot2-point-shapes)  
 [plsda: Partial Least Squares Discriminant Analysis (PLS-DA)](https://rdrr.io/cran/mixOmics/man/plsda.html)  
 
+[Lasso 1)](https://rpubs.com/baekdata/CVLASSO)   
+[Lasso 2)](https://niceguy1575.tistory.com/64)  
+[Lasso 3)](https://stats.stackexchange.com/questions/156098/cross-validating-lasso-regression-in-r)  
+
 ## 1. preprocessing
 
 ## 2. EDA by visualization
