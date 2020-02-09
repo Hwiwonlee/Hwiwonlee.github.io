@@ -1,4 +1,4 @@
-PCA
+
 LOG
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
@@ -7,7 +7,11 @@ LOG
 [GGPlot Legend Title, Position and Labels](https://www.datanovia.com/en/blog/ggplot-legend-title-position-and-labels/#change-legend-title)  
 [Plot multiple boxplot in one graph](https://stackoverflow.com/questions/14604439/plot-multiple-boxplot-in-one-graph)  
 
+[color palette in r](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf)  
 
+[3. PCA, in mixomics vignett](https://mixomicsteam.github.io/Bookdown/pca.html#principle-of-pca)  
+[ggplot2 point shapes](http://www.sthda.com/english/wiki/ggplot2-point-shapes)  
+[plsda: Partial Least Squares Discriminant Analysis (PLS-DA)](https://rdrr.io/cran/mixOmics/man/plsda.html)  
 
 ## 1. preprocessing
 
@@ -3650,6 +3654,9 @@ plotIndiv(plsda.test, ind.names = FALSE,
           col.per.group = c("orangered2", "green3"),
           pch = 20, # point 모양
           X.label = "Component 1 (19%)", Y.label = "Component 2 (11%)", legend.title = "Group") 
+
+test.vip <- vip(plsda.test)
+barplot(test.vip[, 1][which(test.vip[, 1] > 1)])
 
 #### PLS-DA ####
 
