@@ -3639,8 +3639,8 @@ library(ggfortify)
 
 raw_info_add_set_log[, c(8:88)] %>% 
   mutate(Group = as.factor(rep(c("Case", "Control", "Control"), 182))) %>% 
-  select(Group, everything()) %>% 
-  autoplot(prcomp(.[, 2:82], center = T, scale. = T), 
+  # select(Group, everything()) %>% 
+  autoplot(prcomp(.[, 1:81], center = T, scale. = T), 
            data = ., colour = "Group", frame = T, frame.type = "norm") + 
   theme_bw() + 
   ggtitle("Figure 1. PCA plot with all metabolites") + 
