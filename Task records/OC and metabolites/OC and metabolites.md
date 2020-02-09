@@ -3640,9 +3640,22 @@ raw_info_add_set_log[, c(8:88)] %>%
   scale_color_discrete(name = "Group")
 #### PCA ####
 
+#### PLS-DA ####
+library(mixOmics)
+
+Y <- as.factor(rep(c("Case", "Control", "Control"), 182))
+plsda.test <- plsda(X = raw_info_add_set_log[, c(8:88)], Y, ncomp = 2)
+plotIndiv(plsda.test, ind.names = FALSE, 
+          ellipse = TRUE, legend = TRUE, title = "Figure1. test", 
+          col.per.group = c("orangered2", "green3"),
+          pch = 20, # point 모양
+          X.label = "Component 1 (19%)", Y.label = "Component 2 (11%)", legend.title = "Group") 
+
+#### PLS-DA ####
 
 
-BiocManager::install("mixOmics")
+
+
 #### 02.09 ####
 
 #### Package "ropls" ####
