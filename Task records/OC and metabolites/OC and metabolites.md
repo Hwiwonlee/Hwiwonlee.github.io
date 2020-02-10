@@ -3688,7 +3688,67 @@ barplot(test.vip[, 1][which(test.vip[, 1] > 1)])
 
 #### PLS-DA ####
 
+#### 02.10 metabolites list up #### 
 
+#### 1. Kruskal-Wallis test ####
+kruskal.metabolite <- c()
+
+for(i in 1:81) {
+  if(kruskal.test[[i]]$p.value < 0.05) {
+    kruskal.metabolite <- c(kruskal.metabolite, all_metabolites[i])
+  }
+}
+
+as.data.frame(kruskal.metabolite)[, 1]
+#### 1. Kruskal-Wallis test ####
+
+#### 2. Fold-change ####
+volcano.data %>% 
+  dplyr::filter(pvalue.BHcorr < 0.05) %>% 
+  dplyr::select(rowname) -> median_FC.metabolite
+
+median_FC.metabolite[ ,1]
+
+as.data.frame(kruskal.metabolite)[, 1] %in% median_FC.metabolite[ ,1] # complete overlap 
+#### 2. Fold-change ####
+
+#### 3. continous CLR with log scale ####
+# multiple 
+log_mid_high_CLR_conti[, 1:6] %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  # as.data.frame() %>% 
+  dplyr::filter(`p-value` < 0.05) %>% 
+  dplyr::select(Metabolite) -> multi_CLR_conti
+
+# simple 
+log_mid_high_CLR_conti[, 7:16] %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  # as.data.frame() %>% 
+  dplyr::filter(`p_value` < 0.05) %>% 
+  dplyr::select(Metabolites) -> simple_CLR_conti
+
+multi_CLR_conti[, 1] %in% simple_CLR_conti[, 1] # complete overlap 
+ 
+#### 3. continous CLR with log scale ####
+
+
+
+#### 4. categorical CLR with log scale ####
+log_mid_high_CLR %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  dplyr::filter(`p_value` < 0.05) %>% 
+  dplyr::select(Metabolites)
+  
+#### 4. categorical CLR with log scale ####
+
+pca_test <- opls(raw_info_add_set_log[, 8:88])
+
+
+pca_test
+
+summaryDF(pca_test)
+
+#### 02.10 #### 
 
 
 #### 02.09 ####
