@@ -1,4 +1,4 @@
-
+PCA, R2X, Q2  
 LOG
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
