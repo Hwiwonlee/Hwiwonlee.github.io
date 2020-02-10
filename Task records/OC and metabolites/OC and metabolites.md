@@ -3538,6 +3538,42 @@ c = coef(cv.lasso, s=cv.lasso$lambda.min)
 small.lambda.index <- which(cv$lambda == cv$lambda.min)
 small.lambda.betas <- cv$glmnet.fit$beta[, small.lambda.index]
 
+#### 강조하기 + log transformation 이용해보기 ####
+x <- model.matrix(Group~., raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
+y <- raw_info_add_set$Group
+
+
+mod <- glmnet(x, y)
+cvfit <- cv.glmnet(x, y)
+
+glmcoef<-coef(mod, cvfit$lambda.min)
+coef.increase<-dimnames(glmcoef[glmcoef[,1]>0,0])[[1]]
+coef.decrease<-dimnames(glmcoef[glmcoef[,1]<0,0])[[1]]
+
+#get ordered list of variables as they appear at smallest lambda
+allnames<-names(coef(mod)[,
+                          ncol(coef(mod))][order(coef(mod)[,
+                                                           ncol(coef(mod))],decreasing=TRUE)])
+
+#remove intercept
+allnames<-setdiff(allnames,allnames[grep("Intercept",allnames)])
+
+#assign colors
+cols<-rep("gray",length(allnames))
+cols[allnames %in% coef.increase]<-"green"      # higher mpg is good
+cols[allnames %in% coef.decrease]<-"red"        # lower mpg is not
+
+library(plotmo)
+plot_glmnet(mod, label=TRUE, s=cvfit$lambda.min, col=cols)
+
+#if you don't believe metabolites are non-zero look at glmcoef
+glmcoef[, 1][which(glmcoef[, 1] != 0)][-1] %>% 
+  sort(., decreasing = T) %>% 
+  round(., digits = 5)
+
+length(glmcoef[, 1][which(glmcoef[, 1] != 0)][-1]) # intercept를 제외한 43개 
+
+
 #### Lasoo ####
 
 #### Heatmap ####
