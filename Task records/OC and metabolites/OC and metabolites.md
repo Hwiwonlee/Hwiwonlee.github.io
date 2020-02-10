@@ -3271,18 +3271,42 @@ library(muma)
 library(ggrepel)
 
 # Using median
+# Using median
 raw_info_add_set %>% 
   dplyr::filter(Group == 0) %>% 
-  select(all_metabolites) %>% 
+  dplyr::select(all_metabolites) %>% 
   apply(. ,2 , FUN=median) -> group0median
 
 raw_info_add_set %>% 
   dplyr::filter(Group == 1) %>% 
-  select(all_metabolites) %>% 
+  dplyr::select(all_metabolites) %>% 
   apply(. ,2, FUN=median) -> group1median
 
 FC <- group1median / group0median
 log2FC <- log(FC, 2)
+
+pvalue <- lapply(all_metabolites, function(v) {
+  kruskal.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])$p.value
+})
+
+pvalue.BHcorr <- p.adjust(pvalue, method = "BH") # FDR
+pvalue.BHcorr.neglog <- -log10(pvalue.BHcorr)
+
+volcano.data <- data.frame(log2FC, FC, group1median, group0median, pvalue.BHcorr.neglog)
+
+volcano.data %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(log2FC < -1 & pvalue.BHcorr.neglog > 1.301) -> red_set
+
+volcano.data %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(log2FC > 1 & pvalue.BHcorr.neglog > 1.301) -> green_set
+
+volcano.data$pvalue.BHcorr <- pvalue.BHcorr
+
+volcano.data %>% 
+  rownames_to_column() -> volcano.data
+  
 
 # Using mean
 raw_info_add_set %>% 
@@ -3297,9 +3321,6 @@ raw_info_add_set %>%
 
 FC <- group1mean / group0mean
 log2FC <- log(FC, 2)
-
-
-
 
 pvalue <- lapply(all_metabolites, function(v) {
   kruskal.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])$p.value
@@ -3326,6 +3347,9 @@ volcano.data %>%
 volcano.data$sig <- ifelse(volcano.data$pvalue.BHcorr.neglog < 1.301, "Not Sig",
                            ifelse(volcano.data$log2FC < -1 & volcano.data$pvalue.BHcorr.neglog > 1.301, "log2(FC) ≤ -1", 
                                   ifelse(volcano.data$log2FC > 1 & volcano.data$pvalue.BHcorr.neglog > 1.301, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
+
+
+# visualization
 
 volcanoEM <- ggplot(volcano.data, aes(x= log2FC, y=pvalue.BHcorr.neglog)) +  
   geom_point(aes(color=sig)) + 
