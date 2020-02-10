@@ -3312,20 +3312,20 @@ volcano.data <- data.frame(log2FC, FC, group1mean, group0mean, pvalue.BHcorr.neg
 
 volcano.data %>% 
   rownames_to_column() %>% 
-  dplyr::filter(log2FC < -1 & pvalue.BHcorr.neglog > 1.0) -> red_set
+  dplyr::filter(log2FC < -1 & pvalue.BHcorr.neglog > 1.301) -> red_set
 
 volcano.data %>% 
   rownames_to_column() %>% 
-  dplyr::filter(log2FC > 1 & pvalue.BHcorr.neglog > 1.0) -> green_set
+  dplyr::filter(log2FC > 1 & pvalue.BHcorr.neglog > 1.301) -> green_set
 
 volcano.data$pvalue.BHcorr <- pvalue.BHcorr
 
 volcano.data %>% 
   rownames_to_column() -> volcano.data
 
-volcano.data$sig <- ifelse(volcano.data$pvalue.BHcorr.neglog < 1, "Not Sig",
-                           ifelse(volcano.data$log2FC < -1 & volcano.data$pvalue.BHcorr.neglog > 1.0, "log2(FC) ≤ -1", 
-                                  ifelse(volcano.data$log2FC > 1 & volcano.data$pvalue.BHcorr.neglog > 1.0, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
+volcano.data$sig <- ifelse(volcano.data$pvalue.BHcorr.neglog < 1.301, "Not Sig",
+                           ifelse(volcano.data$log2FC < -1 & volcano.data$pvalue.BHcorr.neglog > 1.301, "log2(FC) ≤ -1", 
+                                  ifelse(volcano.data$log2FC > 1 & volcano.data$pvalue.BHcorr.neglog > 1.301, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
 
 volcanoEM <- ggplot(volcano.data, aes(x= log2FC, y=pvalue.BHcorr.neglog)) +  
   geom_point(aes(color=sig)) + 
@@ -3367,20 +3367,20 @@ K_volcano.data <- data.frame(log2FC, FC, group1mean, group0mean, K_pvalue.BHcorr
 
 K_volcano.data %>% 
   rownames_to_column() %>% 
-  dplyr::filter(log2FC < -1 & K_pvalue.BHcorr.neglog > 1.0) -> red_set
+  dplyr::filter(log2FC < -1 & K_pvalue.BHcorr.neglog > 1.301) -> red_set
 
 K_volcano.data %>% 
   rownames_to_column() %>% 
-  dplyr::filter(log2FC > 1 & K_pvalue.BHcorr.neglog > 1.0) -> green_set
+  dplyr::filter(log2FC > 1 & K_pvalue.BHcorr.neglog > 1.301) -> green_set
 
 K_volcano.data$pvalue.BHcorr <- K_pvalue.BHcorr
 
 K_volcano.data %>% 
   rownames_to_column() -> K_volcano.data
 
-K_volcano.data$sig <- ifelse(K_volcano.data$K_pvalue.BHcorr.neglog < 1, "Not Sig",
-                             ifelse(K_volcano.data$log2FC < -1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≤ -1", 
-                                    ifelse(K_volcano.data$log2FC > 1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.0, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
+K_volcano.data$sig <- ifelse(K_volcano.data$K_pvalue.BHcorr.neglog < 1.301, "Not Sig",
+                             ifelse(K_volcano.data$log2FC < -1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.301, "log2(FC) ≤ -1", 
+                                    ifelse(K_volcano.data$log2FC > 1 & K_volcano.data$K_pvalue.BHcorr.neglog > 1.301, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
 
 
 K_volcanoEM <- ggplot(K_volcano.data, aes(x= log2FC, y=K_pvalue.BHcorr.neglog)) +  
