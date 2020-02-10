@@ -3723,6 +3723,8 @@ test.vip <- vip(plsda.test)
 barplot(test.vip[, 1][which(test.vip[, 1] > 1)])
 
 #### PLS-DA ####
+#### 02.09 ####
+
 
 #### 02.10 metabolites list up #### 
 
@@ -3749,45 +3751,134 @@ as.data.frame(kruskal.metabolite)[, 1] %in% median_FC.metabolite[ ,1] # complete
 #### 2. Fold-change ####
 
 #### 3. continous CLR with log scale ####
-# multiple 
-log_mid_high_CLR_conti[, 1:6] %>% 
-  type_convert(cols(NO = col_double())) %>% 
-  # as.data.frame() %>% 
-  dplyr::filter(`p-value` < 0.05) %>% 
-  dplyr::select(Metabolite) -> multi_CLR_conti
+#### multiple ####
+log_mid_high_CLR_conti[,'p-value'] <- as.numeric(as.character(log_mid_high_CLR_conti[,'p-value']))
 
-# simple 
+log_mid_high_CLR_conti[, 1:6] %>% 
+  # as_tibble() %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  dplyr::filter(`p-value` < 0.05) %>% 
+  dplyr::select(Metabolite) -> multi_CLR_conti # 55개 
+
+#### simple ####
 log_mid_high_CLR_conti[, 7:16] %>% 
   type_convert(cols(NO = col_double())) %>% 
   # as.data.frame() %>% 
   dplyr::filter(`p_value` < 0.05) %>% 
-  dplyr::select(Metabolites) -> simple_CLR_conti
+  dplyr::select(Metabolites) -> simple_CLR_conti # 55개 
 
-multi_CLR_conti[, 1] %in% simple_CLR_conti[, 1] # complete overlap 
- 
+#### result ####
+multi_CLR_conti[, 1] %in% simple_CLR_conti[, 1] # 하나 빼고 겹침 
+sum(multi_CLR_conti[, 1] %in% simple_CLR_conti[, 1]) # 54개 
+
+as.character(multi_CLR_conti[, 1]) %in% simple_CLR_conti[, 1]
+simple_CLR_conti[, 1] %in% as.character(multi_CLR_conti[, 1])
+
+as.character(multi_CLR_conti[, 1])[6] # simple에만 유의함 
+simple_CLR_conti[, 1][38] # multiple에만 유의함 
+
+
 #### 3. continous CLR with log scale ####
 
 
 
 #### 4. categorical CLR with log scale ####
-log_mid_high_CLR %>% 
+#### multiple ####
+log_mid_high_CLR[,'p-value'] <- as.numeric(as.character(log_mid_high_CLR[,'p-value']))
+
+log_mid_high_CLR[, 1:6] %>% 
+  # as_tibble() %>% 
   type_convert(cols(NO = col_double())) %>% 
+  dplyr::filter(`p-value` < 0.05) %>% 
+  dplyr::select(Metabolites) -> multi_CLR_cate # 개수만 101개 
+
+#### simple #### 
+log_mid_high_CLR[, 7:16] %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  # as.data.frame() %>% 
   dplyr::filter(`p_value` < 0.05) %>% 
-  dplyr::select(Metabolites)
-  
+  dplyr::select(Metabolites) -> simple_CLR_cate_1 # 개수만 100개 
+
+log_mid_high_CLR[, c(1, 7:16)] %>% 
+  type_convert(cols(NO = col_double())) %>% 
+  # as.data.frame() %>% 
+  dplyr::filter(`p_value` < 0.05) %>% 
+  dplyr::select(Metabolites) -> simple_CLR_cate_2 # 개수만 100개 
+
+#### result ####
+length(unique(multi_CLR_cate[, 1])) # multiple에서 최소 한 개라도 유의한 metabolite는 56개 
+length(unique(simple_CLR_cate_2[, 1])) # simple에서 최소 한 개라도 유의한 metabolite는 58개 
+
+length(multi_CLR_cate[, 1][duplicated(multi_CLR_cate)]) # multiple에서 mid, high 모두 sig한 metabolite 45개 
+length(simple_CLR_cate_2[, 1][duplicated(simple_CLR_cate_2)]) # simple에서 mid, high 모두 sig한 metabolite 42개 
+
+# mutiple에서 둘 중 하나만 sig한 metabolite는 11개 
+multi_CLR_cate[-which( duplicated(multi_CLR_cate)|duplicated(multi_CLR_cate, fromLast=T) ), ]
+# high, high, high, high, high, high, high, high, high, high, high
+# 모두 high에서만 유의함. 따라서 high에서만 유의한 metabolite 총 11개 
+
+# simple에서 둘 중 하나만 sig한 metabolite는 16개 
+simple_CLR_cate_2[-which( duplicated(simple_CLR_cate_2)|duplicated(simple_CLR_cate_2, fromLast=T) ), ]
+
+# 2개는 mid에만, 14개는 high에서만 significant
+simple_CLR_cate_1[-which( duplicated(simple_CLR_cate_2)|duplicated(simple_CLR_cate_2, fromLast=T) ), ]
+
+
 #### 4. categorical CLR with log scale ####
 
-pca_test <- opls(raw_info_add_set_log[, 8:88])
+#### 5. Pathway analysis ####
+# 순서대로 Arginine biosynthesis, Alanine, aspartate and glutamate metabolism, 
+# Glycine, serine and threonine metabolism, Arginine and proline metabolism, 
+# Cysteine and methionine metabolism, Nicotinate and nicotinamide metabolism
+
+Change_names(c("L-Glutamate", "L-Arginine",	"L-Citrulline",	"L-Aspartate",	"L-Glutamine",	"Urea", "Fumarate"))
+Change_names(c("N-Acetyl-L-aspartate",	"L-Aspartate", "L-Asparagine"	,"L-Alanine" , "L-Glutamate", "4-Aminobutanoate", "L-Glutamine", "Fumarate"	, "Succinate"))
+Change_names(c("L-Serine", "Choline"	, "Betaine"	, "Dimethylglycine"	, "L-Cystathionine"	, "Glycine", "L-Threonine"	, "Creatine", "L-Cysteine"))
+Change_names(c("L-Arginine", "Creatine", "4-Aminobutanoate", "S_Adenosylmethionine"	, "Hydroxyproline", "L-Proline", "L-Glutamate"))
+Change_names(c("S_Adenosylmethionine", "L-Cystathionine", "L-Serine", "L-Methionine", "S_Adenosylhomocysteine", "L-Cysteine"))
+Change_names(c("L-Aspartate", "NAD", "Nicotinamide", "Nicotinate"))
+            
+path_metabolite <- unique(c(Change_names(c("L-Glutamate", "L-Arginine",	"L-Citrulline",	"L-Aspartate",	"L-Glutamine",	"Urea", "Fumarate"))
+                            , Change_names(c("N-Acetyl-L-aspartate",	"L-Aspartate", "L-Asparagine"	,"L-Alanine" , "L-Glutamate", "4-Aminobutanoate", "L-Glutamine", "Fumarate"	, "Succinate"))
+                            , Change_names(c("L-Serine", "Choline"	, "Betaine"	, "Dimethylglycine"	, "L-Cystathionine"	, "Glycine", "L-Threonine"	, "Creatine", "L-Cysteine"))
+                            , Change_names(c("L-Arginine", "Creatine", "4-Aminobutanoate", "S_Adenosylmethionine"	, "Hydroxyproline", "L-Proline", "L-Glutamate"))
+                            , Change_names(c("S_Adenosylmethionine", "L-Cystathionine", "L-Serine", "L-Methionine", "S_Adenosylhomocysteine", "L-Cysteine"))
+                            , Change_names(c("L-Aspartate", "NAD", "Nicotinamide", "Nicotinate"))))
+
+path_metabolite
+
+#### 5. Pathway analysis ####
+
+#### 6. final intersection ####
+library(VennDiagram)
+
+median_FC.metabolite[ ,1]
+
+multi_CLR_conti
+simple_CLR_conti
+
+unique(multi_CLR_cate[, 1])
+unique(simple_CLR_cate_2[, 1])
+
+path_metabolite
+
+all_metabolites[ which( all_metabolites %in% median_FC.metabolite[ ,1] ) ] 
 
 
-pca_test
 
-summaryDF(pca_test)
+first <- intersect(all_metabolites, median_FC.metabolite[ ,1])
+second <- intersect(first, multi_CLR_conti[ ,1])
+third <- intersect(second, unique(multi_CLR_cate[, 1]))
+forth <- intersect(third, unique(simple_CLR_cate_2[, 1]))
 
-#### 02.10 #### 
+fifth <- intersect(forth, simple_CLR_conti[, 1])
+sixth <- intersect(fifth, path_metabolite)
 
+fifth
+sixth
 
-#### 02.09 ####
+#### 6. final intersection ####
+#### 02.10 metabolites list up #### 
 
 #### Package "ropls" ####
 if (!requireNamespace("BiocManager", quietly = TRUE))
