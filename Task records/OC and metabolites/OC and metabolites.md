@@ -3879,15 +3879,16 @@ sixth
 
 #### 6. final intersection ####
 #### 7. list with pathway ####
-metabolites_table <- read.xlsx2("...metabolites_listup.xlsx", sheetIndex = 1, header = T)
-pathway_result <- read.xlsx2("...pathway_results.xlsx", sheetIndex = 1, header = T)
+metabolites_table <- read.xlsx2(paste(dir, "metabolites_listup.xlsx", sep= "/"), sheetIndex = 1, stringsAsFactors=FALSE)
 
+pathway_result <- read.xlsx2(paste(dir, "pathway_results.xlsx", sep= "/"), sheetIndex = 1, stringsAsFactors=FALSE)
 
 colnames(metabolites_table) <- metabolites_table[2, ]
 metabolites_table <- metabolites_table[-c(1:2), -c(3:5)]
 
 metabolites_table %>% 
   type_convert(cols(Impact = col_double())) -> metabolites_table
+
 
 test_name <- metabolites_table[, 3]
 test_name <- test_name[-c(43:50)]
@@ -3911,7 +3912,53 @@ for(i in 1:42) {
 which(m != pathway_result$Hits)
 sum(m == pathway_result$Hits) == 42
 
-Change_names(test_name[[1]])
+involve_metabolite <- test_name # invovled metabolites로 commit
+
+Change_names(involve_metabolite[[1]])[which(Change_names(involve_metabolite[[1]]) %in% median_FC.metabolite[, 1])]
+
+# pathway analysis에서는 L-Aspartate로 나옴. 
+# 지금까지의 metabolite name vector에서는 L_Aspartic_acid로 썼음. 
+median_FC.metabolite[, 1] == "L_Aspartic_acid"
+
+
+
+#### component ####
+component <- metabolites_table[, 4]
+component <- component[-c(43:50)]
+
+component <- gsub('*; ', ", ", component)
+component <- gsub('*\n*', "", component)
+# component <- gsub('*, *', ",", component)
+# component <- gsub(" ", "", component)
+
+component <- strsplit(component, ", ")
+component <- gsub('^[:blank:].', "", component)
+
+m <- c()
+for(i in 1:42) {
+  m1 <- length(component[[i]])
+  m <- c(m, m1)
+}
+
+which(m != pathway_result$Total)
+sum(m == pathway_result$Hits) == 42
+
+
+
+length(unlist(strsplit(component[[2]], "*; *"))) == pathway_result$Total[2]
+length(unlist(strsplit(component[[3]], "*; *"))) == pathway_result$Total[3]
+length(unlist(strsplit(component[[4]], "*; *"))) == pathway_result$Total[4]
+length(unlist(strsplit(component[[8]], "*; *"))) == pathway_result$Total[8]
+length(unlist(strsplit(component[[9]], "*; *"))) == pathway_result$Total[9]
+length(unlist(strsplit(component[[10]], "*; *"))) == pathway_result$Total[10]
+
+h <- unlist(strsplit(component[[2]], "*; *"))
+str_replace(h, '^[:blank:]', "")
+
+
+
+Change_names(unlist(strsplit(component[[10]], "*; *"))) %in% 
+#### component ####
 
 # FC metablolite 
 all_metabolites[which(all_metabolites %in% median_FC.metabolite[, 1])] # intersection
@@ -3919,9 +3966,6 @@ all_metabolites[-which(all_metabolites %in% median_FC.metabolite[, 1])] # comple
 
 # CLR metablolite
 length(unique(multi_CLR_cate[, 1])) # 57
-
-#### ####
-#### ####
 
 all_metabolites[which(all_metabolites %in% unique(multi_CLR_cate[, 1]))] # intersection
 all_metabolites[-which(all_metabolites %in% unique(multi_CLR_cate[, 1]))] # complement
