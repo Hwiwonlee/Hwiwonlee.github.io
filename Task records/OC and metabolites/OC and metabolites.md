@@ -3880,6 +3880,9 @@ sixth
 #### 6. final intersection ####
 #### 7. list with pathway ####
 metabolites_table <- read.xlsx2("...metabolites_listup.xlsx", sheetIndex = 1, header = T)
+pathway_result <- read.xlsx2("...pathway_results.xlsx", sheetIndex = 1, header = T)
+
+
 colnames(metabolites_table) <- metabolites_table[2, ]
 metabolites_table <- metabolites_table[-c(1:2), -c(3:5)]
 
@@ -3895,24 +3898,36 @@ test_name <- gsub(" ", "", test_name)
 
 test_name <- strsplit(test_name, ",")
 
+test_name[[4]] <- test_name[[4]][-4]
+test_name[[11]] <- c("Glutathione disulfide", "Glycine","L-Glutamate","L-Cysteine", "5-Oxoproline")
+
+#### Check step ####
 m <- c()
 for(i in 1:42) {
   m1 <- length(test_name[[i]])
   m <- c(m, m1)
 }
 
-m
+which(m != pathway_result$Hits)
+sum(m == pathway_result$Hits) == 42
 
-metabolites_table
+Change_names(test_name[[1]])
 
-test_name[[4]]
+# FC metablolite 
+all_metabolites[which(all_metabolites %in% median_FC.metabolite[, 1])] # intersection
+all_metabolites[-which(all_metabolites %in% median_FC.metabolite[, 1])] # complement
+
+# CLR metablolite
+length(unique(multi_CLR_cate[, 1])) # 57
+
+#### ####
+#### ####
+
+all_metabolites[which(all_metabolites %in% unique(multi_CLR_cate[, 1]))] # intersection
+all_metabolites[-which(all_metabolites %in% unique(multi_CLR_cate[, 1]))] # complement
 
 
-
-# test_name[grepl('\n', test_name)] <- ' '
-
-Change_names(metabolites_table[, c(3,4)])
-
+path_metabolite %in% all_metabolites[which(all_metabolites %in% median_FC.metabolite[, 1])]
 
 #### 7. list with pathway ####
 #### 02.10 metabolites list up #### 
