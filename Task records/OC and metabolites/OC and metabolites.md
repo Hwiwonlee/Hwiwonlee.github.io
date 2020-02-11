@@ -3878,6 +3878,43 @@ fifth
 sixth
 
 #### 6. final intersection ####
+#### 7. list with pathway ####
+metabolites_table <- read.xlsx2("...metabolites_listup.xlsx", sheetIndex = 1, header = T)
+colnames(metabolites_table) <- metabolites_table[2, ]
+metabolites_table <- metabolites_table[-c(1:2), -c(3:5)]
+
+metabolites_table %>% 
+  type_convert(cols(Impact = col_double())) -> metabolites_table
+
+test_name <- metabolites_table[, 3]
+test_name <- test_name[-c(43:50)]
+
+test_name <- gsub(";", ",", test_name)
+test_name <- gsub("*\n*", "", test_name)
+test_name <- gsub(" ", "", test_name)
+
+test_name <- strsplit(test_name, ",")
+
+m <- c()
+for(i in 1:42) {
+  m1 <- length(test_name[[i]])
+  m <- c(m, m1)
+}
+
+m
+
+metabolites_table
+
+test_name[[4]]
+
+
+
+# test_name[grepl('\n', test_name)] <- ' '
+
+Change_names(metabolites_table[, c(3,4)])
+
+
+#### 7. list with pathway ####
 #### 02.10 metabolites list up #### 
 
 #### Package "ropls" ####
