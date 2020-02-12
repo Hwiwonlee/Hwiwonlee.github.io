@@ -3889,7 +3889,6 @@ metabolites_table <- metabolites_table[-c(1:2), -c(3:5)]
 metabolites_table %>% 
   type_convert(cols(Impact = col_double())) -> metabolites_table
 
-
 test_name <- metabolites_table[, 3]
 test_name <- test_name[-c(43:50)]
 
@@ -3901,6 +3900,13 @@ test_name <- strsplit(test_name, ",")
 
 test_name[[4]] <- test_name[[4]][-4]
 test_name[[11]] <- c("Glutathione disulfide", "Glycine","L-Glutamate","L-Cysteine", "5-Oxoproline")
+test_name[[2]] <- c("L-Glutamate",  "L-Arginine",   "L-Citrulline", "L-Aspartate",  "L-Glutamine", "Urea", "Fumarate")
+test_name[[3]] <- c("N-Acetyl-L-aspartate", "L-Aspartate",          "L-Asparagine", "L-Alanine", "L-Glutamate",
+                    "L-Glutamine", "4-Aminobutanoate", "Fumarate", "Succinate")
+test_name[[4]] <- c("L-Serine", "Choline", "Betaine", "N-Dimethylglycine", "L-Cystathionine", "Glycine",
+                    "L-Threonine", "Creatine", "L-Cysteine")
+test_name[[8]] <- c("L-Arginine", "Creatine", "4-Aminobutanoate", "S-Adenosyl-L-methionine",
+                    "Hydroxyproline", "L-Proline", "L-Glutamate")
 
 #### Check step ####
 m <- c()
@@ -3912,14 +3918,423 @@ for(i in 1:42) {
 which(m != pathway_result$Hits)
 sum(m == pathway_result$Hits) == 42
 
+#### Commit Involved metabolite ####
 involve_metabolite <- test_name # invovled metabolites로 commit
 
+
+#### Big problem ####
 Change_names(involve_metabolite[[1]])[which(Change_names(involve_metabolite[[1]]) %in% median_FC.metabolite[, 1])]
 
 # pathway analysis에서는 L-Aspartate로 나옴. 
 # 지금까지의 metabolite name vector에서는 L_Aspartic_acid로 썼음. 
 median_FC.metabolite[, 1] == "L_Aspartic_acid"
+involve_metabolite[[1]] == "L-Aspartate"
 
+# 겹치는 패턴을 찾아내서 FC와 CLR에 추가하는 게 나을 것 같은데? 
+# 가령 -tate == acid 
+median_FC.metabolite[, 1]
+median_FC.metabolite[, 1][which(grepl(pattern = "_acid$", x = median_FC.metabolite[, 1]))]
+
+#### Solve the problem : all_metabolites를 기준으로 뭐가 다른지 먼저 파악하기 
+Change_names(involve_metabolite[[1]]) %in% all_metabolites # 20개 중 2개 불일치
+length(involve_metabolite[[1]])
+
+Change_names(involve_metabolite[[1]])[-which(Change_names(involve_metabolite[[1]]) %in% all_metabolites)] # L_Aspartate, L-Glutamate
+
+all_metabolites == "L_Glutamic_acid"
+
+# 그럼 다른 이름을 갖는 metabolites들만 먼저 빼내보자. 
+filtering_double_name <- function(list_of_matabolites) {
+  
+  Change_names <- function(list){
+    list <- gsub("^ | $", "", list)
+    list <- gsub(" ", "_", list)
+    list <- gsub("-", "_", list)
+    
+    return(list)
+  }
+  
+  result_list1 <- list()
+  result_list2 <- list()
+  result_vector <- c()
+  
+  for(i in 1:length(list_of_matabolites)) {
+    logical_position <- Change_names(list_of_matabolites[[i]]) %in% all_metabolites
+    
+    total_match <- sum(logical_position)
+    total_non_match <- length(list_of_matabolites[[i]]) - sum(logical_position)
+    
+    non_matched_name <- Change_names(list_of_matabolites[[i]])[which(!(logical_position))]
+    matched_name <- Change_names(list_of_matabolites[[i]])[which(logical_position)]
+    
+    total_result <- c(total_match, total_non_match, total_match + total_non_match)
+    result_vector <- rbind(result_vector, total_result)
+  
+    result_list1[[i]] <- matched_name
+    result_list2[[i]] <- non_matched_name
+  }
+  
+  row.names(result_vector) <- seq(1, length(list_of_matabolites), 1)
+  colnames(result_vector) <- c("mathed", "non-matched", "total")
+  result_vector <- as.data.frame(result_vector)
+  
+  
+  return_list <- list(result_vector, result_list1, result_list2)
+  names(return_list) <- c("# of", "matched_name", "non_matched_name")
+  return(return_list)
+}
+
+
+involve_metabolite[[42]][which(!(Change_names(involve_metabolite[[42]]) %in% all_metabolites))]
+
+# function test 
+f_test <- filtering_double_name(involve_metabolite)
+
+# Hits의 개수가 모두 일치하는 것 확인
+f_test[[1]][, 3] == pathway_result$Hits
+sum(f_test[[1]][, 3] == pathway_result$Hits)
+
+# involved의 개수가 1이면, 즉 Hit가 1이면 무조건 mathced인데 아닌 경우가 있다. 
+# 이름이 다른 거겠지..............
+f_test[["non_matched_name"]]
+f_test[["matched_name"]]
+f_test[["# of"]]
+
+# filtering_double_name 함수 내에서 all_metabolite를 이용했기 때문에 non_matched_name list는 null이 되어야 맞다. 
+# 즉, non_matched_name list에 있는 모든 이름들은 내가 사용한 이름들과 다른 것들이다. 
+unique(unlist(f_test[["non_matched_name"]])) # 다른 이름은 전체 26개.
+
+#### 이제 위의 이름들을 내가 사용한 타입의 이름들로 바꿔주자. ####
+double_name <- list()
+
+# 1st pathway에서 다른 이름의 개수 : 2개 
+Change_names(involve_metabolite[[1]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[1]])[which(Change_names(involve_metabolite[[1]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[1]])[which(Change_names(involve_metabolite[[1]]) %in% all_metabolites)]
+double_name[[1]] <- c("L_Aspartic_acid", "L_Glutamic_acid",
+                      Change_names(involve_metabolite[[1]])[which(Change_names(involve_metabolite[[1]]) %in% all_metabolites)])
+sum(double_name[[1]] %in% all_metabolites) == length(double_name[[1]])
+
+# 2nd pathway에서 다른 이름의 개수 : 4개 
+Change_names(involve_metabolite[[2]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[2]])[which(Change_names(involve_metabolite[[2]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[2]])[which(Change_names(involve_metabolite[[2]]) %in% all_metabolites)]
+double_name[[2]] <- c("L_Aspartic_acid", "L_Glutamic_acid", "Citrulline", "Fumaric_acid",
+                      Change_names(involve_metabolite[[2]])[which(Change_names(involve_metabolite[[2]]) %in% all_metabolites)])
+sum(double_name[[2]] %in% all_metabolites) == length(double_name[[2]])
+
+# 3nd pathway에서 다른 이름의 개수 : 7개 
+Change_names(involve_metabolite[[3]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[3]])[which(Change_names(involve_metabolite[[3]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[3]])[which(Change_names(involve_metabolite[[3]]) %in% all_metabolites)]
+double_name[[3]] <- c("N_Acetyl_L_Aspartic_acid", "L_Aspartic_acid", 
+                      "L_Glutamic_acid", "Gamma_Aminobutyric_acid", "Fumaric_acid", "Succinic_acid",
+                      Change_names(involve_metabolite[[3]])[which(Change_names(involve_metabolite[[3]]) %in% all_metabolites)])
+sum(double_name[[3]] %in% all_metabolites) == length(double_name[[3]])
+
+# 4th pathway에서 다른 이름의 개수 : 1개 
+Change_names(involve_metabolite[[4]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[4]])[which(Change_names(involve_metabolite[[4]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[4]])[which(Change_names(involve_metabolite[[4]]) %in% all_metabolites)]
+double_name[[4]] <- c("Dimethylglycine",
+                      Change_names(involve_metabolite[[4]])[which(Change_names(involve_metabolite[[4]]) %in% all_metabolites)])
+sum(double_name[[4]] %in% all_metabolites) == length(double_name[[4]])
+
+# 5th pathway에서 다른 이름의 개수 : 2개 
+Change_names(involve_metabolite[[5]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[5]])[which(Change_names(involve_metabolite[[5]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[5]])[which(Change_names(involve_metabolite[[5]]) %in% all_metabolites)]
+double_name[[5]] <- c("Adenosine_monophosphate", "Uric_acid",
+                      Change_names(involve_metabolite[[5]])[which(Change_names(involve_metabolite[[5]]) %in% all_metabolites)])
+sum(double_name[[5]] %in% all_metabolites) == length(double_name[[5]])
+
+# 6th pathway에서 다른 이름의 개수 : 0개 
+Change_names(involve_metabolite[[6]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[6]])[which(Change_names(involve_metabolite[[6]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[6]])[which(Change_names(involve_metabolite[[6]]) %in% all_metabolites)]
+double_name[[6]] <- c(
+                      Change_names(involve_metabolite[[6]])[which(Change_names(involve_metabolite[[6]]) %in% all_metabolites)])
+sum(double_name[[6]] %in% all_metabolites) == length(double_name[[6]])
+
+# 7th pathway에서 다른 이름의 개수 : 5개 
+Change_names(involve_metabolite[[7]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[7]])[which(Change_names(involve_metabolite[[7]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[7]])[which(Change_names(involve_metabolite[[7]]) %in% all_metabolites)]
+double_name[[7]] <- c("beta_Hydroxybutyric_acid", "Acetoacetic_acid", "Gamma_Aminobutyric_acid",
+                      "L_Glutamic_acid", "Succinic_acid",
+                      Change_names(involve_metabolite[[7]])[which(Change_names(involve_metabolite[[7]]) %in% all_metabolites)])
+sum(double_name[[7]] %in% all_metabolites) == length(double_name[[7]])
+
+# 8th pathway에서 다른 이름의 개수 : 4개 
+Change_names(involve_metabolite[[8]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[8]])[which(Change_names(involve_metabolite[[8]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[8]])[which(Change_names(involve_metabolite[[8]]) %in% all_metabolites)]
+double_name[[8]] <- c("Gamma_Aminobutyric_acid", "S_Adenosylmethionine", "Hydroxy_L_proline",
+                      "L_Glutamic_acid",
+                      Change_names(involve_metabolite[[8]])[which(Change_names(involve_metabolite[[8]]) %in% all_metabolites)])
+sum(double_name[[8]] %in% all_metabolites) == length(double_name[[8]])
+
+# 9th pathway에서 다른 이름의 개수 : 2개 
+Change_names(involve_metabolite[[9]]) %in% unique(unlist(f_test[["non_matched_name"]]))
+
+# 그 이름의 형태
+Change_names(involve_metabolite[[9]])[which(Change_names(involve_metabolite[[9]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+Change_names(involve_metabolite[[9]])[which(Change_names(involve_metabolite[[9]]) %in% all_metabolites)]
+double_name[[9]] <- c("S_Adenosylmethionine", "S_Adenosylhomocysteine",
+                      Change_names(involve_metabolite[[9]])[which(Change_names(involve_metabolite[[9]]) %in% all_metabolites)])
+sum(double_name[[9]] %in% all_metabolites) == length(double_name[[9]])
+
+name_check <- function(list_of_metabolites) {
+  
+  result <- list()
+  
+  for(i in 1: length(list_of_metabolites)) {
+    a <- sum(Change_names(list_of_metabolites[[i]]) %in% unique(unlist(f_test[["non_matched_name"]])))
+    
+    b <- Change_names(list_of_metabolites[[i]])[which(Change_names(list_of_metabolites[[i]]) %in% unique(unlist(f_test[["non_matched_name"]])))]
+    c <- Change_names(list_of_metabolites[[i]])[which(Change_names(list_of_metabolites[[i]]) %in% all_metabolites)]
+    
+    d <- list(a, b, c)
+    names(d) <- c("# of nonmatched", "nonmatched", "matched")
+    
+    result[[i]] <- d
+  }
+  return(result)
+  
+}
+matched_name <- function(list_of_metabolites) {
+  r <- list()
+  for( i in 1:length(list_of_metabolites)) {
+    r[[i]] <- Change_names(list_of_metabolites[[i]])[which(Change_names(list_of_metabolites[[i]]) %in% all_metabolites)]
+  }
+  
+  return(r)
+}
+
+name_check_result <- name_check(involve_metabolite)
+matched_name <- matched_name(involve_metabolite)
+
+
+# 10th : 4
+name_check_result[[10]]
+double_name[[10]] <- c("L_Aspartic_acid", "NAD", "Niacinamide", "Nicotinic_acid", matched_name[[10]])
+sum(double_name[[10]] %in% all_metabolites) == length(double_name[[10]])
+
+# 11th : 3
+name_check_result[[11]]
+double_name[[11]] <- c("L_Glutamic_acid", "Pyroglutamic_acid", "Oxidized_glutathione", matched_name[[11]])
+sum(double_name[[11]] %in% all_metabolites) == length(double_name[[11]])
+
+# 12th : 1
+name_check_result[[12]]
+double_name[[12]] <- c("Hippuric_acid", matched_name[[12]])
+sum(double_name[[12]] %in% all_metabolites) == length(double_name[[12]])
+
+# 13th : 1
+name_check_result[[13]]
+double_name[[13]] <- c("L_Aspartic_acid", matched_name[[13]])
+sum(double_name[[13]] %in% all_metabolites) == length(double_name[[13]])
+
+# 14th : none
+name_check_result[[14]]
+double_name[[14]] <- c(matched_name[[14]])
+sum(double_name[[14]] %in% all_metabolites) == length(double_name[[14]])
+
+# 15th : 2
+name_check_result[[15]]
+double_name[[15]] <- c("beta_Hydroxybutyric_acid", "Acetoacetic_acid",  matched_name[[15]])
+sum(double_name[[15]] %in% all_metabolites) == length(double_name[[15]])
+
+# 16th : 1
+name_check_result[[16]]
+double_name[[16]] <- c("L_Glutamic_acid", matched_name[[16]])
+sum(double_name[[16]] %in% all_metabolites) == length(double_name[[16]])
+
+# 17th : 1
+name_check_result[[17]]
+double_name[[17]] <- c("L_Glutamic_acid", matched_name[[17]])
+sum(double_name[[17]] %in% all_metabolites) == length(double_name[[17]])
+
+# 18th : 1
+name_check_result[[18]]
+double_name[[18]] <- c("L_Glutamic_acid", "L_Aspartic_acid", matched_name[[18]])
+sum(double_name[[18]] %in% all_metabolites) == length(double_name[[18]])
+
+# 19th : none
+name_check_result[[19]]
+double_name[[19]] <- c(matched_name[[19]])
+sum(double_name[[19]] %in% all_metabolites) == length(double_name[[19]])
+
+# 20th : 1
+name_check_result[[20]]
+double_name[[20]] <- c("L_Glutamic_acid", matched_name[[20]])
+sum(double_name[[20]] %in% all_metabolites) == length(double_name[[20]])
+
+# 21th : none
+name_check_result[[21]]
+double_name[[21]] <- c(matched_name[[21]])
+sum(double_name[[21]] %in% all_metabolites) == length(double_name[[21]])
+
+# 22th : 1
+name_check_result[[22]]
+double_name[[22]] <- c("L_Aspartic_acid", matched_name[[22]])
+sum(double_name[[22]] %in% all_metabolites) == length(double_name[[22]])
+
+# 23th : none
+name_check_result[[23]]
+double_name[[23]] <- c(matched_name[[23]])
+sum(double_name[[23]] %in% all_metabolites) == length(double_name[[23]])
+
+# 24th : 1
+name_check_result[[24]]
+double_name[[24]] <- c("Acetoacetic_acid", matched_name[[24]])
+sum(double_name[[24]] %in% all_metabolites) == length(double_name[[24]])
+
+# 25th : 3
+name_check_result[[25]]
+double_name[[25]] <- c("Acetoacetic_acid", "Fumaric_acid", "Norepinephrine", matched_name[[25]])
+sum(double_name[[25]] %in% all_metabolites) == length(double_name[[25]])
+
+# 26th : none
+name_check_result[[26]]
+double_name[[26]] <- c(matched_name[[26]])
+sum(double_name[[26]] %in% all_metabolites) == length(double_name[[26]])
+
+# 27th : 2
+name_check_result[[27]]
+double_name[[27]] <- c("Fumaric_acid", "Succinic_acid", matched_name[[27]])
+sum(double_name[[27]] %in% all_metabolites) == length(double_name[[27]])
+
+# 28th : 1
+name_check_result[[28]]
+double_name[[28]] <- c("Glycerophosphocholine", matched_name[[28]])
+sum(double_name[[28]] %in% all_metabolites) == length(double_name[[28]])
+
+# 29th : 2
+name_check_result[[29]]
+double_name[[29]] <- c("Lactate", "Fumaric_acid", matched_name[[29]])
+sum(double_name[[29]] %in% all_metabolites) == length(double_name[[29]])
+
+# 30th : none
+name_check_result[[30]]
+double_name[[30]] <- c(matched_name[[30]])
+sum(double_name[[30]] %in% all_metabolites) == length(double_name[[30]])
+
+# 31th : none
+name_check_result[[31]]
+double_name[[31]] <- c(matched_name[[31]])
+sum(double_name[[31]] %in% all_metabolites) == length(double_name[[31]])
+
+# 32th : 1
+name_check_result[[32]]
+double_name[[32]] <- c("Methyl_folate", matched_name[[32]])
+sum(double_name[[32]] %in% all_metabolites) == length(double_name[[32]])
+
+# 33th : 1
+name_check_result[[33]]
+double_name[[33]] <- c("Glycocholic_acid", matched_name[[33]])
+sum(double_name[[33]] %in% all_metabolites) == length(double_name[[33]])
+
+# 34th : none
+name_check_result[[34]]
+double_name[[34]] <- c(matched_name[[34]])
+sum(double_name[[34]] %in% all_metabolites) == length(double_name[[34]])
+
+# 35th : 1
+name_check_result[[35]]
+double_name[[35]] <- c("L_Glutamic_acid", matched_name[[35]])
+sum(double_name[[35]] %in% all_metabolites) == length(double_name[[35]])
+
+# 36th : none
+name_check_result[[36]]
+double_name[[36]] <- c(matched_name[[36]])
+sum(double_name[[36]] %in% all_metabolites) == length(double_name[[36]])
+
+# 37th : none
+name_check_result[[37]]
+double_name[[37]] <- c(matched_name[[37]])
+sum(double_name[[37]] %in% all_metabolites) == length(double_name[[37]])
+
+# 38th : 1
+name_check_result[[38]]
+double_name[[38]] <- c("Glycerophosphocholine", matched_name[[38]])
+sum(double_name[[38]] %in% all_metabolites) == length(double_name[[38]])
+
+# 39th : none
+name_check_result[[39]]
+double_name[[39]] <- c(matched_name[[39]])
+sum(double_name[[39]] %in% all_metabolites) == length(double_name[[39]])
+
+# 40th : 1
+name_check_result[[40]]
+double_name[[40]] <- c("Succinic_acid", matched_name[[40]])
+sum(double_name[[40]] %in% all_metabolites) == length(double_name[[40]])
+
+# 41th : none
+name_check_result[[41]]
+double_name[[41]] <- c(matched_name[[41]])
+sum(double_name[[41]] %in% all_metabolites) == length(double_name[[41]])
+
+# 42th : none
+name_check_result[[42]]
+double_name[[42]] <- c("Lactate", matched_name[[42]])
+sum(double_name[[42]] %in% all_metabolites) == length(double_name[[42]])
+#### 이제 위의 이름들을 내가 사용한 타입의 이름들로 바꿔주자. ####
+
+path_metabolite <- unique(unlist(double_name[1 : 10]))
+
+
+#### overlap check ####
+
+vector <- c()
+result <- c()
+
+i <- 1
+for(i in 1:length(double_name)) {
+  
+  a <- median_FC.metabolite[, 1][which(median_FC.metabolite[, 1] %in% double_name[[i]])]
+  b <- unique(multi_CLR_cate[, 1])[which(unique(multi_CLR_cate[, 1]) %in% double_name[[i]])]
+  c <- a[which(a %in% b)]
+  
+  
+  d <- length(a)
+  e <- length(b)
+  f <- length(c)
+  
+  g <- paste(a, collapse = ", ")
+  h <- paste(b, collapse = ", ")
+  i <- paste(c, collapse = ", ")
+  
+  vector <- c(f, i, d, g, e, h)
+  
+  result <- rbind(result, vector)
+  result <- as.data.frame(result)
+  colnames(result) <- c("# of overlab", "overlab", "# of FC", "FC", "# of CLR", "CLR")
+}
+
+
+result %>% as_tibble()
+
+as.data.frame(result) %>% 
+  write.xlsx("path_way_overlap_result.xlsx")
+
+#### overlap check ####
 
 
 #### component ####
