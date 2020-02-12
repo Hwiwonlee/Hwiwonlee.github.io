@@ -3919,6 +3919,7 @@ which(m != pathway_result$Hits)
 sum(m == pathway_result$Hits) == 42
 
 #### Commit Involved metabolite ####
+# imfact와 FDR을 이용한 metabolites list 
 involve_metabolite <- test_name # invovled metabolites로 commit
 
 
@@ -4297,6 +4298,7 @@ double_name[[42]] <- c("Lactate", matched_name[[42]])
 sum(double_name[[42]] %in% all_metabolites) == length(double_name[[42]])
 #### 이제 위의 이름들을 내가 사용한 타입의 이름들로 바꿔주자. ####
 
+# 기존의 criteria였던 impact를 제외하고 FDR만 사용해서 pathway_metabolite 다시 선언 
 path_metabolite <- unique(unlist(double_name[1 : 10]))
 
 
