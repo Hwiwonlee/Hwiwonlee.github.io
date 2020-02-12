@@ -4311,21 +4311,25 @@ for(i in 1:length(double_name)) {
   a <- median_FC.metabolite[, 1][which(median_FC.metabolite[, 1] %in% double_name[[i]])]
   b <- unique(multi_CLR_cate[, 1])[which(unique(multi_CLR_cate[, 1]) %in% double_name[[i]])]
   c <- a[which(a %in% b)]
+  n <- c(setdiff(a, b), setdiff(b, a))
+  
   
   
   d <- length(a)
   e <- length(b)
   f <- length(c)
+  m <- length(n)
   
   g <- paste(a, collapse = ", ")
   h <- paste(b, collapse = ", ")
   i <- paste(c, collapse = ", ")
+  l <- paste(n, collapse = ", ")
   
-  vector <- c(f, i, d, g, e, h)
+  vector <- c(m, l, f, i, d, g, e, h)
   
   result <- rbind(result, vector)
   result <- as.data.frame(result)
-  colnames(result) <- c("# of overlab", "overlab", "# of FC", "FC", "# of CLR", "CLR")
+  colnames(result) <- c("# of complement", "complement", "# of intersection", "intersection", "# of FC", "FC", "# of CLR", "CLR")
 }
 
 
@@ -4335,7 +4339,6 @@ as.data.frame(result) %>%
   write.xlsx("path_way_overlap_result.xlsx")
 
 #### overlap check ####
-
 
 #### component ####
 component <- metabolites_table[, 4]
