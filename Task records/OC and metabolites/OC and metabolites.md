@@ -1,3 +1,5 @@
+
+주말동안 Lasso, log-ratio Lasso  
 PCA, R2X, Q2  
 LOG
 
