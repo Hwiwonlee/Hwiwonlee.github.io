@@ -4348,38 +4348,33 @@ as.data.frame(result) %>%
 component <- metabolites_table[, 4]
 component <- component[-c(43:50)]
 
-component <- gsub('*; ', ", ", component)
-component <- gsub('*\n*', "", component)
+# component <- gsub('*; ', ", ", component)
+# component <- gsub('*\n*', "", component)
+
+#### Problem : 위의 gsub가 제대로 반영이 안됨
+#### solve : space로 공백을 주지 않고 \\s로 공백을 입력함. 
+ts <- gsub(';\\s', ",", as.character(component[[2]]))
+ts <- gsub('*\n*', "", ts)
+
+# ts <- gsub('^\\s+', "", ts) 공백으로 시작하는 character의 공백을 없앨 것. 
+ts <- strsplit(ts, ",")
+ts # component[[2]]가 제대로 잘린 모습을 확인. 
+
 # component <- gsub('*, *', ",", component)
 # component <- gsub(" ", "", component)
 
-component <- strsplit(component, ", ")
-component <- gsub('^[:blank:].', "", component)
+#### edit
+# ","로 strsplit 불가 : 각 metabolite에서 ","를 사용하는 경우가 있음. 
+# 따라서 특정 문자만 제거해주고 ;으로 자르면 될 것 같음
+component <- gsub('*\n*', "", component) # \n를 제거 
+component <- strsplit(component, ";\\s|;") # component[[4]]에 ";"만 있는 경우가 있어 or로 추가 
 
-m <- c()
-for(i in 1:42) {
-  m1 <- length(component[[i]])
-  m <- c(m, m1)
-}
+sum(unlist(lapply(component, length)) == pathway_result$Total) # 42, clear 
 
-which(m != pathway_result$Total)
-sum(m == pathway_result$Hits) == 42
-
+# 변환 완료 
+component 
 
 
-length(unlist(strsplit(component[[2]], "*; *"))) == pathway_result$Total[2]
-length(unlist(strsplit(component[[3]], "*; *"))) == pathway_result$Total[3]
-length(unlist(strsplit(component[[4]], "*; *"))) == pathway_result$Total[4]
-length(unlist(strsplit(component[[8]], "*; *"))) == pathway_result$Total[8]
-length(unlist(strsplit(component[[9]], "*; *"))) == pathway_result$Total[9]
-length(unlist(strsplit(component[[10]], "*; *"))) == pathway_result$Total[10]
-
-h <- unlist(strsplit(component[[2]], "*; *"))
-str_replace(h, '^[:blank:]', "")
-
-
-
-Change_names(unlist(strsplit(component[[10]], "*; *"))) %in% 
 #### component ####
 
 # FC metablolite 
