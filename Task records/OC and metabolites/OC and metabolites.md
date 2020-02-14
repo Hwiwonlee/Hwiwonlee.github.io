@@ -3512,7 +3512,9 @@ remark_fc_metabo[remark_fc_metabo %in% all_sig_result_metabolite]
 
 
 #### Lasso ####
+library(glmnet)
 
+#### 1. baseline lasso, raw data case ####
 x <- model.matrix(Group~., raw_info_add_set[, -c(1,3,4,5,6,7)])[,-1]
 y <- raw_info_add_set$Group
 
@@ -3537,44 +3539,124 @@ b = cv.lasso$lambda.1se
 c = coef(cv.lasso, s=cv.lasso$lambda.min)
 
 # 계수 수동적으로 불러오는법.
-small.lambda.index <- which(cv$lambda == cv$lambda.min)
-small.lambda.betas <- cv$glmnet.fit$beta[, small.lambda.index]
+small.lambda.index <- which(cv.lasso$lambda == cv.lasso$lambda.min)
+small.lambda.betas <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
 
-#### 강조하기 + log transformation 이용해보기 ####
+small.lambda.betas[which(small.lambda.betas !=0)]
+length(small.lambda.betas[which(small.lambda.betas !=0)])
+#### baseline lasso, raw data case ####
+
+
+#### baseline lasso, log transformation data case ####
 x <- model.matrix(Group~., raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
-y <- raw_info_add_set$Group
+y <- raw_info_add_set_log$Group
+
+set.seed(1575)
+train = sample(1:nrow(x), nrow(x)/2)
+test = (-train)
+ytest = y[test]
+
+cv.lasso <- cv.glmnet(x[train,], y[train], alpha=1)
+lasso.coef = predict(cv.lasso, type = "coefficients", s=cv.lasso$lambda.min) # coefficients
+lasso.prediction = predict(cv.lasso, s=cv.lasso$lambda.min, newx = x[test,]) # coefficients
 
 
-mod <- glmnet(x, y)
-cvfit <- cv.glmnet(x, y)
 
-glmcoef<-coef(mod, cvfit$lambda.min)
-coef.increase<-dimnames(glmcoef[glmcoef[,1]>0,0])[[1]]
-coef.decrease<-dimnames(glmcoef[glmcoef[,1]<0,0])[[1]]
+plot(cv.lasso) ## 1 
+plot(cv.lasso$glmnet.fit, xvar="lambda", label=TRUE) ## 2
+plot(cv.lasso$glmnet.fit, xvar="norm", label=TRUE) ## 3
 
-#get ordered list of variables as they appear at smallest lambda
-allnames<-names(coef(mod)[,
-                          ncol(coef(mod))][order(coef(mod)[,
-                                                           ncol(coef(mod))],decreasing=TRUE)])
+# lambda가 아래인것들에서 선택하면 됨 두번째플랏에서!
+a = cv.lasso$lambda.min
+b = cv.lasso$lambda.1se
+c = coef(cv.lasso, s=cv.lasso$lambda.min)
 
-#remove intercept
-allnames<-setdiff(allnames,allnames[grep("Intercept",allnames)])
+# 계수 수동적으로 불러오는법.
+small.lambda.index <- which(cv.lasso$lambda == cv.lasso$lambda.min)
+small.lambda.betas <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
 
-#assign colors
-cols<-rep("gray",length(allnames))
-cols[allnames %in% coef.increase]<-"green"      # higher mpg is good
-cols[allnames %in% coef.decrease]<-"red"        # lower mpg is not
+small.lambda.betas[which(small.lambda.betas !=0)]
+length(small.lambda.betas[which(small.lambda.betas !=0)])
 
-library(plotmo)
-plot_glmnet(mod, label=TRUE, s=cvfit$lambda.min, col=cols)
+#### baseline lasso, log transformation data case ####
 
-#if you don't believe metabolites are non-zero look at glmcoef
-glmcoef[, 1][which(glmcoef[, 1] != 0)][-1] %>% 
-  sort(., decreasing = T) %>% 
-  round(., digits = 5)
 
-length(glmcoef[, 1][which(glmcoef[, 1] != 0)][-1]) # intercept를 제외한 43개 
+#### 2. log-ratio lasso ####
+library(devtools)
+install_github("stephenbates19/logratiolasso")
 
+library(logratiolasso)
+
+set.seed(10)
+n <- 100 #number of observations
+p <- 20 #number of features
+
+x <- abs(matrix(rnorm(n*p), nrow = n)) #positive raw features
+w <- log(x) #logarithmically transformed features
+y <- w[, 1] - w[, 2] + rnorm(n) #response
+
+centered_w <- scale(w, center = TRUE, scale = FALSE)
+centered_y <- y - mean(y)
+
+
+# 2-1 constrained Lasso 
+model_fit <- glmnet.constr(centered_w, y, family = "gaussian")
+dim(model_fit$beta)
+
+cv_model_fit <- cv.glmnet.constr(model_fit, centered_w, y)
+cv_model_fit$cvm #CV estimate of error
+cv_model_fit$beta #best beta value
+
+
+# 2-2 two stage log-lasso
+# 2-2-1 fisrt stage
+ts_model <- two_stage(centered_w, centered_y, k_max = 5)
+
+ts_model$betas[[10]]
+
+cv_ts_model <- cv_two_stage(centered_w, centered_y, k_max = 5)
+cv_ts_model$lambda_min #index of best lambda
+cv_ts_model$k_min #number of ratios
+
+cv_ts_model$beta_min
+
+# 2-2-2 second stage
+cv_ts_model2 <- cv_two_stage(centered_w, centered_y, k_max = 5, second.stage = "yhat")
+cv_ts_model2$beta_min
+
+# 2-3 Approximate forward stepwise selection
+afs_model <- approximate_fs(w, y, k_max = 5)
+afs_model$beta
+
+afs_cv <- cv_approximate_fs(x, y, k_max = 5, n_folds = 10)
+afs_cv$cvm
+#### log-ratio lasso ####
+
+
+
+
+#### 3. Conditional logistic regression with lasso ####
+test_classo <- clogitLasso(X = as.matrix(raw_info_add_set[, 8:88]), 
+                           y = raw_info_add_set$Group, 
+                           strata = raw_info_add_set$set)
+
+
+length(test_classo$beta[100, ][which(test_classo$beta[100, ] != 0)])
+length(test_classo$beta[90, ][which(test_classo$beta[90, ] != 0)])
+length(test_classo$beta[75, ][which(test_classo$beta[75, ] != 0)])
+length(test_classo$beta[50, ][which(test_classo$beta[50, ] != 0)])
+
+plot(test_classo)
+
+
+test_classo_log <- clogitLasso(X = as.matrix(raw_info_add_set_log[, 8:88]), 
+                           y = raw_info_add_set$Group, 
+                           strata = raw_info_add_set$set)
+
+test_classo_log
+
+plot(test_classo_log)
+#### Conditional logistic regression with lasso ####
 
 #### Lasoo ####
 
@@ -3697,6 +3779,8 @@ metabo_test[, -2] %>%
 
 #### 02.09 ####
 #### PCA ####
+# prcomp
+install.packages("ggfortify")
 library(ggfortify)
 
 raw_info_add_set_log[, c(8:88)] %>% 
@@ -3708,6 +3792,35 @@ raw_info_add_set_log[, c(8:88)] %>%
   ggtitle("Figure 1. PCA plot with all metabolites") + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
   scale_color_discrete(name = "Group")
+
+
+
+# pcaMethods
+BiocManager::install("pcaMethods")
+library(pcaMethods)
+test_pca_n <- pca(prep(raw_info_add_set_log[, c(8:88)], scale = "none", center=T), method="svd", nPcs=7, cv="q2")
+test_pca_p <- pca(prep(raw_info_add_set_log[, c(8:88)], scale = "pareto", center=T), method="svd", nPcs=7, cv="q2")
+test_pca_v <- pca(prep(raw_info_add_set_log[, c(8:88)], scale = "vector", center=T), method="svd", nPcs=7, cv="q2")
+test_pca_u <- pca(prep(raw_info_add_set_log[, c(8:88)], scale = "uv", center=T), method="svd", nPcs=7, cv="q2")
+
+test_pca_n
+test_pca_p
+test_pca_v
+test_pca_u
+
+plotPcs(test_pca_n)
+
+test_pca_n@cvstat
+test_pca_p@cvstat
+test_pca_v@cvstat
+test_pca_u@cvstat
+
+# opls
+library(ropls)
+PCA_opls <- opls(raw_info_add_set_log[, c(8:88)])
+PCA_opls
+  
+  
 #### PCA ####
 
 #### PLS-DA ####
