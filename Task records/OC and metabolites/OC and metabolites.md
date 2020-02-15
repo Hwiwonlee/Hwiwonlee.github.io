@@ -1,6 +1,5 @@
 
-주말동안 Lasso, log-ratio Lasso  
-PCA, R2X, Q2  
+주말동안 Lasso, log-ratio Lasso   
 LOG
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
