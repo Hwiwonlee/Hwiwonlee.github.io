@@ -3580,7 +3580,7 @@ c[which(c != 0 ), ]
 as.data.frame(c[which(c != 0 ), ]) %>% 
   rownames_to_column() %>% 
   .[, 1] %>% 
-  .[-1] -> lasso_metabolite
+  .[-1] -> lasso_metabolite # 44개
 
 path_metabolite[which(path_metabolite %in% lasso_metabolite)]
 
@@ -3590,7 +3590,7 @@ path_metabolite[which(path_metabolite %in% lasso_metabolite)]
 small.lambda.index <- which(cv.lasso$lambda == cv.lasso$lambda.min)
 small.lambda.betas <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
 
-small.lambda.betas[which(small.lambda.betas !=0)]
+small.lambda.betas[which(small.lambda.betas !=0)] # 44개, 위의 lasso_metabolite와 같음. 
 length(small.lambda.betas[which(small.lambda.betas !=0)])
 
 #### baseline lasso, log transformation data case ####
