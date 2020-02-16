@@ -3566,9 +3566,25 @@ plot(cv.lasso$glmnet.fit, xvar="lambda", label=TRUE) ## 2
 plot(cv.lasso$glmnet.fit, xvar="norm", label=TRUE) ## 3
 
 # lambda가 아래인것들에서 선택하면 됨 두번째플랏에서!
+
+cv.lasso$lambda
+cv.lasso$lambda.1se
+
 a = cv.lasso$lambda.min
 b = cv.lasso$lambda.1se
 c = coef(cv.lasso, s=cv.lasso$lambda.min)
+
+length(which(c != 0 ))
+c[which(c != 0 ), ]
+
+as.data.frame(c[which(c != 0 ), ]) %>% 
+  rownames_to_column() %>% 
+  .[, 1] %>% 
+  .[-1] -> lasso_metabolite
+
+path_metabolite[which(path_metabolite %in% lasso_metabolite)]
+
+
 
 # 계수 수동적으로 불러오는법.
 small.lambda.index <- which(cv.lasso$lambda == cv.lasso$lambda.min)
