@@ -3673,7 +3673,7 @@ test_classo_log
 plot(test_classo_log)
 #### Conditional logistic regression with lasso ####
 
-#### Lasoo ####
+#### Lasso ####
 
 #### Heatmap ####
 library(gplots)
