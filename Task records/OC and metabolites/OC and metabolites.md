@@ -3633,6 +3633,7 @@ cv_ts_model$beta_min
 # 2-2-2 second stage
 cv_ts_model2 <- cv_two_stage(x, y, k_max = 5, second.stage = "yhat", family = "binomial")
 cv_ts_model2$beta_min
+all_metabolites[which(cv_ts_model2$beta_min != 0)]
 
 # 2-3 Approximate forward stepwise selection
 afs_model <- approximate_fs(x, y, k_max = 5)
