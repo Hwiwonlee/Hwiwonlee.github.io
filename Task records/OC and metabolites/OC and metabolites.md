@@ -3510,44 +3510,10 @@ remark_fc_metabo[remark_fc_metabo %in% all_sig_result_metabolite]
 #### fold change ####
 
 
-#### Lasso ####
-library(glmnet)
-
-#### 1. baseline lasso, raw data case ####
-x <- model.matrix(Group~., raw_info_add_set[, -c(1,3,4,5,6,7)])[,-1]
-y <- raw_info_add_set$Group
-
-set.seed(1575)
-train = sample(1:nrow(x), nrow(x)/2)
-test = (-train)
-ytest = y[test]
-
-cv.lasso <- cv.glmnet(x[train,], y[train], alpha=1)
-lasso.coef = predict(cv.lasso, type = "coefficients", s=cv.lasso$lambda.min) # coefficients
-lasso.prediction = predict(cv.lasso, s=cv.lasso$lambda.min, newx = x[test,]) # coefficients
-
-
-
-plot(cv.lasso) ## 1 
-plot(cv.lasso$glmnet.fit, xvar="lambda", label=TRUE) ## 2
-plot(cv.lasso$glmnet.fit, xvar="norm", label=TRUE) ## 3
-
-# lambda가 아래인것들에서 선택하면 됨 두번째플랏에서!
-a = cv.lasso$lambda.min
-b = cv.lasso$lambda.1se
-c = coef(cv.lasso, s=cv.lasso$lambda.min)
-
-# 계수 수동적으로 불러오는법.
-small.lambda.index <- which(cv.lasso$lambda == cv.lasso$lambda.min)
-small.lambda.betas <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
-
-small.lambda.betas[which(small.lambda.betas !=0)]
-length(small.lambda.betas[which(small.lambda.betas !=0)])
-#### baseline lasso, raw data case ####
-
-
 #### baseline lasso, log transformation data case ####
 x <- model.matrix(Group~., raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
+x <- autoscale(x) # auto scaling : UV scaling 
+x <- paretoscale(x) # pareto scaling 
 y <- raw_info_add_set_log$Group
 
 set.seed(1575)
@@ -3555,7 +3521,7 @@ train = sample(1:nrow(x), nrow(x)/2)
 test = (-train)
 ytest = y[test]
 
-cv.lasso <- cv.glmnet(x[train,], y[train], alpha=1)
+cv.lasso <- cv.glmnet(x[train,], y[train], alpha=1, family = "binomial") # lasso logistic regression 
 lasso.coef = predict(cv.lasso, type = "coefficients", s=cv.lasso$lambda.min) # coefficients
 lasso.prediction = predict(cv.lasso, s=cv.lasso$lambda.min, newx = x[test,]) # coefficients
 
@@ -3575,12 +3541,29 @@ b = cv.lasso$lambda.1se
 c = coef(cv.lasso, s=cv.lasso$lambda.min)
 
 length(which(c != 0 ))
-c[which(c != 0 ), ]
+c[which(c != 0 ), ] %>% 
+  as.data.frame() %>% 
+  write.xlsx("lasso_pareto.xlsx")
 
 as.data.frame(c[which(c != 0 ), ]) %>% 
   rownames_to_column() %>% 
   .[, 1] %>% 
-  .[-1] -> lasso_metabolite # 44개
+  .[-1] -> lasso_pareto_metabolite
+
+lasso_auto <- as.data.frame(c[which(c != 0 ), ])
+lasso_pareto <- as.data.frame(c[which(c != 0 ), ])
+
+as.data.frame(lasso_auto) %>% 
+  write.xlsx("lasso_auto.xlsx")
+
+as.data.frame(lasso_pareto) %>% 
+  write.xlsx("lasso_pareto.xlsx")
+
+
+
+lasso_auto_metabolite %in% lasso_pareto_metabolite
+
+
 
 path_metabolite[which(path_metabolite %in% lasso_metabolite)]
 
@@ -3592,6 +3575,11 @@ small.lambda.betas <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
 
 small.lambda.betas[which(small.lambda.betas !=0)] # 44개, 위의 lasso_metabolite와 같음. 
 length(small.lambda.betas[which(small.lambda.betas !=0)])
+
+
+
+as.data.frame(small.lambda.betas[which(small.lambda.betas !=0)])
+
 
 #### baseline lasso, log transformation data case ####
 
@@ -3615,37 +3603,44 @@ centered_y <- y - mean(y)
 
 
 # 2-1 constrained Lasso 
-model_fit <- glmnet.constr(centered_w, y, family = "gaussian")
+x <- model.matrix(Group~., raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
+# x <- autoscale(x) # auto scaling : UV scaling 
+x <- paretoscale(x) # pareto scaling 
+y <- raw_info_add_set_log$Group
+
+
+model_fit <- glmnet.constr(x, y, family = "binomial")
 dim(model_fit$beta)
 
-cv_model_fit <- cv.glmnet.constr(model_fit, centered_w, y)
+cv_model_fit <- cv.glmnet.constr(model_fit, x, y)
 cv_model_fit$cvm #CV estimate of error
 cv_model_fit$beta #best beta value
-
+cv_model_fit$beta[which(cv_model_fit$beta != 0)]
+length(cv_model_fit$beta[which(cv_model_fit$beta != 0)])
 
 # 2-2 two stage log-lasso
 # 2-2-1 fisrt stage
-ts_model <- two_stage(centered_w, centered_y, k_max = 5)
+ts_model <- two_stage(x, y, k_max = 5, family = "binomial")
 
 ts_model$betas[[10]]
 
-cv_ts_model <- cv_two_stage(centered_w, centered_y, k_max = 5)
+cv_ts_model <- cv_two_stage(x, y, k_max = 5, family = "binomial")
 cv_ts_model$lambda_min #index of best lambda
 cv_ts_model$k_min #number of ratios
 
 cv_ts_model$beta_min
 
 # 2-2-2 second stage
-cv_ts_model2 <- cv_two_stage(centered_w, centered_y, k_max = 5, second.stage = "yhat")
+cv_ts_model2 <- cv_two_stage(x, y, k_max = 5, second.stage = "yhat", family = "binomial")
 cv_ts_model2$beta_min
 
 # 2-3 Approximate forward stepwise selection
-afs_model <- approximate_fs(w, y, k_max = 5)
+afs_model <- approximate_fs(x, y, k_max = 5)
 afs_model$beta
 
 afs_cv <- cv_approximate_fs(x, y, k_max = 5, n_folds = 10)
 afs_cv$cvm
-#### log-ratio lasso ####
+#### 2. log-ratio lasso ####
 
 
 
