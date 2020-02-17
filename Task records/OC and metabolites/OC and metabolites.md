@@ -3510,7 +3510,7 @@ remark_fc_metabo[remark_fc_metabo %in% all_sig_result_metabolite]
 #### fold change ####
 
 
-#### baseline lasso, log transformation data case ####
+#### 1. baseline lasso, log transformation data case ####
 x <- model.matrix(Group~., raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
 x <- autoscale(x) # auto scaling : UV scaling 
 x <- paretoscale(x) # pareto scaling 
@@ -3581,7 +3581,7 @@ length(small.lambda.betas[which(small.lambda.betas !=0)])
 as.data.frame(small.lambda.betas[which(small.lambda.betas !=0)])
 
 
-#### baseline lasso, log transformation data case ####
+#### 1. baseline lasso, log transformation data case ####
 
 
 #### 2. log-ratio lasso ####
