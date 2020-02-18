@@ -3509,6 +3509,9 @@ remark_fc_metabo[remark_fc_metabo %in% all_sig_result_metabolite]
 
 #### fold change ####
 
+#### Lasso ####
+library(glmnet)
+library(RFmarkerDetector)
 
 #### 1. baseline lasso, log transformation data case ####
 x <- model.matrix(Group~., raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
