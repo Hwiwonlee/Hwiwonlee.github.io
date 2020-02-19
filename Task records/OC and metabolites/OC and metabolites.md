@@ -3514,20 +3514,19 @@ library(glmnet)
 library(RFmarkerDetector)
 
 #### 1. baseline lasso, log transformation data case ####
-x <- model.matrix(Group~., raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
-x <- autoscale(x) # auto scaling : UV scaling 
-x <- paretoscale(x) # pareto scaling 
-y <- raw_info_add_set_log$Group
+obs <- model.matrix(Group~., raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
+obs <- autoscale(obs) # auto scaling : UV scaling 
+obs <- paretoscale(obs) # pareto scaling 
+group <- raw_info_add_set_log$Group
 
 set.seed(1575)
-train = sample(1:nrow(x), nrow(x)/2)
+train = sample(1:nrow(obs), nrow(obs)/2)
 test = (-train)
-ytest = y[test]
+ytest = group[test]
 
-cv.lasso <- cv.glmnet(x[train,], y[train], alpha=1, family = "binomial") # lasso logistic regression 
+cv.lasso <- cv.glmnet(obs[train,], group[train], alpha=1, family = "binomial") # lasso logistic regression 
 lasso.coef = predict(cv.lasso, type = "coefficients", s=cv.lasso$lambda.min) # coefficients
 lasso.prediction = predict(cv.lasso, s=cv.lasso$lambda.min, newx = x[test,]) # coefficients
-
 
 
 plot(cv.lasso) ## 1 
@@ -3556,6 +3555,9 @@ as.data.frame(c[which(c != 0 ), ]) %>%
 lasso_auto <- as.data.frame(c[which(c != 0 ), ])
 lasso_pareto <- as.data.frame(c[which(c != 0 ), ])
 
+length(lasso_auto[, 1])
+length(lasso_pareto[, 1])
+
 as.data.frame(lasso_auto) %>% 
   write.xlsx("lasso_auto.xlsx")
 
@@ -3563,25 +3565,64 @@ as.data.frame(lasso_pareto) %>%
   write.xlsx("lasso_pareto.xlsx")
 
 
-
-lasso_auto_metabolite %in% lasso_pareto_metabolite
-
-
-
-path_metabolite[which(path_metabolite %in% lasso_metabolite)]
-
-
-
 # 계수 수동적으로 불러오는법.
-small.lambda.index <- which(cv.lasso$lambda == cv.lasso$lambda.min)
-small.lambda.betas <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
+# 0219, 반복에 따른 차이가 있는지 확인하기 
+lambda_min1 = cv.lasso$lambda.min
+small.lambda.index1 <- which(cv.lasso$lambda == cv.lasso$lambda.min)
+small.lambda.betas1 <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
+
+lambda_min2 = cv.lasso$lambda.min
+small.lambda.index2 <- which(cv.lasso$lambda == cv.lasso$lambda.min)
+small.lambda.betas2 <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
+
+lambda_min3 = cv.lasso$lambda.min
+small.lambda.index3 <- which(cv.lasso$lambda == cv.lasso$lambda.min)
+small.lambda.betas3 <- cv.lasso$glmnet.fit$beta[, small.lambda.index]
+
+small.lambda.betas1[which(small.lambda.betas1 !=0)]
+small.lambda.betas2[which(small.lambda.betas2 !=0)]
+small.lambda.betas3[which(small.lambda.betas3 !=0)]
+
+length(small.lambda.betas1[which(small.lambda.betas1 !=0)])
+length(small.lambda.betas2[which(small.lambda.betas2 !=0)])
+length(small.lambda.betas3[which(small.lambda.betas3 !=0)])
 
 small.lambda.betas[which(small.lambda.betas !=0)] # 44개, 위의 lasso_metabolite와 같음. 
 length(small.lambda.betas[which(small.lambda.betas !=0)])
 
 
+repeat_lasso <- function(x, y) { 
+  
+  a <- c()
+  b <- c()
+  c <- matrix(0, ncol(x), 1)
+  
+  for(i in 1:100) { 
+    CVGLM <- cv.glmnet(x, y, 
+                       nfolds = nrow(x), type.measure = "class", 
+                       alpha = 1, # alpha : 1이어야 lasso
+                       grouped = TRUE, family = "binomial")
+    
+    lambda_min = CVGLM$lambda.min
+    small.lambda.index <- which(CVGLM$lambda == CVGLM$lambda.min)
+    small.lambda.betas <- CVGLM$glmnet.fit$beta[, small.lambda.index]
+    
+    a <- c(a, lambda_min)
+    b <- c(b, small.lambda.index)
+    c <- cbind(c, as.matrix(small.lambda.betas))
+    
+  }
+  result <- list(a,b,c)
+  
+  return(result)
+}
 
-as.data.frame(small.lambda.betas[which(small.lambda.betas !=0)])
+
+test_pareto <- repeat_lasso(obs, group)
+
+test_auto
+test_pareto
+
 
 
 #### 1. baseline lasso, log transformation data case ####
