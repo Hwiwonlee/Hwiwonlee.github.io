@@ -3623,7 +3623,17 @@ test_pareto <- repeat_lasso(obs, group)
 test_auto
 test_pareto
 
+test_auto[[1]]
+test_pareto[[1]]
 
+test_auto[[2]]
+test_pareto[[2]]
+
+test_auto[[3]][, 2][test_auto[[3]][, 2] != 0]
+test_pareto[[3]][, 2][test_pareto[[3]][, 2] != 0]
+
+# 각각 100번의 결과가 같은 것 확인
+# 두 결과에서 선택된 대사체도 같은 것 확인 
 
 #### 1. baseline lasso, log transformation data case ####
 
