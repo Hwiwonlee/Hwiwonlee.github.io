@@ -3589,15 +3589,13 @@ length(small.lambda.betas3[which(small.lambda.betas3 !=0)])
 
 small.lambda.betas[which(small.lambda.betas !=0)] # 44개, 위의 lasso_metabolite와 같음. 
 length(small.lambda.betas[which(small.lambda.betas !=0)])
-
-
 repeat_lasso <- function(x, y) { 
   
   a <- c()
   b <- c()
   c <- matrix(0, ncol(x), 1)
   
-  for(i in 1:100) { 
+  for(i in 1:10) { 
     CVGLM <- cv.glmnet(x, y, 
                        nfolds = nrow(x), type.measure = "class", 
                        alpha = 1, # alpha : 1이어야 lasso
@@ -3620,9 +3618,6 @@ repeat_lasso <- function(x, y) {
 
 test_pareto <- repeat_lasso(obs, group)
 
-test_auto
-test_pareto
-
 test_auto[[1]]
 test_pareto[[1]]
 
@@ -3632,8 +3627,269 @@ test_pareto[[2]]
 test_auto[[3]][, 2][test_auto[[3]][, 2] != 0]
 test_pareto[[3]][, 2][test_pareto[[3]][, 2] != 0]
 
+test_0220[[1]]
+test_0220[[2]]
+test_0220[[3]][, 2][test_0220[[3]][, 2] != 0]
+
 # 각각 100번의 결과가 같은 것 확인
 # 두 결과에서 선택된 대사체도 같은 것 확인 
+# 0220, 혹시나 해본 결과도 같음.
+
+
+#### 궁금해서 해보는 스케일링 후 결과의 range, normality test ####
+## normality test 
+
+# auto scaling
+raw_info_add_set_log %>% 
+  select(Group, all_metabolites) %>% 
+  
+  # autoscaling 
+  autoscale(.) %>% 
+  as.data.frame() %>% 
+  dplyr::filter(Group == 1) %>% 
+  select(all_metabolites) %>% 
+  lapply(., shapiro.test) %>% 
+  unlist() %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  
+  # 정규성 검정 결과
+  dplyr::filter(grepl("p.value", rowname)) %>% 
+  type_convert(cols(. = col_double())) %>% 
+  dplyr::filter(.<0.05)
+
+# pareto scaling
+raw_info_add_set_log %>% 
+  select(Group, all_metabolites) %>% 
+  
+  # paretoscaling 
+  paretoscale(.) %>% 
+  as.data.frame() %>% 
+  dplyr::filter(Group == 1) %>% 
+  select(all_metabolites) %>% 
+  lapply(., shapiro.test) %>% 
+  unlist() %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  
+  # 정규성 검정 결과
+  dplyr::filter(grepl("p.value", rowname)) %>% 
+  type_convert(cols(. = col_double())) %>% 
+  dplyr::filter(.<0.05)
+
+# Non-scaling 
+raw_info_add_set_log %>% 
+  select(Group, all_metabolites) %>% 
+  dplyr::filter(Group == 1) %>% 
+  select(all_metabolites) %>% 
+  lapply(., shapiro.test) %>% 
+  unlist() %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  
+  # 정규성 검정 결과
+  dplyr::filter(grepl("p.value", rowname)) %>% 
+  type_convert(cols(. = col_double())) %>% 
+  dplyr::filter(.<0.05)
+
+# scaling 유무에 상관없이 세 결과가 같다. 왜지? 
+
+#### scaling test ####
+# auto scale과 pareto scale은 정규성에 영향을 미치지 못한다? 
+scaling_test <- sample(x=1:1000,size=300)
+
+hist(scaling_test)
+hist(log(scaling_test))
+hist(autoscale(log(scaling_test), F))
+hist(paretoscale(as.data.frame(log(scaling_test)), F))
+
+
+shapiro.test(log(scaling_test))
+shapiro.test(autoscale(log(scaling_test), F))
+shapiro.test(paretoscale(as.data.frame(log(scaling_test)), F))
+
+shapiro.test(scaling_test)
+shapiro.test(autoscale(scaling_test, F))
+shapiro.test(paretoscale(as.data.frame(scaling_test), F))
+
+# 유의한 건 log를 하고 안하고일때만임. 뭐지? 
+
+#### Range ####
+
+Range_after_autoscaling <- function(data) {
+ 
+  #### Using all data with autoscaling  #### 
+  data %>% 
+    select(all_metabolites) %>% 
+    
+    # autoscaling 
+    autoscale(.) %>% 
+    as.data.frame() %>% 
+    summarise_each(funs(aaaMin = min, 
+                        aaaQ25 = quantile(., probs=0.25), 
+                        aaaMedian = median, 
+                        aaaQ75 = quantile(., probs=0.75), 
+                        aaaMax = max,
+                        aaaMean = mean, 
+                        aaaSd = sd)) -> test_summary_table
+  
+  test_summary_table %>% 
+    gather(stat, val) %>% 
+    separate(stat, into = c("var", "stat"), sep = "_aaa") %>% 
+    spread(stat, val) %>% 
+    select(var, Min, Q25, Median, Q75, Max, Mean, Sd) -> tidy_summary_table
+  
+  #### Using filtered data by group = 1 with autoscaling  #### 
+  data %>% 
+    select(Group, all_metabolites) %>% 
+    
+    # autoscaling 
+    autoscale(.) %>% 
+    as.data.frame() %>% 
+    dplyr::filter(Group == 1) %>% 
+    summarise_each(funs(aaaMin = min, 
+                        aaaQ25 = quantile(., probs=0.25), 
+                        aaaMedian = median, 
+                        aaaQ75 = quantile(., probs=0.75), 
+                        aaaMax = max,
+                        aaaMean = mean, 
+                        aaaSd = sd)) -> test_summary_table_1
+  
+  test_summary_table_1 %>% 
+    gather(stat, val) %>% 
+    separate(stat, into = c("var", "stat"), sep = "_aaa") %>% 
+    spread(stat, val) %>% 
+    select(var, Min, Q25, Median, Q75, Max, Mean, Sd) -> tidy_summary_table_1
+  
+  #### Using filtered data by group = 0 with autoscaling  #### 
+  data %>% 
+    select(Group, all_metabolites) %>% 
+    
+    # autoscaling 
+    autoscale(.) %>% 
+    as.data.frame() %>% 
+    dplyr::filter(Group == 0) %>% 
+    summarise_each(funs(aaaMin = min, 
+                        aaaQ25 = quantile(., probs=0.25), 
+                        aaaMedian = median, 
+                        aaaQ75 = quantile(., probs=0.75), 
+                        aaaMax = max,
+                        aaaMean = mean, 
+                        aaaSd = sd)) -> test_summary_table_0
+  
+  test_summary_table_0 %>% 
+    gather(stat, val) %>% 
+    separate(stat, into = c("var", "stat"), sep = "_aaa") %>% 
+    spread(stat, val) %>% 
+    select(var, Min, Q25, Median, Q75, Max, Mean, Sd) -> tidy_summary_table_0
+  
+  
+  
+  
+  #### indexing for re-ordering ####
+  a <- c()
+  for( i in 1:length(all_metabolites)) {
+    b <- which(tidy_summary_table$var %in% all_metabolites[i])
+    a <- c(a, b)
+  }
+  
+  result <- list(Overall = tidy_summary_table[a, ], 
+                 Case = tidy_summary_table_1[a, ], 
+                 Control = tidy_summary_table_0[a, ])
+  
+  #### result ####
+  return(result)
+}
+Range_after_paretoscaling <- function(data) {
+  
+  #### Using all data with paretoscaling  #### 
+  data %>% 
+    select(all_metabolites) %>% 
+    
+    # paretotoscaling 
+    paretoscale(.) %>% 
+    as.data.frame() %>% 
+    summarise_each(funs(aaaMin = min, 
+                        aaaQ25 = quantile(., probs=0.25), 
+                        aaaMedian = median, 
+                        aaaQ75 = quantile(., probs=0.75), 
+                        aaaMax = max,
+                        aaaMean = mean, 
+                        aaaSd = sd)) -> test_summary_table
+  
+  test_summary_table %>% 
+    gather(stat, val) %>% 
+    separate(stat, into = c("var", "stat"), sep = "_aaa") %>% 
+    spread(stat, val) %>% 
+    select(var, Min, Q25, Median, Q75, Max, Mean, Sd) -> tidy_summary_table
+  
+  #### Using filtered data by group = 1 with paretoscaling  #### 
+  data %>% 
+    select(Group, all_metabolites) %>% 
+    
+    # paretotoscaling 
+    paretoscale(.) %>%  
+    as.data.frame() %>% 
+    dplyr::filter(Group == 1) %>% 
+    summarise_each(funs(aaaMin = min, 
+                        aaaQ25 = quantile(., probs=0.25), 
+                        aaaMedian = median, 
+                        aaaQ75 = quantile(., probs=0.75), 
+                        aaaMax = max,
+                        aaaMean = mean, 
+                        aaaSd = sd)) -> test_summary_table_1
+  
+  test_summary_table_1 %>% 
+    gather(stat, val) %>% 
+    separate(stat, into = c("var", "stat"), sep = "_aaa") %>% 
+    spread(stat, val) %>% 
+    select(var, Min, Q25, Median, Q75, Max, Mean, Sd) -> tidy_summary_table_1
+  
+  #### Using filtered data by group = 0 with paretoscaling  #### 
+  data %>% 
+    select(Group, all_metabolites) %>% 
+    
+    # paretotoscaling 
+    paretoscale(.) %>% 
+    as.data.frame() %>% 
+    dplyr::filter(Group == 0) %>% 
+    summarise_each(funs(aaaMin = min, 
+                        aaaQ25 = quantile(., probs=0.25), 
+                        aaaMedian = median, 
+                        aaaQ75 = quantile(., probs=0.75), 
+                        aaaMax = max,
+                        aaaMean = mean, 
+                        aaaSd = sd)) -> test_summary_table_0
+  
+  test_summary_table_0 %>% 
+    gather(stat, val) %>% 
+    separate(stat, into = c("var", "stat"), sep = "_aaa") %>% 
+    spread(stat, val) %>% 
+    select(var, Min, Q25, Median, Q75, Max, Mean, Sd) -> tidy_summary_table_0
+  
+  
+  
+  
+  #### indexing for re-ordering ####
+  a <- c()
+  for( i in 1:length(all_metabolites)) {
+    b <- which(tidy_summary_table$var %in% all_metabolites[i])
+    a <- c(a, b)
+  }
+  
+  result <- list(Overall = tidy_summary_table[a, ], 
+                 Case = tidy_summary_table_1[a, ], 
+                 Control = tidy_summary_table_0[a, ])
+  
+  #### result ####
+  return(result)
+}
+
+
+
+Range_after_autoscaling(raw_info_add_set_log)
+Range_after_paretoscaling(raw_info_add_set_log)
+
 
 #### 1. baseline lasso, log transformation data case ####
 
