@@ -3723,7 +3723,7 @@ Range_after_autoscaling <- function(data) {
     select(all_metabolites) %>% 
     
     # autoscaling 
-    autoscale(.) %>% 
+    autoscale(., F) %>% 
     as.data.frame() %>% 
     summarise_each(funs(aaaMin = min, 
                         aaaQ25 = quantile(., probs=0.25), 
@@ -3741,12 +3741,12 @@ Range_after_autoscaling <- function(data) {
   
   #### Using filtered data by group = 1 with autoscaling  #### 
   data %>% 
-    select(Group, all_metabolites) %>% 
-    
     # autoscaling 
     autoscale(.) %>% 
-    as.data.frame() %>% 
     dplyr::filter(Group == 1) %>% 
+    select(all_metabolites) %>% 
+    
+    as.data.frame() %>% 
     summarise_each(funs(aaaMin = min, 
                         aaaQ25 = quantile(., probs=0.25), 
                         aaaMedian = median, 
@@ -3762,13 +3762,13 @@ Range_after_autoscaling <- function(data) {
     select(var, Min, Q25, Median, Q75, Max, Mean, Sd) -> tidy_summary_table_1
   
   #### Using filtered data by group = 0 with autoscaling  #### 
-  data %>% 
-    select(Group, all_metabolites) %>% 
-    
+  data %>%
     # autoscaling 
     autoscale(.) %>% 
-    as.data.frame() %>% 
     dplyr::filter(Group == 0) %>% 
+    select(all_metabolites) %>% 
+
+    as.data.frame() %>% 
     summarise_each(funs(aaaMin = min, 
                         aaaQ25 = quantile(., probs=0.25), 
                         aaaMedian = median, 
@@ -3807,7 +3807,7 @@ Range_after_paretoscaling <- function(data) {
     select(all_metabolites) %>% 
     
     # paretotoscaling 
-    paretoscale(.) %>% 
+    paretoscale(., F) %>% 
     as.data.frame() %>% 
     summarise_each(funs(aaaMin = min, 
                         aaaQ25 = quantile(., probs=0.25), 
@@ -3825,12 +3825,12 @@ Range_after_paretoscaling <- function(data) {
   
   #### Using filtered data by group = 1 with paretoscaling  #### 
   data %>% 
-    select(Group, all_metabolites) %>% 
-    
-    # paretotoscaling 
-    paretoscale(.) %>%  
-    as.data.frame() %>% 
+    # paretoscaling 
+    paretoscale(.) %>% 
     dplyr::filter(Group == 1) %>% 
+    select(all_metabolites) %>% 
+    
+    as.data.frame() %>% 
     summarise_each(funs(aaaMin = min, 
                         aaaQ25 = quantile(., probs=0.25), 
                         aaaMedian = median, 
@@ -3847,12 +3847,12 @@ Range_after_paretoscaling <- function(data) {
   
   #### Using filtered data by group = 0 with paretoscaling  #### 
   data %>% 
-    select(Group, all_metabolites) %>% 
-    
-    # paretotoscaling 
+    # paretoscaling 
     paretoscale(.) %>% 
-    as.data.frame() %>% 
     dplyr::filter(Group == 0) %>% 
+    select(all_metabolites) %>% 
+    
+    as.data.frame() %>% 
     summarise_each(funs(aaaMin = min, 
                         aaaQ25 = quantile(., probs=0.25), 
                         aaaMedian = median, 
@@ -3885,10 +3885,15 @@ Range_after_paretoscaling <- function(data) {
   return(result)
 }
 
+do.call(rbind.data.frame, Range_after_autoscaling(raw_info_add_set_log)) %>% 
+  rownames_to_column() %>% 
+  mutate(rowname = gsub("\\.[^0-10]+", "", rowname)) %>% 
+  write.csv("range_autoscaling.csv")
 
-
-Range_after_autoscaling(raw_info_add_set_log)
-Range_after_paretoscaling(raw_info_add_set_log)
+do.call(rbind.data.frame, Range_after_paretoscaling(raw_info_add_set_log)) %>% 
+  rownames_to_column() %>% 
+  mutate(rowname = gsub("\\.[^0-10]+", "", rowname)) %>% 
+  write.csv("range_paretoscaling.csv")
 
 
 #### 1. baseline lasso, log transformation data case ####
