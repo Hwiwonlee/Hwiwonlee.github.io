@@ -4286,6 +4286,7 @@ path_metabolite
 #### 5. Pathway analysis ####
 
 #### 6. final intersection ####
+install.packages("VennDiagram")
 library(VennDiagram)
 
 median_FC.metabolite[ ,1]
@@ -4300,7 +4301,48 @@ path_metabolite
 
 all_metabolites[ which( all_metabolites %in% median_FC.metabolite[ ,1] ) ] 
 
+# Target
+median_FC.metabolite[ ,1]
+unique(multi_CLR_cate[, 1])
+path_metabolite
+rownames(as.data.frame(auto_small.lambda.betas[auto_small.lambda.betas != 0]))
 
+sum(all_metabolites %in% median_FC.metabolite[ ,1])
+sum(all_metabolites %in% unique(multi_CLR_cate[, 1]))
+sum(all_metabolites %in% path_metabolite)
+sum(all_metabolites %in% rownames(as.data.frame(auto_small.lambda.betas[auto_small.lambda.betas != 0])))
+
+as.matrix(all_metabolites %in% median_FC.metabolite[ ,1])
+as.matrix(all_metabolites %in% unique(multi_CLR_cate[, 1]))
+as.matrix(all_metabolites %in% path_metabolite)
+as.matrix(all_metabolites %in% rownames(as.data.frame(auto_small.lambda.betas[auto_small.lambda.betas != 0])))
+
+venn_test <- as.data.frame(cbind(all_metabolites %in% median_FC.metabolite[ ,1], 
+                                 all_metabolites %in% unique(multi_CLR_cate[, 1]), 
+                                 all_metabolites %in% path_metabolite, 
+                                 all_metabolites %in% rownames(as.data.frame(auto_small.lambda.betas[auto_small.lambda.betas != 0]))))
+
+row.names(venn_test) <- all_metabolites
+colnames(venn_test) <- c("FC", "CLR", "path", "LASSO")
+venn_test
+
+venn.diagram(
+  x = list(
+    FC = which(venn_test$FC==TRUE),   # A 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    CLR = which(venn_test$CLR==TRUE),   # B 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    path = which(venn_test$path==TRUE),   # C 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    LASSO = which(venn_test$LASSO==TRUE)    # D 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+  ),
+  filename = "Venn_Diagram_4set.tiff",
+  col = "black",   # 벤 다이어그램 테두리 색상을 설정합니다.
+  lty = "dotted",   # 벤 다이어그램 테두리 선 모양을 설정합니다.
+  fill = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3"),   # 각 벤 다이어그램 내부 색상을 설정합니다.
+  alpha = 0.50,   # 벤 다이어그램의 알파 투명도를 설정합니다.
+  cat.col = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3"),   # 각 벤 다이어그램의 명칭에 대한 색상을 설정합니다.
+  cat.cex = 1.5,   # 각 벤 다이어그램의 명칭에 대한 글자 크기를 설정합니다.
+  cat.fontface = "bold",   # 각 벤 다이어그램의 명칭에 대한 글자를 볼드체로 설정합니다.
+  margin = 0.05   #  벤 다이어그램 주위의 공간을 설정합니다.
+)
 
 first <- intersect(all_metabolites, median_FC.metabolite[ ,1])
 second <- intersect(first, multi_CLR_conti[ ,1])
@@ -4314,6 +4356,7 @@ fifth
 sixth
 
 #### 6. final intersection ####
+
 #### 7. list with pathway ####
 metabolites_table <- read.xlsx2(paste(dir, "metabolites_listup.xlsx", sep= "/"), sheetIndex = 1, stringsAsFactors=FALSE)
 
