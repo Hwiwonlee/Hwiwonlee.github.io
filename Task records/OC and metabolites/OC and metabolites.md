@@ -3959,6 +3959,48 @@ afs_cv <- cv_approximate_fs(x, y, k_max = 5, n_folds = 10)
 afs_cv$cvm
 #### 2. log-ratio lasso ####
 
+#### Plus- Lasso prediction test ####
+library(glmnet)
+
+x <- model.matrix(Group~.,  raw_info_add_set_log[, -c(1,3,4,5,6,7)])[,-1]
+y <- raw_info_add_set_log$Group
+
+set.seed(1575)
+train = sample(1:nrow(x), nrow(x)/2)
+test = (-train)
+ytest = y[test]
+
+cv.lasso_test <- cv.glmnet(x[train,], y[train], alpha=1, 
+                      nfolds = nrow(obs), type.measure = "class", 
+                      grouped = TRUE, family = "binomial") 
+
+
+lasso.fit_test = predict(cv.lasso_test, type = "class", s=cv.lasso_test$lambda.min) # coefficients
+lasso.prediction = predict(cv.lasso_test, type = "class", s=cv.lasso_test$lambda.min, newx = x[test,]) # coefficients
+
+raw_info_add_set_log$Group
+dim(lasso.prediction)
+
+row.names(lasso.prediction)[1]
+
+row.names(raw_info_add_set)
+seq(1, 546, 1)
+
+a <- c()
+b <- matrix(0, 1, 2)
+
+for( i in 1:length(lasso.prediction)) {
+  if(which(row.names(lasso.prediction)[i] == row.names(raw_info_add_set_log)) != 0) {
+    a <- c(lasso.prediction[i, 1], raw_info_add_set_log$Group[which(row.names(lasso.prediction)[i] == row.names(raw_info_add_set_log))])
+    b <- rbind(b, a)
+  }
+}
+
+sum(b[, 1] == b[, 2]) / nrow(b) 
+
+#### Plus- Lasso prediction test ####
+
+
 
 
 
