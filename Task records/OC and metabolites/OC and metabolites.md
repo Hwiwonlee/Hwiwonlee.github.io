@@ -1,5 +1,6 @@
 
-코드 정리하기  
+숙원사업 : 코드 정리하기  
+0225 내용 추가할 것   
 Try log ratio lasso  
 LOG  
 
