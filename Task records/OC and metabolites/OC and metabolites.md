@@ -1,6 +1,5 @@
 
 숙원사업 : 코드 정리하기  
-0225 내용 추가할 것   
 Try log ratio lasso  
 LOG  
 
@@ -4917,6 +4916,150 @@ all_metabolites[-which(all_metabolites %in% unique(multi_CLR_cate[, 1]))] # comp
 path_metabolite %in% all_metabolites[which(all_metabolites %in% median_FC.metabolite[, 1])]
 
 #### 7. list with pathway ####
+```
+
+
+```r
+#### 0225 permutation AUC ####
+install.packages("Biocomb")
+library(Biocomb)
+library(gtools)
+
+# example for dataset without missing values
+data(data_test)
+data_test
+
+# class label must be factor
+data_test <- raw_info_add_set_log
+
+data_test[,ncol(data_test)+1] <- as.factor(data_test[,2])
+
+# FC, CLR, path, LASSO 따로따로
+FC_AUC <- compute.aucs(dattable=data_test[, -c(1:7)][c(FC_metabolite, "V89")]) %>% 
+  write.csv("FC_AUC.csv")
+CLR_AUC <- compute.aucs(dattable=data_test[, -c(1:7)][c(unique(multi_CLR_cate[, 1]), "V89")]) %>% 
+  write.csv("CLR_AUC.csv")
+path_AUC <- compute.aucs(dattable=data_test[, -c(1:7)][c(path_metabolite, "V89")]) %>% 
+  write.csv("path_AUC.csv")
+LASSO_AUC <- compute.aucs(dattable=data_test[, -c(1:7)][c(LASSO_metabolite, "V89")]) %>% 
+  write.csv("LASSO_AUC.csv")
+
+out[which(out$AUC > 0.8), ]$Biomarker
+arrange(out, desc(AUC))[1:(81*0.2), ]
+
+
+#### 0225 permutation AUC ####
+```
+
+```r
+#### 0225 heatmap, random forest, SVM ####
+# 1. heatmap
+FC_metabolite <- c("...")
+unique(multi_CLR_cate[, 1])
+path_metabolite
+LASSO_metabolite <- rownames(as.data.frame(auto_small.lambda.betas[auto_small.lambda.betas != 0]))
+
+raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", FC_metabolite))] %>% 
+  write.csv("FC_meta.csv")
+
+raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", unique(multi_CLR_cate[, 1])))] %>% 
+  write.csv("CLR_meta.csv")
+
+raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", path_metabolite))] %>% 
+  write.csv("path_meta.csv")
+
+raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", LASSO_metabolite))] %>% 
+  write.csv("lasso_meta.csv")
+
+
+# 2. Random forest
+library(randomForest)
+randomForest(as.factor(Group) ~ ., 
+             data=raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", FC_metabolite))], 
+             mtry = floor(sqrt(9)), ntree = 500, importance = T, do.trace = 100)
+
+randomForest(as.factor(Group) ~ ., 
+             data=raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", unique(multi_CLR_cate[, 1])))], 
+             mtry = floor(sqrt(57)), ntree = 500, importance = T, do.trace = 100)
+
+randomForest(as.factor(Group) ~ ., 
+             data=raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", path_metabolite))], 
+             mtry = floor(sqrt(48)), ntree = 500, importance = T, do.trace = 100)
+
+randomForest(as.factor(Group) ~ ., 
+             data=raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", LASSO_metabolite))], 
+             mtry = floor(sqrt(27)), ntree = 500, importance = T, do.trace = 100)
+
+# 3. SVM
+library(e1071)
+
+a <- svm(as.factor(Group) ~ ., 
+    data=raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", FC_metabolite))])
+
+b <- predict(a, raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", FC_metabolite))][ ,-1])
+
+table(raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", FC_metabolite))][, 1], b)
+
+a <- svm(as.factor(Group) ~ ., 
+         data=raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", unique(multi_CLR_cate[, 1])))])
+
+b <- predict(a, raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", unique(multi_CLR_cate[, 1])))][ ,-1])
+
+table(raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", unique(multi_CLR_cate[, 1])))][, 1], b)
+
+a <- svm(as.factor(Group) ~ ., 
+         data=raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", path_metabolite))])
+
+b <- predict(a, raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", path_metabolite))][ ,-1])
+
+table(raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", path_metabolite))][, 1], b)
+
+a <- svm(as.factor(Group) ~ ., 
+         data=raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", LASSO_metabolite))])
+
+b <- predict(a, raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", LASSO_metabolite))][ ,-1])
+
+table(raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", LASSO_metabolite))][, 1], b)
+
+
+
+
+#### MY heatmap 나중에 다시 시도 ####
+t(raw_info_add_set_log[all_metabolites][which(all_metabolites %in% FC_metabolite)]) %>% 
+  # rownames(.) <- .$Group %>% 
+  pheatmap(., show_rownames=T, show_colnames=F)
+
+# Generate annotations for rows and columns
+annotation_col = data.frame(
+  CellType = factor(rep(c("CT1", "CT2"), 5)), 
+  Time = 1:5
+)
+rownames(annotation_col) = paste("Test", 1:10, sep = "")
+
+annotation_row = data.frame(
+  GeneClass = factor(rep(c("Path1", "Path2", "Path3"), c(10, 4, 6)))
+)
+rownames(annotation_row) = paste("Gene", 1:20, sep = "")
+
+# Display row and color annotations
+pheatmap(test, annotation_col = annotation_col)
+pheatmap(test, annotation_col = annotation_col, annotation_legend = FALSE)
+pheatmap(test, annotation_col = annotation_col, annotation_row = annotation_row)
+
+Group_with_all_meta <- c("Group", all_metabolites)
+raw_info_add_set_log[Group_with_all_meta][which(Group_with_all_meta %in% c("Group", FC_metabolite))] %>% 
+  pheatmap()
+
+pheatmap()
+#### ####
+#### 0225 heatmap, random forest, SVM ####
+
+```
+
+
+
+
+```
 #### 02.10 metabolites list up #### 
 
 #### Package "ropls" ####
