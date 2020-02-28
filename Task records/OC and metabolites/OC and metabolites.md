@@ -1,5 +1,6 @@
 
 숙원사업 : 코드 정리하기  
+27, 28 코드 정리  
 Try log ratio lasso  
 LOG  
 
