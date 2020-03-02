@@ -5096,3 +5096,46 @@ foo.pca <- opls(foodMN)
 #### Package "ropls" ####
 
 ```
+
+```r
+#### 0302 KBSI feedback ####
+# 1. divied dataset
+library(caTools)
+library(sampling)
+library(splitstackshape)
+set.seed(1234)
+
+# Q. 이 data는 구강암여부와 age와 sex이다. 2:1로 매칭되어있는 matching data이다. 
+# 즉, 하나의 match에는 3개의 obs가 존재하며 1개의 OC, 2개의 C
+quantcut(raw_info_add_set$age) # age를 4등분
+
+split <- sample(1:nrow(raw_info_add_set_log), 437) # 80%를 train, 20%를 test 
+
+
+
+a <- stratified(raw_info_add_set_log, c("sex", "age"), 0.8)
+
+a %>% 
+  dplyr::arrange(age, sex) %>% 
+  dplyr::filter(age == 1) %>% 
+  as_tibble()
+
+
+dim(a)
+
+a %>% 
+  group_by(age) %>% 
+  summarise(n = n())
+  
+a %>% 
+  group_by(sex) %>% 
+  summarise(n = n())
+
+raw_info_add_set_log %>% 
+  group_by(sex) %>% 
+  summarise(n = n())
+
+
+
+#### 0302 ####
+```
