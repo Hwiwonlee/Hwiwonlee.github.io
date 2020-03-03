@@ -5241,6 +5241,110 @@ table.test <- table(pred = lasso.prediction.test, true = test_obs$Group)
 AUC.test <- roc(test_obs$Group, as.numeric(lasso.prediction.test), plot = TRUE)$auc
 
 
+#### 4. Conditional Logistic Regression ####
+CLR_5fold <- function(data, train, fold.set) { 
+  
+}
+
+
+
+
+#### 2. continuous variable을 이용한 conditional logistic regression ####
+### 1) simple model 
+UsCLR_cont <- function(data, target_position) {
+  
+  result <- list(NULL, NULL)
+  summary_UsCLR <- c()
+  
+  list <- names(data[-target_position])
+  
+  for (i in 1 : length(list)){
+    formula <- as.formula(paste("Group ~", 
+                                list[i],
+                                "+ strata(set)"))
+    
+    result_ith_UsCLR1 <- summary(clogit(formula = formula, data = data, method = "efron"))$coefficients
+    result_ith_UsCLR2 <- summary(clogit(formula = formula, data = data, method = "efron"))$conf.int
+    
+
+    sub_result <- cbind(result_ith_UsCLR1, result_ith_UsCLR2)
+    
+    summary_UsCLR <- rbind(summary_UsCLR, sub_result)
+  }
+  
+  as.data.frame(summary_UsCLR) %>% 
+    rownames_to_column() -> summary_UsCLR
+  
+  
+  #### <TO DO> rename으로바꿔보기 ####
+  colnames(summary_UsCLR) <- c("Metabolites","coef", "exp(coef)", "se(coef)", "z", "p_value", "exp(coef)_re", "exp(-coef)_re", "lower .95", "upper .95")
+  
+  p.adjust(pvalue, method = "BH")
+  
+  summary_UsCLR 
+  
+  summary_UsCLR -> result[[1]]
+  # tibble::rownames_to_column(., "Name") %>%
+  # dplyr::arrange(p_value) %>%
+  
+  
+  summary_UsCLR %>% 
+    tibble::rownames_to_column(., "Name") %>% 
+    dplyr::arrange(p_value) -> result[[2]]
+  
+  return(result)
+}
+
+log_SCLR_cont <- UsCLR_cont(raw_info_add_set_tr.te_log.pareto[, c("set","Group","sex","age","smoking","alcohol","stage", Change_names(all_metabolites))],
+                            c(1,2,4,7))[[1]] 
+
+
+FDR_test <- cbind(log_SCLR_cont, FDR = p.adjust(log_SCLR_cont$p_value, method = "BH"))
+
+FDR_test[which(FDR_test$FDR < 0.05), ]
+
+
+
+raw_info_add_set_tr.te_log.pareto[, c("set","Group","sex","age","smoking","alcohol","stage", Change_names(all_metabolites))]
+
+formula <- as.formula(paste("Group ~", 
+                            "beta_Hydroxybutyric_acid",
+                            "+ strata(set)"))
+
+m <- clogit(formula = formula, data = train_obs[-which(train_obs$set %in% fold.set[[1]]), ], 
+            method = "breslow")
+
+pre <- predict(m, newdata = train_obs[which(train_obs$set %in% fold.set[[1]]), ], type = 'expected', se.fit=TRUE)
+
+predict(m, type = 'lp')
+
+
+pre$fit
+  
+result_ith_UsCLR1 <- summary(clogit(formula = formula, data = raw_info_add_set_tr.te_log.pareto, 
+                                    method = "breslow"))$coefficients
+
+P <- p.adjust(result_ith_UsCLR1[, 5], method = "BH")
+  
+  
+result_ith_UsCLR2 <- summary(clogit(formula = formula, data = raw_info_add_set_tr.te_log.pareto, 
+                                    method = "breslow"))$conf.int
+
+
+sub_result <- cbind(result_ith_UsCLR1, result_ith_UsCLR2)
+
+summary_UsCLR <- rbind(summary_UsCLR, sub_result)
+
+
+ # retain NA in predictions
+fit <- coxph(Surv(time, status) ~ age + ph.ecog + strata(inst), lung)
+#lung data set has status coded as 1/2
+mresid <- (lung$status-1) - predict(fit, type='expected') #Martingale resid 
+predict(fit,type="lp")
+predict(fit,type="expected")
+predict(fit,type="risk",se.fit=TRUE)
+predict(fit,type="terms",se.fit=TRUE)
+predict(fit,type="lp",se.fit=TRUE)
 
 #### 0302 ####
 ```
