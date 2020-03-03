@@ -5099,41 +5099,146 @@ foo.pca <- opls(foodMN)
 
 ```r
 #### 0302 KBSI feedback ####
-# 1. divied dataset
+#### pre. library and seed ####
 library(caTools)
 library(sampling)
 library(splitstackshape)
-set.seed(1234)
-
-# Q. 이 data는 구강암여부와 age와 sex이다. 2:1로 매칭되어있는 matching data이다. 
-# 즉, 하나의 match에는 3개의 obs가 존재하며 1개의 OC, 2개의 C
-quantcut(raw_info_add_set$age) # age를 4등분
-
-split <- sample(1:nrow(raw_info_add_set_log), 437) # 80%를 train, 20%를 test 
-
+library(caret)
+library(RFmarkerDetector)
+library(glmnet)
+library(pROC)
+library(erer)
+set.seed(102)
 
 
-a <- stratified(raw_info_add_set_log, c("sex", "age"), 0.8)
+#### 1. divide dataset and pre-processing ####
+train.index <- createDataPartition(unique(raw_info_add_set$set), p = .8, list = FALSE)
+train.index[1] == raw_info_add_set$set
 
-a %>% 
-  dplyr::arrange(age, sex) %>% 
-  dplyr::filter(age == 1) %>% 
-  as_tibble()
+# extract corrected data with train.index
+a <- c()
+for(i in 1 : length(train.index)) { 
+  b <- which(train.index[i] == raw_info_add_set$set)
+  a <- c(a, b)
+  }
+
+# check same as legnth of train.index and length of extracted data
+length(a) == length(train.index) * 3 # same 
+
+# raw dataset에 index로 train, test를 넣어주자.
+as.numeric(seq(1, 546, 1) %in% a)
+train.test.index <- ifelse(as.numeric(seq(1, 546, 1) %in% a) == 1, "train", "test")
+
+# index와 train, test index를 추가한 dataset
+raw_info_add_set %>% 
+  mutate(train.test.index = train.test.index) %>% 
+  mutate(index = seq(1, nrow(.), 1)) %>% 
+  select(index, train.test.index, everything()) -> raw_info_add_set_tr.te
+
+# log transformation and scaling 
+b <- paretoscale(log(raw_info_add_set_tr.te[, all_metabolites] + 1), exclude = F) # log trans and pareto scaling
+raw_info_add_set_tr.te_log.pareto <- as.data.frame(cbind(raw_info_add_set_tr.te[, 1:9], b)) # cbind 
+
+dim(raw_info_add_set_tr.te_log.pareto) == dim(raw_info_add_set_tr.te) # check dimension
 
 
-dim(a)
+# train, test의 분포 알아보기
+## matching data라 나이와 성별이 최대한 비슷하게 나뉘어야 함. 
+ggplot(raw_info_add_set_tr.te_log.pareto, aes(x = age, fill = train.test.index)) + 
+  geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity')
 
-a %>% 
-  group_by(age) %>% 
-  summarise(n = n())
+ggplot(raw_info_add_set_tr.te_log.pareto, aes(x = age, fill = train.test.index)) + 
+  geom_density(alpha = 0.2)
+
+raw_info_add_set_tr.te_log.pareto %>% 
+  group_by(train.test.index) %>% 
+  count(sex)
+
+ggplot(raw_info_add_set_tr.te_log.pareto, aes(x = sex, fill = train.test.index)) + 
+  geom_bar()
+
+ggplot(raw_info_add_set_tr.te_log.pareto, aes(x = train.test.index, y = age, fill = train.test.index)) + 
+  geom_boxplot()
+
+train_obs <- dplyr::filter(raw_info_add_set_tr.te_log.pareto, train.test.index == "train")
+test_obs <- dplyr::filter(raw_info_add_set_tr.te_log.pareto, train.test.index == "test")
+
+#### 2. 5-Fold dataset ####
+# createFolds는 index를 return한다. 
+set.seed(102)
+
+fold.index <- createFolds(unique(train_obs$set), k=5, list=TRUE, returnTrain=FALSE)
+
+c <- list()
+for(i in 1 : length(fold.index)) { 
+  a <- c()
   
-a %>% 
-  group_by(sex) %>% 
-  summarise(n = n())
+  for( j in 1 : length(fold.index[[i]])) {
+    b <- rep(unique(train_obs$set)[fold.index[[i]][j]], 3)
+    a <- c(a, b)
+  }
+  c[[i]] <- a   
+}
 
-raw_info_add_set_log %>% 
-  group_by(sex) %>% 
-  summarise(n = n())
+length(c[[3]]) == length(fold.index[[3]])*3 # 개수 일치 
+unique(c[[3]]) %in% train_obs$set # set index 일치 
+
+# 위의 결과를 fold.set으로 선언
+fold.set <- c 
+
+# 1st fold의 test obs만 filtering 성공
+train_obs[which(train_obs$set %in% fold.set[[1]]), ]$set == fold.set[[1]]
+
+
+#### 3. LASSO ####
+set.seed(102)
+LASSO_5fold <- function(train, fold.set) { 
+  result <- list()
+  
+  for (i in 1:length(fold.set)) {
+    cv.lasso <- cv.glmnet(as.matrix(train[-which(train$set %in% fold.set[[i]]), all_metabolites]), 
+                          train[-which(train$set %in% fold.set[[i]]), ]$Group,
+                          alpha=1, family = "binomial") # lasso logistic regression 
+    lasso.min_lambda <- glmnet(as.matrix(train[-which(train$set %in% fold.set[[i]]), all_metabolites]), 
+                              train[-which(train$set %in% fold.set[[i]]), ]$Group,
+                              alpha=1, lambda=cv.lasso$lambda.min, family = "binomial") # coefficients
+    lasso.coef <- as.data.frame(as.matrix(coef(lasso.min_lambda)))
+    
+    
+    # check accuracy of each fold
+    lasso.prediction <- predict(lasso.min_lambda, s=cv.lasso$lambda.min, 
+                               newx = as.matrix(train[which(train$set %in% fold.set[[i]]), all_metabolites]), 
+                               type = "class")
+    
+    table <- table(pred=lasso.prediction, true = train[which(train$set %in% fold.set[[i]]), ]$Group)
+    accuracy <- mean(lasso.prediction == train[which(train$set %in% fold.set[[i]]), ]$Group)
+    AUC <- roc(train[which(train$set %in% fold.set[[i]]), ]$Group, as.numeric(lasso.prediction), plot=FALSE)$auc
+    
+    # lasso.prediction_test <- predict(lasso.min_lambda, s=cv.lasso$lambda.min, 
+    #                             newx = as.matrix(train[which(train$set %in% fold.set[[i]]), all_metabolites]), 
+    #                             type = "class")
+    # 
+    # table_test <- table(pred=lasso.prediction_test, true = train[which(train$set %in% fold.set[[i]]), ]$Group)
+    # accuracy_test <- mean(lasso.prediction_test == train[which(train$set %in% fold.set[[i]]), ]$Group)
+    # ACU_test <- roc(train[which(train$set %in% fold.set[[i]]), ]$Group, as.numeric(lasso.prediction_test), plot=FALSE)$auc
+    
+    result[[i]] <- list(lasso.min_lambda, cv.lasso$lambda.min, lasso.coef, table, accuracy, AUC)
+  }
+  
+  names(result) <- c("1st LASSO CV", "2nd LASSO CV", "3nd LASSO CV", "4th LASSO CV", "5th LASSO CV")
+  
+  return(result)
+  
+}
+
+test.LASSO_5fold <- LASSO_5fold(train = train_obs, fold.set = fold.set)
+capture.output(test.LASSO_5fold, file = "LASSO_test.csv")
+
+lasso.prediction.test <- predict(test.LASSO_5fold[[1]][[1]], s = test.LASSO_5fold[[1]][[2]], 
+                                newx = as.matrix(test_obs[, all_metabolites]), 
+                                type = "class")
+table.test <- table(pred = lasso.prediction.test, true = test_obs$Group)
+AUC.test <- roc(test_obs$Group, as.numeric(lasso.prediction.test), plot = TRUE)$auc
 
 
 
