@@ -5655,10 +5655,10 @@ venn
 
 venn.diagram(
   x = list(
-    FC = which(venn$lasso_min_meta==TRUE),   # A 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
-    CLR = which(venn$lasso_1se_meta==TRUE),   # B 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
-    path = which(venn$LR==TRUE),   # C 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
-    LASSO = which(venn$CLR==TRUE)    # D 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    lasso_min_meta = which(venn$lasso_min_meta==TRUE),   # A 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    lasso_1se_meta = which(venn$lasso_1se_meta==TRUE),   # B 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    LR = which(venn$LR==TRUE),   # C 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    CLR = which(venn$CLR==TRUE)    # D 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
   ),
   filename = "Venn_Diagram_4set.tiff",
   col = "black",   # 벤 다이어그램 테두리 색상을 설정합니다.
