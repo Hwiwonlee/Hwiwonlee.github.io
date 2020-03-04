@@ -5108,6 +5108,8 @@ library(RFmarkerDetector)
 library(glmnet)
 library(pROC)
 library(erer)
+library(survival)
+library(VennDiagram)
 set.seed(102)
 
 
@@ -5238,113 +5240,435 @@ lasso.prediction.test <- predict(test.LASSO_5fold[[1]][[1]], s = test.LASSO_5fol
                                 newx = as.matrix(test_obs[, all_metabolites]), 
                                 type = "class")
 table.test <- table(pred = lasso.prediction.test, true = test_obs$Group)
-AUC.test <- roc(test_obs$Group, as.numeric(lasso.prediction.test), plot = TRUE)$auc
+AUC.test1 <- roc(test_obs$Group, as.numeric(lasso.prediction.test), plot = TRUE)$auc
+
+lasso.prediction.test <- predict(test.LASSO_5fold[[2]][[1]], s = test.LASSO_5fold[[2]][[2]], 
+                                 newx = as.matrix(test_obs[, all_metabolites]), 
+                                 type = "class")
+table.test <- table(pred = lasso.prediction.test, true = test_obs$Group)
+AUC.test2 <- roc(test_obs$Group, as.numeric(lasso.prediction.test), plot = TRUE)$auc
+
+lasso.prediction.test <- predict(test.LASSO_5fold[[3]][[1]], s = test.LASSO_5fold[[3]][[2]], 
+                                 newx = as.matrix(test_obs[, all_metabolites]), 
+                                 type = "class")
+table.test <- table(pred = lasso.prediction.test, true = test_obs$Group)
+AUC.test3 <- roc(test_obs$Group, as.numeric(lasso.prediction.test), plot = TRUE)$auc
+
+lasso.prediction.test <- predict(test.LASSO_5fold[[4]][[1]], s = test.LASSO_5fold[[4]][[2]], 
+                                 newx = as.matrix(test_obs[, all_metabolites]), 
+                                 type = "class")
+table.test <- table(pred = lasso.prediction.test, true = test_obs$Group)
+AUC.test4 <- roc(test_obs$Group, as.numeric(lasso.prediction.test), plot = TRUE)$auc
+
+lasso.prediction.test <- predict(test.LASSO_5fold[[5]][[1]], s = test.LASSO_5fold[[5]][[2]], 
+                                 newx = as.matrix(test_obs[, all_metabolites]), 
+                                 type = "class")
+table.test <- table(pred = lasso.prediction.test, true = test_obs$Group)
+AUC.test5 <- roc(test_obs$Group, as.numeric(lasso.prediction.test), plot = TRUE)$auc
 
 
-#### 4. Conditional Logistic Regression ####
-CLR_5fold <- function(data, train, fold.set) { 
+AUC.test1; AUC.test2; AUC.test3; AUC.test4; AUC.test5;
+
+
+
+lasso.final <- glmnet(as.matrix(train[-which(train$set %in% fold.set[[i]]), all_metabolites]), 
+                           train[-which(train$set %in% fold.set[[i]]), ]$Group,
+                           alpha=1, lambda=cv.lasso$lambda.min, family = "binomial") # coefficients
+lasso.coef <- as.data.frame(as.matrix(coef(lasso.final)))
+
+
+# check accuracy of each fold
+
+
+
+
+#### 5-fold CV LASSO ####
+cv.lasso <- cv.glmnet(as.matrix(train_obs[, all_metabolites]), 
+                      train_obs$Group,
+                      alpha=1, family = "binomial", nfolds = 5) # lasso logistic regression 
+lasso.min_lambda <- glmnet(as.matrix(train_obs[, all_metabolites]), 
+                           train_obs$Group,
+                           alpha=1, lambda=cv.lasso$lambda.min, family = "binomial") # coefficients
+
+lasso.1se <- glmnet(as.matrix(train_obs[, all_metabolites]), 
+                    train_obs$Group,
+                    alpha=1, lambda=cv.lasso$lambda.1se, family = "binomial") # coefficients
+
+
+lasso.min_coef <- as.data.frame(as.matrix(coef(lasso.min_lambda)))
+lasso.1se_coef <- as.data.frame(as.matrix(coef(lasso.1se)))
+
+lasso.prediction.min_test <- predict(lasso.min_lambda, s = cv.lasso$lambda.min, 
+                                 newx = as.matrix(test_obs[, all_metabolites]), 
+                                 type = "class")
+
+lasso.prediction.1se_test <- predict(lasso.1se, s = cv.lasso$lambda.1se, 
+                                     newx = as.matrix(test_obs[, all_metabolites]), 
+                                     type = "class")
+
+AUC.test_min <- roc(test_obs$Group, as.numeric(lasso.prediction.min_test), plot = TRUE)$auc
+AUC.test_1se <- roc(test_obs$Group, as.numeric(lasso.prediction.1se_test), plot = TRUE)$auc
+
+lasso.min_coef %>% 
+  rownames_to_column() %>% 
+  write.csv("lasso.min_coef.csv")
+
+lasso.1se_coef %>% 
+  rownames_to_column() %>% 
+  write.csv("lasso.1se_coef.csv")
+
+#### 4. Logistic Regression ####
+set.seed(102)
+
+
+#### Part 1. change to categorical variable ####
+replace.using.mid.high <- function(data){ 
+  
+  data %>% 
+    dplyr::filter(Group == 0) %>%
+    select(all_metabolites) %>% 
+    summarise_all(funs(q33 = quantile(., probs = .33),
+                       q66 = quantile(., probs = .66))) %>% 
+    select(contains("_q33"))  %>% 
+    rename_at(vars(matches("_q33$")), funs(str_replace(., "_q33", ""))) %>% 
+    rownames_to_column %>%
+    gather(variable, value, -rowname) -> mid_standard_log
+  
+  data %>% 
+    dplyr::filter(Group == 0) %>%
+    select(all_metabolites) %>% 
+    summarise_all(funs(q33 = quantile(., probs = .33),
+                       q66 = quantile(., probs = .66))) %>% 
+    select(contains("_q66"))  %>% 
+    rename_at(vars(matches("_q66$")), funs(str_replace(., "_q66", ""))) %>% 
+    rownames_to_column %>%
+    gather(variable, value, -rowname) -> high_standard_log
+  
+  
+  u <- matrix(0, nrow(data), ncol(data))
+  
+  for(i in 1:nrow(mid_standard)){ 
+    for (j in 1:nrow(data)){
+      
+      ## 33th 보다 작으면 1, 
+      ## 1보다는 크고 66th보다 작으면 2
+      ## 66th보다 크면 3
+      if(mid_standard_log[i, 3] > data[j, i]) {
+        u[j, i] <- 1 
+      } else if(high_standard_log[i, 3] > data[j, i]) {
+        u[j, i] <- 2
+      } else {
+        u[j, i] <- 3
+      }
+    }
+  }
+  u <- as.data.frame(u)
+  colnames(u) <- all_metabolites
+  
+  result <- list(u, mid_standard_log, high_standard_log)
+  names(result) <- c("change to categorical", "mid_standard_log_pareto", "high_standard_log_pareto")
+  return(result)
+}
+
+u <- replace.using.mid.high(raw_info_add_set_tr.te_log.pareto[, all_metabolites])
+
+#### 제대로 바뀌었는지 check ####
+u[[1]] %>% 
+  as_tibble()
+
+raw_info_add_set_tr.te_log.pareto %>% 
+  group_by(Group) %>% 
+  mutate_at(vars(all_metabolites), list(~replace(., Group == 0, ntile(., 3)))) %>% 
+  select(15) %>% as.data.frame() -> check_divided
+
+cbind(u[[1]][, 6], check_divided)
+
+# log tras 후 low, mid, high로 나눈 dataset 선언
+tr.re.log.pareto.mid.high <- as.data.frame(cbind(raw_info_add_set_tr.te_log.pareto[, 1:9], u[[1]]))
+
+cate_train_obs <- dplyr::filter(tr.re.log.pareto.mid.high, train.test.index == "train")
+cate_test_obs <- dplyr::filter(tr.re.log.pareto.mid.high, train.test.index == "test")
+
+
+
+
+#### Part 2. 5-fold-crossvalidation ####
+
+LR_5fold <- function(train, fold.set) { 
+  fold_result <- data.frame(matrix(rep(0, 81*10), 81, 10))
+  colnames(fold_result) <- c("1st fold AUC ", "1st fold test AUC", 
+                             "2nd fold AUC ", "2nd fold test AUC",
+                             "3nd fold AUC ", "3nd fold test AUC",
+                             "4th fold AUC ", "4th fold test AUC",
+                             "5th fold AUC ", "5th fold test AUC")
+  row.names(fold_result) <- all_metabolites
+  
+  LR_result <- data.frame(matrix(rep(0, 81*3), 81, 3))
+  colnames(LR_result) <- c("metabolite", "average of AUC in 5f-CV ", "average of AUC in test set")
+  
+  result <- list()
+  
+  #### 하나의 fold 당 81개의 metabolite를 대상으로 한 LR model이 building 되어야 함. 
+  for (i in 1:length(fold.set)) {
+    for (j in 1:length(all_metabolites)) { 
+    
+      #### 하나의 metabolite와 여러 개의 comfounder(sex, age, smoking, alcohol)
+      formula <- as.formula(paste("Group ~ ", 
+                                  paste0("factor(", "sex)"),
+                                  "+ age", 
+                                  paste0("+ factor(", "smoking)"),
+                                  paste0("+ factor(", "alcohol)"),
+                                  "+",  
+                                  paste0("factor(", all_metabolites[j]), ")" ))
+      
+      LR_model <- glm(formula = formula, 
+                      data = cate_train_obs[-which(cate_train_obs$set %in% fold.set[[i]]), ],
+                      family = "binomial")
+      
+      # fold 내에서의 prediction 
+      predict_fold <- predict(LR_model, cate_train_obs[which(cate_train_obs$set %in% fold.set[[i]]), ], type = "response")
+      
+      # fold 내에서의 prediction를 이용한 AUC
+      ROC_fold <- ROC(predict_fold, stat = cate_train_obs[which(cate_train_obs$set %in% fold.set[[i]]), ]$Group, 
+                        AUC = TRUE)
+      
+      # fold 내의 model과 test set을 이용한 prediction
+      predict_test <- predict(LR_model, cate_test_obs, type = "response")
+      ROC_test <- ROC(predict_test, stat = cate_test_obs$Group, AUC = TRUE)
+      
+      fold_result[j, c((2*i)-1, (2*i))] <- c(ROC_fold$AUC, ROC_test$AUC)
+      
+      }
+  }
+  
+  return(fold_result)
   
 }
 
+test.LR_5fold <- LR_5fold(train = cate_train_obs, fold.set = fold.set)
+
+test.LR_5fold %>% 
+  write.csv("LR_5fold.csv")
 
 
-
-#### 2. continuous variable을 이용한 conditional logistic regression ####
-### 1) simple model 
-UsCLR_cont <- function(data, target_position) {
+#### 5. Conditional Logistic Regression ####
+# categorical variable을 이용한 CLR with multiple comfound 
+CLR_mfactor_c_HW <- function(data, all_metabolites, strata_name, point) { 
   
-  result <- list(NULL, NULL)
-  summary_UsCLR <- c()
+  m1 <- list()
+  n <- c()
+  m1_j <- 1
   
-  list <- names(data[-target_position])
+  a1 <-list()
+  all_name <- c()
   
-  for (i in 1 : length(list)){
-    formula <- as.formula(paste("Group ~", 
-                                list[i],
-                                "+ strata(set)"))
+  for(i in 1:length(all_metabolites)) {
+    formula <- as.formula(paste("Group ~ ", 
+                                paste0("factor(", "sex)"),
+                                "+ age", 
+                                paste0("+ factor(", "smoking)"),
+                                paste0("+ factor(", "alcohol)"),
+                                paste0("+ factor(", all_metabolites[i], ")"),
+                                paste0("+ strata(", strata_name, ")") ))
     
-    result_ith_UsCLR1 <- summary(clogit(formula = formula, data = data, method = "efron"))$coefficients
-    result_ith_UsCLR2 <- summary(clogit(formula = formula, data = data, method = "efron"))$conf.int
+    r1 <- summary(clogit(formula = formula, 
+                         data = data, control = coxph.control(iter.max = 100), method='breslow'))
+    r1 <- cbind(r1$conf.int, pvalue = r1$coefficients[, 5], FDR = p.adjust(r1$coefficients[, 5],method="BH"))
     
-
-    sub_result <- cbind(result_ith_UsCLR1, result_ith_UsCLR2)
+    # 모든 결과를 a1에 저장
+    a1[[i]] <- r1
+    all_name <- c(all_name, all_metabolites[i])
     
-    summary_UsCLR <- rbind(summary_UsCLR, sub_result)
+    # FDR, 0.05보다 작은 결과만 m1에 저장
+    if(r1[point, 6] < 0.05) {
+      m1[[m1_j]] <- r1
+      m1_j <- m1_j+1
+      n <- c(n, all_metabolites[i])
+    }
   }
   
-  as.data.frame(summary_UsCLR) %>% 
-    rownames_to_column() -> summary_UsCLR
-  
-  
-  #### <TO DO> rename으로바꿔보기 ####
-  colnames(summary_UsCLR) <- c("Metabolites","coef", "exp(coef)", "se(coef)", "z", "p_value", "exp(coef)_re", "exp(-coef)_re", "lower .95", "upper .95")
-  
-  p.adjust(pvalue, method = "BH")
-  
-  summary_UsCLR 
-  
-  summary_UsCLR -> result[[1]]
-  # tibble::rownames_to_column(., "Name") %>%
-  # dplyr::arrange(p_value) %>%
-  
-  
-  summary_UsCLR %>% 
-    tibble::rownames_to_column(., "Name") %>% 
-    dplyr::arrange(p_value) -> result[[2]]
+  result <- list(a1, all_name, m1, n)
   
   return(result)
 }
 
-log_SCLR_cont <- UsCLR_cont(raw_info_add_set_tr.te_log.pareto[, c("set","Group","sex","age","smoking","alcohol","stage", Change_names(all_metabolites))],
-                            c(1,2,4,7))[[1]] 
+#### Point 체크를 위한 따로 돌려보기 ####
+r1 <- summary(clogit(formula = formula, 
+                     data = log_mid_high_data_set, control = coxph.control(iter.max = 100), method='exact'))
 
+fdr_test <- summary(clogit(formula = formula, 
+                           data = tr.re.log.pareto.mid.high, control = coxph.control(iter.max = 100), method='breslow'))
 
-FDR_test <- cbind(log_SCLR_cont, FDR = p.adjust(log_SCLR_cont$p_value, method = "BH"))
+p.adjust(fdr_test$coefficients[, 5],method="BH")
 
-FDR_test[which(FDR_test$FDR < 0.05), ]
+fdr_test$coefficients[8, 6]
+#### Point 체크를 위한 따로 돌려보기 ####
+# point 8 -> High categorical variable의 위치 
 
+log_pareto_mid_high_CLR <- CLR_mfactor_c_HW(tr.re.log.pareto.mid.high, all_metabolites, "set", 8)
 
-
-raw_info_add_set_tr.te_log.pareto[, c("set","Group","sex","age","smoking","alcohol","stage", Change_names(all_metabolites))]
-
-formula <- as.formula(paste("Group ~", 
-                            "beta_Hydroxybutyric_acid",
-                            "+ strata(set)"))
-
-m <- clogit(formula = formula, data = train_obs[-which(train_obs$set %in% fold.set[[1]]), ], 
-            method = "breslow")
-
-pre <- predict(m, newdata = train_obs[which(train_obs$set %in% fold.set[[1]]), ], type = 'expected', se.fit=TRUE)
-
-predict(m, type = 'lp')
-
-
-pre$fit
+table_gen <- function(result, point) {
   
-result_ith_UsCLR1 <- summary(clogit(formula = formula, data = raw_info_add_set_tr.te_log.pareto, 
-                                    method = "breslow"))$coefficients
-
-P <- p.adjust(result_ith_UsCLR1[, 5], method = "BH")
+  z <- result
+  q <- z[[2]]
   
+  r <- matrix(0, 2, (length(z[[1]][[1]][point, ])))
+  r2 <- matrix(0, 2, (length(z[[1]][[1]][point, ])))
   
-result_ith_UsCLR2 <- summary(clogit(formula = formula, data = raw_info_add_set_tr.te_log.pareto, 
-                                    method = "breslow"))$conf.int
+  for(i in 1:length(z[[1]])) {
+    r[1, ] <- c(z[[1]][[i]][point, ])
+    r[2, ] <- c(z[[1]][[i]][point+1, ])
+    
+    r2 <- rbind(r2, r)
+  }
+  r2 <- r2[-c(1:2), ]
+  
+  e <- as.data.frame(cbind(rep(q, each =2), r2))
+  
+  colnames(e) = c("Metabolites","exp(coef)", "exp(-coef)", "lower .95", "upper .95", "p-value", "FDR")
+  
+  return(e)
+}
+
+CLR_summary <- table_gen(log_pareto_mid_high_CLR, 7)
 
 
-sub_result <- cbind(result_ith_UsCLR1, result_ith_UsCLR2)
 
-summary_UsCLR <- rbind(summary_UsCLR, sub_result)
+# control group, mid,high 기준 n개
+tr.re.log.pareto.mid.high %>% 
+  group_by(Group) %>% 
+  select(c(Group, all_metabolites)) %>% 
+  dplyr::filter(Group == 0) %>% 
+  gather(Group, var) %>% 
+  cbind(index=rep(1:81, each = 364), .)%>% 
+  count(Group, var, index) %>% 
+  arrange(index) %>% 
+  as.data.frame() -> control_log_mid_high_n
+
+# case group, mid,high 기준 n개
+tr.re.log.pareto.mid.high %>% 
+  group_by(Group) %>% 
+  select(c(Group, all_metabolites)) %>% 
+  dplyr::filter(Group == 1) %>% 
+  gather(Group, var) %>% 
+  cbind(index=rep(1:81, each = 182), .)%>% 
+  count(Group, var, index) %>% 
+  arrange(index) %>% 
+  as.data.frame() -> case_log_mid_high_n
+
+as.data.frame(mid_standard_log) -> mid_criteria_log
+as.data.frame(high_standard_log) -> high_criteria_log
+
+#### TO write table ####
+
+n2 <- c()
+for(i in 1:length(all_metabolites)) {
+  # 만약 4분할하면 3을 4로 바꿔주면 됨 
+  
+  # index가 홀수인 경우 
+  if( (((case_log_mid_high_n$index[i]+(3*as.numeric(i)))-3)%%2) != 0 ){
+    
+    j <- (i*3)-2 # 만약 4분할하면 3 -> 4, 2 -> 3
+    k <-  (i*2)-1 # 만약 4분할하면 2 -> 3, 1 -> 2
+    b1 <- c(CLR_summary[k, 1], "", "", "", "", "", "", "", "", "", "")
+    # l1 <- c("Continuous", "", "", "", log_mid_high_CLR_conti[i, ])
+    b2 <- c("Low", mid_criteria_log[i, 3], case_log_mid_high_n[j, 4], control_log_mid_high_n[j, 4], "", "", "", "", "", "", "")
+    b3 <- c("Mid", high_criteria_log[i, 3], case_log_mid_high_n[j+1, 4], control_log_mid_high_n[j+1, 4], 
+            CLR_summary[k, ])
+    b4 <- c("High", high_criteria_log[i, 3], case_log_mid_high_n[j+2, 4], control_log_mid_high_n[j+2, 4],
+            CLR_summary[k+1, ])
+    
+    n1 <- rbind(b1, b2, b3, b4)    
+    
+    # index가 짝수인 경우 
+  } else {
+    j <- (i*3)-2
+    k <- (i*2)-1  
+    b1 <- c(CLR_summary[k, 1], "", "", "", "", "", "", "", "", "", "")
+    # l1 <- c("Continuous", "", "", "", log_mid_high_CLR_conti[i, ])
+    b2 <- c("Low", mid_criteria_log[i, 3], case_log_mid_high_n[j, 4], control_log_mid_high_n[j, 4], "", "", "", "", "", "", "")
+    b3 <- c("Mid", high_criteria_log[i, 3], case_log_mid_high_n[j+1, 4], control_log_mid_high_n[j+1, 4], 
+            CLR_summary[k, ])
+    b4 <- c("High", high_criteria_log[i, 3], case_log_mid_high_n[j+2, 4], control_log_mid_high_n[j+2, 4],
+            CLR_summary[k+1, ])
+    
+    n1 <- rbind(b1, b2, b3, b4) 
+  }
+  n2 <- rbind(n2, n1)
+  
+}
 
 
- # retain NA in predictions
-fit <- coxph(Surv(time, status) ~ age + ph.ecog + strata(inst), lung)
-#lung data set has status coded as 1/2
-mresid <- (lung$status-1) - predict(fit, type='expected') #Martingale resid 
-predict(fit,type="lp")
-predict(fit,type="expected")
-predict(fit,type="risk",se.fit=TRUE)
-predict(fit,type="terms",se.fit=TRUE)
-predict(fit,type="lp",se.fit=TRUE)
+#### Check #####
+as.data.frame(n2)[1:20, 1:4]
+case_mid_high_n[1:18, ]
+control_mid_high_n[1:18, ]
+mid_criteria_log[1:5, ]
+high_criteria_log[1:5, ]
 
+as.data.frame(n2)[1:12, 5:11]
+as.data.frame(CLR_summary)[1:6, ]
+
+as.data.frame(n2)[13:24, 5:11]
+as.data.frame(CLR_summary)[7:12, ]
+#### Check #####
+
+
+n2 %>% 
+  write.xlsx("CLR_result.xlsx") 
+
+
+
+#### 6. venndiagram ####
+#### part1. metabolite name 추출 
+# 1) LASSO
+lasso.min_coef %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(s0 != 0) %>% 
+  select(1) -> lasso_min_meta
+
+lasso.1se_coef %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(s0 != 0) %>% 
+  select(1) -> lasso_1se_meta
+
+# 2) LR
+apply(test.LR_5fold, 1, mean) %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  dplyr::filter(. >= 0.7) %>% 
+  select(1) -> LR_meta
+
+# 3) CLR
+CLR_meta <- log_pareto_mid_high_CLR[[4]]
+
+#### part2. venndiagram 
+
+venn <- as.data.frame(cbind(all_metabolites %in% lasso_min_meta, 
+                            all_metabolites %in% lasso_1se_meta, 
+                            all_metabolites %in% LR_meta, 
+                            all_metabolites %in% CLR_meta))
+
+row.names(venn) <- all_metabolites
+colnames(venn) <- c("lasso_min_meta", "lasso_1se_meta", "LR", "CLR")
+venn
+
+venn.diagram(
+  x = list(
+    FC = which(venn$lasso_min_meta==TRUE),   # A 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    CLR = which(venn$lasso_1se_meta==TRUE),   # B 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    path = which(venn$LR==TRUE),   # C 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    LASSO = which(venn$CLR==TRUE)    # D 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+  ),
+  filename = "Venn_Diagram_4set.tiff",
+  col = "black",   # 벤 다이어그램 테두리 색상을 설정합니다.
+  lty = "dotted",   # 벤 다이어그램 테두리 선 모양을 설정합니다.
+  fill = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3"),   # 각 벤 다이어그램 내부 색상을 설정합니다.
+  alpha = 0.50,   # 벤 다이어그램의 알파 투명도를 설정합니다.
+  cat.col = c("dodgerblue", "goldenrod1", "darkorange1", "seagreen3"),   # 각 벤 다이어그램의 명칭에 대한 색상을 설정합니다.
+  cat.cex = 1.5,   # 각 벤 다이어그램의 명칭에 대한 글자 크기를 설정합니다.
+  cat.fontface = "bold",   # 각 벤 다이어그램의 명칭에 대한 글자를 볼드체로 설정합니다.
+  margin = 0.05   #  벤 다이어그램 주위의 공간을 설정합니다.
+)
 #### 0302 ####
 ```
