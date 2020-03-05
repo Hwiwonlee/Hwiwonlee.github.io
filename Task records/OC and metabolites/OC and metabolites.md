@@ -5501,7 +5501,7 @@ fdr_test <- summary(clogit(formula = formula,
 
 p.adjust(fdr_test$coefficients[, 5],method="BH")
 
-fdr_test$coefficients[8, 6]
+cbind(fdr_test$conf.int, fdr_test$coefficients[, 5], p.adjust(fdr_test$coefficients[, 5],method="BH"))
 #### Point 체크를 위한 따로 돌려보기 ####
 # point 8 -> High categorical variable의 위치 
 
@@ -5619,7 +5619,62 @@ n2 %>%
 
 
 
-#### 6. venndiagram ####
+
+#### 6 Fold change ####
+
+# raw_info_add_set_tr.te_log.pareto %>% 
+#   dplyr::filter(Group == 0) %>% 
+#   dplyr::select(all_metabolites) %>% 
+#   apply(. ,2 , FUN=median) -> group0median
+# 
+# raw_info_add_set_tr.te_log.pareto %>% 
+#   dplyr::filter(Group == 1) %>% 
+#   dplyr::select(all_metabolites) %>% 
+#   apply(. ,2, FUN=median) -> group1median
+# 
+# FC <- group1median / group0median
+# FC_edit <- FC + min(FC)
+# log2FC <- log(abs(FC), 2)
+# 
+# pvalue <- lapply(all_metabolites, function(v) {
+#   kruskal.test(as.data.frame(raw_info_add_set)[, v] ~ as.data.frame(raw_info_add_set)[, 'Group'])$p.value
+# })
+# 
+# pvalue.BHcorr <- p.adjust(pvalue, method = "BH") # FDR
+# pvalue.BHcorr.neglog <- -log10(pvalue.BHcorr)
+# 
+# volcano.data <- data.frame(log2FC, FC, group1median, group0median, pvalue.BHcorr.neglog, unlist(pvalue))
+# 
+# volcano.data %>% 
+#   rownames_to_column() %>% 
+#   dplyr::filter(log2FC < -1 & pvalue.BHcorr.neglog > 1.301) -> red_set
+# 
+# volcano.data %>% 
+#   rownames_to_column() %>% 
+#   dplyr::filter(log2FC > 1 & pvalue.BHcorr.neglog > 1.301) -> green_set
+# 
+# volcano.data$pvalue.BHcorr <- pvalue.BHcorr
+# 
+# volcano.data %>% 
+#   rownames_to_column() -> volcano.data
+# volcano.data$sig <- ifelse(volcano.data$pvalue.BHcorr.neglog < 1.301, "Not Sig",
+#                            ifelse(volcano.data$log2FC < -1 & volcano.data$pvalue.BHcorr.neglog > 1.301, "log2(FC) ≤ -1", 
+#                                   ifelse(volcano.data$log2FC > 1 & volcano.data$pvalue.BHcorr.neglog > 1.301, "log2(FC) ≥ 1", "-1 < log2(FC) < 1")))
+# 
+# volcanoEM <- ggplot(volcano.data, aes(x= log2FC, y=pvalue.BHcorr.neglog)) +  
+#   geom_point(aes(color=sig)) + 
+#   scale_color_manual(values = c("black", "red", "green","grey")) + 
+#   theme_bw(base_size = 12) +  
+#   theme(legend.position = "right", legend.title = element_blank()) + 
+#   geom_text_repel(data = subset(volcano.data, sig == "log2(FC) ≤ -1" | sig == "log2(FC) ≥ 1"), aes(label = rowname), size=5, box.padding = unit(0.35, "lines"), point.padding = unit(0.3, "lines")) +
+#   ggtitle("Figure 1.1 Volcano plot using median fold change and p-value of Kruskal test results") + labs(x=bquote(~log[2]~ "Fold change"), y=bquote(~-log[10]~adjusted-~italic(P))) + 
+#   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15, color = "black"))
+# 
+# 
+# plot(volcanoEM)
+
+
+#### 7. venndiagram ####
 #### part1. metabolite name 추출 
 # 1) LASSO
 lasso.min_coef %>% 
@@ -5636,29 +5691,47 @@ lasso.1se_coef %>%
 apply(test.LR_5fold, 1, mean) %>% 
   as.data.frame() %>% 
   rownames_to_column() %>% 
-  dplyr::filter(. >= 0.7) %>% 
+  dplyr::filter(. > 0.8) %>%
+  dplyr::arrange(desc(.)) %>% 
   select(1) -> LR_meta
 
 # 3) CLR
 CLR_meta <- log_pareto_mid_high_CLR[[4]]
 
-#### part2. venndiagram 
+# 2)와 CLR joint
+sum(CLR_meta %in% LR_meta[, 1])
 
-venn <- as.data.frame(cbind(all_metabolites %in% lasso_min_meta, 
-                            all_metabolites %in% lasso_1se_meta, 
-                            all_metabolites %in% LR_meta, 
-                            all_metabolites %in% CLR_meta))
+
+
+
+# 4) FC
+FC_metabolite
+
+
+unique(c(lasso_1se_meta[, 1], LR_meta[, 1], CLR_meta, FC_metabolite))[-1]
+
+#### part2. venndiagram 
+# venn <- as.data.frame(cbind(all_metabolites %in% lasso_min_meta[, 1], 
+#                             all_metabolites %in% lasso_1se_meta[, 1], 
+#                             all_metabolites %in% LR_meta[, 1], 
+#                             all_metabolites %in% CLR_meta, 
+#                             all_metabolites %in% FC_metabolite))
+
+venn <- as.data.frame(cbind(all_metabolites %in% lasso_1se_meta[, 1], 
+                            all_metabolites %in% LR_meta[, 1], 
+                            all_metabolites %in% CLR_meta, 
+                            all_metabolites %in% FC_metabolite))
 
 row.names(venn) <- all_metabolites
-colnames(venn) <- c("lasso_min_meta", "lasso_1se_meta", "LR", "CLR")
+colnames(venn) <- c("Lasso_1se", "LR_AUC", "CLR_FDR", "FC")
 venn
 
 venn.diagram(
   x = list(
-    lasso_min_meta = which(venn$lasso_min_meta==TRUE),   # A 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
-    lasso_1se_meta = which(venn$lasso_1se_meta==TRUE),   # B 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    FC = which(venn$FC==TRUE),   # A 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    Lasso_1se = which(venn$Lasso_1se==TRUE),   # B 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
     LR = which(venn$LR==TRUE),   # C 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
-    CLR = which(venn$CLR==TRUE)    # D 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
+    CLR = which(venn$CLR==TRUE) # D 그룹에서 평가를 좋게한 인터뷰 대상자 번호를 찾아냅니다.
   ),
   filename = "Venn_Diagram_4set.tiff",
   col = "black",   # 벤 다이어그램 테두리 색상을 설정합니다.
@@ -5670,5 +5743,11 @@ venn.diagram(
   cat.fontface = "bold",   # 각 벤 다이어그램의 명칭에 대한 글자를 볼드체로 설정합니다.
   margin = 0.05   #  벤 다이어그램 주위의 공간을 설정합니다.
 )
+
+venn %>% 
+  write.xlsx("venn.xlsx")
+
+unique(c(lasso_1se_meta[, 1], LR_meta[, 1], CLR_meta, FC_metabolite))[-1] %>% 
+  write.xlsx("union.xlsx")
 #### 0302 ####
 ```
