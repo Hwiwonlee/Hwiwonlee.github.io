@@ -5751,3 +5751,114 @@ unique(c(lasso_1se_meta[, 1], LR_meta[, 1], CLR_meta, FC_metabolite))[-1] %>%
   write.xlsx("union.xlsx")
 #### 0302 ####
 ```
+
+```r
+#### 0306 ####
+library(randomForest)
+library(caret)
+set.seed(102)
+
+#### train part ####
+# repeated 5fold CV search
+fitControl <- trainControl(method = "repeatedcv", number = 5, repeats = 5)
+rf_fit <- train(as.factor(Group) ~ ., data = train_obs[, c("Group", union_metabolite)], 
+                method = "rf", trControl = fitControl, verbose = F, importance = T)
+
+plot(rf_fit)
+varImpPlot(rf_fit$finalModel)
+
+importance(rf_fit$finalModel, type = 1)
+importance(rf_fit$finalModel, type = 2)
+
+
+
+# repeated 5fold CV + grid search 
+fitControl_grid <- trainControl(method = "repeatedcv", number = 5, repeats = 5, search = "grid")
+tunegrid <- expand.grid(mtry = 1:length(union_metabolite))
+rf_fit_grid <- train(as.factor(Group) ~ ., data = train_obs[, c("Group", union_metabolite)], 
+                     method = "rf", trControl = fitControl, verbose = F, importance = T, tuneGrid = tunegrid)
+plot(rf_fit_grid)
+varImpPlot(rf_fit_grid$finalModel)
+
+importance(rf_fit_grid$finalModel, type = 1)
+importance(rf_fit_grid$finalModel, type = 2)
+
+
+#### repeated 5fold CV for tuning hyper-parameters, mtry, ntree ####
+customRF <- list(type = "Classification",
+                 library = "randomForest",
+                 loop = NULL)
+
+customRF$parameters <- data.frame(parameter = c("mtry", "ntree"),
+                                  class = rep("numeric", 2),
+                                  label = c("mtry", "ntree"))
+
+customRF$grid <- function(x, y, len = NULL, search = "grid") {}
+
+customRF$fit <- function(x, y, wts, param, lev, last, weights, classProbs) {
+  randomForest(x, y,
+               mtry = param$mtry,
+               ntree=param$ntree)
+}
+
+#Predict label
+customRF$predict <- function(modelFit, newdata, preProc = NULL, submodels = NULL)
+  predict(modelFit, newdata)
+
+#Predict prob
+customRF$prob <- function(modelFit, newdata, preProc = NULL, submodels = NULL)
+  predict(modelFit, newdata, type = "prob")
+
+customRF$sort <- function(x) x[order(x[,1]),]
+customRF$levels <- function(x) x$classes
+
+
+
+control <- trainControl(method="repeatedcv", 
+                        number=5, 
+                        repeats=5,
+                        allowParallel = TRUE)
+
+tunegrid <- expand.grid(.mtry=c(1:15),.ntree=seq(40, 400, 40))
+metric <- "Accuracy"
+set.seed(102)
+custom <- train(as.factor(Group)~., data=train_obs[, c("Group", union_metabolite)], method=customRF, 
+                metric = metric, tuneGrid=tunegrid, trControl=control) # $importance 추가 전 
+plot(custom)
+varImpPlot(custom$finalModel)
+
+importance(custom$finalModel, type = 1)
+importance(custom$finalModel, type = 2)
+
+
+
+customRF$importance <- TRUE
+metric <- c("Accuracy", "kappa")
+custom2 <- train(as.factor(Group)~., data=train_obs[, c("Group", union_metabolite)], method=customRF, 
+                metric = metric, tuneGrid=tunegrid, trControl=control) # $importance 추가 후 
+
+varImpPlot(custom2$finalModel)
+
+
+importance(custom2$finalModel, type = 1)
+importance(custom2$finalModel, type = 2)
+
+
+
+
+
+
+#### test part ####
+test_rf_fit <- predict(rf_fit, newdata = test_obs[, c("Group", union_metabolite)]) %>% confusionMatrix(as.factor(test_obs$Group))
+test_rf_fit_grid <- predict(rf_fit_grid, newdata = test_obs[, c("Group", union_metabolite)]) %>% confusionMatrix(as.factor(test_obs$Group))
+test_rf_custom <- predict(custom, newdata = test_obs[, c("Group", union_metabolite)]) %>% confusionMatrix(as.factor(test_obs$Group))
+
+
+test_rf_fit$overall
+test_rf_fit_grid$overall
+test_rf_custom$overall
+
+
+#### 0306 ####
+
+```
