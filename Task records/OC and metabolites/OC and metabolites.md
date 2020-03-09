@@ -1,8 +1,8 @@
 
 숙원사업 : 코드 정리하기  
-27, 28 코드 정리  
+
 결과 해석 내용 추가  
-Random forest
+Random forest  
 Try log ratio lasso  
 LOG  
 
