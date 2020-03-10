@@ -4,6 +4,7 @@
 결과 해석 내용 추가  
 Random forest  
 Try log ratio lasso  
+log, pareto scaling  
 LOG  
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
