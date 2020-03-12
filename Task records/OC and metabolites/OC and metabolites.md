@@ -2,9 +2,7 @@
 숙원사업 : 코드 정리하기:금토일  
 
 결과 해석 내용 추가  
-Random forest  
-Try log ratio lasso  
-log, pareto scaling  
+Sampling 코드 추가   
 LOG  
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
