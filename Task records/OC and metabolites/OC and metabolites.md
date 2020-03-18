@@ -1,9 +1,7 @@
 
 숙원사업 : 코드 정리하기:금토일  
 1페이즈 끝 코드 함수화  
-
-Heatmap 깔끔하게  
-Sampling 코드 추가   
+ 
 LOG  
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
