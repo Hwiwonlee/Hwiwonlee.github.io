@@ -5860,3 +5860,32 @@ test_rf_custom$overall
 #### 0306 ####
 
 ```
+
+```r
+data_BN %>% 
+  group_by(Group) %>% 
+  summarise(median = quantile(age, probs = 0.25))
+
+data_BN %>% 
+  group_by(Group) %>% 
+  summarise(median = quantile(age, probs = 0.5))
+
+data_BN %>% 
+  group_by(Group) %>% 
+  summarise(median = quantile(age, probs = 0.75))
+
+which(colnames(data_raw) == "TB_num")
+
+data_raw %>% 
+  merge(general_edu, by = 'TB_num') %>% 
+  as_tibble() %>% 
+  group_by(Group) %>% 
+  select(Group, edu) %>% 
+  count(edu)
+
+data_raw %>% 
+  merge(general_edu, by = 'TB_num') -> edu_test
+  
+kruskal.test(edu ~ Group, edu_test)
+
+```
