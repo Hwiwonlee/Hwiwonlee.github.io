@@ -86,22 +86,6 @@ urban_raw %>%
   count() %>% arrange(as.numeric(DS2_CA1SP))
 
 
-# DS2가 follow-up이면 DS의 암환자들은 DS1에서는 암환자가 아니었을까?
-urban_raw %>%
-  select(RID, matches("DS[[:digit:]]_CA[[:digit:]]"))
-
-  # 78명은 baseline에서도 follow-up에서도 여전히 암환자이다.
-  # dplyr::filter(DS1_CA1 == 2 & DS2_CA1 == 2) %>%
-
-  # 1676명은 follow-up에서 새롭게 추가된 암환자이다.
-  # dplyr::filter(DS1_CA1 == 1 & DS2_CA1 == 2) %>%
-
-  # 2223명은 baseline에서 암환자였지만
-  # dplyr::filter(DS1_CA1 == 2 & DS2_CA1 == 1) %>%
-
-
-colnames(rural_raw)[grep("_CA", colnames(rural_raw))]
-
 
 rural_raw %>%
   select(RID, matches("NCB_CA[[:digit:]]|NCF1_CA")) %>%
