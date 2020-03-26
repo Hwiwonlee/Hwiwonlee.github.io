@@ -69,7 +69,7 @@ urban_raw %>%
 
 
 urban_raw %>%
-  select(RID, matches("DS2_CA[[:digit:]]")) %>%
+  select(RID, matches("DS[[:digit:]]_CA[[:digit:]]")) %>%
   # dplyr::filter(DS2_CA1 == 2) # 1759
   # dplyr::filter(DS2_CA2 == 2) # 40
   # dplyr::filter(DS2_CA1 == 2 & DS2_CA2 == 2) # 40
@@ -79,8 +79,14 @@ urban_raw %>%
 
   # dplyr::filter(DS2_CA1SP == ".") %>% # DS2에서는 모든 암종이 기록되어 있음
   # dplyr::filter(DS2_CA2 == 2 & DS2_CA2SP == ".") # DS2에서는 모든 암종이 기록되어 있음
-
-
+  
+  # Baseline에서 암 과거력이 있는 사람들의 암종 파악
+  # group_by(DS1_CA1SP) %>%
+  # dplyr::filter(DS1_CA1 == 2) %>%
+  # count() %>% arrange(as.numeric(DS1_CA1SP))
+  
+  # Follow-up에서 새로 추가된, 암 과거력이 있는 사람들의 암종 파악
+  dplyr::filter(DS1_CA1 != 2)
   group_by(DS2_CA1SP) %>%
   dplyr::filter(DS2_CA1 == 2) %>%
   count() %>% arrange(as.numeric(DS2_CA1SP))
@@ -93,4 +99,58 @@ rural_raw %>%
   group_by(NCB_CA1) %>% count(NCB_CA1NA, NCB_CA1CU, NCF1_CA, NCF1_CA_NA1_1, NCF1_CA_NA2_1, NCF1_CACU) %>%
   openxlsx::write.xlsx(., file = "test_rural.xlsx")
 
+rural_raw %>%
+  select(RID, matches("NCB_CA[[:digit:]]|NCF1_CA")) %>%
+  dplyr::filter(is.na(NCB_CA1) != T ) %>%
+  group_by(NCB_CA1) %>% count(NCB_CA1NA, NCF1_CA, NCF1_CA_NA1_1) %>%
+  openxlsx::write.xlsx(., file = "rural_cancer.xlsx")
+
+
+rural_raw %>%
+  select(RID, matches("NCB_CA[[:digit:]]|NCF1_CA")) %>%
+# 
+#   # Baseline에서 암 과거력이 있는 사람들의 암종 파악
+#   mutate(NCB_CA1NA =
+#            case_when(
+#              NCB_CA1NA == "위암" ~ "1",
+#              NCB_CA1NA == "간암" ~ "2",
+#              NCB_CA1NA == "대장암" ~ "3",
+#              NCB_CA1NA == "유방암" ~ "4",
+#              NCB_CA1NA == "자궁경부암"|NCB_CA1NA == "경부암" ~ "5",
+#              grepl("자궁", NCB_CA1NA) == TRUE  ~ "5",
+#              NCB_CA1NA == "폐암" ~ "6",
+#              NCB_CA1NA == "갑상선암"|NCB_CA1NA == "갑상선" ~ "7",
+#              NCB_CA1NA == "전립선암" ~ "8",
+#              NCB_CA1NA == "방광암" ~ "9",
+#              grepl("방광", NCB_CA1NA) == TRUE  ~ "9",
+#              NCB_CA1NA == "." ~ "11",
+#              is.na(NCB_CA1NA) != TRUE ~ "10"
+#     )
+#   ) %>%
+#   group_by(NCB_CA1NA) %>%
+#   dplyr::filter(NCB_CA1 == 2) %>%
+#   count() %>% arrange(as.numeric(NCB_CA1NA))
+  
+
+  # Follow-up에서 새로 추가된, 암 과거력이 있는 사람들의 암종 파악
+  dplyr::filter(NCB_CA1 != 2) %>% 
+  mutate(NCF1_CA_NA1_1 =
+         case_when(
+           grepl("위암", NCF1_CA_NA1_1) == TRUE  ~ "1",
+           NCF1_CA_NA1_1 == "간암" ~ "2",
+           NCF1_CA_NA1_1 == "대장암" ~ "3",
+           NCF1_CA_NA1_1 == "유방암" ~ "4",
+           NCF1_CA_NA1_1 == "자궁경부암"|NCF1_CA_NA1_1 == "경부암" ~ "5",
+           grepl("자궁암|자궁내막암", NCF1_CA_NA1_1) == TRUE  ~ "5",
+           NCF1_CA_NA1_1 == "폐암" ~ "6",
+           NCF1_CA_NA1_1 == "갑상선암"|NCF1_CA_NA1_1 == "갑상선" ~ "7",
+           NCF1_CA_NA1_1 == "전립선암" ~ "8",
+           NCF1_CA_NA1_1 == "방광암" ~ "9",
+           NCF1_CA_NA1_1 == "." ~ "11",
+           is.na(NCF1_CA_NA1_1) != TRUE ~ "10"
+         )
+  ) %>%
+  group_by(NCF1_CA_NA1_1) %>%
+  dplyr::filter(NCF1_CA == 2) %>%
+  count() %>% arrange(as.numeric(NCF1_CA_NA1_1))
 ```
