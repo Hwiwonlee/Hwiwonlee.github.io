@@ -3,6 +3,9 @@
 1. 3개의 cohort를 다루고 있는 KoGES data를 merge하기  
 2. 각 cohort의 follow-up 기간이 다르므로 indexing으로 구분하기  
 
+SAS dataset이 문제다. sasdata로 불러온 것을 csv로 내보내면 파일이 깨져버린다.  
+아마 encoding문제인 것 같은데 두 개의 타입으로 encoding된 dataset이 있는 게 가능한가?
+
 ```r
 dir <- "path"
 
