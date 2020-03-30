@@ -158,3 +158,83 @@ rural_raw %>%
   dplyr::filter(NCF1_CA == 2) %>%
   count() %>% arrange(as.numeric(NCF1_CA_NA1_1))
 ```
+
+```r
+urban_raw %>% 
+  mutate(BL_cancer = 
+           case_when(
+             DS1_CA1 == "2" ~ "1",
+             DS1_CA1 != "2" ~ "0"
+           )
+         ) %>% 
+  mutate(DS1_milk_FQ = 
+           case_when(
+             DS1_F084_FQ == "1" ~ 0,
+             DS1_F084_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F084_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F084_FQ == "4" ~ 1.5/7, 
+             DS1_F084_FQ == "5" ~ 3.5/7, 
+             DS1_F084_FQ == "6" ~ 5.5/7, 
+             DS1_F084_FQ == "7" ~ 1, # 7/7
+             DS1_F084_FQ == "8" ~ 2, # 14/7
+             DS1_F084_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_yo_FQ = 
+           case_when(
+             DS1_F085_FQ == "1" ~ 0,
+             DS1_F085_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F085_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F085_FQ == "4" ~ 1.5/7, 
+             DS1_F085_FQ == "5" ~ 3.5/7, 
+             DS1_F085_FQ == "6" ~ 5.5/7, 
+             DS1_F085_FQ == "7" ~ 1, # 7/7
+             DS1_F085_FQ == "8" ~ 2, # 14/7
+             DS1_F085_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_ice_FQ = 
+           case_when(
+             DS1_F086_FQ == "1" ~ 0,
+             DS1_F086_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F086_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F086_FQ == "4" ~ 1.5/7, 
+             DS1_F086_FQ == "5" ~ 3.5/7, 
+             DS1_F086_FQ == "6" ~ 5.5/7, 
+             DS1_F086_FQ == "7" ~ 1, # 7/7
+             DS1_F086_FQ == "8" ~ 2, # 14/7
+             DS1_F086_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_cheese_FQ = 
+           case_when(
+             DS1_F087_FQ == "1" ~ 0,
+             DS1_F087_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F087_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F087_FQ == "4" ~ 1.5/7, 
+             DS1_F087_FQ == "5" ~ 3.5/7, 
+             DS1_F087_FQ == "6" ~ 5.5/7, 
+             DS1_F087_FQ == "7" ~ 1, # 7/7
+             DS1_F087_FQ == "8" ~ 2, # 14/7
+             DS1_F087_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_soy_FQ = 
+           case_when(
+             DS1_F088_FQ == "1" ~ 0,
+             DS1_F088_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F088_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F088_FQ == "4" ~ 1.5/7, 
+             DS1_F088_FQ == "5" ~ 3.5/7, 
+             DS1_F088_FQ == "6" ~ 5.5/7, 
+             DS1_F088_FQ == "7" ~ 1, # 7/7
+             DS1_F088_FQ == "8" ~ 2, # 14/7
+             DS1_F088_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_diary_sum = 
+           DS1_milk_FQ + DS1_yo_FQ + DS1_ice_FQ + DS1_cheese_FQ + DS1_soy_FQ) %>% 
+  group_by(BL_cancer) %>% 
+  select(RID, DS1_diary_sum) %>% 
+  summarise(mean = mean(DS1_diary_sum, na.rm=TRUE))
+```
