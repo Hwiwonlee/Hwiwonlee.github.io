@@ -6,7 +6,8 @@
 SAS dataset이 문제다. sasdata로 불러온 것을 csv로 내보내면 파일이 깨져버린다.  
 아마 encoding문제인 것 같은데 두 개의 타입으로 encoding된 dataset이 있는 게 가능한가?
 
-식이 점수는 하루 단위로 계산  
+식이 점수는 하루 단위로 계산  끝  
+중복 검사 추가 할 것  
 ```r
 dir <- "path"
 
