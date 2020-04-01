@@ -6,8 +6,7 @@
 SAS dataset이 문제다. sasdata로 불러온 것을 csv로 내보내면 파일이 깨져버린다.  
 아마 encoding문제인 것 같은데 두 개의 타입으로 encoding된 dataset이 있는 게 가능한가?
 
-식이 점수는 하루 단위로 계산  끝  
-중복 검사 추가 할 것  
+
 ```r
 dir <- "path"
 
@@ -238,4 +237,196 @@ urban_raw %>%
   group_by(BL_cancer) %>% 
   select(RID, DS1_diary_sum) %>% 
   summarise(mean = mean(DS1_diary_sum, na.rm=TRUE))
+```
+
+```r 
+# ploting
+urban_raw %>% 
+  mutate(BL_cancer = 
+           case_when(
+             DS1_CA1 == "2" ~ "1",
+             DS1_CA1 != "2" ~ "0"
+           )
+  ) %>% 
+  # group_by(BL_cancer) %>%  count() # 168069, 5274
+  mutate(DS1_milk_FQ = 
+           case_when(
+             DS1_F084_FQ == "." ~ 0,
+             DS1_F084_FQ == "1" ~ 0,
+             DS1_F084_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F084_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F084_FQ == "4" ~ 1.5/7, 
+             DS1_F084_FQ == "5" ~ 3.5/7, 
+             DS1_F084_FQ == "6" ~ 5.5/7, 
+             DS1_F084_FQ == "7" ~ 1, # 7/7
+             DS1_F084_FQ == "8" ~ 2, # 14/7
+             DS1_F084_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_yo_FQ = 
+           case_when(
+             DS1_F085_FQ == "." ~ 0,
+             DS1_F085_FQ == "1" ~ 0,
+             DS1_F085_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F085_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F085_FQ == "4" ~ 1.5/7, 
+             DS1_F085_FQ == "5" ~ 3.5/7, 
+             DS1_F085_FQ == "6" ~ 5.5/7, 
+             DS1_F085_FQ == "7" ~ 1, # 7/7
+             DS1_F085_FQ == "8" ~ 2, # 14/7
+             DS1_F085_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_ice_FQ = 
+           case_when(
+             DS1_F086_FQ == "." ~ 0,
+             DS1_F086_FQ == "1" ~ 0,
+             DS1_F086_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F086_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F086_FQ == "4" ~ 1.5/7, 
+             DS1_F086_FQ == "5" ~ 3.5/7, 
+             DS1_F086_FQ == "6" ~ 5.5/7, 
+             DS1_F086_FQ == "7" ~ 1, # 7/7
+             DS1_F086_FQ == "8" ~ 2, # 14/7
+             DS1_F086_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_cheese_FQ = 
+           case_when(
+             DS1_F087_FQ == "." ~ 0,
+             DS1_F087_FQ == "1" ~ 0,
+             DS1_F087_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F087_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F087_FQ == "4" ~ 1.5/7, 
+             DS1_F087_FQ == "5" ~ 3.5/7, 
+             DS1_F087_FQ == "6" ~ 5.5/7, 
+             DS1_F087_FQ == "7" ~ 1, # 7/7
+             DS1_F087_FQ == "8" ~ 2, # 14/7
+             DS1_F087_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  # mutate(DS1_soy_FQ = 
+  #          case_when(
+  #            DS1_F088_FQ == "." ~ 0,
+  #            DS1_F088_FQ == "1" ~ 0,
+  #            DS1_F088_FQ == "2" ~ 1/30, # 0.2333/7
+  #            DS1_F088_FQ == "3" ~ 2.5/30, # 0.583333/7
+  #            DS1_F088_FQ == "4" ~ 1.5/7, 
+  #            DS1_F088_FQ == "5" ~ 3.5/7, 
+  #            DS1_F088_FQ == "6" ~ 5.5/7, 
+  #            DS1_F088_FQ == "7" ~ 1, # 7/7
+  #            DS1_F088_FQ == "8" ~ 2, # 14/7
+  #            DS1_F088_FQ == "9" ~ 3 # 21/7
+  #          )
+  # ) %>%
+  # mutate(DS1_diary_sum = 
+  #          DS1_milk_FQ + DS1_yo_FQ + DS1_ice_FQ + DS1_cheese_FQ + DS1_soy_FQ) %>%
+  mutate(DS1_diary_sum = 
+           DS1_milk_FQ + DS1_yo_FQ + DS1_ice_FQ + DS1_cheese_FQ) %>% 
+  
+  group_by(BL_cancer) %>%
+  # select(BL_cancer, DS1_milk_FQ, DS1_yo_FQ, DS1_ice_FQ, DS1_cheese_FQ, DS1_soy_FQ, DS1_diary_sum) %>% 
+  select(BL_cancer, DS1_milk_FQ, DS1_yo_FQ, DS1_ice_FQ, DS1_cheese_FQ, DS1_diary_sum) %>% 
+  # dplyr::filter(BL_cancer == 0) %>% 
+  dplyr::filter(BL_cancer == 1) %>%
+  gather("variable", "value", -BL_cancer) %>% 
+  ggplot(aes(x = value)) + 
+  # geom_histogram(position = "dodge", fill = "#9ACD32") +
+  geom_histogram(position = "dodge", fill = "#FA8072") +
+  facet_wrap(~variable)
+  
+  urban_raw %>% 
+  mutate(BL_cancer = 
+           case_when(
+             DS1_CA1 == "2" ~ "1",
+             DS1_CA1 != "2" ~ "0"
+           )
+  ) %>% 
+  # group_by(BL_cancer) %>%  count() # 168069, 5274
+  mutate(DS1_milk_FQ = 
+           case_when(
+             DS1_F084_FQ == "." ~ 0,
+             DS1_F084_FQ == "1" ~ 0,
+             DS1_F084_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F084_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F084_FQ == "4" ~ 1.5/7, 
+             DS1_F084_FQ == "5" ~ 3.5/7, 
+             DS1_F084_FQ == "6" ~ 5.5/7, 
+             DS1_F084_FQ == "7" ~ 1, # 7/7
+             DS1_F084_FQ == "8" ~ 2, # 14/7
+             DS1_F084_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_yo_FQ = 
+           case_when(
+             DS1_F085_FQ == "." ~ 0,
+             DS1_F085_FQ == "1" ~ 0,
+             DS1_F085_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F085_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F085_FQ == "4" ~ 1.5/7, 
+             DS1_F085_FQ == "5" ~ 3.5/7, 
+             DS1_F085_FQ == "6" ~ 5.5/7, 
+             DS1_F085_FQ == "7" ~ 1, # 7/7
+             DS1_F085_FQ == "8" ~ 2, # 14/7
+             DS1_F085_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_ice_FQ = 
+           case_when(
+             DS1_F086_FQ == "." ~ 0,
+             DS1_F086_FQ == "1" ~ 0,
+             DS1_F086_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F086_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F086_FQ == "4" ~ 1.5/7, 
+             DS1_F086_FQ == "5" ~ 3.5/7, 
+             DS1_F086_FQ == "6" ~ 5.5/7, 
+             DS1_F086_FQ == "7" ~ 1, # 7/7
+             DS1_F086_FQ == "8" ~ 2, # 14/7
+             DS1_F086_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  mutate(DS1_cheese_FQ = 
+           case_when(
+             DS1_F087_FQ == "." ~ 0,
+             DS1_F087_FQ == "1" ~ 0,
+             DS1_F087_FQ == "2" ~ 1/30, # 0.2333/7
+             DS1_F087_FQ == "3" ~ 2.5/30, # 0.583333/7
+             DS1_F087_FQ == "4" ~ 1.5/7, 
+             DS1_F087_FQ == "5" ~ 3.5/7, 
+             DS1_F087_FQ == "6" ~ 5.5/7, 
+             DS1_F087_FQ == "7" ~ 1, # 7/7
+             DS1_F087_FQ == "8" ~ 2, # 14/7
+             DS1_F087_FQ == "9" ~ 3 # 21/7
+           )
+  ) %>%
+  # mutate(DS1_soy_FQ = 
+  #          case_when(
+  #            DS1_F088_FQ == "." ~ 0,
+  #            DS1_F088_FQ == "1" ~ 0,
+  #            DS1_F088_FQ == "2" ~ 1/30, # 0.2333/7
+  #            DS1_F088_FQ == "3" ~ 2.5/30, # 0.583333/7
+  #            DS1_F088_FQ == "4" ~ 1.5/7, 
+  #            DS1_F088_FQ == "5" ~ 3.5/7, 
+  #            DS1_F088_FQ == "6" ~ 5.5/7, 
+  #            DS1_F088_FQ == "7" ~ 1, # 7/7
+  #            DS1_F088_FQ == "8" ~ 2, # 14/7
+  #            DS1_F088_FQ == "9" ~ 3 # 21/7
+  #          )
+  # ) %>%
+  # mutate(DS1_diary_sum = 
+  #          DS1_milk_FQ + DS1_yo_FQ + DS1_ice_FQ + DS1_cheese_FQ + DS1_soy_FQ) %>%
+  mutate(DS1_diary_sum = 
+           DS1_milk_FQ + DS1_yo_FQ + DS1_ice_FQ + DS1_cheese_FQ) %>% 
+  
+  group_by(BL_cancer) %>%
+  # select(BL_cancer, DS1_milk_FQ, DS1_yo_FQ, DS1_ice_FQ, DS1_cheese_FQ, DS1_soy_FQ, DS1_diary_sum) %>% 
+  select(BL_cancer, DS1_milk_FQ, DS1_yo_FQ, DS1_ice_FQ, DS1_cheese_FQ, DS1_diary_sum) %>% 
+  # dplyr::filter(BL_cancer == 0) %>% 
+  dplyr::filter(BL_cancer == 1) %>%
+  gather("variable", "value", -BL_cancer) %>% 
+  ggplot(aes(x = value)) + 
+  # geom_histogram(position = "dodge", fill = "#9ACD32") +
+  geom_histogram(position = "dodge", fill = "#FA8072") +
+  facet_wrap(~variable)
+
 ```
