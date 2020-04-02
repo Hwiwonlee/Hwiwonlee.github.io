@@ -63,37 +63,256 @@ urban_raw %>%
   dplyr::filter(is.na(DS1_CA1) != T ) %>%
   group_by(DS1_CA1) %>% count(DS1_CA1SP, DS1_CA1CU)
 
+#### Comment about dataset ####
+# 이 dataset은 urban_raw를 이용, baseline과 F/U 단계에서 암 발병 정보를 알아보기 위해 만들어졌다. 
+# urban_raw의 암 진단명에 있어서 '기타' 수준이 ('중복응답', '판단불가', '암종아님')등을 포함하고 있기 때문에 
+# '기타'수준을 갖는 obs를 '암 과거력 없음'으로 정제할 필요가 있었고
+# 진단명 1, 2, 3 등으로 복수 진단을 허용하고 있음을 이용, 진단명 1에서는 '기타'이나 진단명 2,3에서 1-9 수준의 값을 갖는다면
+# 진단명 1을 진단명 2, 3의 1-9 수준으로 대체하였다. 
+# 이 방법은 진단명 1에서 기타인 obs를 최대한 살릴 수 있다는 장점을,
+# 복수 진단을 갖고 있는 obs에 대한 정보 손실을 불러온다는 단점을 갖는다. 
+# '기타'수준 갖는 obs를 '암 과거력 없음'처리 하게 됐을 때에 오는 손실을 최대한 방지하기 위해 이 방법을 선택하였다. 
+#### Comment about dataset ####
+#### Urban data set에서 '기타' 수준을 갖는 obs 살리기 ####
+
 urban_raw %>%
-  select(RID, matches("DS[[:digit:]]_CA[[:digit:]]")) %>%
-  dplyr::filter(is.na(DS1_CA1) != T ) %>%
-  group_by(DS1_CA1) %>% count(DS1_CA1SP, DS1_CA1CU, DS1_CA1CU1, DS2_CA1, DS2_CA1SP, DS2_CA1CU) %>%
-  openxlsx::write.xlsx(., file = "test.xlsx")
+  
+  # # 암 과거력이 NA이지만 진단명이 있는 사람 : 0
+  # # 즉, 암 과거력이 없는 사람 중 진단명이 있는 사람은 없다. 
+  # dplyr::filter(DS1_CA1 == "." & DS1_CA1SP != ".")
+  
+  # # 2개의 암 과거력을 갖는 사람 : 162명
+  # dplyr::filter(DS1_CA1 == "2" & DS1_CA2 == "2")
+  # dplyr::filter(DS1_CA2 == "2") # 와 결과가 같다.
+
+  # # 3개의 암 과거력을 갖는 사람 : 11명
+  # dplyr::filter(DS1_CA1 == "2" & DS1_CA2 == "2" & DS1_CA3 == "2") 
+  # dplyr::filter(DS1_CA3 == "2") # 와 결과가 같다.
+  
+  # # 혹시 몰라서 CA1에서 과거력이 없지만 CA2, CA3에서 과거력을 갖는 사람도 찾아봄
+  # # 없음
+
+  # 암 과거력 유무에 대한 column : cancer_BL
+  mutate(cancer_BL = 
+           case_when(
+             # 암 과거력 여부 파악 : CA1, CA2, CA3 
+             DS1_CA1 == 1 ~ 0,
+             
+             # 과거력이 결측치인 경우, 암 과거력이 없다고 정의
+             DS1_CA1 == "." ~ 0,
+             # 암 진단이 '기타'이거나 결측치인 경우 암 과거력이 없다고 정의
+             ## 이것만 주석처리하면 기타와 결측치를 제외하지 않은 결과를 볼 수 있음
+             # DS1_CA1SP == 10 | DS1_CA1SP == "." ~ 0,
+             
+             DS1_CA1 == 2 ~ 1
+           )
+  ) %>% 
+  # 암 진단명에 대한 column : cancer_BL_type
+  
+  mutate(cancer_BL_type = 
+           case_when (
+             ## 1) 암과거력이 존재하나 '기타'나 NA를 갖는 관측치인 경우 
+             (cancer_BL == 1) & (DS1_CA1SP == "10"| DS1_CA1SP == ".") ~ "10",
+             ## 2) 암 과거력이 있으면서 기타나 NA를 갖지 않는 경우
+             cancer_BL == 1 & is.na(DS1_CA1SP) != TRUE ~ DS1_CA1SP
+           )
+  ) %>% 
+  # group_by(cancer_BL_type) %>% count(cancer_BL_type)
+  
+  mutate(cancer_BL_type = 
+           case_when (
+             ## 3) (cancer_BL_type == 10 & DS1_CA2 == 2)일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
+             (cancer_BL_type == 10 & DS1_CA2 == 2) & (DS1_CA2SP == "10"| DS1_CA2SP == ".") ~ "10",
+             ## 4) (cancer_BL_type == 10 & DS1_CA2 == 2)일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
+             (cancer_BL_type == 10 & DS1_CA2 == 2) & is.na(DS1_CA2SP) != TRUE ~ DS1_CA2SP,
+             cancer_BL_type == 10 ~ cancer_BL_type,
+             cancer_BL_type != 10 ~ cancer_BL_type
+             
+           )
+  ) %>% 
+  # group_by(cancer_BL_type) %>% count(cancer_BL_type)
+  
+  mutate(cancer_BL_type = 
+           case_when (
+             ## 5) (cancer_BL_type == 10 & DS1_CA3 == 2)일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
+             (cancer_BL_type == 10 & DS1_CA3 == 2) & (DS1_CA3SP == "10"| DS1_CA3SP == ".") ~ "10",
+             ## 6) (cancer_BL_type == 10 & DS1_CA3 == 2)일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
+             (cancer_BL_type == 10 & DS1_CA3 == 2) & is.na(DS1_CA3SP) != TRUE ~ DS1_CA3SP,
+             cancer_BL_type == 10 ~ cancer_BL_type,
+             cancer_BL_type != 10 ~ cancer_BL_type
+           )
+  ) %>% 
+  # group_by(cancer_BL_type) %>% count(cancer_BL_type)
+  
+  # cancer_BL_type을 기준으로 cancer_BL 다시 정의
+  mutate(cancer_BL = 
+           case_when(
+             # 암 과거력 여부 파악 : CA1, CA2, CA3 
+             cancer_BL_type == 10 | is.na(cancer_BL_type) == TRUE ~ 0,
+             
+             # 과거력이 결측치인 경우, 암 과거력이 없다고 정의
+             is.na(cancer_BL_type) != TRUE ~ 1
+           )
+  ) %>% 
+  # count(cancer_BL)
+
+  # F/U의 암 발생 현황 정리
+  ## F/U의 total sample : baseline에서 암 과거력이 없는 사람들
+  # dplyr::filter(cancer_BL == 0) %>% 
+  
+  mutate(cancer_FU1 = 
+           case_when(
+             cancer_BL == 0 & (DS2_CA1 == 1 | DS2_CA1 == "." | DS2_CA1 == "") ~ "0",
+             cancer_BL == 0 & (DS2_CA1 == 2) ~ "1",
+             cancer_BL == 1 ~ ""
+           )
+  ) %>% 
+  # group_by(cancer_FU1) %>% count()
+  
+  mutate(cancer_FU1_type = 
+           case_when (
+             ## 1) 암 과거력이 존재하나 '기타'나 NA를 갖는 관측치인 경우 
+             (cancer_FU1 == 1) & (DS2_CA1SP == "10") ~ "10", 
+             (cancer_FU1 == 1) & (DS2_CA1SP == "." | DS2_CA1SP == "") ~ "11",
+             ## 2) 암 과거력이 있으면서 기타나 NA를 갖지 않는 경우
+             cancer_FU1 == 1 & is.na(DS2_CA1SP) != TRUE ~ DS2_CA1SP
+           )
+  ) %>% 
+  # group_by(cancer_FU1_type) %>% count(cancer_FU1_type)
+  
+  mutate(cancer_FU1_type = 
+           case_when (
+             ## 3) (cancer_FU1_type == 10 & DS2_CA2 == 2)일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
+             (cancer_FU1_type == 10 & DS2_CA2 == 2) & (DS2_CA2SP == "10"| DS2_CA2SP == ".") ~ "10",
+             ## 4) (cancer_FU1_type == 10 & DS2_CA2 == 2)일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
+             (cancer_FU1_type == 10 & DS2_CA2 == 2) & is.na(DS2_CA2SP) != TRUE ~ DS2_CA2SP,
+             ## 5) 이미 10으로 정의되었고 위의 경우에서 걸러지지 않았다면 그냥 10이 맞음
+             cancer_FU1_type == 10 ~ cancer_FU1_type,
+             ## 6) 10이 아닌 모든 진단명은 그대로 내려오기
+             cancer_FU1_type != 10 ~ cancer_FU1_type
+           )
+  ) %>% 
+  group_by(cancer_FU1_type) %>% count(cancer_FU1_type)
+  # # dataset으로 export
+  # write.csv("city_cancer_dataset.csv")
+
+  #### NOTE ####
+  # mutate(cancer_BL = 
+  #          case_when(
+  #            # 암 과거력 여부 파악 : CA1, CA2, CA3 
+  #            DS1_CA1 == 1 ~ 0,
+  #            DS1_CA1 == 2 ~ 1, 
+  #            DS1_CA1 == "." ~ 0,
+  #            DS1_CA1SP == 10 | DS1_CA1SP == "." ~ 0,
+  #          )
+  # ) %>% group_by(cancer_BL) %>% count()
+  # 이렇게 선언하면 DS1_CA1SP 구문이 실행되지 않은 결과값으로 나온다.
+  # 왜냐면 이미 DS1_CA1 == 2 ~ 1이 실행됐기 때문에 CA1 == 2를 갖는 값 중 CA1SP == 10를 갖는 값이 있다 하더라도 바뀌지 않는다.
+  # case_when의 특징인가? 주의해야할 부분인 것 같다. 
 
 
 
+#### Urban data set에서 '기타' 수준을 갖는 obs 살리기 ####
 
+
+#### Comment about dataset ####
+# 이 dataset은 urban_raw를 이용, baseline과 F/U 단계에서 암 발병 정보를 알아보기 위해 만들어졌다. 
+# 이전의 방법으로 dataset을 만들면 중복 진단의 정보가 모두 사라진다는 단점 떄문에
+# 특정 암종을 target으로 하는 경우라면 발생된 정보 손실로 인해 분석의 정확도가 떨어질 수 있다. 
+# 따라서 모든 진단명과 횟수를 나타낼 필요가 있어 이 dataset을 만들었다. 
+# 또한 '기타'를 갖는 obs의 경우, 위의 방법처럼 진단명 2, 3을 기준으로 1-9 수준의 진단명을 갖는다면 
+# 암 과거력을 갖는 사람으로, 기타나 결측치를 갖는다면 과거력을 가지지 않는 사람으로 정의하였다. 
+# 이 dataset은 중복 진단을 갖는 obs의 정보를 모두 유지한다는 장점을 가지나
+# 중복 진단을 나타내는 변수들로 인해 dataset이 복잡해진다는 단점 또한 가지고 있다. 
+#### Comment about dataset ####
+
+#### Urban data set에서 모든 진단 횟수와 암종 나타내기 ####
 urban_raw %>%
-  select(RID, matches("DS[[:digit:]]_CA[[:digit:]]")) %>%
-  # dplyr::filter(DS2_CA1 == 2) # 1759
-  # dplyr::filter(DS2_CA2 == 2) # 40
-  # dplyr::filter(DS2_CA1 == 2 & DS2_CA2 == 2) # 40
 
-  # Follow-up에서 전체 암환자 수는 1759명이며
-  # 한 개의 다른 암이 있는 경우는 40명이다.
-
-  # dplyr::filter(DS2_CA1SP == ".") %>% # DS2에서는 모든 암종이 기록되어 있음
-  # dplyr::filter(DS2_CA2 == 2 & DS2_CA2SP == ".") # DS2에서는 모든 암종이 기록되어 있음
+  mutate(cancer_BL_1 = 
+           case_when(
+             DS1_CA1 == 2 & DS1_CA1SP == 10 ~ DS1_CA1SP,
+             DS1_CA1 == 2 & (DS1_CA1SP == "." |  DS1_CA1SP == "") ~ "11",
+             DS1_CA1 == 2 & is.na(DS1_CA1SP) != TRUE ~ DS1_CA1SP, 
+             DS1_CA1 != 2 ~ "Non-case"
+           )
+  ) %>% 
+  # group_by(cancer_BL_1) %>% count()
   
-  # Baseline에서 암 과거력이 있는 사람들의 암종 파악
-  # group_by(DS1_CA1SP) %>%
-  # dplyr::filter(DS1_CA1 == 2) %>%
-  # count() %>% arrange(as.numeric(DS1_CA1SP))
+  mutate(cancer_BL_2 = 
+           case_when(
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (DS1_CA2 == 2) & (DS1_CA2SP == 10) ~ DS1_CA2SP,
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (DS1_CA2 == 2) & (DS1_CA2SP == "." |  DS1_CA2SP == "") ~ "11",
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (DS1_CA2 == 2) & is.na(DS1_CA2SP) != TRUE ~ DS1_CA2SP, 
+             DS1_CA2 == 2 ~ DS1_CA2SP,
+             DS1_CA2 != 2 ~ "Non-case"
+           )
+  ) %>% 
+  # group_by(cancer_BL_2) %>% count()
+  mutate(cancer_BL_3 = 
+           case_when(
+             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (DS1_CA3 == 2) & (DS1_CA3SP == 10) ~ DS1_CA3SP,
+             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (DS1_CA3 == 2) & (DS1_CA3SP == "." |  DS1_CA3SP == "") ~ "11",
+             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (DS1_CA3 == 2) & is.na(DS1_CA3SP) != TRUE ~ DS1_CA3SP, 
+             DS1_CA3 == 2 ~ DS1_CA3SP,
+             DS1_CA3 != 2 ~ "Non-case"
+           )
+  ) %>% 
+  # group_by(cancer_BL_3) %>% count()
   
-  # Follow-up에서 새로 추가된, 암 과거력이 있는 사람들의 암종 파악
-  dplyr::filter(DS1_CA1 != 2)
-  group_by(DS2_CA1SP) %>%
-  dplyr::filter(DS2_CA1 == 2) %>%
-  count() %>% arrange(as.numeric(DS2_CA1SP))
+  # 3개의 진단명에서 10, 11을 갖는 obs 중 한번이라도 1-9를 갖는 obs를 빼려면 어떻게 해야 할까? 
+  # 무식하게 했다. 
+  mutate(cancer_BL = 
+           case_when(
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (cancer_BL_2 != 10 & cancer_BL_2 != "Non-case" & cancer_BL_2 != "11") ~ 1, 
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (cancer_BL_3 != 10 & cancer_BL_3 != "Non-case" & cancer_BL_3 != "11") ~ 1, 
+             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (cancer_BL_3 != 10 & cancer_BL_3 != "Non-case" & cancer_BL_3 != "11") ~ 1, 
+             
+             cancer_BL_1 == "Non-case" ~ 0,
+             
+             cancer_BL_1 != 10 & cancer_BL_1 != 11~ 1,
+             TRUE ~ 0
+           )
+  ) %>% 
+  # group_by(cancer_BL) %>% count()
+  
+  
+  
+  mutate(cancer_FU_1 = 
+           case_when(
+             cancer_BL == 0 & DS2_CA1 == 2 & DS2_CA1SP == 10 ~ DS2_CA1SP,
+             cancer_BL == 0 & DS2_CA1 == 2 & (DS2_CA1SP == "." |  DS2_CA1SP == "") ~ "11",
+             cancer_BL == 0 & DS2_CA1 == 2 & is.na(DS2_CA1SP) != TRUE ~ DS2_CA1SP, 
+             cancer_BL == 0 & DS2_CA1 != 2 ~ "Non-case",
+             TRUE ~ "Baseline case"
+           )
+  ) %>% 
+  # group_by(cancer_FU_1) %>% count()
+  
+  mutate(cancer_FU_2 = 
+           case_when(
+             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (DS2_CA2 == 2) & (DS2_CA2SP == 10) ~ DS2_CA2SP,
+             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (DS2_CA2 == 2) & (DS2_CA2SP == "." |  DS2_CA2SP == "") ~ "11",
+             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (DS2_CA2 == 2) & is.na(DS2_CA2SP) != TRUE ~ DS2_CA2SP, 
+             DS2_CA2 == 2 ~ DS2_CA2SP,
+             DS2_CA2 != 2 ~ "Non-case"
+           )
+  ) %>% 
+  # group_by(cancer_FU_2) %>% count()
+  
+  mutate(cancer_FU = 
+           case_when(
+             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1", 
+             
+             cancer_FU_1 == "Non-case" ~ "0",
+             cancer_FU_1 == "Baseline case" ~ cancer_FU_1,
+             
+             cancer_FU_1 != 10 & cancer_FU_1 != 11~ "1",
+             TRUE ~ "0"
+           )
+  ) %>% 
+  # group_by(cancer_FU) %>% count()
+#### Urban data set에서 모든 진단 횟수와 암종 나타내기 ####
 
 
 
