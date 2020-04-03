@@ -316,66 +316,554 @@ urban_raw %>%
 
 
 
-rural_raw %>%
-  select(RID, matches("NCB_CA[[:digit:]]|NCF1_CA")) %>%
-  dplyr::filter(is.na(NCB_CA1) != T ) %>%
-  group_by(NCB_CA1) %>% count(NCB_CA1NA, NCB_CA1CU, NCF1_CA, NCF1_CA_NA1_1, NCF1_CA_NA2_1, NCF1_CACU) %>%
-  openxlsx::write.xlsx(., file = "test_rural.xlsx")
-
-rural_raw %>%
-  select(RID, matches("NCB_CA[[:digit:]]|NCF1_CA")) %>%
-  dplyr::filter(is.na(NCB_CA1) != T ) %>%
-  group_by(NCB_CA1) %>% count(NCB_CA1NA, NCF1_CA, NCF1_CA_NA1_1) %>%
-  openxlsx::write.xlsx(., file = "rural_cancer.xlsx")
-
-
-rural_raw %>%
-  select(RID, matches("NCB_CA[[:digit:]]|NCF1_CA")) %>%
-# 
-#   # Baseline에서 암 과거력이 있는 사람들의 암종 파악
-#   mutate(NCB_CA1NA =
-#            case_when(
-#              NCB_CA1NA == "위암" ~ "1",
-#              NCB_CA1NA == "간암" ~ "2",
-#              NCB_CA1NA == "대장암" ~ "3",
-#              NCB_CA1NA == "유방암" ~ "4",
-#              NCB_CA1NA == "자궁경부암"|NCB_CA1NA == "경부암" ~ "5",
-#              grepl("자궁", NCB_CA1NA) == TRUE  ~ "5",
-#              NCB_CA1NA == "폐암" ~ "6",
-#              NCB_CA1NA == "갑상선암"|NCB_CA1NA == "갑상선" ~ "7",
-#              NCB_CA1NA == "전립선암" ~ "8",
-#              NCB_CA1NA == "방광암" ~ "9",
-#              grepl("방광", NCB_CA1NA) == TRUE  ~ "9",
-#              NCB_CA1NA == "." ~ "11",
-#              is.na(NCB_CA1NA) != TRUE ~ "10"
-#     )
-#   ) %>%
-#   group_by(NCB_CA1NA) %>%
-#   dplyr::filter(NCB_CA1 == 2) %>%
-#   count() %>% arrange(as.numeric(NCB_CA1NA))
-  
-
-  # Follow-up에서 새로 추가된, 암 과거력이 있는 사람들의 암종 파악
-  dplyr::filter(NCB_CA1 != 2) %>% 
-  mutate(NCF1_CA_NA1_1 =
-         case_when(
-           grepl("위암", NCF1_CA_NA1_1) == TRUE  ~ "1",
-           NCF1_CA_NA1_1 == "간암" ~ "2",
-           NCF1_CA_NA1_1 == "대장암" ~ "3",
-           NCF1_CA_NA1_1 == "유방암" ~ "4",
-           NCF1_CA_NA1_1 == "자궁경부암"|NCF1_CA_NA1_1 == "경부암" ~ "5",
-           grepl("자궁암|자궁내막암", NCF1_CA_NA1_1) == TRUE  ~ "5",
-           NCF1_CA_NA1_1 == "폐암" ~ "6",
-           NCF1_CA_NA1_1 == "갑상선암"|NCF1_CA_NA1_1 == "갑상선" ~ "7",
-           NCF1_CA_NA1_1 == "전립선암" ~ "8",
-           NCF1_CA_NA1_1 == "방광암" ~ "9",
-           NCF1_CA_NA1_1 == "." ~ "11",
-           is.na(NCF1_CA_NA1_1) != TRUE ~ "10"
-         )
+#### Rural data set에서 모든 진단 횟수와 암종 나타내기 ####
+rural_raw %>% 
+  mutate(cancer_BL_1= 
+           case_when(
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # grepl("암", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("암", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1, # 단순 결과로 40개의 암종 발견
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             grepl("위암|위장암", NCB_CA1NA) == TRUE | grepl("위암|위장암", NCB_CA_NA1) == TRUE  ~ "1",
+             NCB_CA1NA == "간암" | NCB_CA_NA1 == "간암" ~ "2",
+             # "대장에 용정제거 후 암세포 발견" 때문에 grepl으로 변경함
+             grepl("대장", NCB_CA1NA) == TRUE | grepl("대장", NCB_CA_NA1) == TRUE  ~ "3",
+             NCB_CA1NA == "유방암" | NCB_CA_NA1 == "유방암" ~ "4",
+             
+             # 자궁경부암의 경우가 좀 복잡함 : 총 43명
+             ## 자궁경부암 : 33명, 경부암 : 5명
+             ## 경부상피암 : 1, 자궁경부상피내암 : 2, 자궁경부이행암 : 1, 자궁상피내암 : 1
+             NCB_CA1NA == "자궁경부암"|NCB_CA1NA == "경부암" | NCB_CA_NA1 == "자궁경부암"|NCB_CA_NA1 == "경부암" ~ "5",
+             # grepl("경부|상피", NCB_CA1NA) == TRUE | grepl("경부|상피", NCB_CA_NA1) == TRUE  ~ "5",
+             NCB_CA1NA == "자궁경부상피내암" | NCB_CA_NA1 == "자궁경부상피내암" ~ "5",
+             NCB_CA1NA == "경부상피암" | NCB_CA_NA1 == "경부상피암" ~ "5",
+             
+             NCB_CA1NA == "자궁경부이행암" | NCB_CA_NA1 == "자궁경부이행암" ~ "5",
+             NCB_CA1NA == "자궁상피내암" | NCB_CA_NA1 == "자궁상피내암" ~ "5",
+             # Q. 왜 아래의 코드를 이용하면 +2가 아니라 +4가 되는 걸까?
+             # grepl("자궁경부|자궁상피", NCB_CA1NA) == TRUE | grepl("자궁경부|자궁상피", NCB_CA_NA1) == TRUE  ~ "5",
+             
+             NCB_CA1NA == "폐암" | NCB_CA_NA1 == "폐암" ~ "6",
+             
+             # NCB_CA1NA == "갑상선암" | NCB_CA_NA1 == "갑상선암"~ "7", # 27개
+             # grepl("갑상선", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("갑상선", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1, # 16개
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA1NA == "갑상선암"|NCB_CA1NA == "갑상선" | NCB_CA_NA1 == "갑상선암"|NCB_CA_NA1 == "갑상선"~ "7",
+             
+             # 전립선암 : 8명, 전립선 : 1명. 마찬가지로 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA1NA) == TRUE | grepl("전립선암|전립선", NCB_CA_NA1) == TRUE  ~ "8",
+             
+             # 방광암 : 7명, 방광 : 3명. 마찬가지로 방광도 방광암으로 간주하고 진행함.
+             NCB_CA1NA == "방광암"|NCB_CA1NA =="방광" | NCB_CA_NA1 == "방광암"|NCB_CA_NA1 =="방광" ~ "9",
+             
+             # grepl("자궁암|자궁내막암", NCB_CA1NA) == TRUE | grepl("자궁암|자궁내막암", NCB_CA_NA1) == TRUE  ~ "10",
+             # NCB_CA1NA != "." | NCB_CA_NA1 != "." ~ "10",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("암", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1,
+             
+             
+             grepl("암", NCB_CA1NA) == TRUE ~ "10",
+             grepl("암", NCB_CA_NA1) == TRUE ~ "10",
+             
+             NCB_CA1 == "2" & NCB_CA1NA != "." ~ "11",
+             NCB_CA == "2" & NCB_CA_NA1 != "." ~ "11",
+             
+             # NCB_CA1 == "2" & NCB_CA1NA != "." ~ NCB_CA1NA,
+             # NCB_CA == "2" & NCB_CA_NA1 != "." ~ NCB_CA_NA1,
+             
+             NCB_CA1 == "2" & NCB_CA1NA == "." ~ "11",
+             NCB_CA == "2" & NCB_CA_NA1 == "." ~ "11",
+             TRUE ~ "Non-case"
+           )
   ) %>%
-  group_by(NCF1_CA_NA1_1) %>%
-  dplyr::filter(NCF1_CA == 2) %>%
-  count() %>% arrange(as.numeric(NCF1_CA_NA1_1))
+  # group_by(cancer_BL_1) %>% count() %>% as.data.frame()
+
+  mutate(cancer_BL_2= 
+           case_when(
+
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             grepl("위암|위", NCB_CA2NA) == TRUE | grepl("위암|위", NCB_CA_NA2) == TRUE  ~ "1",
+             NCB_CA2NA == "간암" | NCB_CA_NA2 == "간암" ~ "2",
+             
+             grepl("대장", NCB_CA2NA) == TRUE | grepl("대장", NCB_CA_NA2) == TRUE  ~ "3",
+             grepl("유방|유방암", NCB_CA2NA) == TRUE | grepl("유방|유방암", NCB_CA_NA2) == TRUE  ~ "4",
+             
+             grepl("경부|자궁경부암", NCB_CA2NA) == TRUE | grepl("경부|자궁경부암", NCB_CA_NA2) == TRUE  ~ "5",
+             
+             NCB_CA2NA == "폐암" | NCB_CA_NA2 == "폐암" ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA2NA == "갑상선암"|NCB_CA2NA == "갑상선" | NCB_CA_NA2 == "갑상선암"|NCB_CA_NA2 == "갑상선"~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA2NA) == TRUE | grepl("전립선암|전립선", NCB_CA_NA2) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             NCB_CA2NA == "방광암"|NCB_CA2NA =="방광" | NCB_CA_NA2 == "방광암"|NCB_CA_NA2 =="방광" ~ "9",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA2NA) == TRUE ~ NCB_CA2NA,
+             # grepl("암", NCB_CA_NA2) == TRUE ~ NCB_CA_NA2,
+             
+             NCB_CA2 == "2" & NCB_CA2NA != "." ~ "10",
+             NCB_CA == "2" & NCB_CA_NA2 != "." ~ "10",
+             NCB_CA2 == "2" & NCB_CA2NA == "." ~ "11",
+             # NCB_CA == "2" & NCB_CA_NA2 == "." ~ "11",
+             TRUE ~ "Non-case"
+           )
+  ) %>% 
+  # group_by(cancer_BL_2) %>% count() %>% as.data.frame()
+
+  mutate(cancer_BL_3= 
+           case_when(
+             
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             ## NCB_CA_NA3은 존재하지 않으므로 제외함 
+             
+             grepl("위암", NCB_CA3NA) == TRUE  ~ "1",
+             NCB_CA3NA == "간암" ~ "2",
+             
+             grepl("대장|대장암", NCB_CA3NA) == TRUE  ~ "3",
+             grepl("유방|유방암", NCB_CA3NA) ~ "4",
+             
+             NCB_CA3NA == "자궁경부암"|NCB_CA3NA == "경부암" ~ "5",
+             
+             NCB_CA3NA == "자궁경부상피내암" ~ "5",
+             NCB_CA3NA == "경부상피암" ~ "5",
+             
+             NCB_CA3NA == "자궁경부이행암" ~ "5",
+             NCB_CA3NA == "자궁상피내암"  ~ "5",
+             
+             NCB_CA3NA == "폐암"  ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA3NA == "갑상선암"|NCB_CA3NA == "갑상선" ~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA3NA) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             NCB_CA3NA == "방광암"|NCB_CA3NA =="방광"  ~ "9",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA3NA) == TRUE ~ NCB_CA3NA,
+             
+             NCB_CA3 == "2" & NCB_CA3NA != "." ~ "10",
+             NCB_CA3 == "2" & NCB_CA3NA == "." ~ "11",
+             TRUE ~ "Non-case"
+           )
+  ) %>% 
+  # group_by(cancer_BL_3) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_BL = 
+           case_when(
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (cancer_BL_2 != 10 & cancer_BL_2 != "Non-case" & cancer_BL_2 != "11") ~ 1, 
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (cancer_BL_3 != 10 & cancer_BL_3 != "Non-case" & cancer_BL_3 != "11") ~ 1, 
+             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (cancer_BL_3 != 10 & cancer_BL_3 != "Non-case" & cancer_BL_3 != "11") ~ 1, 
+             
+             cancer_BL_1 == "Non-case" ~ 0,
+             
+             cancer_BL_1 != 10 & cancer_BL_1 != 11~ 1,
+             TRUE ~ 0
+           )
+  ) %>% 
+  # group_by(cancer_BL) %>% count()
+  
+  # 1차 F/U
+  mutate(cancer_FU_1 = 
+           case_when(
+             # 암종 확인
+             # cancer_BL == 0 & NCF1_CA_NA1_1 != "." ~ NCF1_CA_NA1_1,
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 == "." ~ "11",
+             
+             
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             cancer_BL == 0 & grepl("위암", NCF1_CA_NA1_1) == TRUE  ~ "1",
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "간암" ~ "2",
+             
+             cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA1_1) == TRUE  ~ "3",
+             cancer_BL == 0 & grepl("유방$|유방암", NCF1_CA_NA1_1) ~ "4",
+             
+             cancer_BL == 0 & grepl("자궁경부$|경부암", NCF1_CA_NA1_1) ~ "5",
+             
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "폐암"  ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "갑상선암"|NCF1_CA_NA1_1 == "갑상선" ~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA1_1) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "방광암"|NCF1_CA_NA1_1 =="방광"  ~ "9",
+             
+             cancer_BL == 0 & NCF1_CA == "2" & grepl("암", NCF1_CA_NA1_1) ~ "10",
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 != "." ~ "11",
+             
+             cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
+             cancer_BL == 1 ~ "Baseline case"
+           )
+  ) %>% 
+  # group_by(cancer_FU_1) %>% count() %>%  as.data.frame()
+  
+  mutate(cancer_FU_2 = 
+           case_when(
+             # 암종 확인 : 단 두 개
+             # cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ NCF1_CA_NA2_1, 
+             # cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 != "." ~ "11",
+             
+             cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA2_1) == TRUE  ~ "3",
+             cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA2_1) == TRUE  ~ "8",
+             
+             cancer_BL == 0 & NCF1_CA_NA2_1 == "." ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA_NA2_1 == "" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ "11",
+             
+             cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
+             
+             cancer_BL == 1 ~ "Baseline case"
+             
+           )
+  ) %>% 
+  # group_by(cancer_FU_2) %>% count() %>%  as.data.frame()
+  
+  mutate(cancer_FU = 
+           case_when(
+             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1", 
+             
+             cancer_FU_1 == "Non-case" ~ "0",
+             cancer_FU_1 == "Baseline case" ~ cancer_FU_1,
+             
+             cancer_FU_1 != 10 & cancer_FU_1 != 11 ~ "1",
+             TRUE ~ "0"
+           )
+  ) %>% 
+  group_by(cancer_FU) %>% count()
+#### Rural data set에서 모든 진단 횟수와 암종 나타내기 ####  
+  
+#### Rural data set에서 '기타' 수준을 갖는 obs 살리기 ####
+rural_raw %>% 
+  mutate(cancer_BL_1= 
+           case_when(
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # grepl("암", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("암", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1, # 단순 결과로 40개의 암종 발견
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             grepl("위암|위장암", NCB_CA1NA) == TRUE | grepl("위암|위장암", NCB_CA_NA1) == TRUE  ~ "1",
+             NCB_CA1NA == "간암" | NCB_CA_NA1 == "간암" ~ "2",
+             # "대장에 용정제거 후 암세포 발견" 때문에 grepl으로 변경함
+             grepl("대장", NCB_CA1NA) == TRUE | grepl("대장", NCB_CA_NA1) == TRUE  ~ "3",
+             NCB_CA1NA == "유방암" | NCB_CA_NA1 == "유방암" ~ "4",
+             
+             # 자궁경부암의 경우가 좀 복잡함 : 총 43명
+             ## 자궁경부암 : 33명, 경부암 : 5명
+             ## 경부상피암 : 1, 자궁경부상피내암 : 2, 자궁경부이행암 : 1, 자궁상피내암 : 1
+             NCB_CA1NA == "자궁경부암"|NCB_CA1NA == "경부암" | NCB_CA_NA1 == "자궁경부암"|NCB_CA_NA1 == "경부암" ~ "5",
+             # grepl("경부|상피", NCB_CA1NA) == TRUE | grepl("경부|상피", NCB_CA_NA1) == TRUE  ~ "5",
+             NCB_CA1NA == "자궁경부상피내암" | NCB_CA_NA1 == "자궁경부상피내암" ~ "5",
+             NCB_CA1NA == "경부상피암" | NCB_CA_NA1 == "경부상피암" ~ "5",
+             
+             NCB_CA1NA == "자궁경부이행암" | NCB_CA_NA1 == "자궁경부이행암" ~ "5",
+             NCB_CA1NA == "자궁상피내암" | NCB_CA_NA1 == "자궁상피내암" ~ "5",
+             # Q. 왜 아래의 코드를 이용하면 +2가 아니라 +4가 되는 걸까?
+             # grepl("자궁경부|자궁상피", NCB_CA1NA) == TRUE | grepl("자궁경부|자궁상피", NCB_CA_NA1) == TRUE  ~ "5",
+             
+             NCB_CA1NA == "폐암" | NCB_CA_NA1 == "폐암" ~ "6",
+             
+             # NCB_CA1NA == "갑상선암" | NCB_CA_NA1 == "갑상선암"~ "7", # 27개
+             # grepl("갑상선", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("갑상선", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1, # 16개
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA1NA == "갑상선암"|NCB_CA1NA == "갑상선" | NCB_CA_NA1 == "갑상선암"|NCB_CA_NA1 == "갑상선"~ "7",
+             
+             # 전립선암 : 8명, 전립선 : 1명. 마찬가지로 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA1NA) == TRUE | grepl("전립선암|전립선", NCB_CA_NA1) == TRUE  ~ "8",
+             
+             # 방광암 : 7명, 방광 : 3명. 마찬가지로 방광도 방광암으로 간주하고 진행함.
+             NCB_CA1NA == "방광암"|NCB_CA1NA =="방광" | NCB_CA_NA1 == "방광암"|NCB_CA_NA1 =="방광" ~ "9",
+             
+             # grepl("자궁암|자궁내막암", NCB_CA1NA) == TRUE | grepl("자궁암|자궁내막암", NCB_CA_NA1) == TRUE  ~ "10",
+             # NCB_CA1NA != "." | NCB_CA_NA1 != "." ~ "10",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("암", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1,
+             
+             # NCB_CA1 == "2" & NCB_CA1NA != "." ~ "10",
+             # NCB_CA == "2" & NCB_CA_NA1 != "." ~ "10",
+             
+             grepl("암", NCB_CA1NA) == TRUE ~ "10",
+             grepl("암", NCB_CA_NA1) == TRUE ~ "10",
+             
+             NCB_CA1 == "2" & NCB_CA1NA == "." ~ "11",
+             NCB_CA == "2" & NCB_CA_NA1 == "." ~ "11",
+             NCB_CA1 == "2" & NCB_CA1NA != "." ~ "11",
+             NCB_CA == "2" & NCB_CA_NA1 != "." ~ "11",
+             TRUE ~ "Non-case"
+           )
+  ) %>%
+  # group_by(cancer_BL_1) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_BL_2= 
+           case_when(
+             
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             grepl("위암|위", NCB_CA2NA) == TRUE | grepl("위암|위", NCB_CA_NA2) == TRUE  ~ "1",
+             NCB_CA2NA == "간암" | NCB_CA_NA2 == "간암" ~ "2",
+             
+             grepl("대장", NCB_CA2NA) == TRUE | grepl("대장", NCB_CA_NA2) == TRUE  ~ "3",
+             grepl("유방|유방암", NCB_CA2NA) == TRUE | grepl("유방|유방암", NCB_CA_NA2) == TRUE  ~ "4",
+             
+             grepl("경부|자궁경부암", NCB_CA2NA) == TRUE | grepl("경부|자궁경부암", NCB_CA_NA2) == TRUE  ~ "5",
+             
+             NCB_CA2NA == "폐암" | NCB_CA_NA2 == "폐암" ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA2NA == "갑상선암"|NCB_CA2NA == "갑상선" | NCB_CA_NA2 == "갑상선암"|NCB_CA_NA2 == "갑상선"~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA2NA) == TRUE | grepl("전립선암|전립선", NCB_CA_NA2) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             NCB_CA2NA == "방광암"|NCB_CA2NA =="방광" | NCB_CA_NA2 == "방광암"|NCB_CA_NA2 =="방광" ~ "9",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA2NA) == TRUE ~ NCB_CA2NA,
+             # grepl("암", NCB_CA_NA2) == TRUE ~ NCB_CA_NA2,
+             
+             NCB_CA2 == "2" & NCB_CA2NA != "." ~ "10",
+             NCB_CA == "2" & NCB_CA_NA2 != "." ~ "10",
+             NCB_CA2 == "2" & NCB_CA2NA == "." ~ "11",
+             # NCB_CA == "2" & NCB_CA_NA2 == "." ~ "11",
+             TRUE ~ "Non-case"
+           )
+  ) %>% 
+  # group_by(cancer_BL_2) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_BL_3= 
+           case_when(
+             
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             ## NCB_CA_NA3은 존재하지 않으므로 제외함 
+             
+             grepl("위암", NCB_CA3NA) == TRUE  ~ "1",
+             NCB_CA3NA == "간암" ~ "2",
+             
+             grepl("대장|대장암", NCB_CA3NA) == TRUE  ~ "3",
+             grepl("유방|유방암", NCB_CA3NA) ~ "4",
+             
+             NCB_CA3NA == "자궁경부암"|NCB_CA3NA == "경부암" ~ "5",
+             
+             NCB_CA3NA == "자궁경부상피내암" ~ "5",
+             NCB_CA3NA == "경부상피암" ~ "5",
+             
+             NCB_CA3NA == "자궁경부이행암" ~ "5",
+             NCB_CA3NA == "자궁상피내암"  ~ "5",
+             
+             NCB_CA3NA == "폐암"  ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA3NA == "갑상선암"|NCB_CA3NA == "갑상선" ~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA3NA) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             NCB_CA3NA == "방광암"|NCB_CA3NA =="방광"  ~ "9",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA3NA) == TRUE ~ NCB_CA3NA,
+             
+             NCB_CA3 == "2" & NCB_CA3NA != "." ~ "11",
+             NCB_CA3 == "2" & NCB_CA3NA == "." ~ "11",
+             TRUE ~ "Non-case"
+           )
+  ) %>% 
+  # group_by(cancer_BL_3) %>% count() %>% as.data.frame()
+    
+  mutate(cancer_BL_type = 
+           case_when (
+             ## 1) 암과거력이 존재하나 '기타'나 NA를 갖는 관측치인 경우 
+             (NCB_CA1 == "2" | NCB_CA == "2") & (cancer_BL_1 == "10"| cancer_BL_1 == "11") ~ "10",
+             ## 2) 암 과거력이 있으면서 기타나 NA를 갖지 않는 경우
+             (NCB_CA1 == "2" | NCB_CA == "2") & is.na(cancer_BL_1) != TRUE ~ cancer_BL_1
+           )
+  ) %>% 
+  # group_by(cancer_BL_type) %>% count()
+  
+  mutate(cancer_BL_type = 
+           case_when (
+             ## 3) (cancer_BL_type == 10 & (NCB_CA2 == "2" | NCB_CA == "2"))일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
+             (cancer_BL_type == 10 & (NCB_CA2 == "2" | NCB_CA == "2")) & (cancer_BL_2 == "10"| cancer_BL_2 == "11") ~ "10",
+             ## 4) (cancer_BL_type == 10 & (NCB_CA2 == "2" | NCB_CA == "2"))일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
+             ## Non-case는 NCB_CA == "2"지만 2차 진단명을 갖지 않는 경우임.
+             ## 발생하는 이유는 NCB_CA와 NCB_CA[1-3]의 중복 진단명 수준이 다르기 때문
+             ## NCB_CA : 진단 여부 + NA1, NA2로 진단명 물음
+             ## NCB_CA[1:3] : 각 진단 여부 + NA[1:3] 각 진단명 물음
+             (cancer_BL_type == 10 & (NCB_CA2 == "2" | NCB_CA == "2")) & is.na(cancer_BL_2) != TRUE ~ cancer_BL_2,
+             
+             # 아래 두 코드를 제외한다면 이 단계에서 추가되는 obs만 볼 수 있음
+             cancer_BL_type == 10 ~ cancer_BL_type,
+             cancer_BL_type != 10 ~ cancer_BL_type
+           )
+  ) %>% 
+  # group_by(cancer_BL_type) %>% count(cancer_BL_type)
+  
+  mutate(cancer_BL_type = 
+           case_when (
+             ## 5) cancer_BL_type == 10 & NCB_CA3 == "2"일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
+             cancer_BL_type == 10 & NCB_CA3 == "2" & (cancer_BL_3 == "10"| cancer_BL_3 == "11") ~ "10",
+             ## 6) (cancer_BL_type == 10 & DS1_CA3 == 2)일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
+             cancer_BL_type == 10 & NCB_CA3 == "2" & is.na(cancer_BL_3) != TRUE ~ cancer_BL_3,
+             
+             # 아래 두 코드를 제외한다면 이 단계에서 추가되는 obs만 볼 수 있음
+             cancer_BL_type == 10 ~ cancer_BL_type,
+             cancer_BL_type != 10 ~ cancer_BL_type
+           )
+  ) %>% 
+  # group_by(cancer_BL_type) %>% count(cancer_BL_type)
+  
+  # cancer_BL_type을 기준으로 cancer_BL 다시 정의
+  mutate(cancer_BL = 
+           case_when(
+             # 암 과거력 여부 파악 : BL_type이 '기타'이거나 '결측치'인 경우나 암 과거력이 없는 경우는 모두 0  
+             cancer_BL_type == 10 | cancer_BL_type == "Non-case" | is.na(cancer_BL_type) == TRUE ~ 0,
+             
+             # 위의 경우를 제외한 모든 경우 : 암 과거력이 존재하며 암 유형이 1-9 수준으로 정의될 때 1
+             is.na(cancer_BL_type) != TRUE ~ 1
+           )
+  ) %>% 
+  # count(cancer_BL)
+
+  # 1차 F/U
+  mutate(cancer_FU_1 = 
+           case_when(
+             # 암종 확인
+             # cancer_BL == 0 & NCF1_CA_NA1_1 != "." ~ NCF1_CA_NA1_1,
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 == "." ~ "11",
+             
+             
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             cancer_BL == 0 & grepl("위암", NCF1_CA_NA1_1) == TRUE  ~ "1",
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "간암" ~ "2",
+             
+             cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA1_1) == TRUE  ~ "3",
+             cancer_BL == 0 & grepl("유방$|유방암", NCF1_CA_NA1_1) ~ "4",
+             
+             cancer_BL == 0 & grepl("자궁경부$|경부암", NCF1_CA_NA1_1) ~ "5",
+             
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "폐암"  ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "갑상선암"|NCF1_CA_NA1_1 == "갑상선" ~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA1_1) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "방광암"|NCF1_CA_NA1_1 =="방광"  ~ "9",
+             
+             cancer_BL == 0 & NCF1_CA == "2" & grepl("암", NCF1_CA_NA1_1) ~ "10",
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 != "." ~ "11",
+             
+             cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
+             cancer_BL == 1 ~ "Baseline case"
+           )
+  ) %>% 
+  # group_by(cancer_FU_1) %>% count() %>%  as.data.frame()
+  
+  mutate(cancer_FU_2 = 
+           case_when(
+             # 암종 확인 : 단 두 개
+             # cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ NCF1_CA_NA2_1, 
+             # cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 != "." ~ "11",
+             
+             cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA2_1) == TRUE  ~ "3",
+             cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA2_1) == TRUE  ~ "8",
+             
+             cancer_BL == 0 & NCF1_CA_NA2_1 == "." ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA_NA2_1 == "" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ "11",
+             
+             cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
+             
+             cancer_BL == 1 ~ "Baseline case"
+             
+           )
+  ) %>% 
+  # group_by(cancer_FU_2) %>% count() %>%  as.data.frame()
+  
+  mutate(cancer_FU_type = 
+           case_when (
+             ## 1) 암과거력이 존재하나 '기타'나 NA를 갖는 관측치인 경우 
+             NCF1_CA == "2" & (cancer_FU_1 == "10"| cancer_FU_1 == "11") ~ "10",
+             ## 2) 암 과거력이 있으면서 기타나 NA를 갖지 않는 경우
+             NCF1_CA == "2" & is.na(cancer_FU_1) != TRUE ~ cancer_FU_1,
+             TRUE ~ cancer_FU_1
+           )
+  ) %>% 
+  # group_by(cancer_FU_type) %>% count()
+  
+  mutate(cancer_FU_type = 
+           case_when (
+             ## 3) (cancer_FU_type == 10 & NCF1_CA == "2")일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
+             (cancer_FU_type == 10 & NCF1_CA == "2") & (cancer_FU_2 == "10"| cancer_FU_2 == "11") ~ "10",
+             ## 4) (cancer_FU_type == 10 & NCF1_CA == "2")일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
+             (cancer_FU_type == 10 & NCF1_CA == "2") & is.na(cancer_FU_2) != TRUE ~ cancer_FU_2, 
+             
+             ## 모두 Non-case
+             ## 이 경우는 FU_1에서 '10'을 갖는 obs 중 FU_2 = [1:10]를 갖지 않는 경우임
+             
+             # 아래 두 코드를 제외한다면 이 단계에서 추가되는 obs만 볼 수 있음
+             cancer_FU_type == 10 ~ cancer_FU_type,
+             cancer_FU_type != 10 ~ cancer_FU_type
+           )
+  ) %>% 
+  # group_by(cancer_FU_type) %>% count(cancer_FU_type)
+  
+  mutate(cancer_FU = 
+           case_when(
+             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1", 
+             
+             cancer_FU_1 == "Non-case" ~ "0",
+             cancer_FU_1 == "Baseline case" ~ cancer_FU_1,
+             
+             cancer_FU_1 != 10 & cancer_FU_1 != 11 ~ "1",
+             TRUE ~ "0"
+           )
+  ) %>% 
+  group_by(cancer_FU) %>% count()
+
+#### Rural data set에서 '기타' 수준을 갖는 obs 살리기 ####
 ```
 
 ```r
