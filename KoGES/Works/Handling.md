@@ -1138,3 +1138,158 @@ urban_raw %>%
   facet_wrap(~variable)
 
 ```
+
+```r 
+#### meat ####
+scoring <- function(x, na.rm = FALSE) {
+  ifelse(x == ".", NA, 
+         ifelse( x == "1", 0, 
+                 ifelse( x == "2", 1/30, 
+                         ifelse ( x == "3", 2.5/30, 
+                                  ifelse(x == "4", 1.5/7, 
+                                         ifelse(x == "5", 3.5/7, 
+                                                ifelse(x == "6", 5.5/7, 
+                                                       ifelse(x == "7", 1, 
+                                                              ifelse(x == "8", 2, 
+                                                                     ifelse(x == "9", 3, 1000)
+                                                                     )
+                                                              )
+                                                       )
+                                                )
+                                  )
+                         )
+                 )
+         )
+  )
+}
+
+red_meat <- paste0("DS1_F0", c(57, 58, 59, 61, 62, 63), "_FQ")
+processed_meat <- "DS1_F060_FQ"
+white_meat <- "DS1_F064_FQ"
+fish_white <- c("DS1_F067_FQ", "DS1_F069_FQ", "DS1_F071_FQ", "DS1_F072_FQ", "DS1_F081_FQ")
+fish_red <- c("DS1_F068_FQ", "DS1_F070_FQ", "DS1_F074_FQ", "DS1_F075_FQ")
+
+urban_raw %>% 
+  mutate_at(red_meat, scoring) %>% 
+  mutate_at(processed_meat, scoring) %>% 
+  mutate_at(white_meat, scoring) %>% 
+  mutate_at(fish_white, scoring) %>%
+  mutate_at(fish_red, scoring) %>% 
+  
+  as_tibble() %>% replace(is.na(.), 0) %>% 
+  
+  mutate(RED_meat =  rowSums(.[red_meat])/length(red_meat)) %>%
+  mutate(PROCESSED_meat =  rowSums(.[processed_meat])/length(processed_meat)) %>% 
+  mutate(WHITE_meat =  rowSums(.[white_meat])/length(white_meat)) %>% 
+  mutate(FISH_white =  rowSums(.[fish_white])/length(fish_white)) %>% 
+  mutate(FISH_red =  rowSums(.[fish_red])/length(fish_red)) %>% 
+  
+  # select(RID, red_meat, RED_meat, processed_meat, PROCESSED_meat, white_meat, WHITE_meat,
+  #        fish_white, FISH_white, fish_red, FISH_red)
+  
+  select(RED_meat, PROCESSED_meat, WHITE_meat, FISH_white, FISH_red) %>% 
+  
+  # summarise_all(list(min = min, max = max, mean = mean, sd = sd, 
+  #                    Q1 = ~ quantile(x = ., prob = 0.25), 
+  #                    Q2 = ~ quantile(x = ., prob = 0.50), 
+  #                    Q3 = ~ quantile(x = ., prob = 0.75))) %>% 
+  # t() %>% 
+  # write.xlsx("food_distribution.xlsx")
+  pivot_longer(., cols = c(RED_meat, PROCESSED_meat, WHITE_meat, FISH_white, FISH_red), 
+               names_to = "Var", values_to = "Val") %>% 
+  ggplot(aes(x = Var, y = log(Val+0.0001), fill = Var)) + 
+  geom_boxplot() + labs(x="Food categoires", y="log(score mean)") 
+ggsave("city_food_box.jpg", dpi = 300)
+
+
+
+
+
+red_meat <- paste0("NCB_F0", c(57, 58, 59, 61, 62, 63), "_FQ")
+processed_meat <- "NCB_F060_FQ"
+white_meat <- "NCB_F064_FQ"
+fish_white <- c("NCB_F067_FQ", "NCB_F069_FQ", "NCB_F071_FQ", "NCB_F072_FQ", "NCB_F081_FQ")
+fish_red <- c("NCB_F068_FQ", "NCB_F070_FQ", "NCB_F074_FQ", "NCB_F075_FQ")
+
+rural_raw %>% 
+  mutate_at(red_meat, scoring) %>% 
+  mutate_at(processed_meat, scoring) %>% 
+  mutate_at(white_meat, scoring) %>% 
+  mutate_at(fish_white, scoring) %>%
+  mutate_at(fish_red, scoring) %>% 
+  
+  as_tibble() %>% replace(is.na(.), 0) %>% 
+  
+  mutate(RED_meat =  rowSums(.[red_meat])/length(red_meat)) %>%
+  mutate(PROCESSED_meat =  rowSums(.[processed_meat])/length(processed_meat)) %>% 
+  mutate(WHITE_meat =  rowSums(.[white_meat])/length(white_meat)) %>% 
+  mutate(FISH_white =  rowSums(.[fish_white])/length(fish_white)) %>% 
+  mutate(FISH_red =  rowSums(.[fish_red])/length(fish_red)) %>% 
+  
+  # select(RID, red_meat, RED_meat, processed_meat, PROCESSED_meat, white_meat, WHITE_meat,
+  #        fish_white, FISH_white, fish_red, FISH_red)
+  
+  select(RED_meat, PROCESSED_meat, WHITE_meat, FISH_white, FISH_red) %>% 
+  
+  # summarise_all(list(min = min, max = max, mean = mean, sd = sd, 
+  #                    Q1 = ~ quantile(x = ., prob = 0.25), 
+  #                    Q2 = ~ quantile(x = ., prob = 0.50), 
+  #                    Q3 = ~ quantile(x = ., prob = 0.75))) %>% 
+  # t() %>% 
+  # write.xlsx("food_distribution.xlsx")
+  pivot_longer(., cols = c(RED_meat, PROCESSED_meat, WHITE_meat, FISH_white, FISH_red), 
+               names_to = "Var", values_to = "Val") %>% 
+  ggplot(aes(x = Var, y = log(Val+0.0001), fill = Var)) + 
+  geom_boxplot() + labs(x="Food categoires", y="log(score mean)")
+ggsave("rural_food_box.jpg", dpi = 300)
+
+
+
+red_meat <- c("AS1_DOG_1", "AS1_PORK_1", "AS1_POK3_1", "AS1_BUPO_1", "AS1_BEEF_1", "AS1_SPBF_1", "AS1_NEJA_1")
+processed_meat <- "AS1_HAM_1"
+white_meat <- "AS1_CHIC_1"
+fish_white <- c("AS1_FRFH_1", "AS1_GALF_1", "AS1_JOGI_1", "AS1_TAEF_1", "AS1_UMUK_1")
+fish_red <- c("AS1_JANF_1", "AS1_BLFH_1", "AS1_ANCH_1", "AS1_CHAF_1")
+
+local_raw %>% 
+  mutate_at(red_meat, scoring) %>% 
+  mutate_at(processed_meat, scoring) %>% 
+  mutate_at(white_meat, scoring) %>% 
+  mutate_at(fish_white, scoring) %>%
+  mutate_at(fish_red, scoring) %>% 
+  
+  as_tibble() %>% replace(is.na(.), 0) %>% 
+  
+  mutate(RED_meat =  rowSums(.[red_meat])/length(red_meat)) %>%
+  mutate(PROCESSED_meat =  rowSums(.[processed_meat])/length(processed_meat)) %>% 
+  mutate(WHITE_meat =  rowSums(.[white_meat])/length(white_meat)) %>% 
+  mutate(FISH_white =  rowSums(.[fish_white])/length(fish_white)) %>% 
+  mutate(FISH_red =  rowSums(.[fish_red])/length(fish_red)) %>% 
+  
+  # select(RID, red_meat, RED_meat, processed_meat, PROCESSED_meat, white_meat, WHITE_meat,
+  #        fish_white, FISH_white, fish_red, FISH_red)
+  
+  select(RED_meat, PROCESSED_meat, WHITE_meat, FISH_white, FISH_red) %>% 
+  
+  # summarise_all(list(min = min, max = max, mean = mean, sd = sd, 
+  #                    Q1 = ~ quantile(x = ., prob = 0.25), 
+  #                    Q2 = ~ quantile(x = ., prob = 0.50), 
+  #                    Q3 = ~ quantile(x = ., prob = 0.75))) %>% 
+  # t() %>% 
+  # write.xlsx("food_distribution.xlsx")
+  # select(RED_meat) %>% # table()
+  # ggplot(aes(x = "RED_meat", y = log(RED_meat))) + geom_boxplot()
+  
+  
+  pivot_longer(., cols = c(RED_meat, PROCESSED_meat, WHITE_meat, FISH_white, FISH_red), 
+               names_to = "Var", values_to = "Val") %>% 
+  ggplot(aes(x = Var, y = log(Val+0.0001), fill = Var)) + 
+  geom_boxplot() + labs(x="Food categoires", y="log(score mean)")
+ggsave("local_food_box.jpg", dpi = 300)
+
+```
+
+
+
+
+
