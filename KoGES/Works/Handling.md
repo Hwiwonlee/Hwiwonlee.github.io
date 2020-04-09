@@ -869,7 +869,7 @@ rural_raw %>%
 ```
 
 ```r
-scoring <- function(x, na.rm = FALSE) {
+FQ_scoring <- function(x, na.rm = FALSE) {
   ifelse(x == ".", NA, 
          ifelse( x == "1", 0, 
                  ifelse( x == "2", 1*7/30, 
@@ -886,6 +886,15 @@ scoring <- function(x, na.rm = FALSE) {
                                          )
                                   )
                          )
+                 )
+         )
+  )
+}
+AM_scoring <- function(x, na.rm = FALSE) {
+  ifelse(x == ".", NA, 
+         ifelse( x == "1", 0.5, 
+                 ifelse( x == "2", 1, 
+                         ifelse ( x == "3", 1.5, NA)
                  )
          )
   )
