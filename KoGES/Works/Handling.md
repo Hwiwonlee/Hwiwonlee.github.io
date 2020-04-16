@@ -7,9 +7,8 @@ SAS dataset이 문제다. sasdata로 불러온 것을 csv로 내보내면 파일
 아마 encoding문제인 것 같은데 두 개의 타입으로 encoding된 dataset이 있는 게 가능한가?
 
 기타 제외하기로 결정  
-도시 농촌은 끝냈고 지역이 문제  
-Cox 추가할 것  
-total N수 확인  
+지역 시작함  
+
 
 ```r
 dir <- "path"
