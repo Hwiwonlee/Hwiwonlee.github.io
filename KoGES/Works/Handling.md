@@ -229,94 +229,347 @@ urban_raw %>%
 # 중복 진단을 나타내는 변수들로 인해 dataset이 복잡해진다는 단점 또한 가지고 있다. 
 #### Comment about dataset ####
 
-#### Urban data set에서 모든 진단 횟수와 암종 나타내기 ####
-urban_raw %>%
+#### Rural data set에서 모든 진단 횟수와 암종 나타내기 ####
+rural_raw %>% 
+  mutate(cancer_BL_1= 
+           case_when(
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # grepl("암", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("암", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1, # 단순 결과로 40개의 암종 발견
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             grepl("위암|위장암", NCB_CA1NA) == TRUE | grepl("위암|위장암", NCB_CA_NA1) == TRUE  ~ "1",
+             NCB_CA1NA == "간암" | NCB_CA_NA1 == "간암" ~ "2",
+             # "대장에 용정제거 후 암세포 발견" 때문에 grepl으로 변경함
+             grepl("대장", NCB_CA1NA) == TRUE | grepl("대장", NCB_CA_NA1) == TRUE  ~ "3",
+             NCB_CA1NA == "유방암" | NCB_CA_NA1 == "유방암" ~ "4",
+             
+             # 자궁경부암의 경우가 좀 복잡함 : 총 43명
+             ## 자궁경부암 : 33명, 경부암 : 5명
+             ## 경부상피암 : 1, 자궁경부상피내암 : 2, 자궁경부이행암 : 1, 자궁상피내암 : 1
+             
+             NCB_CA1NA == "자궁경부암"|NCB_CA1NA == "경부암" | NCB_CA_NA1 == "자궁경부암"|NCB_CA_NA1 == "경부암" ~ "5",
+             # grepl("경부|상피", NCB_CA1NA) == TRUE | grepl("경부|상피", NCB_CA_NA1) == TRUE  ~ "5",
+             
+             ## 0406 : 자궁경부암과 상피내암은 구분하는 게 맞다. -> 빼야지 뭐.
+             # NCB_CA1NA == "자궁경부상피내암" | NCB_CA_NA1 == "자궁경부상피내암" ~ "5",
+             # NCB_CA1NA == "경부상피암" | NCB_CA_NA1 == "경부상피암" ~ "5",
+             # 
+             # NCB_CA1NA == "자궁경부이행암" | NCB_CA_NA1 == "자궁경부이행암" ~ "5",
+             # NCB_CA1NA == "자궁상피내암" | NCB_CA_NA1 == "자궁상피내암" ~ "5",
+             
+             # Q. 왜 아래의 코드를 이용하면 +2가 아니라 +4가 되는 걸까?
+             # grepl("자궁경부|자궁상피", NCB_CA1NA) == TRUE | grepl("자궁경부|자궁상피", NCB_CA_NA1) == TRUE  ~ "5",
+             
+             NCB_CA1NA == "폐암" | NCB_CA_NA1 == "폐암" ~ "6",
+             
+             # NCB_CA1NA == "갑상선암" | NCB_CA_NA1 == "갑상선암"~ "7", # 27개
+             # grepl("갑상선", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("갑상선", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1, # 16개
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA1NA == "갑상선암"|NCB_CA1NA == "갑상선" | NCB_CA_NA1 == "갑상선암"|NCB_CA_NA1 == "갑상선"~ "7",
+             
+             # 전립선암 : 8명, 전립선 : 1명. 마찬가지로 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA1NA) == TRUE | grepl("전립선암|전립선", NCB_CA_NA1) == TRUE  ~ "8",
+             
+             # 방광암 : 7명, 방광 : 3명. 마찬가지로 방광도 방광암으로 간주하고 진행함.
+             NCB_CA1NA == "방광암"|NCB_CA1NA =="방광" | NCB_CA_NA1 == "방광암"|NCB_CA_NA1 =="방광" ~ "9",
+             
+             # grepl("자궁암|자궁내막암", NCB_CA1NA) == TRUE | grepl("자궁암|자궁내막암", NCB_CA_NA1) == TRUE  ~ "10",
+             # NCB_CA1NA != "." | NCB_CA_NA1 != "." ~ "10",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
+             # grepl("암", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1,
+             
+             
+             grepl("암", NCB_CA1NA) == TRUE ~ "10",
+             grepl("암", NCB_CA_NA1) == TRUE ~ "10",
 
-  mutate(cancer_BL_1 = 
+             NCB_CA1 == "2" & NCB_CA1NA != "." ~ "11",
+             NCB_CA == "2" & NCB_CA_NA1 != "." ~ "11",
+             
+             # NCB_CA1 == "2" & NCB_CA1NA != "." ~ NCB_CA1NA,
+             # NCB_CA == "2" & NCB_CA_NA1 != "." ~ NCB_CA_NA1,
+             
+             NCB_CA1 == "2" & NCB_CA1NA == "." ~ "12",
+             NCB_CA == "2" & NCB_CA_NA1 == "." ~ "12",
+             TRUE ~ "Non-case"
+           )
+  ) %>%
+  # group_by(cancer_BL_1) %>% count() %>% as.data.frame()
+
+  mutate(cancer_BL_2= 
            case_when(
-             DS1_CA1 == 2 & DS1_CA1SP == 10 ~ DS1_CA1SP,
-             DS1_CA1 == 2 & (DS1_CA1SP == "." |  DS1_CA1SP == "") ~ "11",
-             DS1_CA1 == 2 & is.na(DS1_CA1SP) != TRUE ~ DS1_CA1SP, 
-             DS1_CA1 != 2 ~ "Non-case"
+
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             grepl("위암|위", NCB_CA2NA) == TRUE | grepl("위암|위", NCB_CA_NA2) == TRUE  ~ "1",
+             NCB_CA2NA == "간암" | NCB_CA_NA2 == "간암" ~ "2",
+             
+             grepl("대장", NCB_CA2NA) == TRUE | grepl("대장", NCB_CA_NA2) == TRUE  ~ "3",
+             grepl("유방|유방암", NCB_CA2NA) == TRUE | grepl("유방|유방암", NCB_CA_NA2) == TRUE  ~ "4",
+             
+             grepl("경부|자궁경부암", NCB_CA2NA) == TRUE | grepl("경부|자궁경부암", NCB_CA_NA2) == TRUE  ~ "5",
+             
+             NCB_CA2NA == "폐암" | NCB_CA_NA2 == "폐암" ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA2NA == "갑상선암"|NCB_CA2NA == "갑상선" | NCB_CA_NA2 == "갑상선암"|NCB_CA_NA2 == "갑상선"~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA2NA) == TRUE | grepl("전립선암|전립선", NCB_CA_NA2) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             NCB_CA2NA == "방광암"|NCB_CA2NA =="방광" | NCB_CA_NA2 == "방광암"|NCB_CA_NA2 =="방광" ~ "9",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA2NA) == TRUE ~ NCB_CA2NA,
+             # grepl("암", NCB_CA_NA2) == TRUE ~ NCB_CA_NA2,
+             
+             # grepl("암", NCB_CA2NA) == TRUE ~ "10",
+             # grepl("암", NCB_CA_NA2) == TRUE ~ "10",
+             
+             NCB_CA2 == "2" & NCB_CA2NA != "." ~ "10",
+             NCB_CA == "2" & NCB_CA_NA2 != "." ~ "10", 
+             # 10 : 8이지만 10 : 2, 11 : 6이다. 
+             # NCB_CA2NA에서 기타 암종으로 2개를 찾을 수 있고
+             # NCB_CA_NA2가 모두 NA라 6개의 결측치를 갖는다. 
+             NCB_CA2 == "2" & NCB_CA2NA == "." ~ "11",
+             # NCB_CA == "2" & NCB_CA_NA2 == "." ~ "11",
+             TRUE ~ "Non-case"
+           )
+  ) %>%
+  # group_by(cancer_BL_2) %>% count() %>% as.data.frame()
+
+  mutate(cancer_BL_3= 
+           case_when(
+             
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             ## NCB_CA_NA3은 존재하지 않으므로 제외함 
+             
+             grepl("위암", NCB_CA3NA) == TRUE  ~ "1",
+             NCB_CA3NA == "간암" ~ "2",
+             
+             grepl("대장|대장암", NCB_CA3NA) == TRUE  ~ "3",
+             grepl("유방|유방암", NCB_CA3NA) ~ "4",
+             
+             NCB_CA3NA == "자궁경부암"|NCB_CA3NA == "경부암" ~ "5",
+             
+             # NCB_CA3NA == "자궁경부상피내암" ~ "5",
+             # NCB_CA3NA == "경부상피암" ~ "5",
+             
+             # NCB_CA3NA == "자궁경부이행암" ~ "5",
+             # NCB_CA3NA == "자궁상피내암"  ~ "5",
+             
+             NCB_CA3NA == "폐암"  ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             NCB_CA3NA == "갑상선암"|NCB_CA3NA == "갑상선" ~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선", NCB_CA3NA) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             NCB_CA3NA == "방광암"|NCB_CA3NA =="방광"  ~ "9",
+             
+             # 암종 구분
+             # grepl("암", NCB_CA3NA) == TRUE ~ NCB_CA3NA,
+             # TRUE ~ NCB_CA3NA # 췌장 1
+             
+             NCB_CA3 == "2" & NCB_CA3NA != "." ~ "10",
+             NCB_CA3 == "2" & NCB_CA3NA == "." ~ "12",
+             TRUE ~ "Non-case"
            )
   ) %>% 
-  # group_by(cancer_BL_1) %>% count()
+  # group_by(cancer_BL_3) %>% count() %>% as.data.frame()
   
-  mutate(cancer_BL_2 = 
-           case_when(
-             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (DS1_CA2 == 2) & (DS1_CA2SP == 10) ~ DS1_CA2SP,
-             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (DS1_CA2 == 2) & (DS1_CA2SP == "." |  DS1_CA2SP == "") ~ "11",
-             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (DS1_CA2 == 2) & is.na(DS1_CA2SP) != TRUE ~ DS1_CA2SP, 
-             DS1_CA2 == 2 ~ DS1_CA2SP,
-             DS1_CA2 != 2 ~ "Non-case"
-           )
-  ) %>% 
-  # group_by(cancer_BL_2) %>% count()
-  mutate(cancer_BL_3 = 
-           case_when(
-             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (DS1_CA3 == 2) & (DS1_CA3SP == 10) ~ DS1_CA3SP,
-             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (DS1_CA3 == 2) & (DS1_CA3SP == "." |  DS1_CA3SP == "") ~ "11",
-             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (DS1_CA3 == 2) & is.na(DS1_CA3SP) != TRUE ~ DS1_CA3SP, 
-             DS1_CA3 == 2 ~ DS1_CA3SP,
-             DS1_CA3 != 2 ~ "Non-case"
-           )
-  ) %>% 
-  # group_by(cancer_BL_3) %>% count()
+  # select(cancer_BL_1, cancer_BL_2) %>%
+  # mutate(cancer_BL_1 = as.numeric(str_replace(cancer_BL_1, "Non-case", "0"))) %>%
+  # mutate(cancer_BL_2 = as.numeric(str_replace(cancer_BL_2, "Non-case", "0"))) %>%
+  # table() %>% write.csv("rural_table_1_2.csv")
+
+  # select(cancer_BL_1, cancer_BL_3) %>% 
+  # mutate(cancer_BL_1 = as.numeric(str_replace(cancer_BL_1, "Non-case", "0"))) %>% 
+  # mutate(cancer_BL_3 = as.numeric(str_replace(cancer_BL_3, "Non-case", "0"))) %>% 
+  # table() %>% write.csv("rural_table_1_3.csv")
   
-  # 3개의 진단명에서 10, 11을 갖는 obs 중 한번이라도 1-9를 갖는 obs를 빼려면 어떻게 해야 할까? 
-  # 무식하게 했다. 
+    
   mutate(cancer_BL = 
            case_when(
-             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (cancer_BL_2 != 10 & cancer_BL_2 != "Non-case" & cancer_BL_2 != "11") ~ 1, 
-             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (cancer_BL_3 != 10 & cancer_BL_3 != "Non-case" & cancer_BL_3 != "11") ~ 1, 
-             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (cancer_BL_3 != 10 & cancer_BL_3 != "Non-case" & cancer_BL_3 != "11") ~ 1, 
              
              cancer_BL_1 == "Non-case" ~ 0,
              
-             cancer_BL_1 != 10 & cancer_BL_1 != 11~ 1,
-             TRUE ~ 0
+             # 3개의 진단명에서 10, 11을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11 | cancer_BL_1 == 12) & (cancer_BL_2 != 10 & cancer_BL_2 != "11" & cancer_BL_2 != "Non-case") ~ 1, 
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11 | cancer_BL_1 == 12) & (cancer_BL_3 != 10 & cancer_BL_3 != "11" & cancer_BL_3 != "Non-case") ~ 1, 
+             
+             # 3개의 진단명에서 10, 11을 갖는 obs 중 한번이라도 1-9를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             cancer_BL_1 == 11 & cancer_BL_2 == 11 & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == 11 & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == 11 & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 11 & cancer_BL_2 == 12 & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == 12 & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == 12 & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 11 & cancer_BL_2 == "Non-case" & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == "Non-case" & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == "Non-case" & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 12 & cancer_BL_2 == 11 & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == 11 & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == 11 & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 12 & cancer_BL_2 == 12 & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == 12 & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == 12 & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 12 & cancer_BL_2 == "Non-case" & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == "Non-case" & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == "Non-case" & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 != 11 & cancer_BL_1 != 12 ~ 1,
+             cancer_BL_2 != 11 & cancer_BL_2 != 12 ~ 1,
+             cancer_BL_3 != 11 & cancer_BL_3 != 12 ~ 1,
+             # TRUE ~ 99
            )
   ) %>% 
+  # dplyr::filter(cancer_BL == 99) %>% select(cancer_BL_1, cancer_BL_2, cancer_BL_3)
   # group_by(cancer_BL) %>% count()
   
   
-  
+  # 1차 F/U
   mutate(cancer_FU_1 = 
            case_when(
-             cancer_BL == 0 & DS2_CA1 == 2 & DS2_CA1SP == 10 ~ DS2_CA1SP,
-             cancer_BL == 0 & DS2_CA1 == 2 & (DS2_CA1SP == "." |  DS2_CA1SP == "") ~ "11",
-             cancer_BL == 0 & DS2_CA1 == 2 & is.na(DS2_CA1SP) != TRUE ~ DS2_CA1SP, 
-             cancer_BL == 0 & DS2_CA1 != 2 ~ "Non-case",
-             TRUE ~ "Baseline case"
+             # 암종 확인
+             # cancer_BL == 0 & NCF1_CA_NA1_1 != "." ~ NCF1_CA_NA1_1,
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 == "." ~ "12",
+             
+             
+             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             cancer_BL == 0 & grepl("위암", NCF1_CA_NA1_1) == TRUE  ~ "1",
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "간암" ~ "2",
+             
+             cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA1_1) == TRUE  ~ "3",
+             cancer_BL == 0 & grepl("유방$|유방암", NCF1_CA_NA1_1) ~ "4",
+             
+             cancer_BL == 0 & grepl("자궁경부$|경부암", NCF1_CA_NA1_1) ~ "5",
+             
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "폐암"  ~ "6",
+             
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "갑상선암"|NCF1_CA_NA1_1 == "갑상선" ~ "7",
+             
+             # 전립선도 전립선암으로 간주하고 진행함.
+             cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA1_1) == TRUE  ~ "8",
+             
+             # 방광도 방광암으로 간주하고 진행함.
+             cancer_BL == 0 & NCF1_CA_NA1_1 == "방광암"|NCF1_CA_NA1_1 =="방광"  ~ "9",
+             
+             cancer_BL == 0 & NCF1_CA == "2" & grepl("암", NCF1_CA_NA1_1) ~ "10",
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 != "." ~ "11",
+             
+             cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
+             cancer_BL == 1 ~ "Baseline case",
+             cancer_BL == 3 ~ "Exclude case"
            )
   ) %>% 
-  # group_by(cancer_FU_1) %>% count()
+  # group_by(cancer_FU_1) %>% count() %>%  as.data.frame()
   
   mutate(cancer_FU_2 = 
            case_when(
-             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (DS2_CA2 == 2) & (DS2_CA2SP == 10) ~ DS2_CA2SP,
-             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (DS2_CA2 == 2) & (DS2_CA2SP == "." |  DS2_CA2SP == "") ~ "11",
-             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (DS2_CA2 == 2) & is.na(DS2_CA2SP) != TRUE ~ DS2_CA2SP, 
-             DS2_CA2 == 2 ~ DS2_CA2SP,
-             DS2_CA2 != 2 ~ "Non-case"
+             # 암종 확인 : 단 두 개
+             # cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ NCF1_CA_NA2_1, 
+             # cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 != "." ~ "11",
+             
+             
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 == "." ~ "12",
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 == "" ~ "12",
+             
+             cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA2_1) == TRUE  ~ "3",
+             cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA2_1) == TRUE  ~ "8",
+             
+             # cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ "11",
+             cancer_BL == 0 & NCF1_CA_NA2_1 == "" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA_NA2_1 == "." ~ "Non-case",
+             
+             cancer_BL == 0 & NCF1_CA_NA2_1 != "" ~ "11",
+             cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ "11",
+             
+             cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
+             
+             cancer_BL == 1 ~ "Baseline case",
+             cancer_BL == 3 ~ "Exclude case"
+             
            )
   ) %>% 
-  # group_by(cancer_FU_2) %>% count()
+  # group_by(cancer_FU_2) %>% count() %>%  as.data.frame()
+  
+  # # F/U에서 교차표 그려보기 (0407)
+  # dplyr::filter(cancer_BL == 0 & NCF1_CA == 2) %>%
+  # select(cancer_FU_1, cancer_FU_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
   
   mutate(cancer_FU = 
            case_when(
-             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1", 
-             
              cancer_FU_1 == "Non-case" ~ "0",
              cancer_FU_1 == "Baseline case" ~ cancer_FU_1,
+             cancer_FU_1 == "Exclude case" ~ cancer_FU_1,
              
-             cancer_FU_1 != 10 & cancer_FU_1 != 11~ "1",
-             TRUE ~ "0"
+             # 2개의 진단명에서 10을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             # (cancer_FU_1 == 10 | cancer_FU_1 == 11 | cancer_FU_1 == 12) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1",
+             # (cancer_FU_1 == 10) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1", 
+             
+             # 2개의 진단명에서 10, 11을 갖는 obs 중 한번이라도 1-9를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             cancer_FU_1 == 11 & cancer_FU_2 == 11 ~ "3",
+             cancer_FU_1 == 11 & cancer_FU_2 == 12 ~ "3",
+             cancer_FU_1 == 11 & cancer_FU_2 == "Non-case" ~ "3",
+             
+             cancer_FU_1 == 12 & cancer_FU_2 == 11 ~ "3",
+             cancer_FU_1 == 12 & cancer_FU_2 == 12 ~ "3",
+             cancer_FU_1 == 12 & cancer_FU_2 == "Non-case" ~ "3",
+             
+             cancer_FU_1 != 11 & cancer_FU_1 != 12 ~ "1",
+             cancer_FU_2 != 11 & cancer_FU_2 != 12 ~ "1",
+             
+             TRUE ~ "99"
            )
   ) %>% 
-  # group_by(cancer_FU) %>% count()
-#### Urban data set에서 모든 진단 횟수와 암종 나타내기 ####
+  # dplyr::filter(cancer_FU == "99") %>% select(cancer_FU_1, cancer_FU_2)
+  
+  
+  # select(RID, cancer_BL, cancer_BL_1, cancer_BL_2, cancer_BL_3, cancer_FU_1, cancer_FU_2, cancer_FU) %>% 
+  # write.csv("rural_cancer_data.csv")
+  
+  # enery 제외
+  # dplyr::filter(NCB_SEX == 1 & (NCB_SS01 > 800 & NCB_SS01 < 4200) | 
+  #                 NCB_SEX == 2 & (NCB_SS01 > 500 & NCB_SS01 < 3500)) %>% 
+  
+  # group_by(cancer_FU_2) %>% count() %>%  as.data.frame()
+  
+  # select(cancer_FU_1, cancer_FU_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
 
+    
+  group_by(cancer_FU) %>% count() %>% as.data.frame()
+
+#### Rural data set에서 모든 진단 횟수와 암종 나타내기 #### 
 
 
 #### Rural data set에서 모든 진단 횟수와 암종 나타내기 ####
@@ -339,13 +592,17 @@ rural_raw %>%
              # 자궁경부암의 경우가 좀 복잡함 : 총 43명
              ## 자궁경부암 : 33명, 경부암 : 5명
              ## 경부상피암 : 1, 자궁경부상피내암 : 2, 자궁경부이행암 : 1, 자궁상피내암 : 1
+             
              NCB_CA1NA == "자궁경부암"|NCB_CA1NA == "경부암" | NCB_CA_NA1 == "자궁경부암"|NCB_CA_NA1 == "경부암" ~ "5",
              # grepl("경부|상피", NCB_CA1NA) == TRUE | grepl("경부|상피", NCB_CA_NA1) == TRUE  ~ "5",
-             NCB_CA1NA == "자궁경부상피내암" | NCB_CA_NA1 == "자궁경부상피내암" ~ "5",
-             NCB_CA1NA == "경부상피암" | NCB_CA_NA1 == "경부상피암" ~ "5",
              
-             NCB_CA1NA == "자궁경부이행암" | NCB_CA_NA1 == "자궁경부이행암" ~ "5",
-             NCB_CA1NA == "자궁상피내암" | NCB_CA_NA1 == "자궁상피내암" ~ "5",
+             ## 0406 : 자궁경부암과 상피내암은 구분하는 게 맞다. -> 빼야지 뭐.
+             # NCB_CA1NA == "자궁경부상피내암" | NCB_CA_NA1 == "자궁경부상피내암" ~ "5",
+             # NCB_CA1NA == "경부상피암" | NCB_CA_NA1 == "경부상피암" ~ "5",
+             # 
+             # NCB_CA1NA == "자궁경부이행암" | NCB_CA_NA1 == "자궁경부이행암" ~ "5",
+             # NCB_CA1NA == "자궁상피내암" | NCB_CA_NA1 == "자궁상피내암" ~ "5",
+             
              # Q. 왜 아래의 코드를 이용하면 +2가 아니라 +4가 되는 걸까?
              # grepl("자궁경부|자궁상피", NCB_CA1NA) == TRUE | grepl("자궁경부|자궁상피", NCB_CA_NA1) == TRUE  ~ "5",
              
@@ -374,15 +631,15 @@ rural_raw %>%
              
              grepl("암", NCB_CA1NA) == TRUE ~ "10",
              grepl("암", NCB_CA_NA1) == TRUE ~ "10",
-             
+
              NCB_CA1 == "2" & NCB_CA1NA != "." ~ "11",
              NCB_CA == "2" & NCB_CA_NA1 != "." ~ "11",
              
              # NCB_CA1 == "2" & NCB_CA1NA != "." ~ NCB_CA1NA,
              # NCB_CA == "2" & NCB_CA_NA1 != "." ~ NCB_CA_NA1,
              
-             NCB_CA1 == "2" & NCB_CA1NA == "." ~ "11",
-             NCB_CA == "2" & NCB_CA_NA1 == "." ~ "11",
+             NCB_CA1 == "2" & NCB_CA1NA == "." ~ "12",
+             NCB_CA == "2" & NCB_CA_NA1 == "." ~ "12",
              TRUE ~ "Non-case"
            )
   ) %>%
@@ -417,13 +674,19 @@ rural_raw %>%
              # grepl("암", NCB_CA2NA) == TRUE ~ NCB_CA2NA,
              # grepl("암", NCB_CA_NA2) == TRUE ~ NCB_CA_NA2,
              
+             # grepl("암", NCB_CA2NA) == TRUE ~ "10",
+             # grepl("암", NCB_CA_NA2) == TRUE ~ "10",
+             
              NCB_CA2 == "2" & NCB_CA2NA != "." ~ "10",
-             NCB_CA == "2" & NCB_CA_NA2 != "." ~ "10",
+             NCB_CA == "2" & NCB_CA_NA2 != "." ~ "10", 
+             # 10 : 8이지만 10 : 2, 11 : 6이다. 
+             # NCB_CA2NA에서 기타 암종으로 2개를 찾을 수 있고
+             # NCB_CA_NA2가 모두 NA라 6개의 결측치를 갖는다. 
              NCB_CA2 == "2" & NCB_CA2NA == "." ~ "11",
              # NCB_CA == "2" & NCB_CA_NA2 == "." ~ "11",
              TRUE ~ "Non-case"
            )
-  ) %>% 
+  ) %>%
   # group_by(cancer_BL_2) %>% count() %>% as.data.frame()
 
   mutate(cancer_BL_3= 
@@ -441,11 +704,11 @@ rural_raw %>%
              
              NCB_CA3NA == "자궁경부암"|NCB_CA3NA == "경부암" ~ "5",
              
-             NCB_CA3NA == "자궁경부상피내암" ~ "5",
-             NCB_CA3NA == "경부상피암" ~ "5",
+             # NCB_CA3NA == "자궁경부상피내암" ~ "5",
+             # NCB_CA3NA == "경부상피암" ~ "5",
              
-             NCB_CA3NA == "자궁경부이행암" ~ "5",
-             NCB_CA3NA == "자궁상피내암"  ~ "5",
+             # NCB_CA3NA == "자궁경부이행암" ~ "5",
+             # NCB_CA3NA == "자궁상피내암"  ~ "5",
              
              NCB_CA3NA == "폐암"  ~ "6",
              
@@ -460,34 +723,77 @@ rural_raw %>%
              
              # 암종 구분
              # grepl("암", NCB_CA3NA) == TRUE ~ NCB_CA3NA,
+             # TRUE ~ NCB_CA3NA # 췌장 1
              
              NCB_CA3 == "2" & NCB_CA3NA != "." ~ "10",
-             NCB_CA3 == "2" & NCB_CA3NA == "." ~ "11",
+             NCB_CA3 == "2" & NCB_CA3NA == "." ~ "12",
              TRUE ~ "Non-case"
            )
   ) %>% 
   # group_by(cancer_BL_3) %>% count() %>% as.data.frame()
   
+  # select(cancer_BL_1, cancer_BL_2) %>%
+  # mutate(cancer_BL_1 = as.numeric(str_replace(cancer_BL_1, "Non-case", "0"))) %>%
+  # mutate(cancer_BL_2 = as.numeric(str_replace(cancer_BL_2, "Non-case", "0"))) %>%
+  # table() %>% write.csv("rural_table_1_2.csv")
+
+  # select(cancer_BL_1, cancer_BL_3) %>% 
+  # mutate(cancer_BL_1 = as.numeric(str_replace(cancer_BL_1, "Non-case", "0"))) %>% 
+  # mutate(cancer_BL_3 = as.numeric(str_replace(cancer_BL_3, "Non-case", "0"))) %>% 
+  # table() %>% write.csv("rural_table_1_3.csv")
+  
+    
   mutate(cancer_BL = 
            case_when(
-             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (cancer_BL_2 != 10 & cancer_BL_2 != "Non-case" & cancer_BL_2 != "11") ~ 1, 
-             (cancer_BL_1 == 10 | cancer_BL_1 == 11) & (cancer_BL_3 != 10 & cancer_BL_3 != "Non-case" & cancer_BL_3 != "11") ~ 1, 
-             (cancer_BL_2 == 10 | cancer_BL_2 == 11) & (cancer_BL_3 != 10 & cancer_BL_3 != "Non-case" & cancer_BL_3 != "11") ~ 1, 
              
              cancer_BL_1 == "Non-case" ~ 0,
              
-             cancer_BL_1 != 10 & cancer_BL_1 != 11~ 1,
-             TRUE ~ 0
+             # 3개의 진단명에서 10, 11을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11 | cancer_BL_1 == 12) & (cancer_BL_2 != 10 & cancer_BL_2 != "11" & cancer_BL_2 != "Non-case") ~ 1, 
+             (cancer_BL_1 == 10 | cancer_BL_1 == 11 | cancer_BL_1 == 12) & (cancer_BL_3 != 10 & cancer_BL_3 != "11" & cancer_BL_3 != "Non-case") ~ 1, 
+             
+             # 3개의 진단명에서 10, 11을 갖는 obs 중 한번이라도 1-9를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             cancer_BL_1 == 11 & cancer_BL_2 == 11 & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == 11 & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == 11 & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 11 & cancer_BL_2 == 12 & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == 12 & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == 12 & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 11 & cancer_BL_2 == "Non-case" & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == "Non-case" & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 11 & cancer_BL_2 == "Non-case" & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 12 & cancer_BL_2 == 11 & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == 11 & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == 11 & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 12 & cancer_BL_2 == 12 & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == 12 & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == 12 & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 == 12 & cancer_BL_2 == "Non-case" & cancer_BL_3 == 11  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == "Non-case" & cancer_BL_3 == 12  ~ 3,
+             cancer_BL_1 == 12 & cancer_BL_2 == "Non-case" & cancer_BL_3 == "Non-case"  ~ 3,
+             
+             cancer_BL_1 != 11 & cancer_BL_1 != 12 ~ 1,
+             cancer_BL_2 != 11 & cancer_BL_2 != 12 ~ 1,
+             cancer_BL_3 != 11 & cancer_BL_3 != 12 ~ 1,
+             # TRUE ~ 99
            )
   ) %>% 
+  # dplyr::filter(cancer_BL == 99) %>% select(cancer_BL_1, cancer_BL_2, cancer_BL_3)
   # group_by(cancer_BL) %>% count()
+  
   
   # 1차 F/U
   mutate(cancer_FU_1 = 
            case_when(
              # 암종 확인
              # cancer_BL == 0 & NCF1_CA_NA1_1 != "." ~ NCF1_CA_NA1_1,
-             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 == "." ~ "11",
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 == "." ~ "12",
              
              
              # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
@@ -518,7 +824,8 @@ rural_raw %>%
              cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
              cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
              cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
-             cancer_BL == 1 ~ "Baseline case"
+             cancer_BL == 1 ~ "Baseline case",
+             cancer_BL == 3 ~ "Exclude case"
            )
   ) %>% 
   # group_by(cancer_FU_1) %>% count() %>%  as.data.frame()
@@ -529,344 +836,1877 @@ rural_raw %>%
              # cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ NCF1_CA_NA2_1, 
              # cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 != "." ~ "11",
              
+             
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 == "." ~ "12",
+             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 == "" ~ "12",
+             
              cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA2_1) == TRUE  ~ "3",
              cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA2_1) == TRUE  ~ "8",
              
-             cancer_BL == 0 & NCF1_CA_NA2_1 == "." ~ "Non-case",
+             # cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ "11",
              cancer_BL == 0 & NCF1_CA_NA2_1 == "" ~ "Non-case",
+             cancer_BL == 0 & NCF1_CA_NA2_1 == "." ~ "Non-case",
+             
+             cancer_BL == 0 & NCF1_CA_NA2_1 != "" ~ "11",
              cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ "11",
              
              cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
              cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
              cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
              
-             cancer_BL == 1 ~ "Baseline case"
+             cancer_BL == 1 ~ "Baseline case",
+             cancer_BL == 3 ~ "Exclude case"
              
            )
   ) %>% 
   # group_by(cancer_FU_2) %>% count() %>%  as.data.frame()
   
+  # # F/U에서 교차표 그려보기 (0407)
+  # dplyr::filter(cancer_BL == 0 & NCF1_CA == 2) %>%
+  # select(cancer_FU_1, cancer_FU_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
+  
   mutate(cancer_FU = 
            case_when(
-             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1", 
-             
              cancer_FU_1 == "Non-case" ~ "0",
              cancer_FU_1 == "Baseline case" ~ cancer_FU_1,
+             cancer_FU_1 == "Exclude case" ~ cancer_FU_1,
              
-             cancer_FU_1 != 10 & cancer_FU_1 != 11 ~ "1",
-             TRUE ~ "0"
+             # 2개의 진단명에서 10을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             # (cancer_FU_1 == 10 | cancer_FU_1 == 11 | cancer_FU_1 == 12) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1",
+             # (cancer_FU_1 == 10) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1", 
+             
+             # 2개의 진단명에서 10, 11을 갖는 obs 중 한번이라도 1-9를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             cancer_FU_1 == 11 & cancer_FU_2 == 11 ~ "3",
+             cancer_FU_1 == 11 & cancer_FU_2 == 12 ~ "3",
+             cancer_FU_1 == 11 & cancer_FU_2 == "Non-case" ~ "3",
+             
+             cancer_FU_1 == 12 & cancer_FU_2 == 11 ~ "3",
+             cancer_FU_1 == 12 & cancer_FU_2 == 12 ~ "3",
+             cancer_FU_1 == 12 & cancer_FU_2 == "Non-case" ~ "3",
+             
+             cancer_FU_1 != 11 & cancer_FU_1 != 12 ~ "1",
+             cancer_FU_2 != 11 & cancer_FU_2 != 12 ~ "1",
+             
+             TRUE ~ "99"
            )
   ) %>% 
-  group_by(cancer_FU) %>% count()
-#### Rural data set에서 모든 진단 횟수와 암종 나타내기 ####  
+  # dplyr::filter(cancer_FU == "99") %>% select(cancer_FU_1, cancer_FU_2)
   
-#### Rural data set에서 '기타' 수준을 갖는 obs 살리기 ####
-rural_raw %>% 
+  
+  # select(RID, cancer_BL, cancer_BL_1, cancer_BL_2, cancer_BL_3, cancer_FU_1, cancer_FU_2, cancer_FU) %>% 
+  # write.csv("rural_cancer_data.csv")
+  
+  # enery 제외
+  # dplyr::filter(NCB_SEX == 1 & (NCB_SS01 > 800 & NCB_SS01 < 4200) | 
+  #                 NCB_SEX == 2 & (NCB_SS01 > 500 & NCB_SS01 < 3500)) %>% 
+  
+  # group_by(cancer_FU_2) %>% count() %>%  as.data.frame()
+  
+  # select(cancer_FU_1, cancer_FU_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
+
+    
+  group_by(cancer_FU) %>% count() %>% as.data.frame()
+
+#### Rural data set에서 모든 진단 횟수와 암종 나타내기 #### 
+ 
+
+#### local dataset에서 모든 진단 횟수와 암종 나타내기 ####
+local_raw %>% 
+  mutate_all(
+    funs(
+      case_when(
+        (. == 99999 | . == 66666 | . == 77777 | is.na(.) == TRUE) ~ ".",
+        TRUE ~ as.character(.)
+      )
+    )
+  ) %>% 
+  ## Base line에서 기타 질환에 암종을 갖고 있는 사람 체크
+  # dplyr::filter(grepl("암", AS1_PDOTH1NA) == TRUE) %>%
+  # select(RID, AS1_PDTOTCA1NA, AS1_PDOTH1NA)
+  
+  mutate(AS1_PDTOTCA1NA = 
+           case_when(
+             # AS1_PDOTH1NA : 기타 질환
+             # AS1_PDTOTCA1NA : 각종 종양 1
+             
+             # 기타 질환에 '암'이 있고 각종 종양에 '암'이 없으면 기타 질환의 암으로 값을 대체
+             grepl("암", AS1_PDOTH1NA) == TRUE & grepl("암", AS1_PDTOTCA1NA) != TRUE ~ AS1_PDOTH1NA,
+             
+             # 기타 질환에 '암'이 있고 각종 종양에 '암'이 있으면 각종 종양의 값으로 유지
+             grepl("암", AS1_PDOTH1NA) == TRUE & grepl("암", AS1_PDTOTCA1NA) == TRUE ~ AS1_PDTOTCA1NA,
+             
+             # 나머지는 각종 종양의 값으로 그대로 유지 
+             TRUE ~ AS1_PDTOTCA1NA
+           )
+  ) %>% 
+  # # 바뀐 내용 체크 
+  ## 체크 완료
+  # dplyr::filter(grepl("암", AS1_PDOTH1NA) == TRUE) %>%
+  # select(RID, AS1_PDTOTCA1NA, AS1_PDOTH1NA)
+  
   mutate(cancer_BL_1= 
            case_when(
              # 1) 몇 종류의 암종이 있는지 먼저 파악
-             # grepl("암", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
-             # grepl("암", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1, # 단순 결과로 40개의 암종 발견
+             # grepl("암", AS1_PDTOTCA1NA) == TRUE ~ AS1_PDTOTCA1NA, # 13개 종의 암이 있는 것으로 확인 
+             # is.na(AS1_PDTOTCA1NA) != TRUE ~ AS1_PDTOTCA1NA
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+
+             grepl("위암|위장암", AS1_PDTOTCA1NA) == TRUE  ~ "1",
+             grepl("위$", AS1_PDTOTCA1NA) == TRUE  ~ "1",
+             AS1_PDTOTCA1NA == "간암" ~ "2",
+             # "대장에 용정제거 후 암세포 발견" 때문에 grepl으로 변경함
+             grepl("대장$|대장암", AS1_PDTOTCA1NA) == TRUE ~ "3",
+             AS1_PDTOTCA1NA == "유방암" ~ "4",
+
+             grepl("경부암|자궁경부암", AS1_PDTOTCA1NA) == TRUE ~ "5",
+
+             grepl("폐$|폐암", AS1_PDTOTCA1NA) == TRUE ~ "6",
+
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             AS1_PDTOTCA1NA == "갑상선암"| AS1_PDTOTCA1NA == "갑상선" ~ "7",
+
+             # 전립선도 전립선암으로 간주하고 진행함.
+             grepl("전립선암|전립선$", AS1_PDTOTCA1NA) == TRUE ~ "8",
+
+             # 방광도 방광암으로 간주하고 진행함.
+             grepl("방광암|방광$", AS1_PDTOTCA1NA) == TRUE ~ "9",
+
+             # 암종 구분
+             # grepl("암", AS1_PDTOTCA1NA) == TRUE ~ AS1_PDTOTCA1NA
+             # TRUE ~ AS1_PDTOTCA1NA
+
+             # 1-9에 포함되지 않지만 '암'이면 10
+             grepl("암", AS1_PDTOTCA1NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             AS1_PDTOTCA1 == "2" & AS1_PDTOTCA1NA != "." ~ "11",
+             
+             # 암이 있다고 대답했으나 진단명이 없으면 12 
+             AS1_PDTOTCA1 == "2" & AS1_PDTOTCA1NA == "." ~ "12",
+             
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code 
+             AS1_PDTOTCA1 == "2" & AS1_PDTOTCA1NA != "." ~ AS1_PDTOTCA1NA,
+             TRUE ~ "Non-case"
+           )
+  ) %>%
+  # check를 위한 filter and select : cancer_BL_1 == 11 or 12가 정말 제대로 들어갔나?
+  # 제대로 들어감 
+  # dplyr::filter(cancer_BL_1 == 11 | cancer_BL_1 == 12) %>%
+  # select(RID, cancer_BL_1, AS1_PDTOTCA1NA) %>% as.data.frame()
+  
+  # group_by(cancer_BL_1) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_BL = 
+           case_when(
+             cancer_BL_1 == "Non-case" ~ 0, # 암 환자가 아닌 경우
+             cancer_BL_1 == 10 ~ 1, # '기타' 종류의 암 환자인 경우 
+             cancer_BL_1 == 11 | cancer_BL_1 == 12 ~ 3, # 암이 아닌 다른 종양의 환자이거나 진단명이 결측치인 경우
+             cancer_BL_1 != 11 & cancer_BL_1 != 12 ~ 1 # 암이 아닌 다른 종양의 환자도 아니고 진단명이 결측치가 아닌 경우
+             # TRUE ~ 99
+           )
+  ) %>% 
+  # group_by(cancer_BL) %>% count() %>% as.data.frame()
+  
+  ### 1차 F/U
+  # local_raw의 1차 F/U는 모든 악성 종양 진단명이 누락되어 있음
+  # AS2_PDTOTCA1NA, AS2_PDTOTCA2NA, AS2_PDTOTCA3NA
+  # AS2_PDFTOTCA1NA, AS2_PDFTOTCA2NA, AS2_PDFTOTCA3NA
+  
+  # select(AS2_PDTOTCA1NA, AS2_PDTOTCA2NA, AS2_PDTOTCA3NA, AS2_PDFTOTCA1NA, AS2_PDFTOTCA2NA, AS2_PDFTOTCA3NA) %>% 
+  # table() # 확인 완료 
+  
+  # 04.16 기준 dataset 다시 만들어서 채워넣음
+  
+  # 안성의 기타 질환 중 '암'이 존재한다면 종양 진단명에 채워넣기
+  # Q. AS2_PDTOTCA3NA인 이유?
+  # A. 단 하나의 관측치에서만 암종이 존재하고 이 관측치가 기타 질환을 갖지 않기 때문 (EPI17_009_2_195761, 피부암)
+  # 위의 내용을 확인, 확인 함 
+  # dplyr::filter(grepl("암", AS2_PDTOTCA3NA) == TRUE) %>% 
+  # select(RID, AS2_PDTOTCA3NA, AS2_PDOTH1NA)
+
+  # 기타 질환에서 '암'을 갖는 사람이 각종 종양 1에서는 어떤 값을 갖는지 확인
+  # 어? 똑같네? 
+  # dplyr::filter(grepl("암", AS2_PDOTH1NA) == TRUE) %>%
+  # select(RID, AS2_PDTOTCA1NA, AS2_PDOTH1NA)
+
+  mutate(
+    AS2_PDTOTCA3NA = 
+           case_when(
+             # AS2_PDOTH1NA : 기타 질환
+             # AS2_PDTOTCA2NA : 각종 종양 1
+             
+             # 기타 질환에 '암'이 있고 각종 종양1에 '암'이 없으면 기타 질환의 암으로 각종 종양3의 값을 대체
+             grepl("암", AS2_PDOTH1NA) == TRUE & grepl("암", AS2_PDTOTCA1NA) != TRUE ~ AS2_PDOTH1NA,
+             
+             # 기타 질환에 '암'이 있고 각종 종양1에 '암'이 있으면 각종 종양3의 값으로 유지
+             grepl("암", AS2_PDOTH1NA) == TRUE & grepl("암", AS2_PDTOTCA1NA) == TRUE ~ AS2_PDTOTCA3NA,
+             
+             # 나머지는 각종 종양의 값으로 그대로 유지 
+             TRUE ~ AS2_PDTOTCA3NA
+           )
+  ) %>% 
+    
+  ## 바뀐 내용 체크 
+  ## 체크 완료
+  # dplyr::filter(grepl("암", AS2_PDOTH1NA) == TRUE) %>%
+  # select(RID, AS2_PDTOTCA1NA, AS2_PDTOTCA2NA, AS2_PDTOTCA3NA, AS2_PDOTH1NA)
+
+  
+      
+  # 안산의 기타 질환 중 '암'이 존재한다면 종양 진단명에 채워넣기
+  # 안산의 AS2_PDFOTH1~3NA는 단 하나의 '암' 관측값도 갖지 않아 채워넣을 필요가 없음
+  # dplyr::filter(grepl("암", AS2_PDFOTH1NA) == TRUE) # 없음
+  # dplyr::filter(grepl("암", AS2_PDFOTH2NA) == TRUE) # 없음
+  # dplyr::filter(grepl("암", AS2_PDFOTH3NA) == TRUE) # 없음
+  
+  
+  # IMPORTANT
+  # 2개의 지역 각각 진단 이력과 진단명을 갖는 것을 하나의 column으로 합쳐야 뒤에 코드가 제대로 돌아감
+  # AS2_PDTOTCA1~3, AS2_PDTOTCA1~3NA에 합쳐보자. 
+  
+  # count(AS2_PDTOTCA1)
+
+  # AS2_PDTOTCA1~3가 .이면 AS2_PDFTOTCA1~3로 대체하라. 
+  # .이 아니면? 1 혹은 2의 값을 갖고 있는 것이고 이 경우에 AS2_PDFTOTCA는 "."이다. 
+  mutate(AS2_PDTOTCA1 = 
+           case_when(
+             AS2_PDTOTCA1 == "." ~ AS2_PDFTOTCA1,
+             AS2_PDTOTCA1 != "." ~ AS2_PDTOTCA1
+           )
+  ) %>% 
+  
+  mutate(AS2_PDTOTCA2 = 
+           case_when(
+             AS2_PDTOTCA2 == "." ~ AS2_PDFTOTCA2,
+             AS2_PDTOTCA2 != "." ~ AS2_PDTOTCA2
+           )
+  ) %>% 
+  mutate(AS2_PDTOTCA3 = 
+           case_when(
+             AS2_PDTOTCA3 == "." ~ AS2_PDFTOTCA3,
+             AS2_PDTOTCA3 != "." ~ AS2_PDTOTCA3
+           )
+  ) %>% 
+  
+  # AS2_PDTOTCA1~3NA가 .이면 AS2_PDFTOTCA1~3NA로 대체하라. 
+  # .이 아니면? 진단명을 갖고 있는 것이고 이 경우에 AS2_PDFTOTCANA는 "."이다. 
+  
+  mutate(AS2_PDTOTCA1NA = 
+           case_when(
+             AS2_PDTOTCA1NA == "." ~ AS2_PDFTOTCA1NA,
+             AS2_PDTOTCA1NA != "." ~ AS2_PDTOTCA1NA
+           )
+  ) %>% 
+  mutate(AS2_PDTOTCA2NA = 
+           case_when(
+             AS2_PDTOTCA2NA == "." ~ AS2_PDFTOTCA2NA,
+             AS2_PDTOTCA2NA != "." ~ AS2_PDTOTCA2NA
+           )
+  ) %>% 
+  mutate(AS2_PDTOTCA3NA = 
+           case_when(
+             AS2_PDTOTCA3NA == "." ~ AS2_PDFTOTCA3NA,
+             AS2_PDTOTCA3NA != "." ~ AS2_PDTOTCA3NA
+           )
+  ) %>% 
+
+  mutate(cancer_FU1_1= 
+           case_when(
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 13개 종으로 보임
+             # cancer_BL == 0 & grepl("암", AS2_PDTOTCA1NA) == TRUE ~ AS2_PDTOTCA1NA,
+             # 
+             # cancer_BL == 0 & is.na(AS2_PDTOTCA1NA) != TRUE ~ AS2_PDTOTCA1NA,
+             # 
+             # TRUE ~ as.character(cancer_BL)
+             
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+
+             cancer_BL == 0 & grepl("위암|위장암", AS2_PDTOTCA1NA) == TRUE  ~ "1",
+
+             cancer_BL == 0 & AS2_PDTOTCA1NA == "간암" ~ "2",
+
+             cancer_BL == 0 & grepl("대장$|대장암", AS2_PDTOTCA1NA) == TRUE ~ "3",
+
+             cancer_BL == 0 & AS2_PDTOTCA1NA == "유방암" ~ "4",
+
+             cancer_BL == 0 & grepl("경부암|자궁경부암", AS2_PDTOTCA1NA) == TRUE ~ "5",
+
+             # 폐암의심 때문에 $ 추가
+             cancer_BL == 0 & grepl("폐$|폐암$", AS2_PDTOTCA1NA) == TRUE ~ "6",
+
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             cancer_BL == 0 & AS2_PDTOTCA1NA == "갑상선암"| AS2_PDTOTCA1NA == "갑상선" ~ "7",
+
+             # 전립선도 전립선암으로 간주하고 진행함.
+             cancer_BL == 0 & grepl("전립선암|전립선$", AS2_PDTOTCA1NA) == TRUE ~ "8",
+
+             # 방광도 방광암으로 간주하고 진행함.
+             cancer_BL == 0 & grepl("방광암|방광$", AS2_PDTOTCA1NA) == TRUE ~ "9",
+
+             # 암종 구분
+             # grepl("암", AS2_PDTOTCA1NA) == TRUE ~ AS2_PDTOTCA1NA,
+             # 
+             # TRUE ~ AS2_PDTOTCA1NA
+
+
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_BL == 0 & grepl("암", AS2_PDTOTCA1NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_BL == 0 & AS2_PDTOTCA1 == "2" & AS2_PDTOTCA1NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_BL == 0 & AS2_PDTOTCA1 == "2" & AS2_PDTOTCA1NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_BL == 0 & AS2_PDTOTCA1 == "2" & TRUE ~ AS2_PDTOTCA1NA,
+             
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_BL == 0 & AS2_PDTOTCA1 == "1"  ~ "0",
+             cancer_BL == 0 & AS2_PDTOTCA1 == "."  ~ "0",
+             
+             # 기반조사에서 이미 암 과거력이 존재하는 사람들
+             cancer_BL == 1 ~ "Baseline case",
+             
+             # 기반조사에서 암 진단에서 결측값을 갖거나 암이 아닌 다른 종양을 갖고 있다고 응답한 사람들
+             cancer_BL == 3 ~ "Exclude case", 
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU1_1) %>% count() %>% as.data.frame()
+  
+  
+  mutate(cancer_FU1_2= 
+           case_when(
+             ## 1) 몇 종류의 암종이 있는지 먼저 파악
+             ## 1개 종
+             # cancer_BL == 0 & grepl("암", AS2_PDTOTCA2NA) == TRUE ~ AS2_PDTOTCA2NA,
+             # 
+             # cancer_BL == 0 & is.na(AS2_PDTOTCA2NA) != TRUE ~ AS2_PDTOTCA2NA,
+             # 
+             # TRUE ~ as.character(cancer_BL)
+             
              
              # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
              ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
              
-             grepl("위암|위장암", NCB_CA1NA) == TRUE | grepl("위암|위장암", NCB_CA_NA1) == TRUE  ~ "1",
-             NCB_CA1NA == "간암" | NCB_CA_NA1 == "간암" ~ "2",
-             # "대장에 용정제거 후 암세포 발견" 때문에 grepl으로 변경함
-             grepl("대장", NCB_CA1NA) == TRUE | grepl("대장", NCB_CA_NA1) == TRUE  ~ "3",
-             NCB_CA1NA == "유방암" | NCB_CA_NA1 == "유방암" ~ "4",
-             
-             # 자궁경부암의 경우가 좀 복잡함 : 총 43명
-             ## 자궁경부암 : 33명, 경부암 : 5명
-             ## 경부상피암 : 1, 자궁경부상피내암 : 2, 자궁경부이행암 : 1, 자궁상피내암 : 1
-             NCB_CA1NA == "자궁경부암"|NCB_CA1NA == "경부암" | NCB_CA_NA1 == "자궁경부암"|NCB_CA_NA1 == "경부암" ~ "5",
-             # grepl("경부|상피", NCB_CA1NA) == TRUE | grepl("경부|상피", NCB_CA_NA1) == TRUE  ~ "5",
-             NCB_CA1NA == "자궁경부상피내암" | NCB_CA_NA1 == "자궁경부상피내암" ~ "5",
-             NCB_CA1NA == "경부상피암" | NCB_CA_NA1 == "경부상피암" ~ "5",
-             
-             NCB_CA1NA == "자궁경부이행암" | NCB_CA_NA1 == "자궁경부이행암" ~ "5",
-             NCB_CA1NA == "자궁상피내암" | NCB_CA_NA1 == "자궁상피내암" ~ "5",
-             # Q. 왜 아래의 코드를 이용하면 +2가 아니라 +4가 되는 걸까?
-             # grepl("자궁경부|자궁상피", NCB_CA1NA) == TRUE | grepl("자궁경부|자궁상피", NCB_CA_NA1) == TRUE  ~ "5",
-             
-             NCB_CA1NA == "폐암" | NCB_CA_NA1 == "폐암" ~ "6",
-             
-             # NCB_CA1NA == "갑상선암" | NCB_CA_NA1 == "갑상선암"~ "7", # 27개
-             # grepl("갑상선", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
-             # grepl("갑상선", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1, # 16개
-             
-             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
-             NCB_CA1NA == "갑상선암"|NCB_CA1NA == "갑상선" | NCB_CA_NA1 == "갑상선암"|NCB_CA_NA1 == "갑상선"~ "7",
-             
-             # 전립선암 : 8명, 전립선 : 1명. 마찬가지로 전립선도 전립선암으로 간주하고 진행함.
-             grepl("전립선암|전립선", NCB_CA1NA) == TRUE | grepl("전립선암|전립선", NCB_CA_NA1) == TRUE  ~ "8",
-             
-             # 방광암 : 7명, 방광 : 3명. 마찬가지로 방광도 방광암으로 간주하고 진행함.
-             NCB_CA1NA == "방광암"|NCB_CA1NA =="방광" | NCB_CA_NA1 == "방광암"|NCB_CA_NA1 =="방광" ~ "9",
-             
-             # grepl("자궁암|자궁내막암", NCB_CA1NA) == TRUE | grepl("자궁암|자궁내막암", NCB_CA_NA1) == TRUE  ~ "10",
-             # NCB_CA1NA != "." | NCB_CA_NA1 != "." ~ "10",
-             
-             # 암종 구분
-             # grepl("암", NCB_CA1NA) == TRUE ~ NCB_CA1NA,
-             # grepl("암", NCB_CA_NA1) == TRUE ~ NCB_CA_NA1,
-             
-             # NCB_CA1 == "2" & NCB_CA1NA != "." ~ "10",
-             # NCB_CA == "2" & NCB_CA_NA1 != "." ~ "10",
-             
-             grepl("암", NCB_CA1NA) == TRUE ~ "10",
-             grepl("암", NCB_CA_NA1) == TRUE ~ "10",
-             
-             NCB_CA1 == "2" & NCB_CA1NA == "." ~ "11",
-             NCB_CA == "2" & NCB_CA_NA1 == "." ~ "11",
-             NCB_CA1 == "2" & NCB_CA1NA != "." ~ "11",
-             NCB_CA == "2" & NCB_CA_NA1 != "." ~ "11",
-             TRUE ~ "Non-case"
+             cancer_BL == 0 & grepl("위암|위장암", AS2_PDTOTCA2NA) == TRUE  ~ "1",
+
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_BL == 0 & grepl("암", AS2_PDTOTCA2NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_BL == 0 & AS2_PDTOTCA2 == "2" & AS2_PDTOTCA2NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_BL == 0 & AS2_PDTOTCA2 == "2" & AS2_PDTOTCA2NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_BL == 0 & AS2_PDTOTCA2 == "2" & TRUE ~ AS2_PDTOTCA2NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_BL == 0 & AS2_PDTOTCA2 == "1"  ~ "0",
+             cancer_BL == 0 & AS2_PDTOTCA2 == "."  ~ "0",
+
+             # 기반조사에서 이미 암 과거력이 존재하는 사람들
+             cancer_BL == 1 ~ "Baseline case",
+
+             # 기반조사에서 암 진단에서 결측값을 갖거나 암이 아닌 다른 종양을 갖고 있다고 응답한 사람들
+             cancer_BL == 3 ~ "Exclude case",
+             TRUE ~ "99"
            )
   ) %>%
-  # group_by(cancer_BL_1) %>% count() %>% as.data.frame()
+  # group_by(cancer_FU1_2) %>% count() %>% as.data.frame()
   
-  mutate(cancer_BL_2= 
+  mutate(cancer_FU1_3= 
            case_when(
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 암종 없음 
+             # cancer_BL == 0 & grepl("암", AS2_PDTOTCA3NA) == TRUE ~ AS2_PDTOTCA3NA,
+             # 
+             # cancer_BL == 0 & is.na(AS2_PDTOTCA3NA) != TRUE ~ AS2_PDTOTCA3NA,
+             # 
+             # TRUE ~ as.character(cancer_BL)
              
-             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_BL == 0 & grepl("암", AS2_PDTOTCA3NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_BL == 0 & AS2_PDTOTCA3 == "2" & AS2_PDTOTCA3NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_BL == 0 & AS2_PDTOTCA3 == "2" & AS2_PDTOTCA3NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_BL == 0 & AS2_PDTOTCA3 == "2" & TRUE ~ AS2_PDTOTCA3NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_BL == 0 & AS2_PDTOTCA3 == "1"  ~ "0",
+             cancer_BL == 0 & AS2_PDTOTCA3 == "."  ~ "0",
+
+             # 기반조사에서 이미 암 과거력이 존재하는 사람들
+             cancer_BL == 1 ~ "Baseline case",
+
+             # 기반조사에서 암 진단에서 결측값을 갖거나 암이 아닌 다른 종양을 갖고 있다고 응답한 사람들
+             cancer_BL == 3 ~ "Exclude case",
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU1_3) %>% count() %>% as.data.frame()
+  
+  # cancer_FU1_3을 갖는 관측치는 딱 하나. 이 관측치의 다른 진단명 여부를 알아보자. 
+  # 모두 11, 11, 11, 그럼 어차피 cancer_FU1 == "11"이 된다. 
+  # dplyr::filter(cancer_FU1_3 == "11") %>% 
+  # select(RID, cancer_FU1_1, cancer_FU1_2, cancer_FU1_3)
+  
+  # # F/U에서 교차표 그려보기 (0416)
+  # 아, cancer_FU_2, _3이 Non-case로 되어 있어서 table이 이상하게 뜨는 거임
+  # Non-case 아닌 친구들만 table위로 뜸
+  # 위의 암에 걸리지 않은 사람들을 "0"으로 수정함 (04.17)
+  # dplyr::filter(cancer_BL == 0) %>%
+  # select(cancer_FU1_1, cancer_FU1_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
+  
+  mutate(cancer_FU1 = 
+           case_when(
+             # cancer_FU1_1 == "0" ~ "0",
+             cancer_FU1_1 == "Baseline case" ~ cancer_FU1_1,
+             cancer_FU1_1 == "Exclude case" ~ cancer_FU1_1,
+             
+             # 2개의 진단명에서 10을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             # (cancer_FU_1 == 10 | cancer_FU_1 == 11 | cancer_FU_1 == 12) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1",
+             # (cancer_FU_1 == 10) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1", 
+             
+             # 3개의 진단명에서 11, 12을 갖는 obs 중 한번이라도 1-10를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             
+             # cancer_FU_1, cancer_FU_2, cancer_FU_3이 하나라도 1-10을 포함할 경우의 수 == 
+             # 전체 경우의 수 - (cancer_FU_1, cancer_FU_2, cancer_FU_3이 1-10을 포함하지 않을 경우의 수)
+             
+             # 경우의 수 1/3개 
+             cancer_FU1_1 == 11 & cancer_FU1_2 == 11 & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == 11 & cancer_FU1_2 == 11 & cancer_FU1_3 == 12 ~ "3",
+             cancer_FU1_1 == 11 & cancer_FU1_2 == 11 & cancer_FU1_3 == "0" ~ "3",
+             
+             cancer_FU1_1 == 11 & cancer_FU1_2 == 12 & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == 11 & cancer_FU1_2 == 12 & cancer_FU1_3 == 12 ~ "3",
+             cancer_FU1_1 == 11 & cancer_FU1_2 == 12 & cancer_FU1_3 == "0" ~ "3",
+             
+             cancer_FU1_1 == 11 & cancer_FU1_2 == "0" & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == 11 & cancer_FU1_2 == "0" & cancer_FU1_3 == 12 ~ "3",
+             cancer_FU1_1 == 11 & cancer_FU1_2 == "0" & cancer_FU1_3 == "0" ~ "3",
+             
+             # 경우의 수 2/3개 
+             cancer_FU1_1 == 12 & cancer_FU1_2 == 11 & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == 12 & cancer_FU1_2 == 11 & cancer_FU1_3 == 12 ~ "3",
+             cancer_FU1_1 == 12 & cancer_FU1_2 == 11 & cancer_FU1_3 == "0" ~ "3",
+             
+             cancer_FU1_1 == 12 & cancer_FU1_2 == 12 & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == 12 & cancer_FU1_2 == 12 & cancer_FU1_3 == 12 ~ "3",
+             cancer_FU1_1 == 12 & cancer_FU1_2 == 12 & cancer_FU1_3 == "0" ~ "3",
+             
+             cancer_FU1_1 == 12 & cancer_FU1_2 == "0" & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == 12 & cancer_FU1_2 == "0" & cancer_FU1_3 == 12 ~ "3",
+             cancer_FU1_1 == 12 & cancer_FU1_2 == "0" & cancer_FU1_3 == "0" ~ "3",
+             
+             # 경우의 수 3/3개 
+             cancer_FU1_1 == "0" & cancer_FU1_2 == 11 & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == "0" & cancer_FU1_2 == 11 & cancer_FU1_3 == 12 ~ "3",
+             cancer_FU1_1 == "0" & cancer_FU1_2 == 11 & cancer_FU1_3 == "0" ~ "3",
+             
+             cancer_FU1_1 == "0" & cancer_FU1_2 == 12 & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == "0" & cancer_FU1_2 == 12 & cancer_FU1_3 == 12 ~ "3",
+             cancer_FU1_1 == "0" & cancer_FU1_2 == 12 & cancer_FU1_3 == "0" ~ "3",
+             
+             cancer_FU1_1 == "0" & cancer_FU1_2 == "0" & cancer_FU1_3 == 11 ~ "3",
+             cancer_FU1_1 == "0" & cancer_FU1_2 == "0" & cancer_FU1_3 == 12 ~ "3",
+             
+             # 모두 0인 경우는 당연히 0 
+             cancer_FU1_1 == "0" & cancer_FU1_2 == "0" & cancer_FU1_3 == "0" ~ "0",
+             
+             
+             # 위의 경우를 제외하고 11이 아니고 12가 아닌 경우는 1 
+             cancer_FU1_1 != 11 & cancer_FU1_1 != 12 ~ "1",
+             cancer_FU1_2 != 11 & cancer_FU1_2 != 12 ~ "1",
+             cancer_FU1_3 != 11 & cancer_FU1_3 != 12 ~ "1",
+             
+             TRUE ~ "99"
+           )
+  ) %>% 
+  # group_by(cancer_FU1) %>% count() %>% as.data.frame()
+  
+  
+  
+  # 2차 F/U 시작
+  ## 2차 F/U부터는 위암, 간암, 대장암, 유방암, 폐암, 췌장암, 자궁암이 각각 한 문항씩 갖고 있고 기타종양 1, 기타종양 2의 문항도 존재함. 
+  ## 그럼, _1는 위암부터 자궁암까지 값이 있는지, _2는 기타종양 1, _3은 기타종양 2에 대해 정리하면 되지 않을까? 
+  
+  mutate(cancer_FU2_1= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU1 == "Baseline case" ~ cancer_FU1,
+             cancer_FU1 == "Exclude case" ~ cancer_FU1, 
+             cancer_FU1 == "1" ~ "1st F/U case", 
+             cancer_FU1 == "3" ~ "1st F/U Exclude case", 
+             
+             # 1. 위암
+             cancer_FU1 == 0 & AS3_PDFGCA == 2 ~ "1",
+             
+             # 2. 간암
+             cancer_FU1 == 0 & AS3_PDFHCA == 2 ~ "2",
+             
+             # 3. 대장암
+             cancer_FU1 == 0 & AS3_PDFCOLCA == 2 ~ "3",
+             
+             # 4. 유방암
+             cancer_FU1 == 0 & AS3_PDFBRCA == 2 ~ "4",
+             
+             # 6. 폐암
+             cancer_FU1 == 0 & AS3_PDFGCA == 2 ~ "6",
+             
+             # 10. 췌장암
+             cancer_FU1 == 0 & AS3_PDFPACA == 2 ~ "10",
+             
+             # 10. 자궁암
+             cancer_FU1 == 0 & AS3_PDFUTCA == 2 ~ "10",
+             
+             # FU1에서 넘어온 total N이지만 일단 남은 사람들
+             cancer_FU1 == 0 ~ "0"
+           )
+  ) %>%
+  # group_by(cancer_FU2_1) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_FU2_2= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU1 == "Baseline case" ~ cancer_FU1,
+             cancer_FU1 == "Exclude case" ~ cancer_FU1, 
+             cancer_FU1 == "1" ~ "1st F/U case", 
+             cancer_FU1 == "3" ~ "1st F/U Exclude case", 
+             
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 8개 종으로 보임
+             # cancer_FU1 == 0 & grepl("암", AS3_PDFCA1NA) == TRUE ~ AS3_PDFCA1NA,
+             # 
+             # cancer_FU1 == 0 & is.na(AS3_PDFCA1NA) != TRUE ~ AS3_PDFCA1NA,
+             # 
+             # TRUE ~ as.character(cancer_FU1)
+
+
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+
+             cancer_FU1 == 0 & grepl("위암|위장암", AS3_PDFCA1NA) == TRUE  ~ "1",
+
+             cancer_FU1 == 0 & AS3_PDFCA1NA == "간암" ~ "2",
+
+             cancer_FU1 == 0 & grepl("대장$|대장암", AS3_PDFCA1NA) == TRUE ~ "3",
+
+             cancer_FU1 == 0 & AS3_PDFCA1NA == "유방암" ~ "4",
+
+             cancer_FU1 == 0 & grepl("경부암|자궁경부암", AS3_PDFCA1NA) == TRUE ~ "5",
+
+             cancer_FU1 == 0 & grepl("폐암", AS3_PDFCA1NA) == TRUE ~ "6",
+
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             cancer_FU1 == 0 & AS3_PDFCA1NA == "갑상선암"| AS3_PDFCA1NA == "갑상선" ~ "7",
+
+             # 전립선도 전립선암으로 간주하고 진행함.
+             cancer_FU1 == 0 & grepl("전립선암|전립선$", AS3_PDFCA1NA) == TRUE ~ "8",
+
+             # 방광도 방광암으로 간주하고 진행함.
+             cancer_FU1 == 0 & grepl("방광암|방광$", AS3_PDFCA1NA) == TRUE ~ "9",
+
+             # 암종 구분
+             # grepl("암", AS3_PDFCA1NA) == TRUE ~ AS3_PDFCA1NA,
+             #
+             # TRUE ~ AS3_PDFCA1NA
+             #
+             #
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU1 == 0 & grepl("암", AS3_PDFCA1NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU1 == 0 & AS3_PDFCA1 == "2" & AS3_PDFCA1NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU1 == 0 & AS3_PDFCA1 == "2" & AS3_PDFCA1NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU1 == 0 & AS3_PDFCA1 == "2" & TRUE ~ AS3_PDFCA1NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU1 == 0 & AS3_PDFCA1 == "1"  ~ "0",
+             cancer_FU1 == 0 & AS3_PDFCA1 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU2_2) %>% count() %>% as.data.frame()
+
+  
+  
+  mutate(cancer_FU2_3= 
+         case_when(
+           # 이전 내용 정리 
+           cancer_FU1 == "Baseline case" ~ cancer_FU1,
+           cancer_FU1 == "Exclude case" ~ cancer_FU1, 
+           cancer_FU1 == "1" ~ "1st F/U case", 
+           cancer_FU1 == "3" ~ "1st F/U Exclude case", 
+           
+           
+           # 1) 몇 종류의 암종이 있는지 먼저 파악
+           # 위 용종 하나
+           # 그럼, cancer_FU2_3이 '위용종'인 관측치가 다른 cancer_FU2_는 어떤 값을 갖는지 확인하자.
+           # 확인해서 이미 "11"이나 "12"의 값을 갖는다면 굳이 넣지 않아도 됨
+           # cancer_FU1 == 0 & grepl("암", AS3_PDFCA2NA) == TRUE ~ AS3_PDFCA2NA,
+           # 
+           # cancer_FU1 == 0 & is.na(AS3_PDFCA2NA) != TRUE ~ AS3_PDFCA2NA,
+           # 
+           # TRUE ~ as.character(cancer_FU1)
+           
+           
+           # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+           ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+
+           # 1-9에 포함되지 않지만 '암'이면 10
+           cancer_FU1 == 0 & grepl("암", AS3_PDFCA2NA) == TRUE ~ "10",
+
+           # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+           cancer_FU1 == 0 & AS3_PDFCA2 == "2" & AS3_PDFCA2NA != "." ~ "11",
+
+           # 암이 있다고 대답했으나 진단명이 없으면 12
+           cancer_FU1 == 0 & AS3_PDFCA2 == "2" & AS3_PDFCA2NA == "." ~ "12",
+
+           # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+           cancer_FU1 == 0 & AS3_PDFCA2 == "2" & TRUE ~ AS3_PDFCA2NA,
+
+           # 여전히 암에 걸리지 않은 사람들
+           cancer_FU1 == 0 & AS3_PDFCA2 == "1"  ~ "0",
+           cancer_FU1 == 0 & AS3_PDFCA2 == "."  ~ "0",
+
+           TRUE ~ "99"
+         )
+  ) %>%
+  # group_by(cancer_FU2_3) %>% count() %>% as.data.frame()
+  
+  # cancer_FU2_3은 위 용종, 단 하나의 관측값을 갖는다. 
+  # 그럼, cancer_FU2_3이 '위용종'인 관측치가 다른 cancer_FU2_는 어떤 값을 갖는지 확인하자.
+  # 확인해서 이미 "11"이나 "12"의 값을 갖는다면 굳이 넣지 않아도 됨.
+  # dplyr::filter(cancer_FU2_3 == "위용종") %>% 
+  # select(RID, cancer_FU2_1, cancer_FU2_2, cancer_FU2_3)
+  
+  # dplyr::filter(cancer_FU1 == 0) %>%
+  # select(cancer_FU2_1, cancer_FU2_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
+
+  mutate(cancer_FU2 = 
+           case_when(
+             cancer_FU2_1 == "Baseline case" ~ cancer_FU2_1,
+             cancer_FU2_1 == "Exclude case" ~ cancer_FU2_1,
+             cancer_FU2_1 == "1st F/U case" ~ cancer_FU2_1,
+             cancer_FU2_1 == "1st F/U Exclude case" ~ cancer_FU2_1,
+             
+             # 2개의 진단명에서 10을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             # (cancer_FU_1 == 10 | cancer_FU_1 == 11 | cancer_FU_1 == 12) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1",
+             # (cancer_FU_1 == 10) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1", 
+             
+             # 3개의 진단명에서 11, 12을 갖는 obs 중 한번이라도 1-10를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             
+             # cancer_FU_1, cancer_FU_2, cancer_FU_3이 하나라도 1-10을 포함할 경우의 수 == 
+             # 전체 경우의 수 - (cancer_FU_1, cancer_FU_2, cancer_FU_3이 1-10을 포함하지 않을 경우의 수)
+             
+             # 경우의 수 1/3개 
+             cancer_FU2_1 == 11 & cancer_FU2_2 == 11 & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == 11 & cancer_FU2_2 == 11 & cancer_FU2_3 == 12 ~ "3",
+             cancer_FU2_1 == 11 & cancer_FU2_2 == 11 & cancer_FU2_3 == "0" ~ "3",
+             
+             cancer_FU2_1 == 11 & cancer_FU2_2 == 12 & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == 11 & cancer_FU2_2 == 12 & cancer_FU2_3 == 12 ~ "3",
+             cancer_FU2_1 == 11 & cancer_FU2_2 == 12 & cancer_FU2_3 == "0" ~ "3",
+             
+             cancer_FU2_1 == 11 & cancer_FU2_2 == "0" & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == 11 & cancer_FU2_2 == "0" & cancer_FU2_3 == 12 ~ "3",
+             cancer_FU2_1 == 11 & cancer_FU2_2 == "0" & cancer_FU2_3 == "0" ~ "3",
+             
+             # 경우의 수 2/3개 
+             cancer_FU2_1 == 12 & cancer_FU2_2 == 11 & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == 12 & cancer_FU2_2 == 11 & cancer_FU2_3 == 12 ~ "3",
+             cancer_FU2_1 == 12 & cancer_FU2_2 == 11 & cancer_FU2_3 == "0" ~ "3",
+             
+             cancer_FU2_1 == 12 & cancer_FU2_2 == 12 & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == 12 & cancer_FU2_2 == 12 & cancer_FU2_3 == 12 ~ "3",
+             cancer_FU2_1 == 12 & cancer_FU2_2 == 12 & cancer_FU2_3 == "0" ~ "3",
+             
+             cancer_FU2_1 == 12 & cancer_FU2_2 == "0" & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == 12 & cancer_FU2_2 == "0" & cancer_FU2_3 == 12 ~ "3",
+             cancer_FU2_1 == 12 & cancer_FU2_2 == "0" & cancer_FU2_3 == "0" ~ "3",
+             
+             # 경우의 수 3/3개 
+             cancer_FU2_1 == "0" & cancer_FU2_2 == 11 & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == "0" & cancer_FU2_2 == 11 & cancer_FU2_3 == 12 ~ "3",
+             cancer_FU2_1 == "0" & cancer_FU2_2 == 11 & cancer_FU2_3 == "0" ~ "3",
+             
+             cancer_FU2_1 == "0" & cancer_FU2_2 == 12 & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == "0" & cancer_FU2_2 == 12 & cancer_FU2_3 == 12 ~ "3",
+             cancer_FU2_1 == "0" & cancer_FU2_2 == 12 & cancer_FU2_3 == "0" ~ "3",
+             
+             cancer_FU2_1 == "0" & cancer_FU2_2 == "0" & cancer_FU2_3 == 11 ~ "3",
+             cancer_FU2_1 == "0" & cancer_FU2_2 == "0" & cancer_FU2_3 == 12 ~ "3",
+             
+             # 모두 0인 경우는 당연히 0 
+             cancer_FU2_1 == "0" & cancer_FU2_2 == "0" & cancer_FU2_3 == "0" ~ "0",
+             
+
+             # 위의 경우를 제외하고 11이 아니고 12가 아닌 경우는 1 
+             cancer_FU2_1 != 11 & cancer_FU2_1 != 12 ~ "1",
+             cancer_FU2_2 != 11 & cancer_FU2_2 != 12 ~ "1",
+             cancer_FU2_3 != 11 & cancer_FU2_3 != 12 ~ "1",
+             
+             TRUE ~ "99"
+           )
+  ) %>% 
+    # group_by(cancer_FU2) %>% count() %>% as.data.frame()
+  
+  # 3차 F/U 시작
+  # 2차 F/U와 모든 변수가 같...지 않네? 그래도 범주는 똑같으니 이름만 바꿔주자. 
+  # 바꿔 줄 것은 2차 F/U에서 업데이트된 암 환자와 제외 인원에 대한 indexing
+  # 해당 차수에서 사용할 변수이름들이다. 
+  
+  mutate(cancer_FU3_1= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU2 == "Baseline case" ~ cancer_FU2,
+             cancer_FU2 == "Exclude case" ~ cancer_FU2,
+             
+             cancer_FU2 == "1st F/U case" ~ cancer_FU2,
+             cancer_FU2 == "1st F/U Exclude case" ~ cancer_FU2, 
+             
+             cancer_FU2 == "1" ~ "2nd F/U case", 
+             cancer_FU2 == "3" ~ "2nd F/U Exclude case", 
+             
+             # 1. 위암
+             cancer_FU2 == 0 & AS4_GCA == 2 ~ "1",
+             
+             # 2. 간암
+             cancer_FU2 == 0 & AS4_HCC == 2 ~ "2",
+             
+             # 3. 대장암
+             cancer_FU2 == 0 & AS4_COLCA  == 2 ~ "3",
+             
+             # 4. 유방암
+             cancer_FU2 == 0 & AS4_BRCA == 2 ~ "4",
+             
+             # 6. 폐암
+             cancer_FU2 == 0 & AS4_LCA == 2 ~ "6",
+             
+             # 10. 췌장암
+             cancer_FU2 == 0 & AS4_PACA == 2 ~ "10",
+             
+             # 10. 자궁암
+             cancer_FU2 == 0 & AS4_UTCA == 2 ~ "10",
+             
+             # FU2에서 넘어온 total N이지만 일단 남은 사람들
+             cancer_FU2 == 0 ~ "0"
+             
+           )
+  ) %>%
+  # group_by(cancer_FU3_1) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_FU3_2= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU2 == "Baseline case" ~ cancer_FU2,
+             cancer_FU2 == "Exclude case" ~ cancer_FU2,
+             
+             cancer_FU2 == "1st F/U case" ~ cancer_FU2,
+             cancer_FU2 == "1st F/U Exclude case" ~ cancer_FU2, 
+             
+             cancer_FU2 == "1" ~ "2nd F/U case", 
+             cancer_FU2 == "3" ~ "2nd F/U Exclude case", 
+             
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 3개 종으로 보임
+             
+             # cancer_FU2 == 0 & grepl("암", AS4_CA1NA) == TRUE ~ AS4_CA1NA,
+             # 
+             # cancer_FU2 == 0 & is.na(AS4_CA1NA) != TRUE ~ AS4_CA1NA,
+             # 
+             # TRUE ~ as.character(cancer_FU2)
+             
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
              ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
              
-             grepl("위암|위", NCB_CA2NA) == TRUE | grepl("위암|위", NCB_CA_NA2) == TRUE  ~ "1",
-             NCB_CA2NA == "간암" | NCB_CA_NA2 == "간암" ~ "2",
-             
-             grepl("대장", NCB_CA2NA) == TRUE | grepl("대장", NCB_CA_NA2) == TRUE  ~ "3",
-             grepl("유방|유방암", NCB_CA2NA) == TRUE | grepl("유방|유방암", NCB_CA_NA2) == TRUE  ~ "4",
-             
-             grepl("경부|자궁경부암", NCB_CA2NA) == TRUE | grepl("경부|자궁경부암", NCB_CA_NA2) == TRUE  ~ "5",
-             
-             NCB_CA2NA == "폐암" | NCB_CA_NA2 == "폐암" ~ "6",
-             
+             cancer_FU2 == 0 & grepl("위암|위장암", AS4_CA1NA) == TRUE  ~ "1",
+
+             cancer_FU2 == 0 & AS4_CA1NA == "간암" ~ "2",
+
+             cancer_FU2 == 0 & grepl("대장$|대장암", AS4_CA1NA) == TRUE ~ "3",
+
+             cancer_FU2 == 0 & AS4_CA1NA == "유방암" ~ "4",
+
+             cancer_FU2 == 0 & grepl("경부암|자궁경부암", AS4_CA1NA) == TRUE ~ "5",
+
+             cancer_FU2 == 0 & grepl("폐암", AS4_CA1NA) == TRUE ~ "6",
+
              # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
-             NCB_CA2NA == "갑상선암"|NCB_CA2NA == "갑상선" | NCB_CA_NA2 == "갑상선암"|NCB_CA_NA2 == "갑상선"~ "7",
+             cancer_FU2 == 0 & AS4_CA1NA == "갑상선암"| AS4_CA1NA == "갑상선" ~ "7",
+
+             # 전립선도 전립선암으로 간주하고 진행함.
+             cancer_FU2 == 0 & grepl("전립선암|전립선$", AS4_CA1NA) == TRUE ~ "8",
+
+             # 방광도 방광암으로 간주하고 진행함.
+             cancer_FU2 == 0 & grepl("방광암|방광$", AS4_CA1NA) == TRUE ~ "9",
+
+             # 암종 구분
+             # grepl("암", AS4_CA1NA) == TRUE ~ AS4_CA1NA,
+             #
+             # TRUE ~ AS4_CA1NA
+             #
+             #
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU2 == 0 & grepl("암", AS4_CA1NA) == TRUE ~ "10",
+             cancer_FU2 == 0 & grepl("암", AS4_OTH1NA) == TRUE ~ "10", # 기타 질환에서 피부암, 신장암 케이스 있음. 
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU2 == 0 & AS4_CA1 == "2" & AS4_CA1NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU2 == 0 & AS4_CA1 == "2" & AS4_CA1NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU2 == 0 & AS4_CA1 == "2" & TRUE ~ AS4_CA1NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU2 == 0 & AS4_CA1 == "1"  ~ "0",
+             cancer_FU2 == 0 & AS4_CA1 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU3_2) %>% count() %>% as.data.frame()
+  
+  
+  
+  mutate(cancer_FU3_3= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU2 == "Baseline case" ~ cancer_FU2,
+             cancer_FU2 == "Exclude case" ~ cancer_FU2,
+             
+             cancer_FU2 == "1st F/U case" ~ cancer_FU2,
+             cancer_FU2 == "1st F/U Exclude case" ~ cancer_FU2, 
+             
+             cancer_FU2 == "1" ~ "2nd F/U case", 
+             cancer_FU2 == "3" ~ "2nd F/U Exclude case", 
+             
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 갑상선 암 하나
+             # 그럼, cancer_FU3_3이 '갑상선'인 관측치가 다른 cancer_FU2_는 어떤 값을 갖는지 확인하자.
+             # cancer_FU2 == 0 & grepl("암", AS4_CA2NA) == TRUE ~ AS4_CA2NA,
+             # 
+             # cancer_FU2 == 0 & is.na(AS4_CA2NA) != TRUE ~ AS4_CA2NA,
+             # 
+             # TRUE ~ as.character(cancer_FU2)
+
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             cancer_FU2 == 0 & AS4_CA2NA == "갑상선암"| AS4_CA2NA == "갑상선" ~ "7",
+
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU2 == 0 & grepl("암", AS4_CA2NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU2 == 0 & AS4_CA2 == "2" & AS4_CA2NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU2 == 0 & AS4_CA2 == "2" & AS4_CA2NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU2 == 0 & AS4_CA2 == "2" & TRUE ~ AS4_CA2NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU2 == 0 & AS4_CA2 == "1"  ~ "0",
+             cancer_FU2 == 0 & AS4_CA2 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU3_3) %>% count() %>% as.data.frame()
+  
+  # cancer_FU3_3은 갑상선암, 단 하나의 관측값을 갖는다. 
+  # dplyr::filter(cancer_FU3_3 == "갑상선암") %>%
+  # select(RID, cancer_FU3_1, cancer_FU3_2, cancer_FU3_3)
+  
+  # 다른 종양 진단을 조회해본 결과, 유방종양과 갑상선암 두 개를 갖는다. 
+  # 그럼 cancer_FU3_3의 갑상선암과 cancer_FU3_2의 유방종양의 자리를 바꾸면 되지 않을까? 
+  mutate(cancer_FU3_2 =
+           case_when(
+             RID == "EPI17_009_2_162896" ~ "7",
+             TRUE ~ cancer_FU3_2
+           )
+         ) %>%
+  mutate(cancer_FU3_3 =
+           case_when(
+             RID == "EPI17_009_2_162896" ~ "11",
+             TRUE ~ cancer_FU3_3
+           )
+  ) %>%
+  
+  # 확인, 확인완료 
+  # dplyr::filter(AS4_CA2NA == "갑상선암") %>%
+  # select(RID, cancer_FU3_1, cancer_FU3_2, cancer_FU3_3)
+
+  # dplyr::filter(cancer_FU2 == 0) %>%
+  # select(cancer_FU3_1, cancer_FU3_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
+
+  mutate(cancer_FU3 = 
+           case_when(
+             cancer_FU2 == "Baseline case" ~ cancer_FU2,
+             cancer_FU2 == "Exclude case" ~ cancer_FU2,
+             
+             cancer_FU2 == "1st F/U case" ~ cancer_FU2,
+             cancer_FU2 == "1st F/U Exclude case" ~ cancer_FU2, 
+             
+             cancer_FU2 == "1" ~ "2nd F/U case", 
+             cancer_FU2 == "3" ~ "2nd F/U Exclude case", 
+             
+             # 2개의 진단명에서 10을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             # (cancer_FU_1 == 10 | cancer_FU_1 == 11 | cancer_FU_1 == 12) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1",
+             # (cancer_FU_1 == 10) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1", 
+             
+             # 3개의 진단명에서 11, 12을 갖는 obs 중 한번이라도 1-10를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             
+             # cancer_FU_1, cancer_FU_2, cancer_FU_3이 하나라도 1-10을 포함할 경우의 수 == 
+             # 전체 경우의 수 - (cancer_FU_1, cancer_FU_2, cancer_FU_3이 1-10을 포함하지 않을 경우의 수)
+             
+             # 경우의 수 1/3개 
+             cancer_FU3_1 == 11 & cancer_FU3_2 == 11 & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == 11 & cancer_FU3_2 == 11 & cancer_FU3_3 == 12 ~ "3",
+             cancer_FU3_1 == 11 & cancer_FU3_2 == 11 & cancer_FU3_3 == "0" ~ "3",
+             
+             cancer_FU3_1 == 11 & cancer_FU3_2 == 12 & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == 11 & cancer_FU3_2 == 12 & cancer_FU3_3 == 12 ~ "3",
+             cancer_FU3_1 == 11 & cancer_FU3_2 == 12 & cancer_FU3_3 == "0" ~ "3",
+             
+             cancer_FU3_1 == 11 & cancer_FU3_2 == "0" & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == 11 & cancer_FU3_2 == "0" & cancer_FU3_3 == 12 ~ "3",
+             cancer_FU3_1 == 11 & cancer_FU3_2 == "0" & cancer_FU3_3 == "0" ~ "3",
+             
+             # 경우의 수 2/3개 
+             cancer_FU3_1 == 12 & cancer_FU3_2 == 11 & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == 12 & cancer_FU3_2 == 11 & cancer_FU3_3 == 12 ~ "3",
+             cancer_FU3_1 == 12 & cancer_FU3_2 == 11 & cancer_FU3_3 == "0" ~ "3",
+             
+             cancer_FU3_1 == 12 & cancer_FU3_2 == 12 & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == 12 & cancer_FU3_2 == 12 & cancer_FU3_3 == 12 ~ "3",
+             cancer_FU3_1 == 12 & cancer_FU3_2 == 12 & cancer_FU3_3 == "0" ~ "3",
+             
+             cancer_FU3_1 == 12 & cancer_FU3_2 == "0" & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == 12 & cancer_FU3_2 == "0" & cancer_FU3_3 == 12 ~ "3",
+             cancer_FU3_1 == 12 & cancer_FU3_2 == "0" & cancer_FU3_3 == "0" ~ "3",
+             
+             # 경우의 수 3/3개 
+             cancer_FU3_1 == "0" & cancer_FU3_2 == 11 & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == "0" & cancer_FU3_2 == 11 & cancer_FU3_3 == 12 ~ "3",
+             cancer_FU3_1 == "0" & cancer_FU3_2 == 11 & cancer_FU3_3 == "0" ~ "3",
+             
+             cancer_FU3_1 == "0" & cancer_FU3_2 == 12 & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == "0" & cancer_FU3_2 == 12 & cancer_FU3_3 == 12 ~ "3",
+             cancer_FU3_1 == "0" & cancer_FU3_2 == 12 & cancer_FU3_3 == "0" ~ "3",
+             
+             cancer_FU3_1 == "0" & cancer_FU3_2 == "0" & cancer_FU3_3 == 11 ~ "3",
+             cancer_FU3_1 == "0" & cancer_FU3_2 == "0" & cancer_FU3_3 == 12 ~ "3",
+             
+             # 모두 0인 경우는 당연히 0 
+             cancer_FU3_1 == "0" & cancer_FU3_2 == "0" & cancer_FU3_3 == "0" ~ "0",
+             
+             
+             # 위의 경우를 제외하고 11이 아니고 12가 아닌 경우는 1 
+             cancer_FU3_1 != 11 & cancer_FU3_1 != 12 ~ "1",
+             cancer_FU3_2 != 11 & cancer_FU3_2 != 12 ~ "1",
+             cancer_FU3_3 != 11 & cancer_FU3_3 != 12 ~ "1",
+             
+             TRUE ~ "99"
+           )
+  ) %>% 
+  # group_by(cancer_FU3) %>% count() %>% as.data.frame()
+  
+  # 불현듯 생각난 '기타질환'에 있었던 암종
+  # '기타질환'에 암종이 있던 사람은 cancer_FU3에서 암환자로 빠졌을까? 
+  # 안빠짐. cancer_FU3_2에 코드 추가하고 옴
+  # dplyr::filter(grepl("암", AS4_OTH1NA) == TRUE) %>% 
+  # select(RID, AS4_OTH1NA, cancer_FU3)
+  
+  
+  # 4차 F/U 시작
+  # 3차 F/U와 모든 변수가 같다. 
+  # 바꿔 줄 것은 3차 F/U에서 업데이트된 암 환자와 제외 인원에 대한 indexing
+  # 해당 차수에서 사용할 변수이름들이다. 
+  
+  mutate(cancer_FU4_1= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU3 == "Baseline case" ~ cancer_FU3,
+             cancer_FU3 == "Exclude case" ~ cancer_FU3,
+             
+             cancer_FU3 == "1st F/U case" ~ cancer_FU3,
+             cancer_FU3 == "1st F/U Exclude case" ~ cancer_FU3, 
+             
+             cancer_FU3 == "2nd F/U case" ~ cancer_FU3,  
+             cancer_FU3 == "2nd F/U Exclude case" ~ cancer_FU3, 
+             
+             cancer_FU3 == "1" ~ "3nd F/U case", 
+             cancer_FU3 == "3" ~ "3nd F/U Exclude case", 
+             
+             # 1. 위암
+             cancer_FU3 == 0 & AS5_GCA == 2 ~ "1",
+             
+             # 2. 간암
+             cancer_FU3 == 0 & AS5_HCC == 2 ~ "2",
+             
+             # 3. 대장암
+             cancer_FU3 == 0 & AS5_COLCA  == 2 ~ "3",
+             
+             # 4. 유방암
+             cancer_FU3 == 0 & AS5_BRCA == 2 ~ "4",
+             
+             # 6. 폐암
+             cancer_FU3 == 0 & AS5_LCA == 2 ~ "6",
+             
+             # 10. 췌장암
+             cancer_FU3 == 0 & AS5_PACA == 2 ~ "10",
+             
+             # 10. 자궁암
+             cancer_FU3 == 0 & AS5_UTCA == 2 ~ "10",
+             
+             # FU3에서 넘어온 total N이지만 일단 남은 사람들
+             cancer_FU3 == 0 ~ "0"
+             
+           )
+  ) %>%
+  # group_by(cancer_FU4_1) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_FU4_2= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU3 == "Baseline case" ~ cancer_FU3,
+             cancer_FU3 == "Exclude case" ~ cancer_FU3,
+             
+             cancer_FU3 == "1st F/U case" ~ cancer_FU3,
+             cancer_FU3 == "1st F/U Exclude case" ~ cancer_FU3, 
+             
+             cancer_FU3 == "2nd F/U case" ~ cancer_FU3,  
+             cancer_FU3 == "2nd F/U Exclude case" ~ cancer_FU3, 
+             
+             cancer_FU3 == "1" ~ "3nd F/U case", 
+             cancer_FU3 == "3" ~ "3nd F/U Exclude case", 
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 10개 종
+             # cancer_FU3 == 0 & grepl("암", AS5_CA1NA) == TRUE ~ AS5_CA1NA,
+             # 
+             # cancer_FU3 == 0 & is.na(AS5_CA1NA) != TRUE ~ AS5_CA1NA,
+             # 
+             # TRUE ~ as.character(cancer_FU3)
+
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             cancer_FU3 == 0 & grepl("위암|위장암", AS5_CA1NA) == TRUE  ~ "1",
+
+             cancer_FU3 == 0 & AS5_CA1NA == "간암" ~ "2",
+
+             cancer_FU3 == 0 & grepl("대장$|대장암", AS5_CA1NA) == TRUE ~ "3",
+
+             cancer_FU3 == 0 & AS5_CA1NA == "유방암" ~ "4",
+
+             cancer_FU3 == 0 & grepl("경부암|자궁경부암", AS5_CA1NA) == TRUE ~ "5",
+
+             cancer_FU3 == 0 & grepl("폐암", AS5_CA1NA) == TRUE ~ "6",
+
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             cancer_FU3 == 0 & AS5_CA1NA == "갑상선암"| AS5_CA1NA == "갑상선" ~ "7",
+             cancer_FU3 == 0 & AS5_OTH1NA == "갑상선암" ~ "7",
              
              # 전립선도 전립선암으로 간주하고 진행함.
-             grepl("전립선암|전립선", NCB_CA2NA) == TRUE | grepl("전립선암|전립선", NCB_CA_NA2) == TRUE  ~ "8",
-             
+             cancer_FU3 == 0 & grepl("전립선암|전립선", AS5_CA1NA) == TRUE ~ "8",
+
              # 방광도 방광암으로 간주하고 진행함.
-             NCB_CA2NA == "방광암"|NCB_CA2NA =="방광" | NCB_CA_NA2 == "방광암"|NCB_CA_NA2 =="방광" ~ "9",
+             cancer_FU3 == 0 & grepl("방광암|방광$", AS5_CA1NA) == TRUE ~ "9",
+
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU3 == 0 & grepl("암", AS5_CA1NA) == TRUE ~ "10",
+             cancer_FU3 == 0 & grepl("암", AS5_OTH1NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU3 == 0 & AS5_CA1 == "2" & AS5_CA1NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU3 == 0 & AS5_CA1 == "2" & AS5_CA1NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU3 == 0 & AS5_CA1 == "2" & TRUE ~ AS5_CA1NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU3 == 0 & AS5_CA1 == "1"  ~ "0",
+             cancer_FU3 == 0 & AS5_CA1 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU4_2) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_FU4_3= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU3 == "Baseline case" ~ cancer_FU3,
+             cancer_FU3 == "Exclude case" ~ cancer_FU3,
              
-             # 암종 구분
-             # grepl("암", NCB_CA2NA) == TRUE ~ NCB_CA2NA,
-             # grepl("암", NCB_CA_NA2) == TRUE ~ NCB_CA_NA2,
+             cancer_FU3 == "1st F/U case" ~ cancer_FU3,
+             cancer_FU3 == "1st F/U Exclude case" ~ cancer_FU3, 
              
-             NCB_CA2 == "2" & NCB_CA2NA != "." ~ "10",
-             NCB_CA == "2" & NCB_CA_NA2 != "." ~ "10",
-             NCB_CA2 == "2" & NCB_CA2NA == "." ~ "11",
-             # NCB_CA == "2" & NCB_CA_NA2 == "." ~ "11",
+             cancer_FU3 == "2nd F/U case" ~ cancer_FU3,  
+             cancer_FU3 == "2nd F/U Exclude case" ~ cancer_FU3, 
+             
+             cancer_FU3 == "1" ~ "3nd F/U case", 
+             cancer_FU3 == "3" ~ "3nd F/U Exclude case", 
+             
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 자궁상피내암 1, 나머지 기타 종양 3 
+             # cancer_FU3 == 0 & grepl("암", AS5_CA2NA) == TRUE ~ AS5_CA2NA,
+             # 
+             # cancer_FU3 == 0 & is.na(AS5_CA2NA) != TRUE ~ AS5_CA2NA,
+             # 
+             # TRUE ~ as.character(cancer_FU3)
+             
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             # cancer_FU3 == 0 & AS5_CA2NA == "갑상선암"| AS5_CA2NA == "갑상선" ~ "7",
+             # 
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU3 == 0 & grepl("암", AS5_CA2NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU3 == 0 & AS5_CA2 == "2" & AS5_CA2NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU3 == 0 & AS5_CA2 == "2" & AS5_CA2NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU3 == 0 & AS5_CA2 == "2" & TRUE ~ AS5_CA2NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU3 == 0 & AS5_CA2 == "1"  ~ "0",
+             cancer_FU3 == 0 & AS5_CA2 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU4_3) %>% count() %>% as.data.frame()
+
+  # cancer_FU4_3은 1개의 기타암종과 3개의 기타종양을 갖는다. 
+  # 혹시 cancer_FU4_2에 이미 반영이 되어 있지 않을까? 
+  # 이미 반영되어 있다! 그럼 cancer_FU4_1과 cancer_FU4_2의 table로만으로도 설명 가능
+  # dplyr::filter(grepl("담낭용종|대장종양|유방섬유종|자궁상피내암", cancer_FU4_3) == TRUE) %>%
+  # select(RID, cancer_FU4_1, cancer_FU4_2, cancer_FU4_3)
+  
+  
+  
+  # 마찬가지로 AS5에서도 '기타질환'에서 암종이 들어간 경우가 있음
+  # 제외되었는지 체크하고 제외되어있지 않다면 cancer_FU4_2에 추가하고 오기
+  # 제외되어있지 않기 때문에 추가함. 갑상선암 1, 기타암종 2
+
+  # dplyr::filter(grepl("암", AS5_OTH1NA) == TRUE) %>%
+  # select(RID, AS5_OTH1NA, cancer_FU4_1, cancer_FU4_2, cancer_FU4_3, cancer_FU3)
+  
+  # dplyr::filter(cancer_FU3 == 0) %>%
+  # select(cancer_FU4_1, cancer_FU4_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
+
+  mutate(cancer_FU4 = 
+           case_when(
+             cancer_FU3 == "Baseline case" ~ cancer_FU3,
+             cancer_FU3 == "Exclude case" ~ cancer_FU3,
+             
+             cancer_FU3 == "1st F/U case" ~ cancer_FU3,
+             cancer_FU3 == "1st F/U Exclude case" ~ cancer_FU3, 
+             
+             cancer_FU3 == "2nd F/U case" ~ cancer_FU3,  
+             cancer_FU3 == "2nd F/U Exclude case" ~ cancer_FU3, 
+             
+             cancer_FU3 == "1" ~ "3nd F/U case", 
+             cancer_FU3 == "3" ~ "3nd F/U Exclude case", 
+             
+             # 2개의 진단명에서 10을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             # (cancer_FU_1 == 10 | cancer_FU_1 == 11 | cancer_FU_1 == 12) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1",
+             # (cancer_FU_1 == 10) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1", 
+             
+             # 3개의 진단명에서 11, 12을 갖는 obs 중 한번이라도 1-10를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             
+             # cancer_FU_1, cancer_FU_2, cancer_FU_3이 하나라도 1-10을 포함할 경우의 수 == 
+             # 전체 경우의 수 - (cancer_FU_1, cancer_FU_2, cancer_FU_3이 1-10을 포함하지 않을 경우의 수)
+             
+             # 경우의 수 1/3개 
+             cancer_FU4_1 == 11 & cancer_FU4_2 == 11 & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == 11 & cancer_FU4_2 == 11 & cancer_FU4_3 == 12 ~ "3",
+             cancer_FU4_1 == 11 & cancer_FU4_2 == 11 & cancer_FU4_3 == "0" ~ "3",
+             
+             cancer_FU4_1 == 11 & cancer_FU4_2 == 12 & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == 11 & cancer_FU4_2 == 12 & cancer_FU4_3 == 12 ~ "3",
+             cancer_FU4_1 == 11 & cancer_FU4_2 == 12 & cancer_FU4_3 == "0" ~ "3",
+             
+             cancer_FU4_1 == 11 & cancer_FU4_2 == "0" & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == 11 & cancer_FU4_2 == "0" & cancer_FU4_3 == 12 ~ "3",
+             cancer_FU4_1 == 11 & cancer_FU4_2 == "0" & cancer_FU4_3 == "0" ~ "3",
+             
+             # 경우의 수 2/3개 
+             cancer_FU4_1 == 12 & cancer_FU4_2 == 11 & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == 12 & cancer_FU4_2 == 11 & cancer_FU4_3 == 12 ~ "3",
+             cancer_FU4_1 == 12 & cancer_FU4_2 == 11 & cancer_FU4_3 == "0" ~ "3",
+             
+             cancer_FU4_1 == 12 & cancer_FU4_2 == 12 & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == 12 & cancer_FU4_2 == 12 & cancer_FU4_3 == 12 ~ "3",
+             cancer_FU4_1 == 12 & cancer_FU4_2 == 12 & cancer_FU4_3 == "0" ~ "3",
+             
+             cancer_FU4_1 == 12 & cancer_FU4_2 == "0" & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == 12 & cancer_FU4_2 == "0" & cancer_FU4_3 == 12 ~ "3",
+             cancer_FU4_1 == 12 & cancer_FU4_2 == "0" & cancer_FU4_3 == "0" ~ "3",
+             
+             # 경우의 수 3/3개 
+             cancer_FU4_1 == "0" & cancer_FU4_2 == 11 & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == "0" & cancer_FU4_2 == 11 & cancer_FU4_3 == 12 ~ "3",
+             cancer_FU4_1 == "0" & cancer_FU4_2 == 11 & cancer_FU4_3 == "0" ~ "3",
+             
+             cancer_FU4_1 == "0" & cancer_FU4_2 == 12 & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == "0" & cancer_FU4_2 == 12 & cancer_FU4_3 == 12 ~ "3",
+             cancer_FU4_1 == "0" & cancer_FU4_2 == 12 & cancer_FU4_3 == "0" ~ "3",
+             
+             cancer_FU4_1 == "0" & cancer_FU4_2 == "0" & cancer_FU4_3 == 11 ~ "3",
+             cancer_FU4_1 == "0" & cancer_FU4_2 == "0" & cancer_FU4_3 == 12 ~ "3",
+             
+             # 모두 0인 경우는 당연히 0 
+             cancer_FU4_1 == "0" & cancer_FU4_2 == "0" & cancer_FU4_3 == "0" ~ "0",
+             
+             
+             # 위의 경우를 제외하고 11이 아니고 12가 아닌 경우는 1 
+             # cancer_FU4_1 != 11 & cancer_FU4_1 != 12 & cancer_FU4_1 != "0" ~ "1_1",
+             # cancer_FU4_2 != 11 & cancer_FU4_2 != 12 & cancer_FU4_2 != "0"~ "1_2",
+             # cancer_FU4_3 != 11 & cancer_FU4_3 != 12 & cancer_FU4_3 != "0"~ "1_3",
+             
+             cancer_FU4_1 != 11 & cancer_FU4_1 != 12 ~ "1",
+             cancer_FU4_2 != 11 & cancer_FU4_2 != 12 ~ "1",
+             cancer_FU4_3 != 11 & cancer_FU4_3 != 12 ~ "1",
+             
+             TRUE ~ "99"
+           )
+  ) %>% 
+  # group_by(cancer_FU4) %>% count() %>% as.data.frame()
+  
+  # 5차 F/U 시작
+  # 3차 F/U와 모든 변수가 같다. 
+  # 바꿔 줄 것은 3차 F/U에서 업데이트된 암 환자와 제외 인원에 대한 indexing
+  # 해당 차수에서 사용할 변수이름들이다. 
+  
+  mutate(cancer_FU5_1= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU4 == "Baseline case" ~ cancer_FU4,
+             cancer_FU4 == "Exclude case" ~ cancer_FU4,
+             
+             cancer_FU4 == "1st F/U case" ~ cancer_FU4,
+             cancer_FU4 == "1st F/U Exclude case" ~ cancer_FU4, 
+             
+             cancer_FU4 == "2nd F/U case" ~ cancer_FU4,  
+             cancer_FU4 == "2nd F/U Exclude case" ~ cancer_FU4, 
+             
+             cancer_FU4 == "3nd F/U case" ~ cancer_FU4, 
+             cancer_FU4 == "3nd F/U Exclude case" ~ cancer_FU4,
+             
+             cancer_FU4 == "1" ~ "4th F/U case", 
+             cancer_FU4 == "3" ~ "4th F/U Exclude case", 
+             
+             # 1. 위암
+             cancer_FU4 == 0 & AS6_GCA == 2 ~ "1",
+             
+             # 2. 간암
+             cancer_FU4 == 0 & AS6_HCC == 2 ~ "2",
+             
+             # 3. 대장암
+             cancer_FU4 == 0 & AS6_COLCA  == 2 ~ "3",
+             
+             # 4. 유방암
+             cancer_FU4 == 0 & AS6_BRCA == 2 ~ "4",
+             
+             # 6. 폐암
+             cancer_FU4 == 0 & AS6_LCA == 2 ~ "6",
+             
+             # 10. 췌장암
+             cancer_FU4 == 0 & AS6_PACA == 2 ~ "10",
+             
+             # 10. 자궁암
+             cancer_FU4 == 0 & AS6_UTCA == 2 ~ "10",
+             
+             # FU4에서 넘어온 total N이지만 일단 남은 사람들
+             cancer_FU4 == 0 ~ "0"
+             
+           )
+  ) %>%
+  # group_by(cancer_FU5_1) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_FU5_2= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU4 == "Baseline case" ~ cancer_FU4,
+             cancer_FU4 == "Exclude case" ~ cancer_FU4,
+             
+             cancer_FU4 == "1st F/U case" ~ cancer_FU4,
+             cancer_FU4 == "1st F/U Exclude case" ~ cancer_FU4, 
+             
+             cancer_FU4 == "2nd F/U case" ~ cancer_FU4,  
+             cancer_FU4 == "2nd F/U Exclude case" ~ cancer_FU4, 
+             
+             cancer_FU4 == "3nd F/U case" ~ cancer_FU4, 
+             cancer_FU4 == "3nd F/U Exclude case" ~ cancer_FU4,
+             
+             cancer_FU4 == "1" ~ "4th F/U case", 
+             cancer_FU4 == "3" ~ "4th F/U Exclude case", 
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 10개 종
+             # cancer_FU4 == 0 & grepl("암", AS6_CA1NA) == TRUE ~ AS6_CA1NA,
+             # 
+             # cancer_FU4 == 0 & is.na(AS6_CA1NA) != TRUE ~ AS6_CA1NA,
+             # 
+             # TRUE ~ as.character(cancer_FU4)
+
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             cancer_FU4 == 0 & grepl("위암|위장암", AS6_CA1NA) == TRUE  ~ "1",
+
+             cancer_FU4 == 0 & AS6_CA1NA == "간암" ~ "2",
+
+             cancer_FU4 == 0 & grepl("대장$|대장암", AS6_CA1NA) == TRUE ~ "3",
+
+             cancer_FU4 == 0 & AS6_CA1NA == "유방암" ~ "4",
+
+             cancer_FU4 == 0 & grepl("경부암|자궁경부암", AS6_CA1NA) == TRUE ~ "5",
+
+             cancer_FU4 == 0 & grepl("폐암", AS6_CA1NA) == TRUE ~ "6",
+
+             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
+             cancer_FU4 == 0 & AS6_CA1NA == "갑상선암"| AS6_CA1NA == "갑상선" ~ "7",
+
+             # 전립선도 전립선암으로 간주하고 진행함.
+             cancer_FU4 == 0 & grepl("전립선암|전립선", AS6_CA1NA) == TRUE ~ "8",
+
+             # 방광도 방광암으로 간주하고 진행함.
+             cancer_FU4 == 0 & grepl("방광암|방광$", AS6_CA1NA) == TRUE ~ "9",
+
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU4 == 0 & grepl("암", AS6_CA1NA) == TRUE ~ "10",
+             cancer_FU4 == 0 & grepl("암", AS6_OTH1NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU4 == 0 & AS6_CA1 == "2" & AS6_CA1NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU4 == 0 & AS6_CA1 == "2" & AS6_CA1NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU4 == 0 & AS6_CA1 == "2" & TRUE ~ AS6_CA1NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU4 == 0 & AS6_CA1 == "1"  ~ "0",
+             cancer_FU4 == 0 & AS6_CA1 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU5_2) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_FU5_3= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU4 == "Baseline case" ~ cancer_FU4,
+             cancer_FU4 == "Exclude case" ~ cancer_FU4,
+             
+             cancer_FU4 == "1st F/U case" ~ cancer_FU4,
+             cancer_FU4 == "1st F/U Exclude case" ~ cancer_FU4, 
+             
+             cancer_FU4 == "2nd F/U case" ~ cancer_FU4,  
+             cancer_FU4 == "2nd F/U Exclude case" ~ cancer_FU4, 
+             
+             cancer_FU4 == "3nd F/U case" ~ cancer_FU4, 
+             cancer_FU4 == "3nd F/U Exclude case" ~ cancer_FU4,
+             
+             cancer_FU4 == "1" ~ "4th F/U case", 
+             cancer_FU4 == "3" ~ "4th F/U Exclude case", 
+             
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 나머지 기타 종양 4개 종, 6명
+             # cancer_FU4 == 0 & grepl("암", AS6_CA2NA) == TRUE ~ AS6_CA2NA,
+             # 
+             # cancer_FU4 == 0 & is.na(AS6_CA2NA) != TRUE ~ AS6_CA2NA,
+             # 
+             # TRUE ~ as.character(cancer_FU4)
+             
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             # cancer_FU3 == 0 & AS5_CA2NA == "갑상선암"| AS5_CA2NA == "갑상선" ~ "7",
+             # 
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU4 == 0 & grepl("암", AS6_CA2NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU4 == 0 & AS6_CA2 == "2" & AS6_CA2NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU4 == 0 & AS6_CA2 == "2" & AS6_CA2NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU4 == 0 & AS6_CA2 == "2" & TRUE ~ AS6_CA2NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU4 == 0 & AS6_CA2 == "1"  ~ "0",
+             cancer_FU4 == 0 & AS6_CA2 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU5_3) %>% count() %>% as.data.frame()
+  
+  # cancer_FU5_3은 4개의 기타종양을 갖는다. 
+  # 혹시 cancer_FU5_2에 이미 반영이 되어 있지 않을까? 
+  # 이미 반영되어 있다! 그럼 cancer_FU5_1과 cancer_FU5_2의 table로만으로도 설명 가능
+  # dplyr::filter(grepl("뇌하수체종양|대장용종|위물혹|유방물혹", cancer_FU5_3) == TRUE) %>%
+  # select(RID, cancer_FU4, cancer_FU5_1, cancer_FU5_2, cancer_FU5_3)
+  
+
+  # dplyr::filter(cancer_FU4 == 0) %>%
+  # select(cancer_FU5_1, cancer_FU5_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
+
+  mutate(cancer_FU5 = 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU4 == "Baseline case" ~ cancer_FU4,
+             cancer_FU4 == "Exclude case" ~ cancer_FU4,
+             
+             cancer_FU4 == "1st F/U case" ~ cancer_FU4,
+             cancer_FU4 == "1st F/U Exclude case" ~ cancer_FU4, 
+             
+             cancer_FU4 == "2nd F/U case" ~ cancer_FU4,  
+             cancer_FU4 == "2nd F/U Exclude case" ~ cancer_FU4, 
+             
+             cancer_FU4 == "3nd F/U case" ~ cancer_FU4, 
+             cancer_FU4 == "3nd F/U Exclude case" ~ cancer_FU4,
+             
+             cancer_FU4 == "1" ~ "4th F/U case", 
+             cancer_FU4 == "3" ~ "4th F/U Exclude case", 
+             
+             # 2개의 진단명에서 10을 갖는 obs 중 한번이라도 1-9를 갖는 obs는 모두 cancer case에 포함
+             # (cancer_FU_1 == 10 | cancer_FU_1 == 11 | cancer_FU_1 == 12) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1",
+             # (cancer_FU_1 == 10) & (cancer_FU_2 != 10 & cancer_FU_2 != "0" & cancer_FU_2 != "11") ~ "1", 
+             
+             # 3개의 진단명에서 11, 12을 갖는 obs 중 한번이라도 1-10를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             
+             # cancer_FU_1, cancer_FU_2, cancer_FU_3이 하나라도 1-10을 포함할 경우의 수 == 
+             # 전체 경우의 수 - (cancer_FU_1, cancer_FU_2, cancer_FU_3이 1-10을 포함하지 않을 경우의 수)
+             
+             # 경우의 수 1/3개 
+             cancer_FU5_1 == 11 & cancer_FU5_2 == 11 & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == 11 & cancer_FU5_2 == 11 & cancer_FU5_3 == 12 ~ "3",
+             cancer_FU5_1 == 11 & cancer_FU5_2 == 11 & cancer_FU5_3 == "0" ~ "3",
+             
+             cancer_FU5_1 == 11 & cancer_FU5_2 == 12 & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == 11 & cancer_FU5_2 == 12 & cancer_FU5_3 == 12 ~ "3",
+             cancer_FU5_1 == 11 & cancer_FU5_2 == 12 & cancer_FU5_3 == "0" ~ "3",
+             
+             cancer_FU5_1 == 11 & cancer_FU5_2 == "0" & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == 11 & cancer_FU5_2 == "0" & cancer_FU5_3 == 12 ~ "3",
+             cancer_FU5_1 == 11 & cancer_FU5_2 == "0" & cancer_FU5_3 == "0" ~ "3",
+             
+             # 경우의 수 2/3개 
+             cancer_FU5_1 == 12 & cancer_FU5_2 == 11 & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == 12 & cancer_FU5_2 == 11 & cancer_FU5_3 == 12 ~ "3",
+             cancer_FU5_1 == 12 & cancer_FU5_2 == 11 & cancer_FU5_3 == "0" ~ "3",
+             
+             cancer_FU5_1 == 12 & cancer_FU5_2 == 12 & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == 12 & cancer_FU5_2 == 12 & cancer_FU5_3 == 12 ~ "3",
+             cancer_FU5_1 == 12 & cancer_FU5_2 == 12 & cancer_FU5_3 == "0" ~ "3",
+             
+             cancer_FU5_1 == 12 & cancer_FU5_2 == "0" & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == 12 & cancer_FU5_2 == "0" & cancer_FU5_3 == 12 ~ "3",
+             cancer_FU5_1 == 12 & cancer_FU5_2 == "0" & cancer_FU5_3 == "0" ~ "3",
+             
+             # 경우의 수 3/3개 
+             cancer_FU5_1 == "0" & cancer_FU5_2 == 11 & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == "0" & cancer_FU5_2 == 11 & cancer_FU5_3 == 12 ~ "3",
+             cancer_FU5_1 == "0" & cancer_FU5_2 == 11 & cancer_FU5_3 == "0" ~ "3",
+             
+             cancer_FU5_1 == "0" & cancer_FU5_2 == 12 & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == "0" & cancer_FU5_2 == 12 & cancer_FU5_3 == 12 ~ "3",
+             cancer_FU5_1 == "0" & cancer_FU5_2 == 12 & cancer_FU5_3 == "0" ~ "3",
+             
+             cancer_FU5_1 == "0" & cancer_FU5_2 == "0" & cancer_FU5_3 == 11 ~ "3",
+             cancer_FU5_1 == "0" & cancer_FU5_2 == "0" & cancer_FU5_3 == 12 ~ "3",
+             
+             # 모두 0인 경우는 당연히 0 
+             cancer_FU5_1 == "0" & cancer_FU5_2 == "0" & cancer_FU5_3 == "0" ~ "0",
+             
+             
+             # 위의 경우를 제외하고 11이 아니고 12가 아닌 경우는 1 
+             cancer_FU5_1 != 11 & cancer_FU5_1 != 12 ~ "1",
+             cancer_FU5_2 != 11 & cancer_FU5_2 != 12 ~ "1",
+             cancer_FU5_3 != 11 & cancer_FU5_3 != 12 ~ "1",
+             
+             TRUE ~ "99"
+           )
+  ) %>% 
+    # group_by(cancer_FU5) %>% count() %>% as.data.frame()
+  
+  # 6차 F/U 시작
+  # 3차 F/U와 모든 변수가 같다. 
+  # 바꿔 줄 것은 3차 F/U에서 업데이트된 암 환자와 제외 인원에 대한 indexing
+  # 해당 차수에서 사용할 변수이름들이다. 
+  
+  mutate(cancer_FU6_1= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU5 == "Baseline case" ~ cancer_FU5,
+             cancer_FU5 == "Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "1st F/U case" ~ cancer_FU5,
+             cancer_FU5 == "1st F/U Exclude case" ~ cancer_FU5, 
+             
+             cancer_FU5 == "2nd F/U case" ~ cancer_FU5,  
+             cancer_FU5 == "2nd F/U Exclude case" ~ cancer_FU5, 
+             
+             cancer_FU5 == "3nd F/U case" ~ cancer_FU5, 
+             cancer_FU5 == "3nd F/U Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "4th F/U case" ~ cancer_FU5, 
+             cancer_FU5 == "4th F/U Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "1" ~ "5th F/U case", 
+             cancer_FU5 == "3" ~ "5th F/U Exclude case", 
+             
+             # 1. 위암
+             cancer_FU5 == 0 & AS7_GCA == 2 ~ "1",
+             
+             # 2. 간암
+             cancer_FU5 == 0 & AS7_HCC == 2 ~ "2",
+             
+             # 3. 대장암
+             cancer_FU5 == 0 & AS7_COLCA  == 2 ~ "3",
+             
+             # 4. 유방암
+             cancer_FU5 == 0 & AS7_BRCA == 2 ~ "4",
+             
+             # 6. 폐암
+             cancer_FU5 == 0 & AS7_LCA == 2 ~ "6",
+             
+             # 10. 췌장암
+             cancer_FU5 == 0 & AS7_PACA == 2 ~ "10",
+             
+             # 10. 자궁암
+             cancer_FU5 == 0 & AS7_UTCA == 2 ~ "10",
+             
+             # FU5에서 넘어온 total N이지만 일단 남은 사람들
+             cancer_FU5 == 0 ~ "0"
+             
+           )
+  ) %>%
+  # group_by(cancer_FU6_1) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_FU6_2= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU5 == "Baseline case" ~ cancer_FU5,
+             cancer_FU5 == "Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "1st F/U case" ~ cancer_FU5,
+             cancer_FU5 == "1st F/U Exclude case" ~ cancer_FU5, 
+             
+             cancer_FU5 == "2nd F/U case" ~ cancer_FU5,  
+             cancer_FU5 == "2nd F/U Exclude case" ~ cancer_FU5, 
+             
+             cancer_FU5 == "3nd F/U case" ~ cancer_FU5, 
+             cancer_FU5 == "3nd F/U Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "4th F/U case" ~ cancer_FU5, 
+             cancer_FU5 == "4th F/U Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "1" ~ "5th F/U case", 
+             cancer_FU5 == "3" ~ "5th F/U Exclude case", 
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 6개 종
+             # cancer_FU5 == 0 & grepl("암", AS7_CA1NA) == TRUE ~ AS7_CA1NA,
+             # 
+             # cancer_FU5 == 0 & is.na(AS7_CA1NA) != TRUE ~ AS7_CA1NA,
+             # 
+             # TRUE ~ as.character(cancer_FU5)
+
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             
+             cancer_FU5 == 0 & grepl("위암|위장암", AS7_CA1NA) == TRUE  ~ "1",
+
+             cancer_FU5 == 0 & AS7_CA1NA == "간암" ~ "2",
+
+             cancer_FU5 == 0 & grepl("대장$|대장암", AS7_CA1NA) == TRUE ~ "3",
+
+             cancer_FU5 == 0 & AS7_CA1NA == "유방암" ~ "4",
+
+             cancer_FU5 == 0 & grepl("경부암|자궁경부암", AS7_CA1NA) == TRUE ~ "5",
+
+             cancer_FU5 == 0 & grepl("폐암", AS7_CA1NA) == TRUE ~ "6",
+
+             cancer_FU5 == 0 & AS7_CA1NA == "갑상선암" ~ "7",
+
+             # 전립선도 전립선암으로 간주하고 진행함.
+             cancer_FU5 == 0 & grepl("전립선암|전립선", AS7_CA1NA) == TRUE ~ "8",
+
+             # 방광도 방광암으로 간주하고 진행함.
+             cancer_FU5 == 0 & grepl("방광암|방광$", AS7_CA1NA) == TRUE ~ "9",
+
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU5 == 0 & grepl("암", AS7_CA1NA) == TRUE ~ "10",
+             cancer_FU5 == 0 & grepl("암", AS7_OTH1NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU5 == 0 & AS7_CA1 == "2" & AS7_CA1NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU5 == 0 & AS7_CA1 == "2" & AS7_CA1NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU5 == 0 & AS7_CA1 == "2" & TRUE ~ AS7_CA1NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU5 == 0 & AS7_CA1 == "1"  ~ "0",
+             cancer_FU5 == 0 & AS7_CA1 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU6_2) %>% count() %>% as.data.frame()
+  
+  mutate(cancer_FU6_3= 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU5 == "Baseline case" ~ cancer_FU5,
+             cancer_FU5 == "Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "1st F/U case" ~ cancer_FU5,
+             cancer_FU5 == "1st F/U Exclude case" ~ cancer_FU5, 
+             
+             cancer_FU5 == "2nd F/U case" ~ cancer_FU5,  
+             cancer_FU5 == "2nd F/U Exclude case" ~ cancer_FU5, 
+             
+             cancer_FU5 == "3nd F/U case" ~ cancer_FU5, 
+             cancer_FU5 == "3nd F/U Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "4th F/U case" ~ cancer_FU5, 
+             cancer_FU5 == "4th F/U Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "1" ~ "5th F/U case", 
+             cancer_FU5 == "3" ~ "5th F/U Exclude case", 
+             
+             
+             # 1) 몇 종류의 암종이 있는지 먼저 파악
+             # 나머지 기타 종양 3개
+             # cancer_FU5 == 0 & grepl("암", AS7_CA2NA) == TRUE ~ AS7_CA2NA,
+             # 
+             # cancer_FU5 == 0 & is.na(AS7_CA2NA) != TRUE ~ AS7_CA2NA,
+             # 
+             # TRUE ~ as.character(cancer_FU5)
+             
+             
+             # 2) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
+             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
+             # cancer_FU3 == 0 & AS5_CA2NA == "갑상선암"| AS5_CA2NA == "갑상선" ~ "7",
+             # 
+             # 1-9에 포함되지 않지만 '암'이면 10
+             cancer_FU5 == 0 & grepl("암", AS7_CA2NA) == TRUE ~ "10",
+
+             # 암이 있다고 대답했으나 암이 아닌 다른 종양이면 11
+             cancer_FU5 == 0 & AS7_CA2 == "2" & AS7_CA2NA != "." ~ "11",
+
+             # 암이 있다고 대답했으나 진단명이 없으면 12
+             cancer_FU5 == 0 & AS7_CA2 == "2" & AS7_CA2NA == "." ~ "12",
+
+             # 혹시 누락된 값이 있을 수 있으니 체크하기 위한 code
+             cancer_FU5 == 0 & AS7_CA2 == "2" & TRUE ~ AS7_CA2NA,
+
+             # 여전히 암에 걸리지 않은 사람들
+             cancer_FU5 == 0 & AS7_CA2 == "1"  ~ "0",
+             cancer_FU5 == 0 & AS7_CA2 == "."  ~ "0",
+
+             TRUE ~ "99"
+           )
+  ) %>%
+  # group_by(cancer_FU6_3) %>% count() %>% as.data.frame()
+  
+  # cancer_FU6_3은 3개의 기타종양을 갖는다. 
+  # 혹시 cancer_FU6_2에 이미 반영이 되어 있지 않을까? 
+  # 이미 반영되어 있다! 그럼 cancer_FU6_1과 cancer_FU6_2의 table로만으로도 설명 가능
+  # dplyr::filter(grepl("갑상선상선종양(관찰)|대장용종|위양성종양", cancer_FU6_3) == TRUE) %>%
+  # select(RID, cancer_FU5, cancer_FU6_1, cancer_FU6_2, cancer_FU6_3)
+  
+  
+  # dplyr::filter(cancer_FU5 == 0) %>%
+  # select(cancer_FU6_1, cancer_FU6_2) %>%
+  # mutate_all(funs(as.numeric)) %>%
+  # table()
+
+  mutate(cancer_FU6 = 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU5 == "Baseline case" ~ cancer_FU5,
+             cancer_FU5 == "Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "1st F/U case" ~ cancer_FU5,
+             cancer_FU5 == "1st F/U Exclude case" ~ cancer_FU5, 
+             
+             cancer_FU5 == "2nd F/U case" ~ cancer_FU5,  
+             cancer_FU5 == "2nd F/U Exclude case" ~ cancer_FU5, 
+             
+             cancer_FU5 == "3nd F/U case" ~ cancer_FU5, 
+             cancer_FU5 == "3nd F/U Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "4th F/U case" ~ cancer_FU5, 
+             cancer_FU5 == "4th F/U Exclude case" ~ cancer_FU5,
+             
+             cancer_FU5 == "1" ~ "5th F/U case", 
+             cancer_FU5 == "3" ~ "5th F/U Exclude case", 
+             
+             # 3개의 진단명에서 11, 12을 갖는 obs 중 한번이라도 1-10를 갖지 않는 obs는 모두 '기타'에 포함
+             # "3"은 F/U N 수에 포함되지 않는 excldue group에 대한 index임
+             
+             # cancer_FU_1, cancer_FU_2, cancer_FU_3이 하나라도 1-10을 포함할 경우의 수 == 
+             # 전체 경우의 수 - (cancer_FU_1, cancer_FU_2, cancer_FU_3이 1-10을 포함하지 않을 경우의 수)
+             
+             # 경우의 수 1/3개 
+             cancer_FU6_1 == 11 & cancer_FU6_2 == 11 & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == 11 & cancer_FU6_2 == 11 & cancer_FU6_3 == 12 ~ "3",
+             cancer_FU6_1 == 11 & cancer_FU6_2 == 11 & cancer_FU6_3 == "0" ~ "3",
+             
+             cancer_FU6_1 == 11 & cancer_FU6_2 == 12 & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == 11 & cancer_FU6_2 == 12 & cancer_FU6_3 == 12 ~ "3",
+             cancer_FU6_1 == 11 & cancer_FU6_2 == 12 & cancer_FU6_3 == "0" ~ "3",
+             
+             cancer_FU6_1 == 11 & cancer_FU6_2 == "0" & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == 11 & cancer_FU6_2 == "0" & cancer_FU6_3 == 12 ~ "3",
+             cancer_FU6_1 == 11 & cancer_FU6_2 == "0" & cancer_FU6_3 == "0" ~ "3",
+             
+             # 경우의 수 2/3개 
+             cancer_FU6_1 == 12 & cancer_FU6_2 == 11 & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == 12 & cancer_FU6_2 == 11 & cancer_FU6_3 == 12 ~ "3",
+             cancer_FU6_1 == 12 & cancer_FU6_2 == 11 & cancer_FU6_3 == "0" ~ "3",
+             
+             cancer_FU6_1 == 12 & cancer_FU6_2 == 12 & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == 12 & cancer_FU6_2 == 12 & cancer_FU6_3 == 12 ~ "3",
+             cancer_FU6_1 == 12 & cancer_FU6_2 == 12 & cancer_FU6_3 == "0" ~ "3",
+             
+             cancer_FU6_1 == 12 & cancer_FU6_2 == "0" & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == 12 & cancer_FU6_2 == "0" & cancer_FU6_3 == 12 ~ "3",
+             cancer_FU6_1 == 12 & cancer_FU6_2 == "0" & cancer_FU6_3 == "0" ~ "3",
+             
+             # 경우의 수 3/3개 
+             cancer_FU6_1 == "0" & cancer_FU6_2 == 11 & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == "0" & cancer_FU6_2 == 11 & cancer_FU6_3 == 12 ~ "3",
+             cancer_FU6_1 == "0" & cancer_FU6_2 == 11 & cancer_FU6_3 == "0" ~ "3",
+             
+             cancer_FU6_1 == "0" & cancer_FU6_2 == 12 & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == "0" & cancer_FU6_2 == 12 & cancer_FU6_3 == 12 ~ "3",
+             cancer_FU6_1 == "0" & cancer_FU6_2 == 12 & cancer_FU6_3 == "0" ~ "3",
+             
+             cancer_FU6_1 == "0" & cancer_FU6_2 == "0" & cancer_FU6_3 == 11 ~ "3",
+             cancer_FU6_1 == "0" & cancer_FU6_2 == "0" & cancer_FU6_3 == 12 ~ "3",
+             
+             # 모두 0인 경우는 당연히 0 
+             cancer_FU6_1 == "0" & cancer_FU6_2 == "0" & cancer_FU6_3 == "0" ~ "0",
+             
+             
+             # 위의 경우를 제외하고 11이 아니고 12가 아닌 경우는 1 
+             cancer_FU6_1 != 11 & cancer_FU6_1 != 12 ~ "1",
+             cancer_FU6_2 != 11 & cancer_FU6_2 != 12 ~ "1",
+             cancer_FU6_3 != 11 & cancer_FU6_3 != 12 ~ "1",
+             
+             TRUE ~ "99"
+           )
+  ) %>% 
+  # group_by(cancer_FU6) %>% count() %>% as.data.frame()
+  
+  # BL부터 6th F/U까지 cancer index를 정리할 수 있는 column 하나 만들자. 
+  mutate(cancer_index = 
+           case_when(
+             # 이전 내용 정리 
+             cancer_FU6 == "Baseline case" ~ cancer_FU6,
+             cancer_FU6 == "Exclude case" ~ cancer_FU6,
+             
+             cancer_FU6 == "1st F/U case" ~ cancer_FU6,
+             cancer_FU6 == "1st F/U Exclude case" ~ cancer_FU6, 
+             
+             cancer_FU6 == "2nd F/U case" ~ cancer_FU6,  
+             cancer_FU6 == "2nd F/U Exclude case" ~ cancer_FU6, 
+             
+             cancer_FU6 == "3nd F/U case" ~ cancer_FU6, 
+             cancer_FU6 == "3nd F/U Exclude case" ~ cancer_FU6,
+             
+             cancer_FU6 == "4th F/U case" ~ cancer_FU6, 
+             cancer_FU6 == "4th F/U Exclude case" ~ cancer_FU6,
+             
+             cancer_FU6 == "5th F/U case" ~ cancer_FU6, 
+             cancer_FU6 == "5th F/U Exclude case" ~ cancer_FU6,
+             
+             cancer_FU6 == "1" ~ "6th F/U case", 
+             cancer_FU6 == "3" ~ "6th F/U Exclude case",
+             
              TRUE ~ "Non-case"
            )
   ) %>% 
-  # group_by(cancer_BL_2) %>% count() %>% as.data.frame()
-  
-  mutate(cancer_BL_3= 
-           case_when(
-             
-             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
-             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
-             ## NCB_CA_NA3은 존재하지 않으므로 제외함 
-             
-             grepl("위암", NCB_CA3NA) == TRUE  ~ "1",
-             NCB_CA3NA == "간암" ~ "2",
-             
-             grepl("대장|대장암", NCB_CA3NA) == TRUE  ~ "3",
-             grepl("유방|유방암", NCB_CA3NA) ~ "4",
-             
-             NCB_CA3NA == "자궁경부암"|NCB_CA3NA == "경부암" ~ "5",
-             
-             NCB_CA3NA == "자궁경부상피내암" ~ "5",
-             NCB_CA3NA == "경부상피암" ~ "5",
-             
-             NCB_CA3NA == "자궁경부이행암" ~ "5",
-             NCB_CA3NA == "자궁상피내암"  ~ "5",
-             
-             NCB_CA3NA == "폐암"  ~ "6",
-             
-             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
-             NCB_CA3NA == "갑상선암"|NCB_CA3NA == "갑상선" ~ "7",
-             
-             # 전립선도 전립선암으로 간주하고 진행함.
-             grepl("전립선암|전립선", NCB_CA3NA) == TRUE  ~ "8",
-             
-             # 방광도 방광암으로 간주하고 진행함.
-             NCB_CA3NA == "방광암"|NCB_CA3NA =="방광"  ~ "9",
-             
-             # 암종 구분
-             # grepl("암", NCB_CA3NA) == TRUE ~ NCB_CA3NA,
-             
-             NCB_CA3 == "2" & NCB_CA3NA != "." ~ "11",
-             NCB_CA3 == "2" & NCB_CA3NA == "." ~ "11",
-             TRUE ~ "Non-case"
-           )
-  ) %>% 
-  # group_by(cancer_BL_3) %>% count() %>% as.data.frame()
-    
-  mutate(cancer_BL_type = 
-           case_when (
-             ## 1) 암과거력이 존재하나 '기타'나 NA를 갖는 관측치인 경우 
-             (NCB_CA1 == "2" | NCB_CA == "2") & (cancer_BL_1 == "10"| cancer_BL_1 == "11") ~ "10",
-             ## 2) 암 과거력이 있으면서 기타나 NA를 갖지 않는 경우
-             (NCB_CA1 == "2" | NCB_CA == "2") & is.na(cancer_BL_1) != TRUE ~ cancer_BL_1
-           )
-  ) %>% 
-  # group_by(cancer_BL_type) %>% count()
-  
-  mutate(cancer_BL_type = 
-           case_when (
-             ## 3) (cancer_BL_type == 10 & (NCB_CA2 == "2" | NCB_CA == "2"))일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
-             (cancer_BL_type == 10 & (NCB_CA2 == "2" | NCB_CA == "2")) & (cancer_BL_2 == "10"| cancer_BL_2 == "11") ~ "10",
-             ## 4) (cancer_BL_type == 10 & (NCB_CA2 == "2" | NCB_CA == "2"))일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
-             ## Non-case는 NCB_CA == "2"지만 2차 진단명을 갖지 않는 경우임.
-             ## 발생하는 이유는 NCB_CA와 NCB_CA[1-3]의 중복 진단명 수준이 다르기 때문
-             ## NCB_CA : 진단 여부 + NA1, NA2로 진단명 물음
-             ## NCB_CA[1:3] : 각 진단 여부 + NA[1:3] 각 진단명 물음
-             (cancer_BL_type == 10 & (NCB_CA2 == "2" | NCB_CA == "2")) & is.na(cancer_BL_2) != TRUE ~ cancer_BL_2,
-             
-             # 아래 두 코드를 제외한다면 이 단계에서 추가되는 obs만 볼 수 있음
-             cancer_BL_type == 10 ~ cancer_BL_type,
-             cancer_BL_type != 10 ~ cancer_BL_type
-           )
-  ) %>% 
-  # group_by(cancer_BL_type) %>% count(cancer_BL_type)
-  
-  mutate(cancer_BL_type = 
-           case_when (
-             ## 5) cancer_BL_type == 10 & NCB_CA3 == "2"일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
-             cancer_BL_type == 10 & NCB_CA3 == "2" & (cancer_BL_3 == "10"| cancer_BL_3 == "11") ~ "10",
-             ## 6) (cancer_BL_type == 10 & DS1_CA3 == 2)일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
-             cancer_BL_type == 10 & NCB_CA3 == "2" & is.na(cancer_BL_3) != TRUE ~ cancer_BL_3,
-             
-             # 아래 두 코드를 제외한다면 이 단계에서 추가되는 obs만 볼 수 있음
-             cancer_BL_type == 10 ~ cancer_BL_type,
-             cancer_BL_type != 10 ~ cancer_BL_type
-           )
-  ) %>% 
-  # group_by(cancer_BL_type) %>% count(cancer_BL_type)
-  
-  # cancer_BL_type을 기준으로 cancer_BL 다시 정의
-  mutate(cancer_BL = 
-           case_when(
-             # 암 과거력 여부 파악 : BL_type이 '기타'이거나 '결측치'인 경우나 암 과거력이 없는 경우는 모두 0  
-             cancer_BL_type == 10 | cancer_BL_type == "Non-case" | is.na(cancer_BL_type) == TRUE ~ 0,
-             
-             # 위의 경우를 제외한 모든 경우 : 암 과거력이 존재하며 암 유형이 1-9 수준으로 정의될 때 1
-             is.na(cancer_BL_type) != TRUE ~ 1
-           )
-  ) %>% 
-  # count(cancer_BL)
+  count(cancer_index)
 
-  # 1차 F/U
-  mutate(cancer_FU_1 = 
-           case_when(
-             # 암종 확인
-             # cancer_BL == 0 & NCF1_CA_NA1_1 != "." ~ NCF1_CA_NA1_1,
-             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 == "." ~ "11",
-             
-             
-             # 1) 도시코호트에서 정리된 것처럼 1-9까지 정의해보기
-             ## 순서대로 위암, 간암, 대장암, 유방암, 자궁경부암, 폐암, 갑상선암, 전립선암, 방광암
-             
-             cancer_BL == 0 & grepl("위암", NCF1_CA_NA1_1) == TRUE  ~ "1",
-             cancer_BL == 0 & NCF1_CA_NA1_1 == "간암" ~ "2",
-             
-             cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA1_1) == TRUE  ~ "3",
-             cancer_BL == 0 & grepl("유방$|유방암", NCF1_CA_NA1_1) ~ "4",
-             
-             cancer_BL == 0 & grepl("자궁경부$|경부암", NCF1_CA_NA1_1) ~ "5",
-             
-             cancer_BL == 0 & NCF1_CA_NA1_1 == "폐암"  ~ "6",
-             
-             # 일단, 갑상선도 갑상선암으로 간주하고 진행함.
-             cancer_BL == 0 & NCF1_CA_NA1_1 == "갑상선암"|NCF1_CA_NA1_1 == "갑상선" ~ "7",
-             
-             # 전립선도 전립선암으로 간주하고 진행함.
-             cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA1_1) == TRUE  ~ "8",
-             
-             # 방광도 방광암으로 간주하고 진행함.
-             cancer_BL == 0 & NCF1_CA_NA1_1 == "방광암"|NCF1_CA_NA1_1 =="방광"  ~ "9",
-             
-             cancer_BL == 0 & NCF1_CA == "2" & grepl("암", NCF1_CA_NA1_1) ~ "10",
-             cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA1_1 != "." ~ "11",
-             
-             cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
-             cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
-             cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
-             cancer_BL == 1 ~ "Baseline case"
-           )
-  ) %>% 
-  # group_by(cancer_FU_1) %>% count() %>%  as.data.frame()
   
-  mutate(cancer_FU_2 = 
-           case_when(
-             # 암종 확인 : 단 두 개
-             # cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ NCF1_CA_NA2_1, 
-             # cancer_BL == 0 & NCF1_CA == "2" & NCF1_CA_NA2_1 != "." ~ "11",
-             
-             cancer_BL == 0 & grepl("대장|대장암", NCF1_CA_NA2_1) == TRUE  ~ "3",
-             cancer_BL == 0 & grepl("전립선암|전립선", NCF1_CA_NA2_1) == TRUE  ~ "8",
-             
-             cancer_BL == 0 & NCF1_CA_NA2_1 == "." ~ "Non-case",
-             cancer_BL == 0 & NCF1_CA_NA2_1 == "" ~ "Non-case",
-             cancer_BL == 0 & NCF1_CA_NA2_1 != "." ~ "11",
-             
-             cancer_BL == 0 & NCF1_CA == "1" ~ "Non-case",
-             cancer_BL == 0 & NCF1_CA == "." ~ "Non-case",
-             cancer_BL == 0 & NCF1_CA == "" ~ "Non-case",
-             
-             cancer_BL == 1 ~ "Baseline case"
-             
-           )
-  ) %>% 
-  # group_by(cancer_FU_2) %>% count() %>%  as.data.frame()
-  
-  mutate(cancer_FU_type = 
-           case_when (
-             ## 1) 암과거력이 존재하나 '기타'나 NA를 갖는 관측치인 경우 
-             NCF1_CA == "2" & (cancer_FU_1 == "10"| cancer_FU_1 == "11") ~ "10",
-             ## 2) 암 과거력이 있으면서 기타나 NA를 갖지 않는 경우
-             NCF1_CA == "2" & is.na(cancer_FU_1) != TRUE ~ cancer_FU_1,
-             TRUE ~ cancer_FU_1
-           )
-  ) %>% 
-  # group_by(cancer_FU_type) %>% count()
-  
-  mutate(cancer_FU_type = 
-           case_when (
-             ## 3) (cancer_FU_type == 10 & NCF1_CA == "2")일 때, 기타나 NA를 갖는 관측치인 경우, type을 10으로 고정
-             (cancer_FU_type == 10 & NCF1_CA == "2") & (cancer_FU_2 == "10"| cancer_FU_2 == "11") ~ "10",
-             ## 4) (cancer_FU_type == 10 & NCF1_CA == "2")일 때, 1~9의 관측치를 갖는 경우, 1~9의 값으로 type을 변경 
-             (cancer_FU_type == 10 & NCF1_CA == "2") & is.na(cancer_FU_2) != TRUE ~ cancer_FU_2, 
-             
-             ## 모두 Non-case
-             ## 이 경우는 FU_1에서 '10'을 갖는 obs 중 FU_2 = [1:10]를 갖지 않는 경우임
-             
-             # 아래 두 코드를 제외한다면 이 단계에서 추가되는 obs만 볼 수 있음
-             cancer_FU_type == 10 ~ cancer_FU_type,
-             cancer_FU_type != 10 ~ cancer_FU_type
-           )
-  ) %>% 
-  # group_by(cancer_FU_type) %>% count(cancer_FU_type)
-  
-  mutate(cancer_FU = 
-           case_when(
-             (cancer_FU_1 == 10 | cancer_FU_1 == 11) & (cancer_FU_2 != 10 & cancer_FU_2 != "Non-case" & cancer_FU_2 != "11") ~ "1", 
-             
-             cancer_FU_1 == "Non-case" ~ "0",
-             cancer_FU_1 == "Baseline case" ~ cancer_FU_1,
-             
-             cancer_FU_1 != 10 & cancer_FU_1 != 11 ~ "1",
-             TRUE ~ "0"
-           )
-  ) %>% 
-  group_by(cancer_FU) %>% count()
-
-#### Rural data set에서 '기타' 수준을 갖는 obs 살리기 ####
+#### local dataset에서 모든 진단 횟수와 암종 나타내기 ####
 ```
 
 ```r
