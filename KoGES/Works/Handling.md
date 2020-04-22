@@ -1,12 +1,10 @@
 
-적당한 규모의 KoGES data를 handling할 기회를 얻었다.  
-1. 3개의 cohort를 다루고 있는 KoGES data를 merge하기  
-2. 각 cohort의 follow-up 기간이 다르므로 indexing으로 구분하기  
-
 기타 제외하기로 결정  
 지역 시작함  
 지역 끝  
 cox는 SAS로 돌릴 예정  
+돌리는 중  
+Baseline의 ffq를 기준으로 시행  
 
 
 ```r
