@@ -5,6 +5,7 @@ cox는 SAS로 돌릴 예정
 Baseline의 ffq를 기준으로 시행  
 subtype의 frequency로 추가 진행  
 Dairy + vita D + Ca  
+Compound 선별 작업 중  
 
 ```r
 dir <- "path"
