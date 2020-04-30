@@ -2,7 +2,7 @@
 1페이즈 끝 코드 함수화  
 code 정리해서 파일 새로 만들기  
 Guide 만들기  
- 
+Code 정리   
 LOG  
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
