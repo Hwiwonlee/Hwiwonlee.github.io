@@ -6,6 +6,7 @@ Baseline의 ffq를 기준으로 시행
 subtype의 frequency로 추가 진행  
 Dairy + vita D + Ca  
 Compound 선별 작업 중  
+변수 판단 후 삭제 예정  
 
 ```r
 dir <- "path"
