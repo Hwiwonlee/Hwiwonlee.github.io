@@ -4,7 +4,7 @@ code 정리해서 파일 새로 만들기
 Guide 만들기  
 Code 정리 끝 주석 달아서 최신화  
 Riaz에게 설명  
-Riaz요청대로 그래프 하나 추가
+Riaz요청대로 그래프 하나 추가  
 LOG  
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
@@ -5890,5 +5890,74 @@ data_raw %>%
   merge(general_edu, by = 'TB_num') -> edu_test
   
 kruskal.test(edu ~ Group, edu_test)
+
+```
+
+```r
+LR_5fold <- function(train, test, fold.set, all_metabolites) { 
+  
+  fold_result <- data.frame(matrix(rep(0, length(all_metabolites)*10), length(all_metabolites), 10))
+  
+  colnames(fold_result) <- c("1st fold AUC ", "1st fold test AUC", 
+                             "2nd fold AUC ", "2nd fold test AUC",
+                             "3nd fold AUC ", "3nd fold test AUC",
+                             "4th fold AUC ", "4th fold test AUC",
+                             "5th fold AUC ", "5th fold test AUC")
+  row.names(fold_result) <- all_metabolites
+  
+  # LR_result <- data.frame(matrix(rep(0, 81*3), 81, 3))
+  # colnames(LR_result) <- c("metabolite", "average of AUC in 5f-CV ", "average of AUC in test set")
+  
+  result <- list()
+  
+  #### 하나의 fold 당 81개의 metabolite를 대상으로 한 LR model이 building 되어야 함. 
+  for (i in 1:length(fold.set)) {
+    for (j in 1:length(all_metabolites)) { 
+      
+      #### 하나의 metabolite와 여러 개의 comfounder(sex, age, smoking, alcohol)
+      formula <- as.formula(paste("Group ~ ", 
+                                  # paste0("factor(", "sex)"),
+                                  # paste0("+ factor(", "age)"), 
+                                  paste0("+ factor(", "smoking)"),
+                                  paste0("+ factor(", "alcohol)"),
+                                  "+",  
+                                  # paste0("factor(", all_metabolites[j]), ")" ))
+                                  paste0(all_metabolites[j])))
+      
+      LR_model <- glm(formula = formula, 
+                      data = train[-which(train$set %in% fold.set[[i]]), ],
+                      family = "binomial")
+      
+      # fold 내에서의 prediction 
+      predict_fold <- predict(LR_model, train[which(train$set %in% fold.set[[i]]), ], type = "response")
+      
+      # fold 내에서의 prediction를 이용한 AUC
+      ROC_fold <- ROC(predict_fold, stat = train[which(train$set %in% fold.set[[i]]), ]$Group, 
+                      AUC = TRUE)
+      
+      # fold 내의 model과 test set을 이용한 prediction
+      predict_test <- predict(LR_model, test, type = "response")
+      ROC_test <- ROC(predict_test, stat = test$Group, AUC = TRUE)
+      
+      fold_result[j, c((2*i)-1, (2*i))] <- c(ROC_fold$AUC, ROC_test$AUC)
+      
+      result[2] <- ROC_test
+    }
+  }
+  result[1] <- fold_result
+  # result[2]
+  
+  return(result)
+  
+}
+
+
+
+candidate_test.LR_5fold <- LR_5fold(train = train_obs, 
+                                    test = test_obs, 
+                                    fold.set = fold.set, 
+                                    all_metabolites = candidate_metabolite)
+
+candidate_test.LR_5fold
 
 ```
