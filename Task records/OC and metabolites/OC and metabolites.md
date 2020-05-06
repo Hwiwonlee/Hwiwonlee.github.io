@@ -3,8 +3,8 @@
 code 정리해서 파일 새로 만들기  
 Guide 만들기  
 Code 정리 끝 주석 달아서 최신화  
-Riaz에게 설명  
 Riaz요청대로 그래프 하나 추가  
+당장 달래서 주먹구구식으로 일단 작성  
 LOG  
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
@@ -5941,10 +5941,11 @@ LR_5fold <- function(train, test, fold.set, all_metabolites) {
       
       fold_result[j, c((2*i)-1, (2*i))] <- c(ROC_fold$AUC, ROC_test$AUC)
       
-      result[2] <- ROC_test
+      
     }
+    result[[i+1]] <- ROC_test
   }
-  result[1] <- fold_result
+  result[[1]] <- fold_result
   # result[2]
   
   return(result)
@@ -5953,11 +5954,55 @@ LR_5fold <- function(train, test, fold.set, all_metabolites) {
 
 
 
+candidate_metabolite <- "Decanoylcarnitine"
+
 candidate_test.LR_5fold <- LR_5fold(train = train_obs, 
                                     test = test_obs, 
                                     fold.set = fold.set, 
                                     all_metabolites = candidate_metabolite)
 
-candidate_test.LR_5fold
 
+draw_ROC <- function(LR_5fold_result){
+  
+  cbind(LR_5fold_result[[2]]$res[, 1], LR_5fold_result[[3]]$res[, 1], LR_5fold_result[[4]]$res[, 1], 
+        LR_5fold_result[[5]]$res[, 1], LR_5fold_result[[6]]$res[, 1]) %>% 
+    rowMeans() -> sens
+  
+  cbind(LR_5fold_result[[2]]$res[, 2], LR_5fold_result[[3]]$res[, 2], LR_5fold_result[[4]]$res[, 2], 
+        LR_5fold_result[[5]]$res[, 2], LR_5fold_result[[6]]$res[, 2]) %>% 
+    rowMeans() -> spec
+  
+  cbind(sens, spec) %>% 
+    as_data_frame() -> ROC_data
+  
+  ggplot(data = ROC_data, aes(y = sens, x = 1-spec)) + 
+    geom_path(color = "red", size = 1.2) + theme_bw() + 
+    labs(x="1-Specificity", y="Sensitivity") + geom_abline() -> ROC_plot
+  
+  return(ROC_plot)
+  
+}
+
+cbind(candidate_test.LR_5fold[[2]]$res[, 1], candidate_test.LR_5fold[[3]]$res[, 1], candidate_test.LR_5fold[[4]]$res[, 1], 
+      candidate_test.LR_5fold[[5]]$res[, 1], candidate_test.LR_5fold[[6]]$res[, 1]) %>% 
+  rowMeans() -> x
+
+
+cbind(candidate_test.LR_5fold[[2]]$res[, 2], candidate_test.LR_5fold[[3]]$res[, 2], candidate_test.LR_5fold[[4]]$res[, 2], 
+      candidate_test.LR_5fold[[5]]$res[, 2], candidate_test.LR_5fold[[6]]$res[, 2]) %>% 
+  rowMeans() -> y
+
+cbind(x, y) %>% 
+  as_data_frame() -> ROC_data
+
+plot(ROC_data$x~I(1-ROC_data$y),type="l", add=TRUE)
+
+
+
+ggplot(data = candidate_test.LR_5fold[[2]]$res, aes(y = sens, x = 1-spec)) + 
+  geom_path(color = "red", size = 1.2) + theme_bw() + 
+  labs(x="1-Specificity", y="Sensitivity") + geom_abline()
+
+
+draw_ROC(candidate_test.LR_5fold)
 ```
