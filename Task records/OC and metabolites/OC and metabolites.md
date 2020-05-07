@@ -3,8 +3,7 @@
 code 정리해서 파일 새로 만들기  
 Guide 만들기  
 Code 정리 끝 주석 달아서 최신화  
-Riaz요청대로 그래프 하나 추가  
-당장 달래서 주먹구구식으로 일단 작성  
+ROC + boxplots  
 LOG  
 
 [Function to pass parameter to perform group_by in R](https://stackoverflow.com/questions/55246913/function-to-pass-parameter-to-perform-group-by-in-r)  
