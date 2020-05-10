@@ -7,6 +7,7 @@ subtype의 frequency로 추가 진행
 Dairy + vita D + Ca  
 Compound 선별 작업 중  
 변수 판단 후 삭제 예정  
+SAS code를 R로...?
 
 ```r
 dir <- "path"
