@@ -5,4 +5,16 @@
 
 # Up sampling, Down sampling의 이해 
 
+
+# CART, xgboost, gbm
+## CART
+sisters_cart <- train(age ~ ., method = "rpart"
+, data = training)
+## xgboost
+sisters_rf <- train(age ~ ., method = "xgbLinear"
+, data = training)
+## gbm
+sisters_gbm <- train(age ~ ., method = "gbm"
+, data = training)
+
 ```
