@@ -2,6 +2,8 @@
 # Caret package의 이해
 
 
+# yardstick package의 이해 
+
 
 # Up sampling, Down sampling의 이해 
 
