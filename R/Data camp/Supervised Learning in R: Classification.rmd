@@ -1,13 +1,14 @@
 ```r
 # meaning of cl in knn function
 
-# Load the 'class' package
-# library(class)
+## Load the 'class' package
+## library(class)
 
-# Create a vector of labels
-# sign_types <- signs$sign_type
+## Create a vector of labels
+## sign_types <- signs$sign_type
 
-# Classify the next sign observed
-# knn(train = signs[-1], test = next_sign, cl = sign_types)
+## Classify the next sign observed
+## knn(train = signs[-1], test = next_sign, cl = sign_types)
 
+# naive bayse package에 대한 설명
 ```
