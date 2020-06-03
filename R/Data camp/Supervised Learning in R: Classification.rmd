@@ -14,4 +14,5 @@
 
 
 # rpart package와 의사결정나무 + rpart.plot
+## pruning의 효과 검증하기. 
 ```
