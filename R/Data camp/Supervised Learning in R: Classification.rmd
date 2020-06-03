@@ -13,5 +13,5 @@
 # naive bayse package에 대한 설명
 
 
-# rpart package와 의사결정나무
+# rpart package와 의사결정나무 + rpart.plot
 ```
