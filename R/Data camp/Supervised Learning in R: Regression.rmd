@@ -108,7 +108,7 @@ model.matrix()
 dframe
 
 # Create and print a vector of variable names
-(vars <- names(dframe))
+(vars <- c("color", "size"))
 
 # Load the package vtreat
 library(vtreat)
@@ -128,4 +128,55 @@ treatplan <- designTreatmentsZ(dframe, vars)
 
 # Create the treated training data
 (dframe.treat <- prepare(treatplan, dframe, varRestriction = newvars))
+
+```
+
+Novel levels
+When a level of a categorical variable is rare, sometimes it will fail to show up in training data. If that rare level then appears in future data, downstream models may not know what to do with it. When such novel levels appear, using model.matrix or caret::dummyVars to one-hot-encode will not work correctly.
+
+vtreat is a "safer" alternative to model.matrix for one-hot-encoding, because it can manage novel levels safely. vtreat also manages missing values in the data (both categorical and continuous).
+
+In this exercise you will see how vtreat handles categorical values that did not appear in the training set. The treatment plan treatplan and the set of variables newvars from the previous exercise are still in your workspace. dframe and a new data frame testframe are also in your workspace.
+
+
+Find the right number of trees for a gradient boosting machine
+
+For this exercise, the key arguments to the xgb.cv() call are:
+
+data: a numeric matrix.
+label: vector of outcomes (also numeric).
+nrounds: the maximum number of rounds (trees to build).
+nfold: the number of folds for the cross-validation. 5 is a good number.
+objective: "reg:linear" for continuous outcomes.
+eta: the learning rate.
+max_depth: depth of trees.
+early_stopping_rounds: after this many rounds without improvement, stop.
+verbose: 0 to stay silent.
+```r
+# The July data is in the workspace
+ls()
+
+# Load the package xgboost
+library(xgboost)
+str(bikesJuly)
+# Run xgb.cv
+cv <- xgb.cv(data = as.matrix(bikesJuly.treat), 
+            label = bikesJuly$cnt,
+            nrounds = 100,
+            nfold = 5,
+            objective = "reg:linear",
+            eta = 0.3,
+            max_depth = 6,
+            early_stopping_rounds = 10,
+            verbose = 0    # silent
+)
+
+# Get the evaluation log 
+elog <- cv$evaluation_log
+
+# Determine and print how many trees minimize training and test error
+elog %>% 
+   summarize(ntrees.train = which.min(train_rmse_mean),   # find the index of min(train_rmse_mean)
+             ntrees.test  = which.min(test_rmse_mean))   # find the index of min(test_rmse_mean)
+
 ```
