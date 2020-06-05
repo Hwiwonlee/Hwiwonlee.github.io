@@ -9,5 +9,7 @@ glance(lm_model)
 # Call wrapFTest() on unemployment_model to see the most relevant details
 wrapFTest(lm_model)
 
+# WVPlots Package 
+WVPlots::GainCurvePlot()
 
 ```
