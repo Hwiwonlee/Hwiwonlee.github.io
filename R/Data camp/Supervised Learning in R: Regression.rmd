@@ -66,4 +66,66 @@ model.matrix()
 
 
 # ranger()를 이용한 random forest 
+
+
+
+# one-hot-encoding for categorical data set 
+## guide
+# In this exercise you will use vtreat to one-hot-encode a categorical variable on a small example. vtreat creates a treatment plan to transform categorical variables into indicator variables (coded "lev"), and to clean bad values out of numerical variables (coded "clean").
+# 
+# To design a treatment plan use the function designTreatmentsZ()
+# 
+# treatplan <- designTreatmentsZ(data, varlist)
+# data: the original training data frame
+# varlist: a vector of input variables to be treated (as strings).
+# designTreatmentsZ() returns a list with an element scoreFrame: a data frame that includes the names and types of the new variables:
+#   
+#   scoreFrame <- treatplan %>% 
+#   magrittr::use_series(scoreFrame) %>% 
+#   select(varName, origName, code)
+# varName: the name of the new treated variable
+# origName: the name of the original variable that the treated variable comes from
+# code: the type of the new variable.
+# "clean": a numerical variable with no NAs or NaNs
+# "lev": an indicator variable for a specific level of the original categorical variable.
+# (magrittr::use_series() is an alias for $ that you can use in pipes.)
+# 
+# For these exercises, we want varName where code is either "clean" or "lev":
+#   
+#   newvarlist <- scoreFrame %>% 
+#   filter(code %in% c("clean", "lev") %>%
+#            magrittr::use_series(varName)
+#          To transform the data set into all numerical and one-hot-encoded variables, use prepare():
+#            
+#            data.treat <- prepare(treatplan, data, varRestrictions = newvarlist)
+#          treatplan: the treatment plan
+#          data: the data frame to be treated
+#          varRestrictions: the variables desired in the treated data
+
+
+# vtreat on a small example
+# dframe is in the workspace
+dframe
+
+# Create and print a vector of variable names
+(vars <- names(dframe))
+
+# Load the package vtreat
+library(vtreat)
+
+# Create the treatment plan
+treatplan <- designTreatmentsZ(dframe, vars)
+
+# Examine the scoreFrame
+(scoreFrame <- treatplan %>%
+    use_series(scoreFrame) %>%
+    select(varName, origName, code))
+
+# We only want the rows with codes "clean" or "lev"
+(newvars <- scoreFrame %>%
+    filter(code %in% c("clean", "lev")) %>%
+    use_series(varName))
+
+# Create the treated training data
+(dframe.treat <- prepare(treatplan, dframe, varRestriction = newvars))
 ```
