@@ -1,0 +1,13 @@
+```r
+# 다음 3개의 함수의 차이? 
+# Call summary() on unemployment_model to get more details
+summary(lm_model)
+
+# Call glance() on unemployment_model to see the details in a tidier form
+glance(lm_model)
+
+# Call wrapFTest() on unemployment_model to see the most relevant details
+wrapFTest(lm_model)
+
+
+```
