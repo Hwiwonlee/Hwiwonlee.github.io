@@ -27,12 +27,12 @@ mpg$pred.cv <- 0
 # k is the number of folds
 # splitPlan is the cross validation plan
 for(i in 1:k) {
-  split <- splitPlan[[i]
+  split <- splitPlan[[i]]
   
   # Build a model on the training data 
   # from this split 
   # (lm, in this case)
-  model <- lm(fmla, data = mpg[split$train, ])
+  model <- lm(cty ~ hwy, data = mpg[split$train, ])
   
   # make predictions on the 
   # application data from this split
