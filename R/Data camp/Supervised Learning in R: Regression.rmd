@@ -57,4 +57,10 @@ model.matrix()
 # Recall that the operator : designates the interaction between two variables. 
 # The operator * designates the interaction between the two variables, plus the main effects.
 # x*y = x + y + x:y
+
+
+# Poisson과 quasipoisson
+
+
+# GAM과 s() function 
 ```
