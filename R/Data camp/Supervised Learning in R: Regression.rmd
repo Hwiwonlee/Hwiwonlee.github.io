@@ -14,5 +14,38 @@ WVPlots::GainCurvePlot()
 
 # vtreat Package
 vtreat::kWayCrossValidation()
+# mpg is in the workspace
+summary(mpg)
+
+# splitPlan is in the workspace
+str(splitPlan)
+
+# Run the 3-fold cross validation plan from splitPlan
+k <- 3 # Number of folds
+mpg$pred.cv <- 0 
+
+# k is the number of folds
+# splitPlan is the cross validation plan
+for(i in 1:k) {
+  split <- splitPlan[[i]
+  
+  # Build a model on the training data 
+  # from this split 
+  # (lm, in this case)
+  model <- lm(fmla, data = mpg[split$train, ])
+  
+  # make predictions on the 
+  # application data from this split
+  mpg$pred.cv[split$app] <- predict(model, newdata = mpg[split$app, ])
+}
+
+# Predict from a full model
+mpg$pred <- predict(lm(cty ~ hwy, data = mpg))
+
+# Get the rmse of the full model's predictions
+rmse(mpg$pred, mpg$cty)
+
+# Get the rmse of the cross-validation predictions
+rmse(mpg$pred.cv, mpg$cty)
 
 ```
