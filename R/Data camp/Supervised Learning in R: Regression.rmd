@@ -63,4 +63,7 @@ model.matrix()
 
 
 # GAM과 s() function 
+
+
+# ranger()를 이용한 random forest 
 ```
