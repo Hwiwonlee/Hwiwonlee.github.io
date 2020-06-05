@@ -48,4 +48,8 @@ rmse(mpg$pred, mpg$cty)
 # Get the rmse of the cross-validation predictions
 rmse(mpg$pred.cv, mpg$cty)
 
+
+# model.matrix를 이용한 Examining the structure of categorical inputs.
+model.matrix()
+
 ```
