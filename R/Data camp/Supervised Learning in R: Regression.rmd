@@ -12,4 +12,7 @@ wrapFTest(lm_model)
 # WVPlots Package 
 WVPlots::GainCurvePlot()
 
+# vtreat Package
+vtreat::kWayCrossValidation()
+
 ```
