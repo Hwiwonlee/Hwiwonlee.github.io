@@ -66,3 +66,24 @@ grade_model_opt <- prune(tree = grade_model,
 rpart.plot(x = grade_model_opt, yesno = 2, type = 0, extra = 0)
 
 ```
+Boosted Trees
+- Boosted Tree part에서 GBM 방법을 좀 더 자세히 알아보기
+
+
+Compare all models based on AUC
+- Decision Trees, Bagged Trees, Random Forest and Gradient Boosting Machine (GBM)를 이용한 prediction의 AUC 비교 
+```r
+# Generate the test set AUCs using the two sets of predictions & compare
+actual <- credit_test$default
+dt_auc <- auc(actual = actual, predicted = dt_preds)
+bag_auc <- auc(actual = actual, predicted = bag_preds)
+rf_auc <- auc(actual = actual, predicted = rf_preds)
+gbm_auc <- auc(actual = actual, predicted = gbm_preds)
+
+# Print results
+sprintf("Decision Tree Test AUC: %.3f", dt_auc)
+sprintf("Bagged Trees Test AUC: %.3f", bag_auc)
+sprintf("Random Forest Test AUC: %.3f", rf_auc)
+sprintf("GBM Test AUC: %.3f", gbm_auc)
+
+```
