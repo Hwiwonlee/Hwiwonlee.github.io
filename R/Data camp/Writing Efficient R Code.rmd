@@ -78,3 +78,31 @@ profvis({
 })     ## Remember the closing brackets!
 
 ```
+
+Moving to parApply
+To run code in parallel using the parallel package, the basic workflow has three steps.
+
+1. Create a cluster using makeCluster().
+2. Do some work.
+3. Stop the cluster using stopCluster().
+The simplest way to make a cluster is to pass a number to makeCluster(). This creates a cluster of the default type, running the code on that many cores.
+
+The object dd is a data frame with 10 columns and 100 rows. The following code uses apply() to calculate the column medians:
+
+apply(dd, 2, median)
+To run this in parallel, you swap apply() for parApply(). The arguments to this function are the same, except that it takes a cluster argument before the usual apply() arguments.
+
+```r
+# Determine the number of available cores
+detectCores()
+
+# Create a cluster via makeCluster
+cl <- makeCluster(2)
+
+# Parallelize this code
+parApply(cl, dd, 2, median)
+
+# Stop the cluster
+stopCluster(cl)
+
+```
