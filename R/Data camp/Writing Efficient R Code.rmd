@@ -24,3 +24,57 @@ compare <- microbenchmark(read.csv("movies.csv"),
 print(compare)
 
 ```
+
+Memory allocation
+- R code의 실행 자체를 빠르게 만들 수는 없지만 code를 어떻게 짜느냐에따라 속도가 좌우되기도 한다. 목적과 결과는 같지만 더 빠른 길이 존재한다는 것이다. 
+```r
+n <- 30000
+# Slow code
+growing <- function(n) {
+    x <- NULL
+    for(i in 1:n)
+        x <- c(x, rnorm(1))
+    x
+}
+
+n <- 30000
+# Fast code
+pre_allocate <- function(n) {
+    x <- numeric(n) # Pre-allocate
+    for(i in 1:n) 
+        x[i] <- rnorm(1)
+    x
+}
+
+system.time(res_growing <- growing(n = 30000))
+system.time(res_allocate <- pre_allocate(n = 30000))
+
+
+```
+
+Profiling a function
+- profvis package의 profvis() 알아보기 
+```r
+# Load the data set
+data(movies, package = "ggplot2movies") 
+
+# Load the profvis package
+library(profvis)
+
+# Profile the following code with the profvis function
+profvis({
+  # Load and select data
+  comedies <- movies[movies$Comedy == 1, ]
+
+  # Plot data of interest
+  plot(comedies$year, comedies$rating)
+
+  # Loess regression line
+  model <- loess(rating ~ year, data = comedies)
+  j <- order(comedies$year)
+  
+  # Add fitted line to the plot
+  lines(comedies$year[j], model$fitted[j], col = "red")
+})     ## Remember the closing brackets!
+
+```
