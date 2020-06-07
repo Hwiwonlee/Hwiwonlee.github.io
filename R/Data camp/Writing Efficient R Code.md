@@ -153,3 +153,21 @@ res <- parSapply(cl, 1:100, function(i) play())
 # Stop the cluster
 stopCluster(cl)
 ```
+
+```r
+# Set the number of games to play
+no_of_games <- 1e5
+
+## Time serial version
+system.time(serial <- sapply(1:no_of_games, function(i) play()))
+
+## Set up cluster
+cl <- makeCluster(4)
+clusterExport(cl, "play")
+
+## Time parallel version
+system.time(par <- parSapply(cl, 1:no_of_games, function(i) play()))
+
+## Stop cluster
+stopCluster(cl)
+```
