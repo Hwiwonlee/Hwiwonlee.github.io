@@ -106,3 +106,49 @@ parApply(cl, dd, 2, median)
 stopCluster(cl)
 
 ```
+
+"Using parSapply()
+We previously played the following game:
+
+Initialize: total = 0.
+Roll a single die and add it to total.
+If total is even, reset total to zero.
+If total is greater than 10. The game finishes.
+The game could be simulated using the play() function:
+
+```r
+play <- function() {
+  total <- no_of_rolls <- 0
+  while(total < 10) {
+    total <- total + sample(1:6, 1)
+
+    # If even. Reset to 0
+    if(total %% 2 == 0) total <- 0 
+    no_of_rolls <- no_of_rolls + 1
+  }
+  no_of_rolls
+}
+```
+To simulate the game 100 times, we could use a for loop or sapply():
+
+res <- sapply(1:100, function(i) play())
+This is perfect for running in parallel!
+
+To make functions available on a cluster, you use the clusterExport() function. This takes a cluster and a string naming the function.
+
+clusterExport(cl, "some_function")
+
+```r
+library("parallel")
+# Create a cluster via makeCluster (2 cores)
+cl <- makeCluster(2)
+
+# Export the play() function to the cluster
+clusterExport(cl, "play")
+
+# Re-write sapply as parSapply
+res <- parSapply(cl, 1:100, function(i) play())
+
+# Stop the cluster
+stopCluster(cl)
+```
