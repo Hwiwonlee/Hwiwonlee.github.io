@@ -107,7 +107,7 @@ stopCluster(cl)
 
 ```
 
-"Using parSapply()
+## Using parSapply()  
 We previously played the following game:
 
 Initialize: total = 0.
@@ -130,14 +130,15 @@ play <- function() {
 }
 ```
 To simulate the game 100 times, we could use a for loop or sapply():
-
+```r
 res <- sapply(1:100, function(i) play())
+```
 This is perfect for running in parallel!
 
 To make functions available on a cluster, you use the clusterExport() function. This takes a cluster and a string naming the function.
-
+```r
 clusterExport(cl, "some_function")
-
+```
 ```r
 library("parallel")
 # Create a cluster via makeCluster (2 cores)
