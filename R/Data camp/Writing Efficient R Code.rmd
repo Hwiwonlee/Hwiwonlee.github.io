@@ -1,0 +1,26 @@
+
+Comparing read times of CSV and RDS files using system.time()
+```r
+# How long does it take to read movies from CSV?
+system.time(read.csv("movies.csv"))
+
+# How long does it take to read movies from RDS?
+system.time(readRDS("movies.rds"))
+```
+
+Elapsed time
+- Using system.time() is convenient, but it does have its drawbacks when comparing multiple function calls. The microbenchmark package solves this problem with the microbenchmark() function.
+
+```r
+# Load the microbenchmark package
+library(microbenchmark)
+
+# Compare the two functions
+compare <- microbenchmark(read.csv("movies.csv"), 
+                          readRDS("movies.rds"), 
+                          times = 10)
+
+# Print compare
+print(compare)
+
+```
