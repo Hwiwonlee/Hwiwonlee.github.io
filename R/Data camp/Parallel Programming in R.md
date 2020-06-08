@@ -66,3 +66,30 @@ result <- sapply(
 hist(result)
 
 ```
+
+
+
+```r
+# Function definition of ar1_multiple_blocks_of_trajectories()
+ar1_multiple_blocks_of_trajectories <- function(ids, ...) {
+  # Call ar1_block_of_trajectories() for each ids
+  trajectories_by_block <- lapply(ids, ar1_block_of_trajectories, ...)
+  
+  # rbind results
+  do.call(rbind, trajectories_by_block)
+}
+
+# Create a sequence from 1 to number of blocks
+traj_ids <- seq_len(nrow(ar1est)) # 1:nrow(ar1est)와 같음
+
+# Generate trajectories for all rows of the estimation dataset
+trajs <- ar1_multiple_blocks_of_trajectories(
+  ids = traj_ids, rate0 = 0.015,
+  block_size = 10, traj_len = 15
+)
+
+# Show results
+show_migration(trajs)
+
+
+```
