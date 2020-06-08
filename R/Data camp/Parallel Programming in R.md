@@ -153,7 +153,7 @@ hist(unlist(means))
 
 ### Exploring the cluster object  
 - str(cl) : cl에 대한 structure 확인. socket과 같은 backend setting도 알아두면 좋을 듯.  
--- SOCK은 OS에 상관없이 사용가능하므로 default로 설정되어 있음.  
+  - SOCK은 OS에 상관없이 사용가능하므로 default로 설정되어 있음.  
 - clusterCall : lapply()처럼 object, function으로 사용가능. Sys.getpid로 cluster에 할당된 id를 확인.  
 ```r
 # Load the parallel package
@@ -218,7 +218,7 @@ Not all embarrassingly parallel aplications are suited for parallel processing.
 - How big is a single task (green bar)
 - How much data need to be sent
 - How much gain is there by running it in parallel ⟶ benchmark
--- 아래 예제에서 볼 수 있듯, dataset의 크기가 작고 반복수가 늘어나면 sequential process의 benchmark가 더 좋게 나온다. 
+  - 아래 예제에서 볼 수 있듯, dataset의 크기가 작고 반복수가 늘어나면 sequential process의 benchmark가 더 좋게 나온다. 
 
 ```r
 mean_of_rnorm_sequentially <- function(n_numbers_per_replicate, n_replicates) { 
@@ -259,4 +259,63 @@ microbenchmark(
   times = 1, 
   unit = "s"
 )
+```
+
+### Initialization of nodes
+- Each cluster node starts with an empty environment (no libraries loaded).  
+- Repeated communication with the master is expensive.  
+  - Example:  
+  ```r
+  clusterApply(cl, rep(1000, n), rnorm, sd = 1:1000)
+  ```
+    Master sends a vector of 1:1000 to all n tasks (n can be very large).  
+
+- Good practice: Master initializes workers at the beginning with everything that stays constant or/and is time consuming. Examples:  
+  - sending static data    
+  - loading libraries  
+  - evaluating global functions  
+
+#### Loading package on nodes  
+```r
+# From previous step
+myrdnorm <- function(n, mean = 0, sd = 1) 
+    rdnorm(n, mean = mean, sd = sd)
+n_numbers_per_replicate <- 1000
+n_replicates <- 20
+n <- rep(n_numbers_per_replicate, n_replicates)
+
+# Load extraDistr on master
+library(extraDistr)
+
+# Load extraDistr on all workers
+clusterEvalQ(cl, 
+  library(extraDistr)
+)
+
+# Run myrdnorm in parallel. It should work now!
+res <- clusterApply(cl, n, myrdnorm)
+
+# Plot the result
+plot(table(unlist(res)))
+```
+
+#### Exporting global objects using clusterExport()  
+```r
+# Set global objects on master: mean to 20, sd to 10
+mean <- 20
+sd <- 10
+
+# Load extraDistr on workers
+clusterEvalQ(cl, 
+  library(extraDistr)
+)
+
+# Export global objects to workers
+clusterExport(cl, c("mean", "sd"))
+
+# Run myrdnorm in parallel
+res <- clusterApply(cl, n, myrdnorm)
+
+# Plot the results
+plot(table(unlist(res)))
 ```
