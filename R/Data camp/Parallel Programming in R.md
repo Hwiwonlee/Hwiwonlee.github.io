@@ -206,3 +206,57 @@ clusterCall(cl_fork, print_global_var)
 # Stop the cluster
 stopCluster(cl_fork)
 ```
+
+### The core of parallel  
+#### Parallel vs. Sequential  
+Not all embarrassingly parallel aplications are suited for parallel processing.
+##### Processing overhead:  
+- Starting/stopping cluster
+- Number of messages sent between nodes and master
+- Size of messages (sending big data is expensive)
+##### Things to consider:  
+- How big is a single task (green bar)
+- How much data need to be sent
+- How much gain is there by running it in parallel ⟶ benchmark
+-- 아래 예제에서 볼 수 있듯, dataset의 크기가 작고 반복수가 늘어나면 sequential process의 benchmark가 더 좋게 나온다. 
+
+```r
+mean_of_rnorm_sequentially <- function(n_numbers_per_replicate, n_replicates) { 
+  n <- rep(n_numbers_per_replicate, n_replicates)
+  lapply(n, mean_of_rnorm)
+}
+mean_of_rnorm_in_parallel <- function(n_numbers_per_replicate, n_replicates) { 
+  n <- rep(n_numbers_per_replicate, n_replicates)
+  clusterApply(cl, n, mean_of_rnorm) 
+}
+
+# Set numbers per replicate to 5 million
+n_numbers_per_replicate <- 5000000
+
+# Set number of replicates to 4
+n_replicates <- 4
+
+# Run a microbenchmark
+microbenchmark(
+  # Call mean_of_rnorm_sequentially()
+  mean_of_rnorm_sequentially(n_numbers_per_replicate, n_replicates), 
+  # Call mean_of_rnorm_in_parallel()
+  mean_of_rnorm_in_parallel(n_numbers_per_replicate, n_replicates),
+  times = 1, 
+  unit = "s"
+)
+
+# Change the numbers per replicate to 100
+n_numbers_per_replicate <- 100
+
+# Change number of replicates to 100
+n_replicates <- 100
+
+# Rerun the microbenchmark
+microbenchmark(
+  mean_of_rnorm_sequentially(n_numbers_per_replicate, n_replicates), 
+  mean_of_rnorm_in_parallel(n_numbers_per_replicate, n_replicates),
+  times = 1, 
+  unit = "s"
+)
+```
