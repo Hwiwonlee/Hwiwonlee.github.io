@@ -150,3 +150,59 @@ means <- clusterApply(cl,
 # View results as histogram
 hist(unlist(means))
 ```
+
+### Exploring the cluster object  
+- str(cl) : cl에 대한 structure 확인. socket과 같은 backend setting도 알아두면 좋을 듯.  
+-- SOCK은 OS에 상관없이 사용가능하므로 default로 설정되어 있음.  
+- clusterCall : lapply()처럼 object, function으로 사용가능. Sys.getpid로 cluster에 할당된 id를 확인.  
+```r
+# Load the parallel package
+library(parallel)
+
+# Make a cluster with 4 nodes
+cl <- makeCluster(4)
+
+# Investigate the structure of cl
+str(cl)
+
+# What is the process ID of the workers?
+clusterCall(cl, Sys.getpid)
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+### Socket vs Fork
+- Socket : The socket cluster failed to print a_global_var because Workers in a socket cluster start with an empty environment. Thus, a_global_var was not defined.  
+- Fork : The fork cluster did not update a_global_var after it was updated because Workers in a fork cluster start with a copy of the master environment. After forking, they do not see changes on the master. Thus, a_global_var was not updated.  
+```r
+# type = "PSOCK"
+# A global variable and is defined
+a_global_var <- "before"
+
+# Create a socket cluster with 2 nodes
+cl_sock <- makeCluster(2, type = "PSOCK")
+
+# Evaluate the print function on each node
+clusterCall(cl_sock, print_global_var)
+
+# Stop the cluster
+stopCluster(cl_sock)
+```
+```r
+# type = "FORK"
+# A global variable and is defined
+a_global_var <- "before"
+
+# Create a fork cluster with 2 nodes
+cl_fork <- makeCluster(2, type = "FORK")
+
+# Change the global var to "after"
+a_global_var <- "after"
+
+# Evaluate the print fun on each node again
+clusterCall(cl_fork, print_global_var)
+
+# Stop the cluster
+stopCluster(cl_fork)
+```
