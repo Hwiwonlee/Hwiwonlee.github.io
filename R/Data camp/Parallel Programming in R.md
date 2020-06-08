@@ -70,6 +70,8 @@ hist(result)
 
 
 ```r
+# preloading function : show_migration
+
 # Function definition of ar1_multiple_blocks_of_trajectories()
 ar1_multiple_blocks_of_trajectories <- function(ids, ...) {
   # Call ar1_block_of_trajectories() for each ids
@@ -92,4 +94,59 @@ trajs <- ar1_multiple_blocks_of_trajectories(
 show_migration(trajs)
 
 
+```
+
+
+```r
+# From previous step
+library(parallel)
+ncores <- detectCores(logical = FALSE)
+n <- ncores:1
+
+# Use lapply to call rnorm for each n,
+# setting mean to 10 and sd to 2 
+lapply(n, rnorm, mean = 10, sd = 2)
+
+
+# Using cluster for parallel computing
+# Create a cluster
+cl <- makeCluster(ncores)
+
+# Use clusterApply to call rnorm for each n in parallel,
+# again setting mean to 10 and sd to 2 
+clusterApply(cl, x = ncores:1, fun = rnorm, mean = 10, sd = 2)
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+### Sum in parallel  
+summation을 두 부분으로 나눠서 병렬처리  
+```r
+# Evaluate partial sums in parallel
+part_sums <- clusterApply(cl, x = c(1, 51),
+                    fun = function(x) sum(x:(x + 49)))
+# Total sum
+total <- sum(unlist(part_sums))
+
+# Check for correctness
+total == sum(1:100)
+
+```
+
+### More tasks than workers  
+rnorm()을 이용해, 10000번의 random sampling을 시행한 후 평균을 구하는 mean_of_rnorm를 50번 반복하는 작업을 병렬처리.  
+```r
+# Create a cluster and set parameters
+cl <- makeCluster(2)
+n_replicates <- 50
+n_numbers_per_replicate <- 10000
+
+# Parallel evaluation on n_numbers_per_replicate, n_replicates times
+means <- clusterApply(cl, 
+             x = rep(n_numbers_per_replicate, n_replicates), 
+             fun = mean_of_rnorm)
+                
+# View results as histogram
+hist(unlist(means))
 ```
