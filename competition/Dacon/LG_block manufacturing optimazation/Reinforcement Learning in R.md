@@ -23,10 +23,5 @@ Nicolas Pröllochs
 2. 행동들의 유한한 경우의 수로 이뤄진 집합 (a finite set of agent actions) **_A_**  : 행동집합
 3. 강화의 signal인 scalar(즉, 보상 = reward)의 집합 **_R_** : 보상집합
 
-각각의 반복 _i_에 따라 agent는 상태집합에 속하는 상태를 관측(혹은 **결정**)하고 상태에 따라 정해진 행동을 하게 된다. 반복의 순환이 끝나면  agent는 행동의 결과인 **보상**(reward)를 받는데 이 또한 보상집합에 속한다. 이후 i+1번째의 반복을 시작해 새로운 상태인 s<sub>i+1</sub>를 갖는다.
+각각의 반복 _i_ 에 따라 agent는 상태집합에 속하는 상태(s<sub>i</sub> ∈ **_S_**)를 관측(혹은 **결정**)하고 상태에 따라 정해진 행동(a<sub>i</sub> ∈ **_A_**(s<sub>i</sub>), 이 때, **_A_**(s<sub>i</sub>)⊆ **_A_** 이며 **_A_**(s<sub>i</sub>)는 상태 s<sub>i</sub>에서 가능한 행동으로 정의된다.)을 하게 된다. 반복의 순환이 끝나면 agent는 행동의 결과인 **보상**(reward)를 받는데 이 또한 보상집합에 속한다. 이후 i+1번째의 반복을 시작해 새로운 상태인 s<sub>i+1</sub>를 갖는다.
 
-
-
-At each iteration i, the agent observes some representation of the environment’s state si∈S. On that basis, the agent selects an action ai∈A(si), where A(si)⊆A denotes the set of actions available in state si. After each iteration, the agent receives a numerical reward ri+1∈R and observes a new state si+1.
-
-<sub>말</sub>말<sup>말</sup>
