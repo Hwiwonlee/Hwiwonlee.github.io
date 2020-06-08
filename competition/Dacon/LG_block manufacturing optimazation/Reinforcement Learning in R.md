@@ -25,3 +25,6 @@ Nicolas Pröllochs
 
 각각의 반복 _i_ 에 따라 agent는 상태집합에 속하는 상태(s<sub>i</sub> ∈ **_S_**)를 관측(혹은 **결정**)하고 상태에 따라 정해진 행동(a<sub>i</sub> ∈ **_A_**(s<sub>i</sub>), 이 때, **_A_**(s<sub>i</sub>)⊆ **_A_** 이며 **_A_**(s<sub>i</sub>)는 상태 s<sub>i</sub>에서 가능한 행동으로 정의된다.)을 하게 된다. 반복의 순환이 끝나면 agent는 행동의 결과인 **보상**(reward)를 받는데 이 또한 보상집합에 속한다. 이후 i+1번째의 반복을 시작해 새로운 상태인 s<sub>i+1</sub>를 갖는다.
 
+### Policy learning
+i번째 반복이후의 시점에서 발견한 최적점을 저장해두기 위해, 강화학습에서는 각각의 상태, s<sub>i</sub>에서 가능한 행동 a<sub>i</sub>의 기댓값으로 정의되는 stage-action function **_Q_**(s<sub>i</sub>, a<sub>i</sub>)를 사용한다. 만약 **_Q_**(s<sub>i</sub>, a<sub>i</sub>)를 알고 있다면 max(**_Q_**(s<sub>i</sub>, a<sub>i</sub>))의 상태, s<sub>i</sub>와 행동, a<sub>i</sub>로 구할 수 있는 최적의 policy, **_π_**<sup>*</sup>(s<sub>i</sub>, a<sub>i</sub>)을 찾을 수 있다. 결과적으로 **Agent**의 학습은 optimal policy function **_π_**<sup>*</sup>(s<sub>i</sub>, a<sub>i</sub>)를 학습함으로써 expected reward를 최대화하는 방향으로 진행하는 것이다. 
+
