@@ -322,18 +322,18 @@ plot(table(unlist(res)))
 
 ### Subsetting data
 #### Data chunks
-Each task applied to different data (data chunk)
-Data chunks are passed to workers as follows:
-  1. Random numbers generated on the fly : 난수로 dataset을 chunk로 만드는 방식
+Each task applied to different data (data chunk)  
+Data chunks are passed to workers as follows:  
+  1. Random numbers generated on the fly : 난수로 dataset을 chunk로 만드는 방식  
   ```r 
   myfunc <- function(n, ...) mean(rnorm(n, ...))
   clusterApply(cl, rep(1000, 20), myfunc, sd = 6)
   ```
-  2. Passing chunks of data as argument : chuck를 arg로 전달하는 방식
-    - Dataset is chunked into several blocks on master
-    - Each block passed to worker via an argument
-    - Incorporated into higher level functions (parApply() etc)
-    - If data have larger and larger, then more slow and overload in this way  
+  2. Passing chunks of data as argument : chuck를 arg로 전달하는 방식  
+    - Dataset is chunked into several blocks on master  
+    - Each block passed to worker via an argument  
+    - Incorporated into higher level functions (parApply() etc)  
+    - If data have larger and larger, then more slow and overload in this way    
   ```r
   cl <- makeCluster(4)
   mat <- matrix(rnorm(12), ncol=4)
@@ -350,7 +350,7 @@ Data chunks are passed to workers as follows:
   mult_row <- function(id) apply(M, 2, function(col) sum(M[id,] * col))
   clusterApply(cl, 1:n, mult_row) %>% do.call(rbind, .)
   ```
-  > 2와 3의 차이를 보려면 clusterApply의 x parameter에 선언된 arg를 볼 것.
+  > 2와 3의 차이를 보려면 clusterApply의 x parameter에 선언된 arg를 볼 것.  
 
 #### Passing data as arguments  
 ```r
@@ -384,7 +384,7 @@ trajs <- do.call(rbind, res)
 ```
 
 #### Alternative chunking  
-index를 이용해 chunking이 아닌 병렬 할당해버리는 방식 
+index를 이용해 chunking이 아닌 병렬 할당 방식 
 ```r
 # Split task into 5 chunks
 ind <- splitIndices(nrow(ar1est), 5)
