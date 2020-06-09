@@ -73,7 +73,8 @@ rmse(mpg$pred.cv, mpg$cty)
 
 
 #### model.matrix를 이용한 Examining the structure of categorical inputs.
-model.matrix()
+[model.matrix()](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/model.matrix)  
+[r에서 design matrix 만들기](https://statkclee.github.io/ml/ml-r-design-matrix.html)
 
 
 #### Modeling an interaction
