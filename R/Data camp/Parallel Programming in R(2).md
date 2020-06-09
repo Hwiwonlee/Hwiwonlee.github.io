@@ -1,4 +1,4 @@
-## foreach package
+## foreach, future.apply and Load Balancing
 #### What is foreach for?
 - Developed by Rich Calaway and Steve Weston.
 - Provides a new looping construct for repeated execution.
@@ -173,3 +173,107 @@ microbenchmark(
 plot_parSapply(cl, bias_tasktime, Sys.sleep)
 plot_cluster_applyLB(cl, bias_tasktime, Sys.sleep)
 ```
+
+## Random Numbers and Reproducibility
+#### SOCK vs. FORK
+```r
+cl.fork <- makeCluster(2, type = "FORK")
+cl.sock <- makeCluster(2, type = "SOCK")
+
+# Register the SOCK cluster
+registerDoParallel(cl.sock)
+
+replicate(
+  # Use 2 replicates
+  n = 2, 
+  expr = {
+    # Set the seed to 100
+    set.seed(100)
+    # Run two iterations in parallel, bound by rows
+    foreach(i = 1:2, .combine = rbind) %dopar% rnorm(3)
+  }, 
+  simplify = FALSE
+)
+
+# Change this to register the FORK cluster
+registerDoParallel(cl.fork)
+
+# Run this again and look at the output!
+replicate(
+  n = 2, 
+  expr = {
+    set.seed(100)
+    foreach(i = 1:2, .combine = rbind) %dopar% rnorm(3)
+  }, 
+  simplify = FALSE
+)
+```
+
+### Parallel random number generators
+####
+
+```r
+# Create a cluster
+cl <- makeCluster(2)
+
+# Check RNGkind on workers
+clusterCall(cl, RNGkind) # "Mersenne-Twister" "Inversion"
+
+# Set the RNG seed on workers
+clusterSetRNGStream(cl, iseed = 100)
+
+# Check RNGkind on workers
+clusterCall(cl, RNGkind) # "L'Ecuyer-CMRG" "Inversion"
+
+```
+#### Reproducible results in parallel
+```r
+# The cluster, & how many numbers to generate
+cl <- makeCluster(2)
+n_vec <- c(1000, 1000, 1000, 1000, 1000)
+
+# non-reproductivity
+t(replicate(
+  # Use 3 replicates
+  n = 3,
+  expr = {
+    # Spread across cl, apply mean_of_rnorm() to n_vec
+    clusterApply(cl, n_vec, mean_of_rnorm)
+  }
+))
+
+# Reproductivity
+t(replicate(
+  n = 3,
+  expr = {
+    # Set the cluster's RNG stream seed to 1234
+    clusterSetRNGStream(cl, iseed = 1234)
+    clusterApply(cl, n_vec, mean_of_rnorm)
+  }
+))
+```
+
+#### Non-reproducible results in parallel
+```r
+# Make a cluster of size 2
+cl2 <- makeCluster(2)
+
+# Set the cluster's RNG stream seed to 1234
+clusterSetRNGStream(cl2, iseed = 1234)
+
+# Spread across the cluster, apply mean_of_rnorm() to n_vec
+unlist(clusterApply(cl2, n_vec, mean_of_rnorm))
+
+
+# Make a cluster of size 4
+cl4 <- makeCluster(4)
+
+# Set the cluster's RNG stream seed to 1234
+clusterSetRNGStream(cl4, iseed = 1234)
+
+# Spread across the cluster, apply mean_of_rnorm() to n_vec
+unlist(clusterApply(cl4, n_vec, mean_of_rnorm))
+
+# The first two numbers are the same, but after that they diverge because they are being evaluated on different cores.
+```
+
