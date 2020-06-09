@@ -8,12 +8,32 @@ glance(lm_model)
 
 # Call wrapFTest() on unemployment_model to see the most relevant details
 wrapFTest(lm_model)
+```
 
+## Difference of summary(), glance(), wrapFTest()  
+Purpose of these three function, summary(), glance(), wrapFTest(), is arranging result of some model to more easily understand.  
+```{r}
+model <- lm(cty ~ displ + hwy + drv, data = mpg)
+summary(model)
+glance(model) %>% as.data.frame()
+wrapFTest(model)
+```
+As you have seen, most detailed result is obtained by using summary(). Result of summary() has a lot of things about model. There are range of residual, information of coefficients like estimate, standard deviation, t value, p-value, $R^2$, $AdjustedR^2$, F-value and p-value. But this result is little bit complex to read and understand. Using glance() or wrapFTest(), you can see some information about model even if some information disappear. Especially, glance() focus on the statistical significance of model. So, if you need to 'glance' the model, I will recommand that please use glance().  
+
+#### Usage WVPlots package
+(WVPlots examples)[https://cran.r-project.org/web/packages/WVPlots/vignettes/WVPlots_examples.html]
+
+#### Vignette of vtreat package
+(Vignette of vtreat)[https://cran.r-project.org/web/packages/vtreat/vignettes/vtreat.html]
+```r
 # WVPlots Package 
 WVPlots::GainCurvePlot()
 
 # vtreat Package
 vtreat::kWayCrossValidation()
+```
+
+```r
 # mpg is in the workspace
 summary(mpg)
 
