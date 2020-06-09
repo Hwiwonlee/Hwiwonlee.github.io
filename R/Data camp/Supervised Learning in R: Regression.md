@@ -21,10 +21,10 @@ wrapFTest(model)
 As you have seen, most detailed result is obtained by using summary(). Result of summary() has a lot of things about model. There are range of residual, information of coefficients like estimate, standard deviation, t value, p-value, $R^2$, $AdjustedR^2$, F-value and p-value. But this result is little bit complex to read and understand. Using glance() or wrapFTest(), you can see some information about model even if some information disappear. Especially, glance() focus on the statistical significance of model. So, if you need to 'glance' the model, I will recommand that please use glance().  
 
 #### Usage WVPlots package
-(WVPlots examples)[https://cran.r-project.org/web/packages/WVPlots/vignettes/WVPlots_examples.html]
+[WVPlots examples](https://cran.r-project.org/web/packages/WVPlots/vignettes/WVPlots_examples.html)
 
 #### Vignette of vtreat package
-(Vignette of vtreat)[https://cran.r-project.org/web/packages/vtreat/vignettes/vtreat.html]
+[Vignette of vtreat](https://cran.r-project.org/web/packages/vtreat/vignettes/vtreat.html)
 ```r
 # WVPlots Package 
 WVPlots::GainCurvePlot()
@@ -38,6 +38,8 @@ vtreat::kWayCrossValidation()
 summary(mpg)
 
 # splitPlan is in the workspace
+set.seed(100)
+splitPlan <- vtreat::kWayCrossValidation(nRows = nrow(mpg), nSplits = 3, dframe = NULL, y = NULL)
 str(splitPlan)
 
 # Run the 3-fold cross validation plan from splitPlan
@@ -67,28 +69,29 @@ rmse(mpg$pred, mpg$cty)
 
 # Get the rmse of the cross-validation predictions
 rmse(mpg$pred.cv, mpg$cty)
+```
 
 
-# model.matrix를 이용한 Examining the structure of categorical inputs.
+#### model.matrix를 이용한 Examining the structure of categorical inputs.
 model.matrix()
 
 
-# Modeling an interaction
-# Recall that the operator : designates the interaction between two variables. 
-# The operator * designates the interaction between the two variables, plus the main effects.
-# x*y = x + y + x:y
+#### Modeling an interaction
+Recall that the operator : designates the interaction between two variables.  
+The operator * designates the interaction between the two variables, plus the main effects.  
+`x*y = x + y + x:y`
 
 
-# Poisson과 quasipoisson
+#### Poisson과 quasipoisson
 
 
-# GAM과 s() function 
+#### GAM과 s() function 
 
 
-# ranger()를 이용한 random forest 
+#### ranger()를 이용한 random forest 
 
 
-
+```r
 # one-hot-encoding for categorical data set 
 ## guide
 # In this exercise you will use vtreat to one-hot-encode a categorical variable on a small example. vtreat creates a treatment plan to transform categorical variables into indicator variables (coded "lev"), and to clean bad values out of numerical variables (coded "clean").
