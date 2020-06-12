@@ -144,3 +144,23 @@ svm_model_voters_ar <- train(turnout16_2016 ~ .,
 toc()
 
 ```
+### Hyperparameter tuning with mlr
+mlr package를 이용한 hyperparameter tuning을 보여준다. 사실  mlr package는 ML을 목적으로 만들어진 package라 좀 더 공부해보는 것도 의미있을 것 같다. 흥미로웠던 부분은 mlr이 일련의 work flow를 정의해야만 작동된다는 것이었다. 물론, 다른 패키지나 함수들도 명시적으로 정의되어있진 않지만 work flow라는게 존재하지만 mlr처럼 명확하게 정의하고 있진 않다. work flow가 분명한 mlr package을 쓰는 것 자체가 분석의 과정에 익숙해지는 계기가 될 것 같다.  
+#### Modeling with mlr
+```r
+# Create classification taks
+task <- makeClassifTask(data = knowledge_train_data, 
+                        target = "UNS")
+
+# Call the list of learners
+listLearners() %>%
+ as.data.frame() %>%
+ select(class, short.name, package) %>%
+ filter(grepl("classif.", class))
+
+# Create learner
+lrn <- makeLearner("classif.randomForest", 
+                   predict.type = "prob", 
+                   fix.factors.prediction = TRUE)
+
+```
