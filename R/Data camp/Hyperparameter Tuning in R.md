@@ -164,3 +164,86 @@ lrn <- makeLearner("classif.randomForest",
                    fix.factors.prediction = TRUE)
 
 ```
+
+
+#### Random search with mlr
+낯설어서 그런 것이겠지...? 되게 어려워보이는데?   
+```r
+# Get the parameter set for neural networks of the nnet package
+getParamSet("classif.nnet")
+
+# Define set of parameters
+param_set <- makeParamSet(
+  makeDiscreteParam("size", values = c(2,3,5)),
+  makeNumericParam("decay", lower = 0.0001, upper = 0.1)
+)
+
+# Print parameter set
+print(param_set)
+
+# Define a random search tuning method.
+ctrl_random <- makeTuneControlRandom()
+```
+
+#### Perform hyperparameter tuning with mlr
+```r
+# Define a random search tuning method.
+ctrl_random <- makeTuneControlRandom(maxit = 6)
+
+# Define a 3 x 3 repeated cross-validation scheme
+cross_val <- makeResampleDesc("RepCV", folds = 3 * 3)
+
+# Tune hyperparameters
+tic()
+lrn_tune <- tuneParams(lrn,
+                       task,
+                       resampling = cross_val,
+                       control = ctrl_random, 
+                       par.set = param_set)
+toc()
+```
+
+#### Evaluating hyperparameters with `mlr`
+```r
+# Create holdout sampling
+holdout <- makeResampleDesc("Holdout")
+
+# Perform tuning
+lrn_tune <- tuneParams(learner = lrn, task = task, resampling = holdout, control = ctrl_random, par.set = param_set)
+
+# Generate hyperparameter effect data
+hyperpar_effects <- generateHyperParsEffectData(lrn_tune, partial.dep = TRUE)
+
+# Plot hyperparameter effects
+plotHyperParsEffect(hyperpar_effects, 
+    partial.dep.learn = "regr.glm",
+    x = "minsplit", y = "mmce", z = "maxdepth",
+    plot.type = "line")
+```
+
+### Advanced tuning with `mlr`
+#### Define aggregated measures
+```r
+# Create holdout sampling
+holdout <- makeResampleDesc("Holdout", predict = "both")
+
+# Perform tuning
+lrn_tune <- tuneParams(learner = lrn, 
+                       task = task, 
+                       resampling = holdout, 
+                       control = ctrl_random, 
+                       par.set = param_set,
+                       measures = list(acc, setAggregation(acc, train.mean), mmce, setAggregation(mmce, train.mean)))
+```
+
+#### Setting hyperparameters
+다 좋은데, hyperparameter의 이름을 다 알아야하는건가? lrn에서 따로 조회할 수 있는 방법을 알아보자.  
+```r
+# Set hyperparameters
+lrn_best <- setHyperPars(lrn, par.vals = list(size = 1, 
+                                              maxit = 150, 
+                                              decay = 0))
+
+# Train model
+model_best <- train(lrn_best, task)
+```
