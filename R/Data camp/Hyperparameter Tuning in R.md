@@ -75,3 +75,72 @@ svm_model_voters_grid <- train(turnout16_2016 ~ .,
 toc()
 
 ```
+
+#### Plot hyperparameter model output
+```r
+# Plot default
+plot(svm_model_voters_grid)
+
+# Plot Kappa level-plot
+plot(svm_model_voters_grid, metric = "Kappa", plotType = "level")
+
+```
+
+#### Grid search with range of hyperparameters
+```r
+# Define the grid with hyperparameter ranges
+big_grid <- expand.grid(size = seq(from = 1, to = 5, by = 1), decay = c(0, 1))
+
+# Train control with grid search
+fitControl <- trainControl(method = "repeatedcv", number = 3, repeats = 5, search = "grid")
+
+# Train neural net
+tic()
+set.seed(42)
+nn_model_voters_big_grid <- train(turnout16_2016 ~ ., 
+                   data = voters_train_data, 
+                   method = "nnet", 
+                   trControl = fitControl,
+                   verbose = FALSE,
+                   tuneGrid = big_grid)
+toc()
+```
+
+#### Random search with caret
+```r
+# Train control with random search
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 3,
+                           repeats = 5,
+                           search = "random")
+
+# Test 6 random hyperparameter combinations
+tic()
+nn_model_voters_big_grid <- train(turnout16_2016 ~ ., 
+                   data = voters_train_data, 
+                   method = "nnet", 
+                   trControl = fitControl,
+                   verbose = FALSE,
+                   tuneLength = 6)
+toc()
+```
+
+#### Adaptive Resampling with caret
+```r
+# Define trainControl function
+fitControl <- trainControl(method = "adaptive_cv",
+                           number = 3, repeats = 3,
+                           adaptive = list(min = 3, alpha = 0.05, method = "BT", complete = FALSE),
+                           search = "random")
+
+# Start timer & train model
+tic()
+svm_model_voters_ar <- train(turnout16_2016 ~ ., 
+                   data = voters_train_data, 
+                   method = "nnet", 
+                   trControl = fitControl,
+                   verbose = FALSE,
+                   tuneLength = 6)
+toc()
+
+```
