@@ -27,7 +27,9 @@ fa.diagram(EFA_model)
 ```
 
 #### Interpreting individuals' factor scores
-Factor score란 EFA로 추정된 item-factor의 관계를 토대로 각 observation들이 factor에 대해 갖는 계산된 값이다. 
+Factor score란 EFA로 추정된 item-factor의 관계를 토대로 각 observation들이 factor에 대해 갖는 계산된 값이다. 사실 명확하게 이해가 안돼서 위키피디아의 내용을 인용하겠다.   
+> Factor scores (also called component scores in PCA): are the scores of each case (row) on each factor (column). To compute the factor score for a given case for a given factor, one takes the case's standardized score on each variable, multiplies by the corresponding loadings of the variable for the given factor, and sums these products. Computing factor scores allows one to look for factor outliers. Also, factor scores may be used as variables in subsequent modeling.   
+위키피디아의 내용을 보면 각 factor에 대한 score를 계산할 수 있는 모양이지만 예제는 minimum residual로부터 계산한 MR1의 factor score만을 다루고 있다. 
 ```r
 # Take a look at the first few lines of the response data and their corresponding sum scores
 head(gcbs)
