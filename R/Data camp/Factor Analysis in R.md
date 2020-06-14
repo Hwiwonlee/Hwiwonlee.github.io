@@ -248,3 +248,34 @@ summary(EFA_CFA)$BIC
 # Compare EFA_CFA BIC to the BIC from the CFA based on theory
 summary(theory_CFA)$BIC
 ```
+
+## Refining your measure and/or model  
+### EFA vs. CFA revisited  
+EFA:  
+- Estimates all possible variable/factor relationships  
+- Looking for patterns in the data  
+- Use when you don't have a well-developed theory  
+CFA:  
+- Only specified variable/factor relationships  
+- Testing a theory that you know in advance  
+- This is the right thing to publish!  
+
+```r
+# View the first five rows of the EFA loadings
+EFA_model$loadings[1:5,]
+
+# View the first five loadings from the CFA estimated from the EFA results
+summary(EFA_CFA)$coeff[1:5,]
+
+# Extracting factor scores from the EFA model
+EFA_scores <- EFA_model$scores
+
+# Calculating factor scores by applying the CFA parameters to the EFA dataset
+CFA_scores <- fscores(EFA_CFA, data = bfi_EFA)
+
+# Comparing factor scores from the EFA and CFA results from the bfi_EFA dataset
+plot(density(EFA_scores[,1], na.rm = TRUE), 
+    xlim = c(-3, 3), ylim = c(0, 1), col = "blue")
+lines(density(CFA_scores[,1], na.rm = TRUE), 
+    xlim = c(-3, 3), ylim = c(0, 1), col = "red")
+```
