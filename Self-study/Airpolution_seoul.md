@@ -113,6 +113,8 @@ Measurement_summary %>%
   
   summarise(sum = sum(`dif`)) %>% summarise(total_sum = sum(`sum`)) # 3489
 
-
+register_google(key="API 키", write = TRUE)
+seoul_map <- get_map("seoul", zoom=11, maptype="roadmap")
+ggmap(seoul_map)
 
 ```
