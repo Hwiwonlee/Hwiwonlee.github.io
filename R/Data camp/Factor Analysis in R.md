@@ -255,6 +255,7 @@ EFA:
 - Estimates all possible variable/factor relationships  
 - Looking for patterns in the data  
 - Use when you don't have a well-developed theory  
+  
 CFA:  
 - Only specified variable/factor relationships  
 - Testing a theory that you know in advance  
@@ -278,4 +279,74 @@ plot(density(EFA_scores[,1], na.rm = TRUE),
     xlim = c(-3, 3), ylim = c(0, 1), col = "blue")
 lines(density(CFA_scores[,1], na.rm = TRUE), 
     xlim = c(-3, 3), ylim = c(0, 1), col = "red")
+```
+
+### Adding loadings to improve fit
+Remember:  
+- EFAs estimate all item/factor loadings  
+- CFAs only estimate specified loadings  
+- Poor model fit could be due to excluded loadings  
+
+EFA는 모든 item을 사용하고 CFA는 가설에 속한 item과 factor와의 관계를 이용하기 때문에 특정 item과 factor만 사용한다. 따라서 loading을 추가하는 작업은 CFA에서만 가능하다. 
+```r
+# Add some plausible item/factor loadings to the syntax
+theory_syn_add <- "
+AGE: A1, A2, A3, A4, A5
+CON: C1, C2, C3, C4, C5
+EXT: E1, E2, E3, E4, E5, N4
+NEU: N1, N2, N3, N4, N5, E3
+OPE: O1, O2, O3, O4, O5
+"
+
+# Convert your equations to sem-compatible syntax
+theory_syn2 <- cfa(text = theory_syn_add, reference.indicators = FALSE)
+
+# Run a CFA with the revised syntax
+theory_CFA_add <- sem(model = theory_syn2, data = bfi_CFA)
+
+# Conduct a likelihood ratio test
+anova(theory_CFA, theory_CFA_add)
+
+# Compare the comparative fit indices - higher is better!
+summary(theory_CFA)$CFI
+summary(theory_CFA_add)$CFI
+
+# Compare the RMSEA values - lower is better!
+summary(theory_CFA)$RMSEA
+summary(theory_CFA_add)$RMSEA
+
+# Compare BIC values
+summary(theory_CFA)$BIC
+summary(theory_CFA_add)$BIC
+```
+
+### Improving fit by removing loadings
+
+```r
+# Remove the weakest factor loading from the syntax
+theory_syn_del <- "
+AGE: A1, A2, A3, A4, A5
+CON: C1, C2, C3, C4, C5
+EXT: E1, E2, E3, E4, E5
+NEU: N1, N2, N3, N4, N5
+OPE: O1, O2, O3, O5
+"
+
+# Convert your equations to sem-compatible syntax
+theory_syn3 <- cfa(text = theory_syn_del, reference.indicators = FALSE)
+
+# Run a CFA with the revised syntax
+theory_CFA_del <- sem(model = theory_syn3, data = bfi_CFA)
+
+# Compare the comparative fit indices - higher is better!
+summary(theory_CFA)$CFI
+summary(theory_CFA_del)$CFI
+
+# Compare the RMSEA values - lower is better!
+summary(theory_CFA)$RMSEA
+summary(theory_CFA_del)$RMSEA
+
+# Compare BIC values
+summary(theory_CFA)$BIC
+summary(theory_CFA_del)$BIC
 ```
