@@ -117,3 +117,134 @@ splitHalf(gcbs)
 ```
 크론바흐 알파(Cronbach's alpha) 혹은 tau-equivalent reliability는 단일 실행 신뢰도 계수로 고정된 시간에서 여러 항목에 대한 응답자의 신뢰도를 나타낸다. FA에서 크론바흐 알파는 다양한 항목(item)들이 같은 개념을 측정하는지 확인하고자 하는 목적으로 사용된다. 따라서 높은 alpha는 여러 item(혹은 factor)들이 측정하고자 하는 factor를 일관되게 측정하고 있음을 의미한다. 크론바흐 알파는 factor들끼리 상관관계가 클수록, 그리고  factor별 분산들의 차이가 작을수록 크게 계산되며 이는 크론바흐 알파가 factor들의 측정 일관성을 나타낸다는 점에서 직관적으로 이해할 수 있다. 
 
+## Multidimensional EFA
+### Determining dimensionality
+Factor analysis의 대표적인 예시인 PCA가 reduction dimensionality의 효과가 있는 것처럼 EFA 또한 차원 감소의 목적으로 사용된다. 이론적으로 봐도  PCA, EFA 모두 eigen value & eigen vector를 사용하기 때문에 전개가 거의 비슷하다. 따라서 이 절에서는 eigen value를 구하는 법을 배우는데...정작 eigen value와 eigen vector로 어떻게 차원감소가 이뤄지는지까지는 나오지 않는다. 나중에 따로 정리해봐야겠다. 
+
+```r
+# Establish two sets of indices to split the dataset
+N <- nrow(bfi)
+indices <- seq(1, N)
+indices_EFA <- sample(indices, floor((.5*N)))
+indices_CFA <- indices[!(indices %in% indices_EFA)]
+
+# Use those indices to split the dataset into halves for your EFA and CFA
+bfi_EFA <- bfi[indices_EFA, ]
+bfi_CFA <- bfi[indices_CFA, ]
+
+# Calculate the correlation matrix first
+bfi_EFA_cor <- cor(bfi_EFA, use = "pairwise.complete.obs")
+
+# Then use that correlation matrix to calculate eigenvalues
+eigenvals <- eigen(bfi_EFA_cor)
+
+# Look at the eigenvalues returned
+eigenvals$values
+
+# Calculate the correlation matrix first
+bfi_EFA_cor <- cor(bfi_EFA, use = "pairwise.complete.obs")
+
+# Then use that correlation matrix to create the scree plot
+scree(bfi_EFA_cor, factors = FALSE)
+```
+
+### Understanding multidimensional data
+factor와 item을 혼용해서 사용하는데 명확한 구분이 있는 걸까? loading과 factor score에 대해서도 모호하게 설명하고 넘어가는데 좀 아쉽다. 
+
+```r
+# Run the EFA with six factors (as indicated by your scree plot)
+EFA_model <- fa(bfi_EFA, nfactors = 6)
+
+# View results from the model object
+EFA_model
+
+# Run the EFA with six factors (as indicated by your scree plot)
+EFA_model <- fa(bfi_EFA, nfactors = 6)
+
+# View items' factor loadings
+EFA_model$loadings
+
+# View the first few lines of examinees' factor scores
+head(EFA_model$scores)
+```
+그래도 나중에 설명해준다. 
+An item's loadings represent the amount of information it provides for each factor. Items’ meaningful loadings will be displayed in the output. You’ll notice that many items load onto more than one factor, which means they provide information about multiple factors. This may not be desirable for measure development, so some researchers consider **only** the strongest loading for each item.
+
+Each examinee will have a factor score for each factor, so that the matrix won't include blanks. However, examinees with missing data will receive NA scores on all factors.
+
+## Investigating model fit
+EFA는 absolute fit test과 relative fit test의 두 가지 방법으로 model fitting test를 한다. 두 fit test의 차이점을 쉽게 설명하면, absolute fit test는 model 자체의 fitting test고 relative fit test는 유의한 model에서 optimal number of factors를 결정하기 위한 방법이다.  relative fit test에서 BIC가 되는 걸 보면 AIC와 같은 다른 값들도 사용가능하지 않을까 추측해본다. 
+
+Absolute fit statistics have intrinsic meaning and suggested cutoff values.  
+ 1) Chi-square test : model 자체의 유의성만 판단, N이 커지면 보통 유의하다는 결과를 줌.  
+ 2) Tucker-Lewis Index (TLI) : 0.9보다 크면 well fitting    
+ 3) Root Mean Square Error of Approximation (RMSEA) : 0.05보다 작으면 well fitting   
+Relative fit statistics only have meaning when comparing models.  
+ 1) Bayesian Information Criterion (BIC)  
+
+
+```r
+# Run each theorized EFA on your dataset
+bfi_theory <- fa(bfi_EFA, nfactors = 5)
+bfi_eigen <- fa(bfi_EFA, nfactors = 6)
+
+# Compare the BIC values
+bfi_theory$BIC
+bfi_eigen$BIC
+```
+
+## Confirmatory Factor Analysis
+### Setting up a CFA
+CFA(Confirmatory Factor Analysis)와 EFA의 차이로 factor와 item 사이의 이론적 가설이나 가정의 존재를 말한 적이 있다. CFA는 factor와 item 사이에 밝혀진 이론이나 연구자의 가설이 설정된 상태에서 이뤄지는 분석이다. 따라서 factor와 item 사이의 관계를 먼저 설정하는 것이 첫 단계이다.  
+Benefits of a confirmatory analysis:  
+ 1) Explicitly specified variable/factor relationships
+ 2) Testing a theory that you know in advance
+ 3) This is the right thing to publish when you are developing a new measure!
+
+```r
+# Conduct a five-factor EFA on the EFA half of the dataset
+EFA_model <- fa(bfi_EFA, nfactors = 5)
+
+# Use the wrapper function to create syntax for use with the sem() function
+EFA_syn <- structure.sem(EFA_model)
+
+# Set up syntax specifying which items load onto each factor
+theory_syn_eq <- "
+AGE: A1, A2, A3, A4, A5
+CON: C1, C2, C3, C4, C5
+EXT: E1, E2, E3, E4, E5
+NEU: N1, N2, N3, N4, N5
+OPE: O1, O2, O3, O4, O5
+"
+
+# Feed the syntax in to have variances and covariances automatically added
+theory_syn <- cfa(text = theory_syn_eq, 
+                  reference.indicators = FALSE)
+```
+
+### Understanding the sem() syntax
+```r
+# Use the sem() function to run a CFA
+theory_CFA <- sem(theory_syn, data = bfi_CFA)
+
+# Use the summary function to view fit information and parameter estimates
+summary(theory_CFA)
+```
+
+### Investigating model fit
+```r
+# Set the options to include various fit indices so they will print
+options(fit.indices = c("CFI", "GFI", "RMSEA", "BIC"))
+
+# Use the summary function to view fit information and parameter estimates
+summary(theory_CFA)
+
+# Run a CFA using the EFA syntax you created earlier
+EFA_CFA <- sem(EFA_syn, data = bfi_CFA)
+
+# Locate the BIC in the fit statistics of the summary output
+summary(EFA_CFA)$BIC
+
+# Compare EFA_CFA BIC to the BIC from the CFA based on theory
+summary(theory_CFA)$BIC
+```
