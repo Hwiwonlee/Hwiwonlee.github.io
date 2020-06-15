@@ -1,8 +1,15 @@
 
 
 ```r
+# kaggle page
+# https://www.kaggle.com/bappekim/air-pollution-in-seoul/kernels
+
+library(raster) # 행정구역 구분을 위한 package
 library(tidyverse)
 library(lubridate)
+library(ggmap)
+library(rgdal)
+
 
 # guide : https://googledrive.tidyverse.org/
 # https://rpubs.com/Evan_Jung/rgoogledrive
@@ -113,8 +120,56 @@ Measurement_summary %>%
   
   summarise(sum = sum(`dif`)) %>% summarise(total_sum = sum(`sum`)) # 3489
 
+# google map API 등록
 register_google(key="API 키", write = TRUE)
-seoul_map <- get_map("seoul", zoom=11, maptype="roadmap")
-ggmap(seoul_map)
+
+
+# ggmap을 이용한 관측소 표시
+## ggmap 가이드 
+## https://kuduz.tistory.com/1042
+## https://lovetoken.github.io/r/data_visualization/2016/10/18/ggmap.html
+## https://mrkevinna.github.io/R-%EC%8B%9C%EA%B0%81%ED%99%94-3/
+
+# 목표 : https://www.kaggle.com/bappekim/visualizing-the-location-of-station-using-folium
+ggmap(get_map("seoul", zoom=11, maptype="roadmap")) +
+  # Q. 행정구역을 따로 표시하고 싶은데 어떻게 하지? 
+  # geom_polygon(data=korea[korea$NAME_1 == "Seoul", ], aes(x=long, y=lat, group=group), fill='white', color='black')
+  # overlapping 문제 때문에 polygon을 위쪽으로 옮김
+  geom_polygon(data=seoul_data, aes(x=long, y=lat, group=group), fill='white', color='blue', alpha = 0.5) +
+  geom_point(data = Measurement_station_info, mapping = aes(x = Longitude, y = Latitude),
+             shape = '▼',
+             color = 'Red',
+             size = 4) + # '▼'모양으로 station 위치 표시
+  geom_text(data = Measurement_station_info, aes(x = Longitude, y = Latitude, label = `Station name(district)`),
+            color = 'black',
+            hjust = 0.5,
+            vjust = -1.0,
+            size = 2.5,
+            fontface = 'bold',
+            family = 'NanumGothic') # station의 이름 표시('구'를 기준으로 위치하고 있다) 
+
+
+
+
+# 서울의 행정구역을 표시해보기
+# raster package를 이용해 한국의 행정구역 받기
+korea <- getData('GADM', country='kor', level=2)
+ggplot() + geom_polygon(data=korea[korea$NAME_1 == "Seoul", ], aes(x=long, y=lat, group=group), fill='white', color='black') 
+# 뭉개진 것처럼 나온다. 
+
+# http://www.gisdeveloper.co.kr/?p=2332에서 시군구 geo dataset을 받음. 
+geo_data <- shapefile('.../SIG.shp')
+
+# geo_data[1:25, ] : 서울의 행정구역, 위도랑 경도가 이상한데? 
+ggplot() + geom_polygon(data=geo_data[1:25, ], aes(x=long, y=lat, group=group), fill='white', color='black')
+
+# 위치정보를 표시하는 형식으로 geo_data는 GRS80을 사용하고 있다. 
+# 그러나 우리가 아는 보편적인 위도경도의 형식은 WGS84이므로 
+# GRS80을 WGS84로 변환해줘야 한다. 
+# 참고 : https://m.blog.naver.com/PostView.nhn?blogId=hss2864&logNo=221645854030&proxyReferer=https:%2F%2Fwww.google.com%2F
+seoul_data <- spTransform(geo_data[1:25, ], CRS("+proj=longlat +ellps=WGS84 + datum=WGS84 +no_efs"))
+
+# 제대로 나오는 것을 확인
+ggplot() + geom_polygon(data=seoul_data, aes(x=long, y=lat, group=group), fill='white', color='black')
 
 ```
