@@ -149,7 +149,7 @@ ggplot(tsne_plot, aes(x = tsne_x, y = tsne_y, color = label)) +
   3. Dene a similarity probability distribution ofthe points in the low-dimensional embedding  
   4. Minimize theK-L divergence between the two distributions using gradient descent method  
 
-embedding이라는 단어가 낯설어서 찾아봤더니 의미가 모호하고 그 의미조차 분야마다 다르다. 아마 [wiki]<https://en.wikipedia.org/wiki/Embedding>에서 말하는 것처럼 수리적인 의미로 임베딩이라는 단어를 사용하는 것 같은데, 좌표축을 바꾼다는 의미일까? 
+embedding이라는 단어가 낯설어서 찾아봤더니 의미가 모호하고 그 의미조차 분야마다 다르다. 아마 [wiki](https://en.wikipedia.org/wiki/Embedding)에서 말하는 것처럼 수리적인 의미로 임베딩이라는 단어를 사용하는 것 같은데, 좌표축을 바꾼다는 의미일까? 
 > In mathematics, an embedding (or imbedding[1]) is one instance of some mathematical structure contained within another instance, such as a group that is a subgroup.  
 
 
@@ -169,4 +169,161 @@ ggplot(tsne_plot, aes(x = tsne_x, y = tsne_y, color = digit)) +
 	ggtitle("t-SNE of MNIST sample") + 
 	geom_text(aes(label = digit)) + 
 	theme(legend.position = "none")
+	
+	
+# Inspect the output object's structure
+str(tsne_output)
+
+# Show total costs after each 50th iteration
+tsne_output$itercosts
+
+# Plot the evolution of the KL divergence at each 50th iteration
+plot(tsne_output$itercosts, type = "l")
+
+# Show the K-L divergence of each record after the final iteration
+tsne_output$costs
+
+# Plot the K-L divergence of each record after the final iteration
+plot(tsne_output$costs, type = "l")
+```
+
+### Optimal number of t-SNE iterations
+#### Whatis a hyper-parameter?
+A parameter whose value is not learned from the data and is set beforehand  
+ - Number ofiterations  
+ - Perplexity  
+ - Learning rate  
+Optimization criterium: K-L divergence  
+
+```r
+# Generate a three-dimensional t-SNE embedding without PCA
+set.seed(1234)
+tsne_output <- Rtsne(mnist_sample[, -1], PCA = FALSE, dims = 3)
+
+# Generate a new t-SNE embedding with the same hyper-parameter values
+set.seed(1234)
+tsne_output_new <- Rtsne(mnist_sample[, -1], PCA = FALSE, dims = 3)
+
+# Check if the two outputs are identical
+identical(tsne_output, tsne_output_new)
+
+# Set seed to ensure reproducible results
+set.seed(1234)
+
+# Execute a t-SNE with 2000 iterations
+tsne_output <- Rtsne(mnist_sample[, -1], max_iter = 2000)
+
+# Observe the output costs 
+tsne_output$itercosts
+
+# Get the 50th iteration with the minimum K-L cost
+which.min(tsne_output$itercosts)
+```
+
+
+### Effect of perplexity parameter
+#### What is the perplexity parameter?
+ - Balance attention between local and global aspects ofthe dataset  
+ - A guess about the number of close neighbors  
+ - In a real setting is important to try different values  
+ - Must be lower than the number ofinput records  
+
+```r
+# Set seed to ensure reproducible results
+set.seed(1234)
+
+# Execute a t-SNE with perplexity 5
+tsne_output <- Rtsne(mnist_sample[, -1], max_iter = 1200, perple = 5)
+
+# Observe the returned K-L divergence costs at every 50th iteration
+tsne_output$itercosts
+
+# Set seed to ensure reproducible results
+set.seed(1234)
+
+# Execute a t-SNE with perplexity 20
+tsne_output <- Rtsne(mnist_sample[, -1], max_iter = 1200, perple = 20)
+
+# Observe the returned K-L divergence costs at every 50th iteration
+tsne_output$itercosts
+
+# Set seed to ensure reproducible results
+set.seed(1234)
+
+# Execute a t-SNE with perplexity 50
+tsne_output <- Rtsne(mnist_sample[, -1], max_iter = 1200, perple = 50)
+
+# Observe the returned K-L divergence costs at every 50th iteration
+tsne_output$itercosts
+
+# Observe the K-L divergence costs with perplexity 5 and 50
+tsne_output_5$itercosts
+tsne_output_50$itercosts
+
+# Generate the data frame to visualize the embedding
+tsne_plot_5 <- data.frame(tsne_x = tsne_output_5$Y[, 1], tsne_y = tsne_output_5$Y[, 2], digit = as.factor(mnist_10k$label))
+tsne_plot_50 <- data.frame(tsne_x = tsne_output_50$Y[, 1], tsne_y = tsne_output_50$Y[, 2], digit = as.factor(mnist_10k$label))
+
+# Plot the obtained embeddings
+ggplot(tsne_plot_5, aes(x = tsne_x, y = tsne_y, color = digit)) + 
+	ggtitle("MNIST t-SNE with 1300 iter and Perplexity=5") + geom_text(aes(label = digit)) + 
+	theme(legend.position="none")
+ggplot(tsne_plot_50, aes(x = tsne_x, y = tsne_y, color = digit)) + 
+	ggtitle("MNIST t-SNE with 1300 iter and Perplexity=50") + geom_text(aes(label = digit)) + 
+	theme(legend.position="none")
+```
+
+### Classifying digits with t-SNE
+```r
+# Prepare the data.frame
+tsne_plot <- data.frame(tsne_x = tsne$Y[1:5000, 1], 
+                        tsne_y = tsne$Y[1:5000, 2], 
+                        digit = as.factor(mnist_10k[1:5000, ]$label))
+
+# Plot the obtained embedding
+ggplot(tsne_plot, aes(x = tsne_x, y = tsne_y, color = digit)) + 
+	ggtitle("MNIST embedding of the first 5K digits") + 
+	geom_text(aes(label = digit)) + 
+	theme(legend.position="none")
+	
+# Get the first 5K records and set the column names
+dt_prototypes <- as.data.table(tsne$Y[1:5000,])
+setnames(dt_prototypes, c("X","Y"))
+
+# Paste the label column as factor
+dt_prototypes[, label := as.factor(mnist_10k[1:5000,]$label)]
+
+# Compute the centroids per label
+dt_prototypes[, mean_X := mean(X), by = label]
+dt_prototypes[, mean_Y := mean(Y), by = label]
+
+# Get the unique records per label
+dt_prototypes <- unique(dt_prototypes, by = "label")
+dt_prototypes
+
+# Store the last 5000 records in distances and set column names
+distances <- as.data.table(tsne$Y[5001:10000, ])
+setnames(distances, c("X","Y"))
+
+# Paste the true label
+distances[, label := mnist_10k[5001:10000,]$label]
+
+# Filter only those labels that are 1 or 0 
+distances_filtered <- distances[label == 1 | label == 0]
+
+# Compute Euclidean distance to prototype of digit 1
+distances_filtered[, dist_1 := sqrt( (X - dt_prototypes[label == 1,]$mean_X)^2 + 
+                             (Y - dt_prototypes[label == 1,]$mean_Y)^2)]
+			     
+# Compute the basic statistics of distances from records of class 1
+summary(distances[label == 1]$dist_1)
+
+# Compute the basic statistics of distances from records of class 0
+summary(distances[label == 0]$dist_1)
+
+# Plot the histogram of distances of each class
+ggplot(distances, aes(x = dist_1, fill = as.factor(label))) +
+  	geom_histogram(binwidth = 5, alpha = .5, position = "identity", show.legend = FALSE) + 
+  	ggtitle("Distribution of Euclidean distance 1 vs 0")
+
 ```
