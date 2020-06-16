@@ -134,3 +134,39 @@ ggplot(tsne_plot, aes(x = tsne_x, y = tsne_y, color = label)) +
 	geom_text(aes(label = label)) + 
 	theme(legend.position = "none")
 ```
+
+## Introduction to t-SNE
+### Building a t-SNE embedding
+#### Introduction to t-SNE
+  - Published by Van der Maaten & Hinton in 2008  
+  - Non-linear dimensionality reduction technique  
+  - Works well for most ofthe problems and is a very good method for visualizing high dimensional datasets  
+  - Rather than keeping dissimilar points apart (like PCA) it keeps the low-dimensional representation of similar points together  
+  
+#### t-SNE method
+  1. Use PCA to reduce the input dimensions into a small number  
+  2. Construct a probability distribution over pairs of original high dimensional records  
+  3. Dene a similarity probability distribution ofthe points in the low-dimensional embedding  
+  4. Minimize theK-L divergence between the two distributions using gradient descent method  
+
+embedding이라는 단어가 낯설어서 찾아봤더니 의미가 모호하고 그 의미조차 분야마다 다르다. 아마 [wiki]<https://en.wikipedia.org/wiki/Embedding>에서 말하는 것처럼 수리적인 의미로 임베딩이라는 단어를 사용하는 것 같은데, 좌표축을 바꾼다는 의미일까? 
+> In mathematics, an embedding (or imbedding[1]) is one instance of some mathematical structure contained within another instance, such as a group that is a subgroup.  
+
+
+```r
+# Compute t-SNE without doing the PCA step
+tsne_output <- Rtsne(mnist_sample[,-1], PCA = FALSE, dims = 3)
+
+# Show the obtained embedding coordinates
+head(tsne_output$Y)
+
+# Store the first two coordinates and plot them 
+tsne_plot <- data.frame(tsne_x = tsne_output$Y[, 1], tsne_y = tsne_output$Y[, 2], 
+                        digit = as.factor(mnist_sample$label))
+
+# Plot the coordinates
+ggplot(tsne_plot, aes(x = tsne_x, y = tsne_y, color = digit)) + 
+	ggtitle("t-SNE of MNIST sample") + 
+	geom_text(aes(label = digit)) + 
+	theme(legend.position = "none")
+```
