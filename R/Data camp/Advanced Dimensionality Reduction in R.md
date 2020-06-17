@@ -449,4 +449,174 @@ head(layer_128_train[, 119:128])
 
 # Generate a summary of all columns
 summary(layer_128_train)
+
+# Set the seed
+set.seed(1234)
+
+# Generate the t-SNE
+tsne_output <- Rtsne(as.matrix(layer_128_train), check_duplicates = FALSE,
+                     max_iter = 400, perp = 50)
+tsne_output
+# Prepare data.frame
+tsne_plot <- data.frame(tsne_x = tsne_output$Y[, 1], tsne_y = tsne_output$Y[, 2], 
+                        Class = creditcard_train$Class)
+
+# Plot the data 
+ggplot(tsne_plot, aes(x = tsne_x, y = tsne_y, color = Class)) + 
+	geom_point() + 
+	ggtitle("Credit card embedding of Last Neural Network Layer")
+```
+
+
+## Generalized Low Rank Models (GLRM)
+### Exploring fashion MNIST dataset
+
+```r
+# Show the dimensions
+dim(fashion_mnist)
+
+# Create a summary of the last six columns 
+summary(fashion_mnist[, 780:785])
+
+# Table with the class distribution
+table(fashion_mnist$label)
+
+# Get the data from the last image
+plot_data <- cbind(xy_axis, fill = as.data.frame(t(fashion_mnist[500, -1]))[,1])
+
+# Observe the first records
+head(plot_data)
+
+# Plot the image using ggplot()
+ggplot(plot_data, aes(x, y, fill = fill)) + 
+  ggtitle(class_names[as.integer(fashion_mnist[500, 1])]) + 
+  plot_theme 
+  
+### plot_theme
+plot_theme <- list(
+raster = geom_raster(hjust = 0, vjust = 0),
+gradient_fill = scale_fill_gradient(low = "white",
+high = "black", guide = FALSE),
+theme = theme(axis.line = element_blank(),
+axis.text = element_blank(),
+axis.ticks = element_blank(),
+axis.title = element_blank(),
+panel.background = element_blank(),
+panel.border = element_blank(),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(),
+plot.background = element_blank())
+)
+```
+
+### Generalized Low Rank Models (GLRM)
+
+```r
+# Start a connection with the h2o cluster
+h2o.init()
+
+# Store the data into h2o cluster
+fashion_mnist.hex <- as.h2o(fashion_mnist, "fashion_mnist.hex")
+
+# Launch a GLRM model over fashion_mnist data
+model_glrm <- h2o.glrm(training_frame = fashion_mnist.hex,
+                       cols = 2:ncol(fashion_mnist), 
+                       k = 2,
+                       seed = 123,
+                       max_iterations = 100)
+
+# Plotting the convergence
+plot(model_glrm)
+
+# Start a connection with the h2o cluster
+h2o.init()
+
+# Store the data into h2o cluster
+fashion_mnist.hex <- as.h2o(fashion_mnist, "fashion_mnist.hex")
+
+# Launch a GLRM model with normalized fashion_mnist data  
+model_glrm <- h2o.glrm(training_frame = fashion_mnist.hex, transform = "NORMALIZE",
+                       cols = 2:ncol(fashion_mnist), 
+                       k = 2, 
+                       seed = 123,
+                       max_iterations = 100)
+
+# Plotting the convergence
+plot(model_glrm)
+```
+
+### Visualizing a GLRM model
+
+```r
+# Dimension of X_matrix
+dim(X_matrix)
+
+# First records of X_matrix
+head(X_matrix)
+
+# Plot the records in the new two dimensional space
+ggplot(as.data.table(X_matrix), aes(x= Arch1, y = Arch2, color = fashion_mnist$label)) + 
+	ggtitle("Fashion Mnist GLRM Archetypes") + 
+	geom_text(aes(label = fashion_mnist$label)) + 
+	theme(legend.position="none")
+	
+# Store the label of each record and compute the centroids
+X_matrix[, label := as.numeric(fashion_mnist$label)]
+X_matrix[, mean_x := mean(Arch1), by = label]
+X_matrix[, mean_y := mean(Arch2), by = label]
+
+# Get one record per label and create a vector with class names
+X_mean <- unique(X_matrix, by = "label")
+label_names <- c("T-shirt/top", "Trouser", "Pullover", "Dress", "Coat", "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot")
+
+# Plot the centroids
+ggplot(X_mean, aes(x = mean_x, y = mean_y, color = as.factor(label))) + 
+	ggtitle("Fashion Mnist GLRM class centroids") + 
+	geom_text(aes(label = label_names[label])) +
+	theme(legend.position = "none")
+```
+
+### Dealing with missing data and speeding-up models
+```r
+# Store the input data in h2o
+fashion_mnist_miss.hex <- as.h2o(fashion_mnist_miss, "fashion_mnist_miss.hex")
+
+# Build a GLRM model
+model_glrm <- h2o.glrm(training_frame = fashion_mnist_miss.hex,
+                       transform = "NORMALIZE",
+                       k = 2,
+                       max_iterations = 100)
+
+# Impute missing values
+fashion_pred <- h2o.predict(model_glrm, fashion_mnist_miss.hex)
+
+# Observe the statistics of the first 5 pixels
+summary(fashion_pred[, 1:5])
+
+# Get the starting timestamp
+time_start <- proc.time()
+
+# Train the random forest
+rf_model <- randomForest(x = fashion_mnist[, -1], y = fashion_mnist$label, ntree = 20)
+
+# Get the end timestamp
+time_end <- timetaken(time_start)
+
+# Show the error and the time
+rf_model$err.rate[20]
+time_end
+
+# Get the starting timestamp
+time_start <- proc.time()
+
+# Train the random forest
+rf_model <- randomForest(x = train_x, y = train_y, ntree = 500)
+
+# Get the end timestamp
+time_end <- timetaken(time_start)
+
+# Show the error and the time
+rf_model$err.rate[500]
+time_end
+
 ```
