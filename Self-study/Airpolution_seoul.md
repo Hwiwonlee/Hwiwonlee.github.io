@@ -246,23 +246,47 @@ seoul_map <- function(dataset, Measurement_item_info, Measurement_station_info, 
     mutate_at(vars(matches(item)), funs(Color = Color(dataset[, item], Measurement_item_info, item))) %>% 
     dplyr::filter(`Measurement date` == ymd_hms(ymd_hms)) -> dataset
     
-  map <- ggmap(get_map("seoul", zoom=11, maptype="roadmap")) +
-    geom_polygon(data=seoul_data, aes(x=long, y=lat, group=group), fill='white', color='blue', alpha = 0.5) +
+  Measurement_station_info <- Measurement_station_info %>%
+    mutate(`Station name(district, 한글)` = c("종로구", "중구", "용산구", "은평구", "서대문구", "마포구", "성동구", "광진구", "동대문구",
+                                            "중랑구", "성북구", "강북구", "도봉구", "노원구", "양천구", "강서구", "구로구", "금천구",
+                                            "영등포구", "동작구", "관악구", "서초구", "강남구", "송파구", "강동구"))
+  
+  title <- paste0(ymd_hms," ", item, " 상황")
+  
+  map <- ggmap(seoul_roadmap) +
+    geom_polygon(data=seoul_data, aes(x=long, y=lat, group = group), fill='white', color='blue', alpha = 0.5) +
     geom_point(data = dataset, mapping = aes(x = Longitude, y = Latitude),
                shape = '▼',
                color = dataset$Color,
-               size = 10) + # '▼'모양으로 station 위치 표시
-    geom_text(data = Measurement_station_info, aes(x = Longitude, y = Latitude, label = `Station name(district)`),
+               size = 25) + # '▼'모양으로 station 위치 표시
+    geom_text(data = Measurement_station_info, aes(x = Longitude, y = Latitude, label = `Station name(district, 한글)`),
               color = 'black',
               hjust = 0.5,
-              vjust = -1.8,
-              size = 3,
+              vjust = -1.3,
+              size = 8,
               fontface = 'bold',
-              family = 'NanumGothic') # station의 이름 표시('구'를 기준으로 위치하고 있다)
+              family = 'NanumGothic') +  # station의 이름 표시('구'를 기준으로 위치하고 있다) 
+    ggtitle(title) + 
+    theme(plot.title = element_text(family = "NanumGothic", face = "bold", size = 20))
   
   return(map)
 }
 
 
-seoul_map(Measurement_summary, Measurement_item_info, Measurement_station_info, seoul_data, item = "PM10", "2019-03-25 13:00:00")
+seoul_map(Measurement_summary, Measurement_item_info, Measurement_station_info, seoul_data, item = "PM10", "2018-03-13 13:00:00")
+
+item <- "PM10"
+Measurement_summary %>% 
+  mutate_at(vars(matches(item)), funs(Color = Color(Measurement_summary[, item], Measurement_item_info, item))) %>% 
+  dplyr::filter(`Measurement date` == ymd_hms("2019-03-13 13:00:00")) -> test
+
+
+
+for(i in 1:6) { 
+  for(j in 0:23) { 
+    a <- paste0("2018-03-1", i," ", ifelse(j < 10, paste0("0", j), j), ":00:00")
+    seoul_map(Measurement_summary, Measurement_item_info, Measurement_station_info, seoul_data, item = "PM10", a)
+    ggsave(file=paste0("2018-03-1", i," " ,j, "_", "PM10", ".jpg")) # width, height, units
+    }
+  }
 ```
