@@ -194,14 +194,13 @@ Measurement_item_info
 Measurement_summary[, c("SO2", "NO2", "O3", "CO", "PM10", "PM2.5")]
 
 
+# 각 factor에 따라 공기오염도의 기준을 불러오는 함수
 get_criteria <- function(Measurement_item_info, item) { 
   criteria <- Measurement_item_info[Measurement_item_info[, "Item name"] == item, 4:7]
   return(criteria)
 }
 
-### test 
-# get_criteria(Measurement_item_info, "PM10")[1]
-
+# 공기오염도의 기준에 따라 색깔을 지정해주는 함수
 Color <- function(dataset, Measurement_item_info, item){ 
   polution_factor <- names(dataset)[grepl("[0-9]$|O$", item)]
   get_criteria <- get_criteria(Measurement_item_info, item)
@@ -214,15 +213,9 @@ Color <- function(dataset, Measurement_item_info, item){
   return(a)
 }
 
-### test
-# Color(Measurement_summary, Measurement_item_info, "PM10")
+seoul_roadmap <- get_map("seoul", zoom=11, maptype="roadmap")
 
-Measurement_summary %>% 
-  mutate_at(vars(matches(item)), funs(Color = Color(Measurement_summary[, item], Measurement_item_info, item))) %>% 
-  dplyr::filter(`Measurement date` == ymd_hms("2017-01-01 00:00:00")) -> test
-  # select(matches("Color")) %>% count(Color[,"SO2"]) # mutate까지 확인
-
-
+# 지도를 그려주는 함수
 seoul_map <- function(dataset, Measurement_item_info, Measurement_station_info, seoul_data, item, ymd_hms){ 
   
   get_criteria <- function(Measurement_item_info, item) { 
@@ -272,21 +265,15 @@ seoul_map <- function(dataset, Measurement_item_info, Measurement_station_info, 
   return(map)
 }
 
-
-seoul_map(Measurement_summary, Measurement_item_info, Measurement_station_info, seoul_data, item = "PM10", "2018-03-13 13:00:00")
-
-item <- "PM10"
-Measurement_summary %>% 
-  mutate_at(vars(matches(item)), funs(Color = Color(Measurement_summary[, item], Measurement_item_info, item))) %>% 
-  dplyr::filter(`Measurement date` == ymd_hms("2019-03-13 13:00:00")) -> test
-
-
-
-for(i in 1:6) { 
-  for(j in 0:23) { 
-    a <- paste0("2018-03-1", i," ", ifelse(j < 10, paste0("0", j), j), ":00:00")
+# per hour의 기준으로 지도를 반복해서 그려주는 함수
+generate_png_per_hour <- function(from, to) { 
+  time <- seq.POSIXt(from = as.POSIXct(from), to = as.POSIXct(to), by = "hour")
+  time <- time[-length(time)]
+  
+  for( i in 1:length(time)){ 
+    a <- format(time[i], '%Y-%m-%d %H:%M:%S')
     seoul_map(Measurement_summary, Measurement_item_info, Measurement_station_info, seoul_data, item = "PM10", a)
-    ggsave(file=paste0("2018-03-1", i," " ,j, "_", "PM10", ".jpg")) # width, height, units
-    }
+    ggsave(file=paste0(format(time[i], '%Y-%m-%d'), "_", i, "_PM10", ".png"))
   }
+}
 ```
