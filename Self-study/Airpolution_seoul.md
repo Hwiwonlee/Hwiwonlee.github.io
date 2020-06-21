@@ -277,3 +277,8 @@ generate_png_per_hour <- function(from, to) {
   }
 }
 ```
+
+```r
+##### 2. EDA ####
+# https://www.kaggle.com/mateuscco/air-pollution-in-seoul-eda-with-maps
+```
