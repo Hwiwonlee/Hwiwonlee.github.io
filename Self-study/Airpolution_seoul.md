@@ -369,4 +369,63 @@ Measurement_info %>%
   geom_bar(stat = "identity") + 
   coord_flip() + 
   facet_wrap(facets = `Station code` ~., ncol = 5) 
+  
+# 1. 
+Measurement_item_info
+Measurement_station_info$`Station name(district)`
+Measurement_info %>% 
+  mutate(`Station code` = 
+           case_when(
+             `Station code` == 101 ~ Measurement_station_info$`Station name(district)`[1], 
+             `Station code` == 102 ~ Measurement_station_info$`Station name(district)`[2], 
+             `Station code` == 103 ~ Measurement_station_info$`Station name(district)`[3], 
+             `Station code` == 104 ~ Measurement_station_info$`Station name(district)`[4], 
+             `Station code` == 105 ~ Measurement_station_info$`Station name(district)`[5], 
+             `Station code` == 106 ~ Measurement_station_info$`Station name(district)`[6], 
+             `Station code` == 107 ~ Measurement_station_info$`Station name(district)`[7], 
+             `Station code` == 108 ~ Measurement_station_info$`Station name(district)`[8], 
+             `Station code` == 109 ~ Measurement_station_info$`Station name(district)`[9], 
+             `Station code` == 110 ~ Measurement_station_info$`Station name(district)`[10], 
+             `Station code` == 111 ~ Measurement_station_info$`Station name(district)`[11], 
+             `Station code` == 112 ~ Measurement_station_info$`Station name(district)`[12], 
+             `Station code` == 113 ~ Measurement_station_info$`Station name(district)`[13], 
+             `Station code` == 114 ~ Measurement_station_info$`Station name(district)`[14], 
+             `Station code` == 115 ~ Measurement_station_info$`Station name(district)`[15], 
+             `Station code` == 116 ~ Measurement_station_info$`Station name(district)`[16], 
+             `Station code` == 117 ~ Measurement_station_info$`Station name(district)`[17], 
+             `Station code` == 118 ~ Measurement_station_info$`Station name(district)`[18], 
+             `Station code` == 119 ~ Measurement_station_info$`Station name(district)`[19], 
+             `Station code` == 120 ~ Measurement_station_info$`Station name(district)`[20], 
+             `Station code` == 121 ~ Measurement_station_info$`Station name(district)`[21], 
+             `Station code` == 122 ~ Measurement_station_info$`Station name(district)`[22], 
+             `Station code` == 123 ~ Measurement_station_info$`Station name(district)`[23], 
+             `Station code` == 124 ~ Measurement_station_info$`Station name(district)`[24], 
+             `Station code` == 125 ~ Measurement_station_info$`Station name(district)`[25]
+           )
+  ) %>% 
+  mutate(`Instrument status` = 
+           case_when(
+             `Instrument status` == 0 ~ "Normal", 
+             `Instrument status` == 1 ~ "Need for calibration", 
+             `Instrument status` == 2 ~ "Abnormal", 
+             `Instrument status` == 4 ~ "Power cut off", 
+             `Instrument status` == 8 ~ "Under repair", 
+             `Instrument status` == 9 ~ "abnormal data", 
+           )
+  ) %>% 
+  mutate(`Item code` = 
+           case_when(
+             `Item code` == 1 ~ "SO2", 
+             `Item code` == 3 ~ "NO2", 
+             `Item code` == 5 ~ "CO", 
+             `Item code` == 6 ~ "O3", 
+             `Item code` == 8 ~ "PM10",
+             `Item code` == 9 ~ "PM2.5"
+           )
+  ) %>% 
+  mutate(`Year` = year(`Measurement date`)) %>% 
+  mutate(`Month` = month(`Measurement date`)) %>%
+  mutate(`Day` = day(`Measurement date`)) %>% 
+  mutate(`Hour` = hour(`Measurement date`)) %>% 
+  gather(key = "key", value = "value", -c(`Measurement date`, `Station code`))
 ```
