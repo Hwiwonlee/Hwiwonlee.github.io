@@ -279,6 +279,94 @@ generate_png_per_hour <- function(from, to) {
 ```
 
 ```r
-##### 2. EDA ####
+#### TASK 2. EDA(Explanatory Data Analysis) ####
 # https://www.kaggle.com/mateuscco/air-pollution-in-seoul-eda-with-maps
+Measurement_summary
+Measurement_info
+Measurement_station_info
+
+Measurement_summary %>% 
+  dplyr::filter(grepl("2017", `Measurement date`)) %>% dim() # 219000     11
+
+Measurement_summary %>% 
+  dplyr::filter(grepl("2018", `Measurement date`)) %>% dim() # 219000     11
+
+Measurement_summary %>% 
+  dplyr::filter(grepl("2019", `Measurement date`)) %>% dim() # 209511(-9489)     11
+
+# 1. 2019년에 각 station별로 빠진 날짜와 시간 살펴보기
+
+length(seq.POSIXt(from = as.POSIXct("2019-01-01"), to = as.POSIXct("2020-01-01"), by = "hour")[-1]) * 25
+
+time_index <- seq.POSIXt(from = as.POSIXlt("2019-01-01", tz = "UTC"), to = as.POSIXlt("2020-01-01", tz = "UTC"), by = "hour")[-8761]
+time_2019 <- Measurement_summary$`Measurement date`[grepl("2019", Measurement_summary$`Measurement date`)]
+
+## 25개의 station의 2019년도 기록을 불러오기 위한 함수
+time_2019 <- function(Measurement_summary) { 
+  
+  # 2020-01-01을 제외한 19년도의 time stamp(1시간 단위)
+  time_index <- seq.POSIXt(from = as.POSIXlt("2019-01-01", tz = "UTC"), to = as.POSIXlt("2020-01-01", tz = "UTC"), by = "hour")[-8761]
+  
+  Measurement_summary %>% 
+    dplyr::filter(grepl("2019", `Measurement date`)) %>% 
+    dplyr::select(`Station code`, `Measurement date`) -> station_date
+  
+  result <- as.character(time_index)
+  
+  for( i in 1 : 25) { 
+    print(i)
+    
+    j <- 100+i
+    a <- as.character(station_date$`Measurement date`[station_date$`Station code` == j])
+    result <- cbind(result, a)
+    
+    result[, i][which(duplicated(result[, i]))] <- NA
+  }
+  result <- as.data.frame(result)
+  names(result) <- c("index", paste(seq(101, 125, 1)))
+  
+  a <- list()
+  
+  for( i in 1 : 25) { 
+    a[[i]] <- c(result[, 1], result[, i+1])[-which(c(duplicated(c(result[, 1], result[, i+1]), fromLast = T) | duplicated(c(result[, 1], result[, i+1]))))]  
+  }
+  names(a) <- paste(seq(101, 125, 1))
+  b <- list(result, a)
+  
+  return(b)
+}
+
+time_2019_station <- time_2019(Measurement_summary)
+str(time_2019_station[[1]]) # 각각의 station에 등록된 시간들
+str(time_2019_station[[2]]) # 각각의 station에서 누락된 시간들
+
+
+## 각 station별로 2019년에 빠진 시간의 개수
+time_2019_station[[1]] %>% 
+  summarise_all(funs(sum(is.na(.))))
+
+
+## Measurement_info에 장비 상태(Instrument status)가 존재한다. 
+Measurement_info %>% 
+  mutate(`Instrument status` = 
+           case_when(
+             `Instrument status` == 0 ~ "Normal", 
+             `Instrument status` == 1 ~ "Need for calibration", 
+             `Instrument status` == 2 ~ "Abnormal", 
+             `Instrument status` == 4 ~ "Power cut off", 
+             `Instrument status` == 8 ~ "Under repair", 
+             `Instrument status` == 9 ~ "abnormal data", 
+           )
+  ) -> Measurement_info
+
+
+Measurement_info %>% 
+  group_by(`Station code`) %>% 
+  count(`Instrument status`) %>%
+  dplyr::filter(`Instrument status` != "Normal") %>% # normal 제외하고 보기 위한 코드
+  ungroup() %>% 
+  ggplot(aes(x = `Instrument status`, y = n, fill = `Instrument status`)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip() + 
+  facet_wrap(facets = `Station code` ~., ncol = 5) 
 ```
