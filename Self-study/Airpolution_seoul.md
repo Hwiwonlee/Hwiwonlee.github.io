@@ -13,6 +13,11 @@ library(googledrive)
 library(extrafont)
 library(showtext)
 
+# R에서 폰트쓰기
+# https://kuduz.tistory.com/1101
+# https://blog.jongbin.com/2016/12/ggplot2-korean-font/
+# https://danbi-ncsoft.github.io/etc/2018/07/24/use-your-font-in-r.html
+
 font_add_google('Nanum Gothic', 'NanumGothic')
 font_add_google("Gochi Hand", "gochi") 
 font_add_google("Do Hyeon", "BMDOHYEON")
@@ -134,15 +139,12 @@ Measurement_summary %>%
 register_google(key="API 키", write = TRUE)
 
 
+#### TASK 1. ggmap을 이용해 오염도를 지도에 표시하기 ####
 # ggmap을 이용한 관측소 표시
 ## ggmap 가이드 
 ## https://kuduz.tistory.com/1042
 ## https://lovetoken.github.io/r/data_visualization/2016/10/18/ggmap.html
 ## https://mrkevinna.github.io/R-%EC%8B%9C%EA%B0%81%ED%99%94-3/
-
-# R에서 폰트 쓰기
-font_add_google('Nanum Gothic', 'NanumGothic')
-showtext_auto()
 
 # 목표 : https://www.kaggle.com/bappekim/visualizing-the-location-of-station-using-folium
 ggmap(get_map("seoul", zoom=11, maptype="roadmap")) +
@@ -186,20 +188,12 @@ seoul_data <- spTransform(geo_data[1:25, ], CRS("+proj=longlat +ellps=WGS84 + da
 ## 제대로 나오는 것을 확인
 ggplot() + geom_polygon(data=seoul_data, aes(x=long, y=lat, group=group), fill='white', color='black')
 
-# R에서 폰트쓰기
-# https://kuduz.tistory.com/1101
-# https://blog.jongbin.com/2016/12/ggplot2-korean-font/
-# https://danbi-ncsoft.github.io/etc/2018/07/24/use-your-font-in-r.html
-# install.package("extrafont")
-# install.package("showtext")
-
 # 공기오염도에 따라 "shape"의 색깔 바꿔보기
 ## 각 item의 오염도 기준
 Measurement_item_info
 
 ## 시간대별 관측소의 공기오염도
 Measurement_summary[, c("SO2", "NO2", "O3", "CO", "PM10", "PM2.5")]
-
 
 # 각 factor에 따라 공기오염도의 기준을 불러오는 함수
 get_criteria <- function(Measurement_item_info, item) { 
@@ -283,6 +277,7 @@ generate_png_per_hour <- function(from, to) {
     ggsave(file=paste0(format(time[i], '%Y-%m-%d'), "_", i, "_PM10", ".png"))
   }
 }
+
 ```
 
 ```r
@@ -378,8 +373,22 @@ Measurement_info %>%
   facet_wrap(facets = `Station code` ~., ncol = 5) 
   
 # 1. 
-Measurement_item_info
-Measurement_station_info$`Station name(district)`
+# mutate_at에 실패한 함수, level 
+level = function(x) {
+  # 들어온 column의 name과 Item name를 비교. 일치하는 자리 찾기 
+  index <- which(names(x) == Measurement_item_info$`Item name`)
+  # 알맞은 pollution factor의 criteria를 정의 
+  criteria <- Measurement_item_info[index, 4:7]
+  # pollution factor의 value와 criteria를 비교해서 leveling
+  a <- ifelse(x <= as.numeric(criteria[1]), "Good", 
+              ifelse(x <= as.numeric(criteria[2]), "Normal",
+                     ifelse(x <= as.numeric(criteria[3]), "Bad", "Very bad")
+              )
+  )
+  return(a)
+}
+
+
 Measurement_info %>% 
   mutate(`Station code` = 
            case_when(
@@ -430,9 +439,65 @@ Measurement_info %>%
              `Item code` == 9 ~ "PM2.5"
            )
   ) %>% 
+  
+  # pivot_wider를 이용해 Item code를 column으로 뿌려주고 그에 맞는 Average value을 할당해준다. 
+  # https://stackoverflow.com/questions/57993552/r-tidyr-mutate-and-spread-multiple-columns
+  pivot_wider(
+    names_from = `Item code`,
+    values_from = `Average value`
+  ) %>% 
+  # 모든 pollution factor들을 한번에 각각의 criteria에 따라 leveling할 수 있을까? 
+  # mutate_at(vars(`SO2`:PM2.5), funs(level = level)) # 실패
+  mutate(`SO2_level` = 
+           case_when (
+             `SO2` <= as.numeric(Measurement_item_info[1, 4]) ~ "Good", 
+             `SO2` <= as.numeric(Measurement_item_info[1, 5]) ~ "Normal",
+             `SO2` <= as.numeric(Measurement_item_info[1, 6]) ~ "Bad",
+             `SO2` <= as.numeric(Measurement_item_info[1, 7]) ~ "Very bad"
+           )
+  ) %>% 
+  mutate(`NO2_level` = 
+           case_when (
+             `NO2` <= as.numeric(Measurement_item_info[2, 4]) ~ "Good", 
+             `NO2` <= as.numeric(Measurement_item_info[2, 5]) ~ "Normal",
+             `NO2` <= as.numeric(Measurement_item_info[2, 6]) ~ "Bad",
+             `NO2` <= as.numeric(Measurement_item_info[2, 7]) ~ "Very bad"
+           )
+  ) %>%
+  mutate(`CO_level` = 
+           case_when (
+             `CO` <= as.numeric(Measurement_item_info[3, 4]) ~ "Good", 
+             `CO` <= as.numeric(Measurement_item_info[3, 5]) ~ "Normal",
+             `CO` <= as.numeric(Measurement_item_info[3, 6]) ~ "Bad",
+             `CO` <= as.numeric(Measurement_item_info[3, 7]) ~ "Very bad"
+           )
+  ) %>%
+  mutate(`O3_level` = 
+           case_when (
+             `O3` <= as.numeric(Measurement_item_info[4, 4]) ~ "Good", 
+             `O3` <= as.numeric(Measurement_item_info[4, 5]) ~ "Normal",
+             `O3` <= as.numeric(Measurement_item_info[4, 6]) ~ "Bad",
+             `O3` <= as.numeric(Measurement_item_info[4, 7]) ~ "Very bad"
+           )
+  ) %>%
+  mutate(`PM10_level` = 
+           case_when (
+             `PM10` <= as.numeric(Measurement_item_info[5, 4]) ~ "Good", 
+             `PM10` <= as.numeric(Measurement_item_info[5, 5]) ~ "Normal",
+             `PM10` <= as.numeric(Measurement_item_info[5, 6]) ~ "Bad",
+             `PM10` <= as.numeric(Measurement_item_info[5, 7]) ~ "Very bad"
+           )
+  ) %>%
+  mutate(`PM2.5_level` = 
+           case_when (
+             `PM2.5` <= as.numeric(Measurement_item_info[6, 4]) ~ "Good", 
+             `PM2.5` <= as.numeric(Measurement_item_info[6, 5]) ~ "Normal",
+             `PM2.5` <= as.numeric(Measurement_item_info[6, 6]) ~ "Bad",
+             `PM2.5` <= as.numeric(Measurement_item_info[6, 7]) ~ "Very bad"
+           )
+  ) %>% 
   mutate(`Year` = year(`Measurement date`)) %>% 
   mutate(`Month` = month(`Measurement date`)) %>%
   mutate(`Day` = day(`Measurement date`)) %>% 
-  mutate(`Hour` = hour(`Measurement date`)) %>% 
-  gather(key = "key", value = "value", -c(`Measurement date`, `Station code`))
+  mutate(`Hour` = hour(`Measurement date`))
 ```
