@@ -511,6 +511,63 @@ Measurement_info %>%
 paste0('Fist date is ', format(head(Measurement_info$Date, 1), '%Y-%m-%d %H:%M:%S'))
 paste0('Last date is ', format(tail(Measurement_info$Date, 1), '%Y-%m-%d %H:%M:%S'))
 
-
 # 2. Exploratory analysis
+## 2.1 Status에 따라 나누기
+Measurement_info %>% 
+  dplyr::filter(`Status` != "Normal") -> bad_measure
+
+Measurement_info %>% 
+  dplyr::filter(`Status` == "Normal") -> normal_measure
+
+normal_measure %>% 
+  group_by(`Date`) %>% 
+  summarise_at(vars(3:8), funs(mean(., na.rm = T))) %>% 
+  mutate(`SO2_level` = 
+           case_when (
+             `SO2` <= as.numeric(Measurement_item_info[1, 4]) ~ "Good", 
+             `SO2` <= as.numeric(Measurement_item_info[1, 5]) ~ "Normal",
+             `SO2` <= as.numeric(Measurement_item_info[1, 6]) ~ "Bad",
+             `SO2` <= as.numeric(Measurement_item_info[1, 7]) ~ "Very bad"
+           )
+  ) %>% 
+  mutate(`NO2_level` = 
+           case_when (
+             `NO2` <= as.numeric(Measurement_item_info[2, 4]) ~ "Good", 
+             `NO2` <= as.numeric(Measurement_item_info[2, 5]) ~ "Normal",
+             `NO2` <= as.numeric(Measurement_item_info[2, 6]) ~ "Bad",
+             `NO2` <= as.numeric(Measurement_item_info[2, 7]) ~ "Very bad"
+           )
+  ) %>%
+  mutate(`CO_level` = 
+           case_when (
+             `CO` <= as.numeric(Measurement_item_info[3, 4]) ~ "Good", 
+             `CO` <= as.numeric(Measurement_item_info[3, 5]) ~ "Normal",
+             `CO` <= as.numeric(Measurement_item_info[3, 6]) ~ "Bad",
+             `CO` <= as.numeric(Measurement_item_info[3, 7]) ~ "Very bad"
+           )
+  ) %>%
+  mutate(`O3_level` = 
+           case_when (
+             `O3` <= as.numeric(Measurement_item_info[4, 4]) ~ "Good", 
+             `O3` <= as.numeric(Measurement_item_info[4, 5]) ~ "Normal",
+             `O3` <= as.numeric(Measurement_item_info[4, 6]) ~ "Bad",
+             `O3` <= as.numeric(Measurement_item_info[4, 7]) ~ "Very bad"
+           )
+  ) %>%
+  mutate(`PM10_level` = 
+           case_when (
+             `PM10` <= as.numeric(Measurement_item_info[5, 4]) ~ "Good", 
+             `PM10` <= as.numeric(Measurement_item_info[5, 5]) ~ "Normal",
+             `PM10` <= as.numeric(Measurement_item_info[5, 6]) ~ "Bad",
+             `PM10` <= as.numeric(Measurement_item_info[5, 7]) ~ "Very bad"
+           )
+  ) %>%
+  mutate(`PM2.5_level` = 
+           case_when (
+             `PM2.5` <= as.numeric(Measurement_item_info[6, 4]) ~ "Good", 
+             `PM2.5` <= as.numeric(Measurement_item_info[6, 5]) ~ "Normal",
+             `PM2.5` <= as.numeric(Measurement_item_info[6, 6]) ~ "Bad",
+             `PM2.5` <= as.numeric(Measurement_item_info[6, 7]) ~ "Very bad"
+           )
+  )
 ```
