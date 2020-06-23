@@ -13,6 +13,13 @@ library(googledrive)
 library(extrafont)
 library(showtext)
 
+font_add_google('Nanum Gothic', 'NanumGothic')
+font_add_google("Gochi Hand", "gochi") 
+font_add_google("Do Hyeon", "BMDOHYEON")
+font_add_google("Jua", "BMJua")
+font_add_google("Yeon Sung", "BMYeonSung")
+showtext_auto()
+
 # guide : https://googledrive.tidyverse.org/
 # https://rpubs.com/Evan_Jung/rgoogledrive
 # install.packages("googledrive")
