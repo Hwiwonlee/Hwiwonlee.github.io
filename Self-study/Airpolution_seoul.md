@@ -372,7 +372,7 @@ Measurement_info %>%
   coord_flip() + 
   facet_wrap(facets = `Station code` ~., ncol = 5) 
   
-# 1. 
+# 1. dataset 준비
 # mutate_at에 실패한 함수, level 
 level = function(x) {
   # 들어온 column의 name과 Item name를 비교. 일치하는 자리 찾기 
@@ -419,16 +419,16 @@ Measurement_info %>%
              `Station code` == 125 ~ Measurement_station_info$`Station name(district)`[25]
            )
   ) %>% 
-  mutate(`Instrument status` = 
+  mutate(`Instrument status` =
            case_when(
-             `Instrument status` == 0 ~ "Normal", 
-             `Instrument status` == 1 ~ "Need for calibration", 
-             `Instrument status` == 2 ~ "Abnormal", 
-             `Instrument status` == 4 ~ "Power cut off", 
-             `Instrument status` == 8 ~ "Under repair", 
-             `Instrument status` == 9 ~ "abnormal data", 
+             `Instrument status` == 0 ~ "Normal",
+             `Instrument status` == 1 ~ "Need for calibration",
+             `Instrument status` == 2 ~ "Abnormal",
+             `Instrument status` == 4 ~ "Power cut off",
+             `Instrument status` == 8 ~ "Under repair",
+             `Instrument status` == 9 ~ "abnormal data",
            )
-  ) %>% 
+  ) %>%
   mutate(`Item code` = 
            case_when(
              `Item code` == 1 ~ "SO2", 
@@ -499,5 +499,18 @@ Measurement_info %>%
   mutate(`Year` = year(`Measurement date`)) %>% 
   mutate(`Month` = month(`Measurement date`)) %>%
   mutate(`Day` = day(`Measurement date`)) %>% 
-  mutate(`Hour` = hour(`Measurement date`))
+  mutate(`Hour` = hour(`Measurement date`)) %>% 
+  rename(`Date` = `Measurement date`, 
+         `Station` = `Station code`, 
+         `Status` = `Instrument status`) -> Measurement_info
+
+  
+Measurement_info %>% 
+  summarise_each(funs(sum(is.na(.)))) %>% as.data.frame() # 각 column별로 NA 개수 확인
+
+paste0('Fist date is ', format(head(Measurement_info$Date, 1), '%Y-%m-%d %H:%M:%S'))
+paste0('Last date is ', format(tail(Measurement_info$Date, 1), '%Y-%m-%d %H:%M:%S'))
+
+
+# 2. Exploratory analysis
 ```
