@@ -569,5 +569,16 @@ normal_measure %>%
              `PM2.5` <= as.numeric(Measurement_item_info[6, 6]) ~ "Bad",
              `PM2.5` <= as.numeric(Measurement_item_info[6, 7]) ~ "Very bad"
            )
-  )
+  ) -> overview_measure
+
+overview_measure %>%
+  select(2:7) %>% 
+  gather(key = "key", value = "value") %>% 
+  # mutate(key = factor(key, levels=c('SO2', 'NO2', 'CO', 'O3', 'PM10', 'PM2.5'))) %>% 
+  mutate(key = factor(key, levels=unique(key))) %>% 
+  ggplot(aes(y = value)) + 
+  geom_boxplot(fill='#56B4E9') + 
+  facet_wrap( ~ key, ncol = 6, scales = "free") + 
+  ggtitle('Distribution of pollutants') + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
 ```
