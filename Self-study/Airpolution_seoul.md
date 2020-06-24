@@ -571,6 +571,7 @@ normal_measure %>%
            )
   ) -> overview_measure
 
+## 2.3  overview_measure의 box plot 그리기 
 overview_measure %>%
   select(2:7) %>% 
   gather(key = "key", value = "value") %>% 
@@ -581,4 +582,86 @@ overview_measure %>%
   facet_wrap( ~ key, ncol = 6, scales = "free") + 
   ggtitle('Distribution of pollutants') + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
+
+## 2.4  overview_measure의 summary statistics table
+overview_measure %>% 
+  select(2:7) %>% 
+  gather(key = "key", value = "value") %>% 
+  group_by(key) %>% 
+  # https://stackoverflow.com/questions/30488389/using-dplyr-window-functions-to-calculate-percentiles
+  # https://stackoverflow.com/questions/53787714/dplyr-summarise-all-with-quantile-and-other-functions
+  summarise_at(vars(value), funs(min, max, mean, sd, 
+                                 quantile = list(as.tibble(as.list(quantile(., probs = c(0.25, 0.5, 0.75))))))) %>%
+  unnest(cols = c(quantile)) %>% 
+  # https://stackoverflow.com/questions/34004008/transposing-in-dplyr : gather, spread를 이용한 transpose
+  # gather(variable, summary_stat, min:`75%`) %>%
+  # spread(key, summary_stat) %>%
+
+  # https://stackoverflow.com/questions/47126197/how-to-transpose-t-in-the-tidyverse-using-tidyr : pivot을 이용한 transpose
+  pivot_longer(min:`75%`, "variable", "value") %>% 
+  pivot_wider(variable, key) %>% 
+  select(variable, SO2, NO2, CO, O3, PM10, PM2.5) %>% 
+  arrange(factor(variable, 
+                 levels = c('min', 'max', 'mean', 'sd', '25%', '50%', '75%')))
+
+
+## 2.5 overview_measure의 pollution level의 stacked bar plot 
+overview_measure %>%
+  select(8:13) %>% 
+  pivot_longer(1:6, 'variable', 'value') %>% 
+  # https://stringr.tidyverse.org/reference/str_replace.html : 문자 value의 특정 부분만 replace
+  mutate_at(vars(variable), ~str_replace(., "_", " ")) %>% 
+  group_by(variable) %>% 
+  dplyr::count(value) %>% 
+  ggplot(aes(x = variable, y = n, fill = value)) + 
+  geom_bar(stat="identity", position = "stack") + 
+  ggtitle('Levels of pollution in Seoul from 2017 to 2019') + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
+  theme(legend.title = element_blank()) + 
+  # http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
+  # https://stackoverflow.com/questions/51272689/ggplot2-how-to-change-the-order-of-a-legend : legend의 label reordering 
+  scale_fill_manual(breaks=c("Good","Normal", "Bad", "Very bad"),
+                    values=c("steelblue3", "springgreen3", "sienna2", "red3"), 
+                    labels=c("Good","Normal", "Bad", "Very bad")) + 
+  labs(x="Pollutants", y="Stacked n")
+
+
+## 2.6 Does pollutants have correlation?
+# Get upper triangle of the correlation matrix
+get_upper_tri <- function(cormat){
+  cormat[lower.tri(cormat)]<- NA
+  return(cormat)
+}
+
+round(cor(na.omit(normal_measure[, 4:9])), 2) %>% 
+  get_upper_tri() %>% 
+  melt() %>% 
+  ggplot(aes(x=Var1, y=Var2, fill=value)) + 
+  geom_tile() + 
+  # http://www.sthda.com/english/wiki/ggplot2-quick-correlation-matrix-heatmap-r-software-and-data-visualization
+  geom_text(aes(Var1, Var2, label = value), color = "white", size = 4) +
+  # https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html
+  # https://www.r-graph-gallery.com/79-levelplot-with-ggplot2.html
+  scale_fill_viridis(option = "magma", discrete=FALSE) + 
+  ggtitle('Correlation between Pollutants') + 
+  # https://stackoverflow.com/questions/35090883/remove-all-of-x-axis-labels-in-ggplot
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+
+
+## 2.7 How pollutant concentrations varies with location?
+na.omit(normal_measure) %>% 
+  select(c(2, 4:9)) %>%
+  group_by(Station) %>% 
+  summarise_at(vars(1:6), funs(mean)) -> district_pol # 신기하네. column 7 개로 나오는데 2:7하면 7은 없는 자리라고 에러난다. 
+  
+  
+district_pol %>% 
+  # https://stackoverflow.com/questions/15215457/standardize-data-columns-in-r : 와-우
+  mutate_at(vars(2:7), ~(scale(.) %>% as.vector)) %>% 
+  column_to_rownames(var = "Station") %>% 
+  pheatmap(., cluster_rows = FALSE, cluster_cols = FALSE, 
+           color = YlGnBu(10), border_color = FALSE, angle_col = 0)
+
 ```
