@@ -12,6 +12,12 @@ library(rgdal)
 library(googledrive)
 library(extrafont)
 library(showtext)
+library(container)
+library(pheatmap)
+library(reshape2)
+library(viridis)
+library(BBmisc)
+library(heatmaply)
 
 # R에서 폰트쓰기
 # https://kuduz.tistory.com/1101
@@ -664,4 +670,31 @@ district_pol %>%
   pheatmap(., cluster_rows = FALSE, cluster_cols = FALSE, 
            color = YlGnBu(10), border_color = FALSE, angle_col = 0)
 
+## 2.8 What really happened on that December 11th? : 19년 12월 11일에 갑자기 증가한 미세먼지 농도에 대하여
+overview_measure %>% 
+  dplyr::filter(`Date` == as.POSIXlt("2019-12-11 10:00:00", tz = "UTC")) -> reported_day_morning
+
+overview_measure %>% 
+  dplyr::filter(`Date` == as.POSIXlt("2019-12-11 22:00:00", tz = "UTC")) -> reported_day_night
+
+normal_measure %>% 
+  group_by(Station) %>% 
+  dplyr::filter(`Date` == as.POSIXlt("2019-12-11 10:00:00", tz = "UTC"))
+
+normal_measure %>% 
+  group_by(Station) %>% 
+  dplyr::filter(`Date` == as.POSIXlt("2019-12-11 22:00:00", tz = "UTC"))
+
+overview_measure %>% 
+  dplyr::filter(`Date` >= as.POSIXlt("2019-12-01", tz = "UTC")) %>% 
+  select(c(1, 2:7)) %>% 
+  pivot_longer(-Date, "variable", "value") %>% 
+  ggplot(aes(x = Date, y = value)) + 
+  geom_path(aes(group = 1), colour = "steelblue3") + 
+  # geom_point() + 
+  facet_wrap(facets = `variable` ~., nrow = 6, scales = "free") + 
+  ggtitle('Pollutant concentrations on December 2019') + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
+  labs(x="Date in december 2019", y="Polluntants value") + 
+  theme_minimal()
 ```
