@@ -688,13 +688,130 @@ normal_measure %>%
 overview_measure %>% 
   dplyr::filter(`Date` >= as.POSIXlt("2019-12-01", tz = "UTC")) %>% 
   select(c(1, 2:7)) %>% 
-  pivot_longer(-Date, "variable", "value") %>% 
+  pivot_longer(-Date, "variable", "value") %>%
+  # https://stackoverflow.com/questions/14262497/fixing-the-order-of-facets-in-ggplot
+  # facet_wrap에서의 ordering 고정
+  mutate(variable = factor(variable, levels=unique(variable))) %>% 
   ggplot(aes(x = Date, y = value)) + 
   geom_path(aes(group = 1), colour = "steelblue3") + 
   # geom_point() + 
-  facet_wrap(facets = `variable` ~., nrow = 6, scales = "free") + 
+  facet_wrap(facets = `variable` ~., nrow = 6, scales = "free_y") + 
   ggtitle('Pollutant concentrations on December 2019') + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
   labs(x="Date in december 2019", y="Polluntants value") + 
   theme_minimal()
+
+## 2.9 Does the concentration of pollutants have seazonality and tendency? (to be expanded) 
+normal_measure %>% 
+  group_by(Hour) %>% 
+  select(4:9) %>% 
+  summarise_at(1:6, funs(mean(., na.rm = T))) %>% 
+  pivot_longer(-Hour, "variable", "value") %>% 
+  # facet_wrap에서의 ordering 고정
+  mutate(variable = factor(variable, levels=unique(variable))) %>% 
+  ggplot(aes(x = Hour, y = value)) + 
+  geom_path(aes(group = 1), colour = "springgreen3") + 
+  facet_wrap(facets = `variable` ~ . , nrow = 6, scales = "free_y") + 
+  ggtitle('Pollutant concentrations along the day') + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
+  labs(x="Hours", y="Polluntants value") + 
+  theme_minimal()
+
+normal_measure %>% 
+  mutate(`Date` = format(`Date`, "%Y-%m-%d")) %>% 
+  group_by(`Date`) %>% 
+  select(4:9) %>% 
+  summarise_at(1:6, funs(mean(., na.rm = T))) %>% 
+  pivot_longer(-Date, "variable", "value") %>% 
+  # facet_wrap에서의 ordering 고정
+  mutate(variable = factor(variable, levels=unique(variable))) %>% 
+  
+  ggplot(aes(x = Date, y = value)) + 
+  geom_path(aes(group = 1), colour = "sienna2") + 
+  # https://cran.r-project.org/web/packages/lemon/vignettes/facet-rep-labels.html : x축 눈금 없애기
+  facet_wrap(facets = `variable` ~ . , nrow = 6, scales = "free_y") + 
+  ggtitle('Pollutant concentrations along the years') + 
+  scale_x_discrete(breaks=c("2017-01-01", "2017-05-01", "2017-09-01",
+                              "2018-01-01", "2018-05-01", "2018-09-01",
+                              "2019-01-01", "2019-05-01", "2019-09-01", "2019-12-01")) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) +
+  labs(x="Date", y="Polluntants value") + 
+  theme_minimal()
+
+
+## 2.10 Appendix
+### 2.10.1 What happens when an instrument doesn't work properly?
+
+Measurement_info %>% 
+  dplyr::count(`Status`) %>% 
+  arrange(n) %>% 
+  mutate(Status = factor(Status, level = unique(Status))) %>% 
+  # dplyr::filter(`Status` != "Normal") %>% # normal 제외하고 보기 위한 코드
+  ggplot(aes(x = `Status`, y = n, fill = `Status`)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip() + 
+  # http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
+  scale_fill_manual(breaks=c("Normal","Need for calibration", "Abnormal", "Power cut off", "Under repair", "abnormal data"),
+                    values=c("chartreuse3", "sienna2", "red3", "azure3", "deepskyblue3", "firebrick4"), 
+                    labels=c("Normal","Need for calibration", "Abnormal", "Power cut off", "Under repair", "abnormal data")) + 
+  ggtitle('Distribution of status values') + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) +
+  labs(x="Station status", y="Occurrence") + 
+  theme_minimal()
+
+
+Measurement_info %>% 
+  group_by(`Station`) %>% 
+  dplyr::count(`Status`) %>%
+  arrange(n) %>% 
+  mutate(Status = factor(Status, level = unique(Status))) %>% 
+  dplyr::filter(`Status` != "Normal") %>% # normal 제외하고 보기 위한 코드
+  ungroup() %>% 
+  ggplot(aes(x = `Status`, y = n, fill = `Status`)) + 
+  geom_bar(stat = "identity") + 
+  coord_flip() + 
+  facet_wrap(facets = `Station` ~., ncol = 5, scales = "free_x") +
+  scale_fill_manual(breaks=c("Need for calibration", "Abnormal", "Power cut off", "Under repair", "abnormal data"),
+                    values=c("sienna2", "red3", "azure3", "deepskyblue3", "firebrick4"), 
+                    labels=c("Need for calibration", "Abnormal", "Power cut off", "Under repair", "abnormal data")) + 
+  ggtitle('Distribution of status values') + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) +
+  labs(x="Station status", y="Occurrence") + 
+  theme_minimal()
+
+### 2.10.2. Is there a pattern in when a instrument stop working?
+bad_measure %>% 
+  group_by(Hour) %>% 
+  dplyr::count(`Status`) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = `Status`, values_from = `n`) %>% 
+  column_to_rownames(var = "Hour") %>% 
+  pheatmap(., cluster_rows = FALSE, cluster_cols = FALSE, 
+           color = YlGnBu(10), border_color = FALSE, angle_col = 0, display_numbers = T, number_format = "%.0f")
+
+Measurement_info %>% 
+  dplyr::filter(Status != "Normal") %>% 
+  group_by(Station) %>% 
+  dplyr::count(Status) %>% 
+  summarise(n = sum(n)) %>%
+  arrange(n) %>% 
+  mutate(Station = factor(Station, level = unique(Station))) %>% 
+  ggplot(aes(x = n, y = Station, fill = Station)) + 
+  geom_bar(stat = "identity") + 
+    ggtitle('Amount of times that problems occured by district') + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) +
+  labs(x="Occurrence", y="Station") + 
+  theme_minimal() + 
+  theme(legend.position = "none")
+
+bad_measure %>% 
+  group_by(Station) %>% 
+  dplyr::count(`Status`) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = `Status`, values_from = `n`) %>% 
+  # https://stackoverflow.com/questions/49342097/replace-na-on-numeric-columns-with-mutate-if-and-replace-na : na값 대체하기
+  mutate_if(is.numeric, replace_na, replace = 0) %>% 
+  column_to_rownames(var = "Station") %>% 
+  pheatmap(., cluster_rows = FALSE, cluster_cols = FALSE, 
+           color = YlGnBu(10), border_color = FALSE, angle_col = 0, display_numbers = T, number_format = "%.0f")
 ```
