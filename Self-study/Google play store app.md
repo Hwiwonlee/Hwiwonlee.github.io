@@ -41,7 +41,7 @@ googleplaystore %>%
                                                 "10,000,000+", "50,000,000+", "100,000,000+", "500,000,000+", 
                                                 "1,000,000,000+"))) -> googleplaystore
 
-#### 1. https://www.kaggle.com/mdp1990/google-play-app-store-eda-data-visualisation 
+#### 1. https://www.kaggle.com/mdp1990/google-play-app-store-eda-data-visualisation ####
 ### 1.1 Simple work
 # App with large number of reviews
 
@@ -208,4 +208,82 @@ googleplaystore %>%
         axis.text.x = element_text(angle = 90), 
         legend.position = "none") + 
   labs(x="Apps", y="Difference of Rating")
+```
+```r
+#### 2. ML to Visualization & Prediction of App Ratings ####
+# https://www.kaggle.com/rajeshjnv/ml-to-visualization-prediction-of-app-ratings  
+### 1. pandas_profiling.ProfileReport(data)를 이용한 feature overview
+# R에서 비슷한 기능을하는 pakcage, DataExplorer와 skimr을 이용해봤는데 이거다!라는 느낌은 없다. 
+## https://cran.r-project.org/web/packages/skimr/vignettes/skimr.html
+## https://cran.r-project.org/web/packages/DataExplorer/vignettes/dataexplorer-intro.html
+
+plot_intro(googleplaystore)
+plot_str(googleplaystore)
+plot_missing(googleplaystore)  
+skim(googleplaystore)
+
+# NA 개수 파악
+googleplaystore %>% 
+  summarise_all(funs(sum(is.na(.)))) %>% as.data.frame()
+
+
+# categorical variable overview
+## Category
+googleplaystore %>% 
+  dplyr::count(`Category`, sort = T) %>% as.data.frame()
+
+# 1.9???? 
+
+## Type
+googleplaystore %>% 
+  dplyr::count(`Type`, sort = T)
+# 0 : 1개. NaN : 1개
+
+googleplaystore %>% 
+  dplyr::filter(Type == "NaN") %>% as.data.frame()
+## 커맨드엔컨커인데...설치된 적이 없고 리뷰도 없네? 이게 dataset 만들기 바로 직전에 나온 어플이라면?
+
+googleplaystore %>% 
+  dplyr::filter(grepl(", 2018", `Last Updated`)) %>% 
+  dplyr::count(`Last Updated`, sort = F) %>% as.data.frame() 
+## 그렇지도 않네? 
+## Price가 0이니까 Type = Free, Reviews가 0이니까 Rating을 0으로 주자. 
+
+## Content Rating
+googleplaystore %>% 
+  dplyr::count(`Content Rating`, sort = T)
+# NA : 1개
+
+## Genres
+googleplaystore %>% 
+  dplyr::count(`Genres`) %>% 
+  arrange(n) %>% 
+  as.data.frame()
+
+## Last Updated
+googleplaystore %>% 
+  dplyr::count(`Last Updated`, sort = T)
+
+## Current Ver
+googleplaystore %>% 
+  dplyr::count(`Current Ver`, sort = T)
+
+googleplaystore %>% 
+  dplyr::filter(is.na(`Current Ver`)) %>% as.data.frame()
+
+## Android Ver
+googleplaystore %>% 
+  dplyr::count(`Android Ver`, sort = T)
+
+googleplaystore %>% 
+  dplyr::filter(is.na(`Android Ver`)) %>% as.data.frame()
+
+# Life Made WI-Fi Touchscreen Photo Frame apps을 보면 value들이 좀 밀려있는 것 같은 인상이 받는다. 
+## Category가 1.9, Rating이 19, Size가 1,000+ 등등. 빼자. 
+
+# Command & Conquer: Rivals와 Life Made WI-Fi Touchscreen Photo Frame를 수정한 dataset 
+googleplaystore %>% 
+  mutate(Rating = ifelse(App == "Command & Conquer: Rivals", 0, Rating)) %>% 
+  mutate(Type = ifelse(App == "Command & Conquer: Rivals", "Free", Type)) %>% 
+  dplyr::filter(App != "Life Made WI-Fi Touchscreen Photo Frame") -> googleplaystore
 ```
