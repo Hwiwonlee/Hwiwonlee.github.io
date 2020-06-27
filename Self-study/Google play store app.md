@@ -263,6 +263,7 @@ googleplaystore %>%
 ## Last Updated
 googleplaystore %>% 
   dplyr::count(`Last Updated`, sort = T)
+# 날짜형이니까 날짜로 바꿔주는 게 좋을 것 같다. 
 
 ## Current Ver
 googleplaystore %>% 
@@ -278,12 +279,44 @@ googleplaystore %>%
 googleplaystore %>% 
   dplyr::filter(is.na(`Android Ver`)) %>% as.data.frame()
 
+## Installs : 인스톨 횟수, n번 이상의 형태로 categorical variable임. 
+googleplaystore %>% 
+  dplyr::count(`Installs`, sort = T) %>% 
+  arrange(Installs)
+
+## Size : App 크기, 단위 MB, KB가 붙어있어 Character variable로 정의되어 있다. 단위 통일을 한 후 numeric으로 바꿔야 한다. 
+googleplaystore %>% 
+  dplyr::count(`Size`, sort = T)
+
+### 1.1 Overview 결과 : 관측값 제거 및 수정
 # Life Made WI-Fi Touchscreen Photo Frame apps을 보면 value들이 좀 밀려있는 것 같은 인상이 받는다. 
-## Category가 1.9, Rating이 19, Size가 1,000+ 등등. 빼자. 
+# Category가 1.9, Rating이 19, Size가 1,000+ 등등. 빼자. 
 
 # Command & Conquer: Rivals와 Life Made WI-Fi Touchscreen Photo Frame를 수정한 dataset 
 googleplaystore %>% 
   mutate(Rating = ifelse(App == "Command & Conquer: Rivals", 0, Rating)) %>% 
   mutate(Type = ifelse(App == "Command & Conquer: Rivals", "Free", Type)) %>% 
   dplyr::filter(App != "Life Made WI-Fi Touchscreen Photo Frame") -> googleplaystore
+
+### 1.2 Overview 결과 : variable 변환
+# Installs : 인스톨 횟수를 factor로 바꿔주자. 
+googleplaystore %>% 
+  mutate(Installs = factor(Installs, levels = c("Free", "0", "0+", "1+", "5+", "10+", "50+", "100+", "500+", 
+                                                "1,000+", "5,000+", "10,000+", "50,000+", 
+                                                "100,000+", "500,000+", "1,000,000+", "5,000,000+", 
+                                                "10,000,000+", "50,000,000+", "100,000,000+", "500,000,000+", 
+                                                "1,000,000,000+"))) -> googleplaystore
+# Size : MB 단위로 맞춰준다. 
+googleplaystore %>% 
+  # https://stackoverflow.com/questions/28860069/regular-expressions-regex-and-dplyrfilter : filter에서 regex 사용하기 
+  dplyr::filter(Size != "Varies with device" & !grepl("\\+$", Size)) %>% 
+  mutate(KB = ifelse(grepl("k", Size), "k", "M")) %>% 
+  mutate_at(vars(Size), ~str_replace(., "M", "")) %>% 
+  mutate_at(vars(Size), ~str_replace(., "k", "")) %>% 
+  mutate(Size = as.numeric(Size)) %>% 
+  mutate(Size = ifelse(KB == "k", Size/1000, Size)) -> googleplaystore
+
+# Last Updated : date variable로 바꾸자. 
+googleplaystore$`Last Updated`<- mdy(googleplaystore$`Last Updated`)
+
 ```
