@@ -507,4 +507,39 @@ googleplaystore %>%
   ggtitle("Content Rating of Rating >= 4" ) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
 
+## 3. ML
+### 3.1 dataset split
+googleplaystore %>% 
+  summarise_all(funs(sum(is.na(.)))) %>% as.data.frame()
+
+googleplaystore %>% 
+  drop_na() %>% 
+  select(Category, Rating, Reviews, Type, `Content Rating`, `Last Updated date`) %>% 
+  mutate(year = factor(year(`Last Updated date`))) %>% 
+  mutate(month = factor(month(`Last Updated date`))) %>% 
+  mutate_if(is.character, funs(factor)) -> googleplaystore_ML
+
+trainIndex <- createDataPartition(googleplaystore_ML$Type, p = .8, list = FALSE, times = 1)  
+
+### 3.2 ML
+# kaggle kernal에서 ML에 사용된 변수는 Rating, Review, Last Updated, Category, Type, Rating Content 등이다. 
+# 여기서 categorical variable들은 다 dummy variable을 만들어서 ML을 시행했는데 굳이 그렇게 해야하나 싶어서 그냥 해볼 생각이다. 
+# Classification problem으로 접근하는데, binary가 아니라 multinomial logistic regression으로 response는 interger(Rating)이다. 
+# 
+
+## 3.2.1 Logistic regression
+model <- glm(formula = Rating ~ Category + Reviews + Type + `Content Rating` + year + month, 
+             data = googleplaystore_ML[trainIndex, ], family = "gaussian")
+
+predict <- round(predict(model, newdata = googleplaystore_ML[-trainIndex, ], type = "response"), 1)
+
+confusionMatrix(factor(as.integer(predict), levels = c(1,2,3,4,5)), factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
+
+
+
+## 3.2.2 Decision Tree
+
+## 3.2.3 Random forest
+
+## 3.2.4 Support Vector Machine 
 ```
