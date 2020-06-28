@@ -1,16 +1,17 @@
 ```r
 
+
 library(tidyverse)
 library(lubridate)
 library(googledrive)
 library(extrafont)
 library(showtext)
-library(pheatmap)
-library(reshape2)
 library(viridis)
-library(BBmisc)
-library(heatmaply)
 library(forcats)
+library(DataExplorer)
+library(skimr)
+library(caret)
+
 
 
 font_add_google('Nanum Gothic', 'NanumGothic')
