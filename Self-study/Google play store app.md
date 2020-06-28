@@ -316,7 +316,195 @@ googleplaystore %>%
   mutate(Size = as.numeric(Size)) %>% 
   mutate(Size = ifelse(KB == "k", Size/1000, Size)) -> googleplaystore
 
-# Last Updated : date variable로 바꾸자. 
-googleplaystore$`Last Updated`<- mdy(googleplaystore$`Last Updated`)
+# Last Updated : date variable로 바꾸자.
+# https://stackoverflow.com/questions/36971015/mdy-lubridate-unable-to-identify-january
+# 일반적인 방법의 mdy로하면 틀린 날짜가 return된다. 
+googleplaystore %>% 
+  mutate(`Last Updated date` = str_remove(`Last Updated`, ",")) %>% 
+  mutate(`Last Updated date` = str_remove(`Last Updated date`, " ")) %>% 
+  mutate(`Last Updated date` = mdy(`Last Updated date`)) -> googleplaystore
+
+
+### 2. EDA
+### 2.1 Piechart for "Type"
+googleplaystore %>% 
+  count(Type) %>% 
+  mutate(n = n/9145) %>% 
+  ggplot(aes(x = "", y = n, fill = Type)) + 
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y") +
+  theme_void() + 
+  ggtitle("Type distribution in Google play store" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
+  geom_text(aes(label = paste0(round(n*100,1),"%")), 
+            position = position_stack(vjust = 0.5)) 
+
+### 2.2 Line plot for "Last Updated" and "Type"
+googleplaystore %>% 
+  mutate(year = year(`Last Updated date`)) %>% 
+  group_by(Type) %>% 
+  count(year) %>% 
+  ggplot(aes(x = year, y = n)) + 
+  geom_line(aes(group = Type, colour = Type), size = 1.3) + 
+  geom_point(aes(colour = Type)) + 
+  theme_minimal() + 
+  # https://stackoverflow.com/questions/26195231/ggplot2-manually-specifying-colour-with-geom-line : line plot에 색깔 넣기
+  scale_colour_manual(values = c(Free = "steelblue3", Paid = "sienna2")) + 
+  labs(x="Year", y="") + 
+  ggtitle("App udated or added over the years" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
+
+
+### 2.3 
+googleplaystore %>% 
+  dplyr::filter(Type == "Free") %>% 
+  mutate(month = month(`Last Updated date`)) %>% 
+  count(month) %>% 
+  mutate(month = factor(month)) %>% 
+  ggplot(aes(x = month, y = n)) + 
+  geom_bar(stat = "identity", fill = "springgreen3") + 
+  theme_minimal() + 
+  labs(x="Month", y="") + 
+  ggtitle("Free App added over the month" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
+
+
+googleplaystore %>% 
+  dplyr::filter(Type == "Paid") %>% 
+  mutate(month = month(`Last Updated date`)) %>% 
+  count(month) %>% 
+  mutate(month = factor(month)) %>% 
+  ggplot(aes(x = month, y = n)) + 
+  geom_bar(stat = "identity", fill = "dodgerblue1") + 
+  theme_minimal() + 
+  labs(x="Month", y="") + 
+  ggtitle("Paid App added over the month" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
+
+
+### 2.4 Content Rating
+googleplaystore %>% 
+  group_by(Type) %>% 
+  count(`Content Rating`) %>% 
+  ggplot(aes(x = `Content Rating`, y = n)) + 
+  geom_line(aes(group = Type, colour = Type), size = 1.3) + 
+  geom_point(aes(colour = Type)) + 
+  theme_minimal() + 
+  # https://stackoverflow.com/questions/26195231/ggplot2-manually-specifying-colour-with-geom-line : line plot에 색깔 넣기
+  scale_colour_manual(values = c(Free = "steelblue3", Paid = "sienna2")) + 
+  labs(x="Content Rating", y="") + 
+  ggtitle("Ratings of the free vs paid app" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
+
+googleplaystore %>% 
+  dplyr::filter(Type == "Free") %>% 
+  count(`Content Rating`, sort = T) %>%  
+  mutate(`Content Rating` = factor(`Content Rating`, levels = unique(`Content Rating`))) %>% 
+  ggplot(aes(x = `Content Rating`, y = n)) + 
+  geom_bar(stat = "identity", fill = "palegreen2") + 
+  theme_minimal() + 
+  labs(x="Content Rating", y="") + 
+  ggtitle("Free App Content Rating" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
+
+googleplaystore %>% 
+  dplyr::filter(Type == "Paid") %>% 
+  count(`Content Rating`, sort = T) %>%  
+  mutate(`Content Rating` = factor(`Content Rating`, levels = unique(`Content Rating`))) %>% 
+  ggplot(aes(x = `Content Rating`, y = n)) + 
+  geom_bar(stat = "identity", fill = "royalblue1") + 
+  theme_minimal() + 
+  labs(x="Content Rating", y="") + 
+  ggtitle("Paid App Content Rating" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
+
+### 2.5 Rating 
+googleplaystore %>% 
+  group_by(Type) %>% 
+  count(`Rating`) %>% 
+  ggplot(aes(x = `Rating`, y = n)) + 
+  geom_line(aes(group = Type, colour = Type), size = 1.3) + 
+  theme_minimal() + 
+  scale_colour_manual(values = c(Free = "steelblue3", Paid = "sienna2")) + 
+  labs(x="Rating", y="") + 
+  ggtitle("Ratings of the free vs paid app" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
+
+googleplaystore %>% 
+  dplyr::filter(Type == "Free") %>% 
+  count(`Rating`) %>% 
+  dplyr::filter(!is.nan(Rating)) %>% 
+  mutate(`Rating` = factor(`Rating`, levels = unique(`Rating`))) %>% 
+  ggplot(aes(x = `Rating`, y = n)) + 
+  geom_bar(stat = "identity", fill = "palegreen2") + 
+  theme_minimal() + 
+  labs(x="Rating", y="") + 
+  ggtitle("Free App Rating" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
+  scale_x_discrete(breaks=seq(1, 5, 0.5))
+
+googleplaystore %>% 
+  dplyr::filter(Type == "Paid") %>% 
+  count(`Rating`) %>% 
+  dplyr::filter(!is.nan(Rating)) %>% 
+  mutate(`Rating` = factor(`Rating`, levels = unique(`Rating`))) %>% 
+  ggplot(aes(x = `Rating`, y = n)) + 
+  geom_bar(stat = "identity", fill = "royalblue1") + 
+  theme_minimal() + 
+  labs(x="Rating", y="") + 
+  ggtitle("Paid App Rating" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
+  scale_x_discrete(breaks=seq(1, 5, 0.5))
+
+### 2.6 Category
+googleplaystore %>% 
+  group_by(Type) %>% 
+  count(`Category`) %>% 
+  ggplot(aes(x = `Category`, y = n)) + 
+  geom_line(aes(group = Type, colour = Type), size = 1.3) + 
+  theme_minimal() + 
+  scale_colour_manual(values = c(Free = "steelblue3", Paid = "sienna2")) + 
+  labs(x="Category", y="") + 
+  ggtitle("App Category" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+### 2.7 Android version 
+googleplaystore %>% 
+  group_by(Type) %>% 
+  count(`Android Ver`) %>% 
+  ggplot(aes(x = `Android Ver`, y = n)) + 
+  geom_line(aes(group = Type, colour = Type), size = 1.3) + 
+  theme_minimal() + 
+  scale_colour_manual(values = c(Free = "steelblue3", Paid = "sienna2")) + 
+  labs(x="Android Ver", y="") + 
+  ggtitle("Android Versions" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+### 2.8 Installed App
+googleplaystore %>% 
+  group_by(Type) %>% 
+  count(`Installs`) %>% 
+  ggplot(aes(x = `Installs`, y = n)) + 
+  geom_line(aes(group = Type, colour = Type), size = 1.3) + 
+  theme_minimal() + 
+  scale_colour_manual(values = c(Free = "steelblue3", Paid = "sienna2")) + 
+  labs(x="Installs", y="") + 
+  ggtitle("Installed App" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+### 2.9 Content Rating of Rating >= 4
+googleplaystore %>% 
+  dplyr::filter(Rating >= 4) %>% 
+  count(`Content Rating`) %>% 
+  ggplot(aes(x = `Content Rating`, y = n)) + 
+  geom_bar(stat = "identity", fill = "steelblue3") + 
+  theme_minimal() + 
+  labs(x="Content Rating", y="") + 
+  ggtitle("Content Rating of Rating >= 4" ) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
 
 ```
