@@ -558,15 +558,21 @@ C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-train
 # Ordinal decision tree를 찾아보니 rpartScore package를 이용한 방법이 있었지만 
 # 시간이 오래 걸리고 reference를 봐도 잘 모르겠으므로 일단 일반적인 decision tree를 이용해보자. 
 
-
+## Ordinal logistic regression의 결과와 크게 다르지 않다. 
 model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(ContentRating),
                data = as.data.frame(googleplaystore_ML_test[trainIndex, ]), 
+               method = "rpart2", tuneLength = 10, trControl = trainControl(method = "cv"))
+
+# predictor를 factor로 정의하지 않고 integer로 했을 때의 결과. 
+# 잘못된 방법이지만 차이가 있는지 궁금해서 해보았다. 
+# 77.2%, kappa = 0.1515, 유의한 P-value를 갖는다. 
+model <- train(factor(Rating) ~ . ,
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -c(6, 9)]), 
                method = "rpart2", tuneLength = 10, trControl = trainControl(method = "cv"))
 
 predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, ]), type = "raw")
 C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
 
-## Ordinal logistic regression의 결과와 크게 다르지 않다. 
 
 ## 3.2.3 Support Vector regression  
 # Ordinal support vector regression, 
@@ -576,14 +582,16 @@ model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(Content
 
 
 
+
 ## 3.2.4 Random forest
 # Basic random forest 
+# predictor를 factor로 정의하지 않고 integer로 했을 때의 결과. 
+# 잘못된 방법이지만 차이가 있는지 궁금해서 해보았다. 
+# 76.63% accuracy, non-significant. kappa = 0.1504
 model <- train(factor(Rating) ~ . ,
                data = as.data.frame(googleplaystore_ML_test[trainIndex, -c(6, 9)]), 
                method = "rf", trControl = trainControl(method = "cv"))
 
 predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, ]), type = "raw")
 C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
-
-## 76.63% accuracy, non-significant. kappa가 조금 오른 게 눈에 띄긴 하지만 의미있는 결과는 아니다. 
 ```
