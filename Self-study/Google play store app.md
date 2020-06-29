@@ -555,8 +555,29 @@ C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-train
 
 
 ## 3.2.2 Decision Tree
+# Ordinal decision tree를 찾아보니 rpartScore package를 이용한 방법이 있었지만 
+# 시간이 오래 걸리고 reference를 봐도 잘 모르겠으므로 일단 일반적인 decision tree를 이용해보자. 
 
-## 3.2.3 Random forest
 
-## 3.2.4 Support Vector Machine 
+model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(ContentRating),
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, ]), 
+               method = "rpart2", tuneLength = 10, trControl = trainControl(method = "cv"))
+
+predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, ]), type = "raw")
+C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
+
+## Ordinal logistic regression의 결과와 크게 다르지 않다. 
+
+## 3.2.3 Support Vector regression  
+# Ordinal support vector regression, 
+model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(ContentRating),
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, ]), 
+               method = "svmRadial", trControl = trainControl(method = "cv"))
+
+
+
+## 3.2.4 Random forest
+model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(ContentRating),
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, ]), 
+               method = "ordinalRF", trControl = trainControl(method = "cv"))
 ```
