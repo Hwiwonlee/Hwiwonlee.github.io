@@ -577,7 +577,13 @@ model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(Content
 
 
 ## 3.2.4 Random forest
-model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(ContentRating),
-               data = as.data.frame(googleplaystore_ML_test[trainIndex, ]), 
-               method = "ordinalRF", trControl = trainControl(method = "cv"))
+# Basic random forest 
+model <- train(factor(Rating) ~ . ,
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -c(6, 9)]), 
+               method = "rf", trControl = trainControl(method = "cv"))
+
+predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, ]), type = "raw")
+C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
+
+## 76.63% accuracy, non-significant. kappa가 조금 오른 게 눈에 띄긴 하지만 의미있는 결과는 아니다. 
 ```
