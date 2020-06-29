@@ -528,13 +528,29 @@ trainIndex <- createDataPartition(googleplaystore_ML$Type, p = .8, list = FALSE,
 # Classification problem으로 접근하는데, binary가 아니라 multinomial logistic regression으로 response는 interger(Rating)이다. 
 # 
 
-## 3.2.1 Logistic regression
-model <- glm(formula = Rating ~ Category + Reviews + Type + `Content Rating` + year + month, 
-             data = googleplaystore_ML[trainIndex, ], family = "gaussian")
+## 3.2.1 Logistic regression -> Ordinal logistic regression 
+# kernel에서는 logistic regression로 분석했는데, response인 integer(Rating)이 1부터 5까지의 5개의 수준(level)을 갖는 variable이 된다. 
+# sklearn.linear_model의 LogisticRegression method가 어떻게 구동되는지 모르겠지만 
+# response가 0 or 1이 아닌 상황에서 model을 만들면 자동적으로 n개의 categorical level로 정의해서 multinomial이든 ordinal이든 logisitic regression을 수행해준다. 
+# kernel에선 0 or 1이 아닌 response를 사용했음에도 명시적으로 multinomial인지 ordinal인지 표현하지 않으므로 둘 다 해보겠다. 
+# ...물론 ordinal categorical varible이므로 ordinal만 하는 것이 방법론적으로는 맞다. 
 
-predict <- round(predict(model, newdata = googleplaystore_ML[-trainIndex, ], type = "response"), 1)
+# 1) Ordinal logistic regression 
 
-confusionMatrix(factor(as.integer(predict), levels = c(1,2,3,4,5)), factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
+# Using ordinalNet() in ordinalNet package
+ordinalNet(as.matrix(googleplaystore_ML[trainIndex, -c(2, 6)]), googleplaystore_ML[trainIndex, 2])
+as.matrix(googleplaystore_ML[trainIndex, -c(2, 6)])
+
+# Using polr() in MASS package  
+model <- polr(formula = Rating ~ Category + Type + `Content Rating`+ month , data = googleplaystore_ML[trainIndex, ], Hess=TRUE)
+predict <- predict(model, newdata = googleplaystore_ML[-trainIndex, ], type = "class")
+C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
+
+## 끔찍한 결과다. ACC가 0.758 나오지만 P-value나 Kappa, Mcnemar's Test P-value는 이 값을 믿을 수 없다고 말한다.
+## object predict을 보면 test set에 model을 fitting해서 prediction한 결과 모든 값을 "4"로 예측했다. 
+## ACC 75.8%가 나온 것은 model의 prediction이 좋은 게 아니라 test set의 Rating이 "4"가 많기 때문이다.
+## 쉽게 말해, 백 문제 중 70개의 문제의 정답이 3번일 때, 3번으로 한줄 찍기를 해서 70점을 맞은 것과 비슷한 것이다. 
+## year, Reviews와 Reviews를 ntile로 바꾼 Reviews_ntile을 넣으면 정확도에 대한 warnning이 생겨 제외했다. 
 
 
 
