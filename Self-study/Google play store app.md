@@ -508,22 +508,8 @@ googleplaystore %>%
   ggtitle("Content Rating of Rating >= 4" ) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15))
 
-## 3. ML
-### 3.1 dataset split
-googleplaystore %>% 
-  summarise_all(funs(sum(is.na(.)))) %>% as.data.frame()
-
-googleplaystore %>% 
-  drop_na() %>% 
-  select(Category, Rating, Reviews, Type, `Content Rating`, `Last Updated date`) %>% 
-  mutate(year = factor(year(`Last Updated date`))) %>% 
-  mutate(month = factor(month(`Last Updated date`))) %>% 
-  mutate_if(is.character, funs(factor)) -> googleplaystore_ML
-
-trainIndex <- createDataPartition(googleplaystore_ML$Type, p = .8, list = FALSE, times = 1)  
-
 ### 3.2 ML
-# kaggle kernal에서 ML에 사용된 변수는 Rating, Review, Last Updated, Category, Type, Rating Content 등이다. 
+# kaggle kernel에서 ML에 사용된 변수는 Rating, Review, Last Updated, Category, Type, Rating Content 등이다. 
 # 여기서 categorical variable들은 다 dummy variable을 만들어서 ML을 시행했는데 굳이 그렇게 해야하나 싶어서 그냥 해볼 생각이다. 
 # Classification problem으로 접근하는데, binary가 아니라 multinomial logistic regression으로 response는 interger(Rating)이다. 
 # 
@@ -536,18 +522,22 @@ trainIndex <- createDataPartition(googleplaystore_ML$Type, p = .8, list = FALSE,
 # ...물론 ordinal categorical varible이므로 ordinal만 하는 것이 방법론적으로는 맞다. 
 
 # 1) Ordinal logistic regression 
+# Using rpartScore 
+model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + factor(Type) + factor(ContentRating) + 
+                 Price + factor(Installs),
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
+               method = "rpartScore", trControl = trainControl(method = "cv"))
 
-# Using ordinalNet() in ordinalNet package
-ordinalNet(as.matrix(googleplaystore_ML[trainIndex, -c(2, 6)]), googleplaystore_ML[trainIndex, 2])
-as.matrix(googleplaystore_ML[trainIndex, -c(2, 6)])
+# Penalized Ordinal Regression
+model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + factor(Type) + factor(ContentRating) + 
+                 Price + factor(Installs),
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
+               method = "ordinalNet", trControl = trainControl(method = "cv"))
 
-# Using polr() in MASS package  
-model <- polr(formula = factor(Rating) ~ factor(Category) + Reviews + Size + factor(Type) + factor(ContentRating) + 
-                Price + factor(Installs) , 
-              data = googleplaystore_ML[trainIndex, ], Hess=TRUE)
 predict <- predict(model, newdata = googleplaystore_ML[-trainIndex, ], type = "class")
 C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
 
+### polr()를 이용한 결과
 ## 끔찍한 결과다. ACC가 0.758 나오지만 P-value나 Kappa, Mcnemar's Test P-value는 이 값을 믿을 수 없다고 말한다.
 ## object predict을 보면 test set에 model을 fitting해서 prediction한 결과 모든 값을 "4"로 예측했다. 
 ## ACC 75.8%가 나온 것은 model의 prediction이 좋은 게 아니라 test set의 Rating이 "4"가 많기 때문이다.
@@ -577,15 +567,19 @@ predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-train
 C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
 
 
-## 3.2.3 Support Vector regression  
-# Ordinal support vector regression, 
+## 3.2.3 Support Vector machine
+# Ordinal value를 대상으로 하는 SVM이 따로 없는 것 같아 non-linearity를 갖는 Support vector machine인 svmRadial을 이용해보았다.  
+# kernel에서는 regression을 이용하는데 왜...인지는 안 나와있다. 
+
 model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + factor(Type) + factor(ContentRating) + 
                  Price + factor(Installs),
                data = as.data.frame(googleplaystore_ML_test[trainIndex, ]), 
                method = "svmRadial", trControl = trainControl(method = "cv"))
 
+predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, -10]), type = "raw")
+C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
 
-
+# 결과는 뭐 거의 비슷하다. 
 
 ## 3.2.4 Random forest
 # Basic random forest 
@@ -595,6 +589,25 @@ model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + factor(Type)
 model <- train(factor(Rating) ~ . ,
                data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
                method = "rf", trControl = trainControl(method = "cv"))
+
+
+model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + Price + factor(Type) + factor(ContentRating) + 
+                 Price + factor(Installs) ,
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
+               method = "rf", trControl = trainControl(method = "cv"))
+# factor(Rating) ~ factor(Category) + Reviews + Size + Price + factor(Type) + factor(ContentRating) + Price + factor(Installs)
+# Acc : 0.7456, Kapp : 0.2651, Mcnemars'Test < 0.0001, P-value : 0.1568
+
+# Ordinal RF
+model <- train(factor(Rating) ~ . ,
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
+               method = "ordinalRF", trControl = trainControl(method = "cv"))
+
+model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + Price + factor(Type) + factor(ContentRating) + 
+                 Price + factor(Installs) ,
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
+               method = "ordinalRF", trControl = trainControl(method = "cv"))
+
 
 predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, ]), type = "raw")
 C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
