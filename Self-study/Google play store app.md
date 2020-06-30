@@ -542,7 +542,9 @@ ordinalNet(as.matrix(googleplaystore_ML[trainIndex, -c(2, 6)]), googleplaystore_
 as.matrix(googleplaystore_ML[trainIndex, -c(2, 6)])
 
 # Using polr() in MASS package  
-model <- polr(formula = Rating ~ Category + Type + `Content Rating`+ month , data = googleplaystore_ML[trainIndex, ], Hess=TRUE)
+model <- polr(formula = factor(Rating) ~ factor(Category) + Reviews + Size + factor(Type) + factor(ContentRating) + 
+                Price + factor(Installs) , 
+              data = googleplaystore_ML[trainIndex, ], Hess=TRUE)
 predict <- predict(model, newdata = googleplaystore_ML[-trainIndex, ], type = "class")
 C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
 
@@ -559,24 +561,26 @@ C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-train
 # 시간이 오래 걸리고 reference를 봐도 잘 모르겠으므로 일단 일반적인 decision tree를 이용해보자. 
 
 ## Ordinal logistic regression의 결과와 크게 다르지 않다. 
-model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(ContentRating),
-               data = as.data.frame(googleplaystore_ML_test[trainIndex, ]), 
+model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + factor(Type) + factor(ContentRating) + 
+                 Price + factor(Installs),
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
                method = "rpart2", tuneLength = 10, trControl = trainControl(method = "cv"))
 
 # predictor를 factor로 정의하지 않고 integer로 했을 때의 결과. 
 # 잘못된 방법이지만 차이가 있는지 궁금해서 해보았다. 
 # 77.2%, kappa = 0.1515, 유의한 P-value를 갖는다. 
 model <- train(factor(Rating) ~ . ,
-               data = as.data.frame(googleplaystore_ML_test[trainIndex, -c(6, 9)]), 
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
                method = "rpart2", tuneLength = 10, trControl = trainControl(method = "cv"))
 
-predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, ]), type = "raw")
+predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, -10]), type = "raw")
 C_matrix <- confusionMatrix(predict, factor(as.integer(googleplaystore_ML[-trainIndex, ]$Rating)))
 
 
 ## 3.2.3 Support Vector regression  
 # Ordinal support vector regression, 
-model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(ContentRating),
+model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + factor(Type) + factor(ContentRating) + 
+                 Price + factor(Installs),
                data = as.data.frame(googleplaystore_ML_test[trainIndex, ]), 
                method = "svmRadial", trControl = trainControl(method = "cv"))
 
@@ -589,7 +593,7 @@ model <- train(factor(Rating) ~ factor(Category) + factor(Type) + factor(Content
 # 잘못된 방법이지만 차이가 있는지 궁금해서 해보았다. 
 # 76.63% accuracy, non-significant. kappa = 0.1504
 model <- train(factor(Rating) ~ . ,
-               data = as.data.frame(googleplaystore_ML_test[trainIndex, -c(6, 9)]), 
+               data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
                method = "rf", trControl = trainControl(method = "cv"))
 
 predict <- predict(model, newdata = as.data.frame(googleplaystore_ML_test[-trainIndex, ]), type = "raw")
