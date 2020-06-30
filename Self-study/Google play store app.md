@@ -599,6 +599,7 @@ model <- train(factor(Rating) ~ factor(Category) + Reviews + Size + Price + fact
 # Acc : 0.7456, Kapp : 0.2651, Mcnemars'Test < 0.0001, P-value : 0.1568
 
 # Ordinal RF
+## 너무 느린데...?
 model <- train(factor(Rating) ~ . ,
                data = as.data.frame(googleplaystore_ML_test[trainIndex, -10]), 
                method = "ordinalRF", trControl = trainControl(method = "cv"))
