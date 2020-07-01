@@ -51,6 +51,7 @@ FertilizersProduct %>%
 FertilizersProduct %>% 
   # Côte d'Ivoire의 이름이 C\xf4te로 깨져서 나옴, o로 대체
   mutate(Area = str_replace(Area, "\xf4", "ô")) -> FertilizersProduct
+# 끝. 
 
 # 5개의 대륙을 추가, Continent  
 # https://stackoverflow.com/questions/47510141/get-continent-name-from-country-name-in-r
@@ -62,6 +63,7 @@ FertilizersProduct %>%
 
 FertilizersProduct %>% 
   count(Continent)
+# 끝. 
 
 # Value == 0?
 # 없으면 공백일 수도 있는데 왜 Value = 0이 존재할까? 
@@ -77,6 +79,8 @@ FertilizersProduct %>%
               values_from = "n") %>% 
   dplyr::select(1, sample(seq(2, length(unique(FertilizersProduct$Area)), 1), 4))
 # 응. 아니야. 
+# 심지어 일부 나라는 아예 조사가 되지 않은 연도도 있다. 
+
 
 # Value의 -1043? 
 FertilizersProduct %>% 
@@ -153,7 +157,8 @@ FertilizersProduct %>%
   summarise(sum = sum(Value))
 
 ### 2.1.2 Using boxplot, Visualization about values of Export & Import
-boxplot_value <- function(target) {
+# Distribution of element's values among the continent
+boxplot_value_continent <- function(target) {
   
   FertilizersProduct %>% 
     dplyr::filter(Element == target) %>% 
@@ -170,25 +175,71 @@ boxplot_value <- function(target) {
   
 }
 
-boxplot_value("Export Quantity")
-boxplot_value("Import Quantity")
+boxplot_value_continent("Export Quantity")
+boxplot_value_continent("Import Quantity")
 
-boxplot_value("Export Value")
-boxplot_value("Import Value")
+boxplot_value_continent("Export Value")
+boxplot_value_continent("Import Value")
+
+boxplot_value_continent("Agricultural Use")
+
+boxplot_value_continent("Production")
+
+# Distribution of element's values among the item
+boxplot_value_item <- function(target) {
+  
+  FertilizersProduct %>% 
+    dplyr::filter(Element == target) %>% 
+    # 0을 가진 observation이 있으므로 0.001을 더해서 NA를 방지함
+    ggplot(aes(x = log(Value+0.001), color = Item)) +
+    geom_boxplot(position = "dodge", outlier.shape = "*", outlier.size = 5) +
+    facet_wrap(Item ~ .,  ncol = 5) +
+    theme_bw() +
+    ggtitle(paste0('Boxplot about ', target, ' in each items')) +
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+          legend.position = "none") + 
+    labs(x=paste0('log(', target, ')'), y="")
+  
+}
+
+boxplot_value_item("Export Quantity")
+boxplot_value_item("Import Quantity")
+
+boxplot_value_item("Export Value")
+boxplot_value_item("Import Value")
+
+boxplot_value_item("Agricultural Use")
+
+boxplot_value_item("Production")
+
+# Trend of element's values among the item
+barplot_value_item <- function(target) { 
+  FertilizersProduct %>% 
+    group_by(Year, Item) %>% 
+    dplyr::filter(Element == target) %>% 
+    summarise(sum = sum(Value)) %>% 
+    ggplot(aes(x = Year, y = sum, color = Item, fill = Item)) +
+    geom_bar(stat = 'identity') + 
+    facet_wrap(Item ~ ., ncol = 3) + 
+    theme_bw() + 
+    ggtitle(paste0('Bar plot about ', target, ' in Each Items')) + 
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+          legend.position = "none") + 
+    labs(x="Years", y="Amount") + 
+    scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3))
+    
+}
+
+barplot_value_item("Export Quantity")
+barplot_value_item("Import Quantity")
+
+barplot_value_item("Export Value")
+barplot_value_item("Import Value")
+
+barplot_value_item("Agricultural Use")
+barplot_value_item("Production")
 
 
-FertilizersProduct %>% 
-  dplyr::filter(Value != 0) %>%
-  dplyr::filter(Area == "Cyprus") %>% 
-  ggplot(aes(x = Year, y = Value, color = Item, fill = Item)) + 
-  geom_line() +
-  geom_point() + 
-  facet_wrap(Element ~ . , nrow = 6, scales = "free_y")
-
-
-FertilizersProduct %>% 
-  dplyr::filter(Area == "Cyprus" & Element == "Agricultural Use" & Item == "Ammonia, anhydrous") %>% 
-  as.data.frame()
 
 
 # 연도별로 value를 합치는 건 어떨까? 
