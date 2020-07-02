@@ -89,12 +89,26 @@ FertilizersProduct %>%
 
 FertilizersProduct %>% 
   dplyr::filter(Area == "Switzerland" & 
-                  # Element == "Agricultural Use" & 
+                  Element == "Agricultural Use" &
                   Unit == "tonnes" &
                   `Item Code` == 4023) %>% 
   arrange(desc(Year)) %>% 
   dplyr::select(-matches(" ")) %>% as.data.frame()
 
+
+# Export & Import의 Item list와 Production & Agriculture Use의 Item list가 다르다? 
+FertilizersProduct %>% 
+  group_by(Element) %>% 
+  count(Item) %>% count(Element) 
+# Export & Import는 22개의 Item, Production & Agriculture Use는 23개의 Item. 
+
+FertilizersProduct %>% 
+  group_by(Element) %>% 
+  count(Item) %>%
+  ungroup() %>% 
+  pivot_wider(names_from = Element, values_from = n) %>% as.data.frame()
+# Other NK compounds만 차이가 있다. 
+# 끝. 
 
 
 # 2. EDA 
@@ -107,35 +121,36 @@ FertilizersProduct %>%
 
 
 ## 2,1 Using Element 
-FertilizersProduct %>% 
-  dplyr::filter(Element == "Agricultural Use") %>% 
-  count(Area, sort = T) %>%
-  head(10) %>% 
-  arrange(n) %>% 
-  mutate(Area = factor(Area, levels = unique(Area))) %>% 
-  ggplot(aes(x = Area, y = n, fill = Area)) + 
-  geom_bar(stat = "identity") +
-  coord_flip() + 
-  ggtitle('Top 10 Country Having Highest Agricultural Use') + 
-  theme_minimal() + 
-  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
-        legend.position = "none") + 
-  labs(x="Country", y="Number of Uses")
+barplot_value_country <- function(target) { 
+  FertilizersProduct %>% 
+    dplyr::filter(Element == target) %>% 
+    group_by(Area) %>%
+    summarise(sum = sum(Value)) %>% 
+    arrange(desc(sum)) %>% 
+    head(10) %>% 
+    arrange(sum) %>% 
+    mutate(Area = factor(Area, levels = unique(Area))) %>% 
+    ggplot(aes(x = Area, y = sum, fill = Area)) + 
+    geom_bar(stat = "identity") +
+    coord_flip() + 
+    ggtitle(paste0('Top 10 Country Having Highest ', target)) + 
+    theme_minimal() + 
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+          legend.position = "none") + 
+    labs(x="Country", y=paste0(target))
+  
+}
 
-FertilizersProduct %>% 
-  dplyr::filter(Element == "Production") %>% 
-  count(Area, sort = T) %>%
-  head(10) %>% 
-  arrange(n) %>% 
-  mutate(Area = factor(Area, levels = unique(Area))) %>% 
-  ggplot(aes(x = Area, y = n, fill = Area)) + 
-  geom_bar(stat = "identity") +
-  coord_flip() + 
-  ggtitle('Top 10 Country Having Highest Production') + 
-  theme_minimal() + 
-  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
-        legend.position = "none") + 
-  labs(x="Country", y="Number of Productions")
+barplot_value_country("Export Quantity")
+barplot_value_country("Import Quantity")
+
+barplot_value_country("Export Value")
+barplot_value_country("Import Value")
+
+barplot_value_country("Agricultural Use")
+barplot_value_country("Production")
+
+
 
 FertilizersProduct %>% 
   dplyr::filter(Element == "Export Quantity") %>% 
@@ -182,8 +197,34 @@ boxplot_value_continent("Export Value")
 boxplot_value_continent("Import Value")
 
 boxplot_value_continent("Agricultural Use")
-
 boxplot_value_continent("Production")
+
+# Barplot of element's values among the item
+barplot_value_continent <- function(target) { 
+  FertilizersProduct %>% 
+    dplyr::filter(Element == target) %>% 
+    group_by(Continent, Item) %>% 
+    summarise(sum = sum(Value)) %>% 
+    ggplot(aes(x = Continent, y = sum, color = Continent, fill = Continent)) +
+    geom_bar(stat = 'identity') + 
+    facet_wrap(Item ~ ., ncol = 3, scales = "free_y") + 
+    theme_bw() + 
+    ggtitle(paste0('Bar plot about ', target, ' in Each Items')) + 
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+          legend.position = "none") + 
+    labs(x="Continent", y="Amount")
+  
+}
+barplot_value_continent("Export Quantity")
+barplot_value_continent("Import Quantity")
+
+barplot_value_continent("Export Value")
+barplot_value_continent("Import Value")
+
+barplot_value_continent("Agricultural Use")
+barplot_value_continent("Production")
+
+
 
 # Distribution of element's values among the item
 boxplot_value_item <- function(target) {
@@ -209,10 +250,9 @@ boxplot_value_item("Export Value")
 boxplot_value_item("Import Value")
 
 boxplot_value_item("Agricultural Use")
-
 boxplot_value_item("Production")
 
-# Trend of element's values among the item
+# Barplot of element's values among the item
 barplot_value_item <- function(target) { 
   FertilizersProduct %>% 
     group_by(Year, Item) %>% 
@@ -240,19 +280,19 @@ barplot_value_item("Agricultural Use")
 barplot_value_item("Production")
 
 
-
-
-# 연도별로 value를 합치는 건 어떨까? 
-FertilizersProduct %>% 
-  dplyr::select(-matches(" ")) %>% 
-  group_by(Area, Element, Year) %>% 
-  mutate(sum_value = sum(Value))
-
 FertilizersProduct %>% 
   dplyr::select(-matches(" ")) %>% 
   dplyr::filter(Area == "Republic of Korea") %>% 
-  group_by(Year, Item, Element) %>% 
-  summarise(sum_value = sum(Value))
+  group_by(Year, Element) %>% 
+  summarise(sum_value = sum(Value)) %>% 
+  ggplot(aes(x = Year, y = sum_value, color = Element, fill = Element)) +
+  geom_line(group = 1) + 
+  facet_wrap(Element ~ ., ncol = 1, scales = "free_y") +
+  theme_minimal() + 
+  ggtitle(paste0('Line plot about South Korea in Each Element')) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        legend.position = "none") + 
+  labs(x="Years", y="Amount")
 
 
 ```
