@@ -118,9 +118,54 @@ FertilizersProduct %>%
 FertilizersProduct %>% 
   count(Value)
 
+unique(FertilizersProduct$Element)
+
+summary_stat <- function(target){ 
+  FertilizersProduct %>% 
+    dplyr::filter(Element == target) %>% 
+    summarise_at(vars(Value), funs(min, 
+                                   quantile = list(as.tibble(as.list(quantile(., probs = c(0.25, 0.5, 0.75))))), 
+                                   max, 
+                                   mean, sd)) %>%
+    unnest(cols = c(quantile))
+}
+summary_stat("Export Quantity")
+
+summary_stat_list <- function(dataset){
+  
+  summary_stat <- function(target){ 
+    dataset %>% 
+      dplyr::filter(Element == target) %>% 
+      summarise_at(vars(Value), funs(min, 
+                                     quantile = list(as.tibble(as.list(quantile(., probs = c(0.25, 0.5, 0.75))))), 
+                                     max, 
+                                     mean, sd)) %>%
+      unnest(cols = c(quantile))
+  } 
+  
+  list <- lapply(unique(dataset$Element), summary_stat)
+  names(list) <- unique(dataset$Element)
+  
+  return(list)
+}
+summary_stat_list(FertilizersProduct)
 
 
-## 2,1 Using Element 
+FertilizersProduct %>% 
+  dplyr::filter(Element == "Export Quantity") %>% 
+  summarise_at(vars(Value), funs(min, mean, sd, 
+                                 quantile = list(as.tibble(as.list(quantile(., probs = c(0.25, 0.5, 0.75))))), 
+                                 max)) %>%
+  unnest(cols = c(quantile))
+
+FertilizersProduct %>% 
+  dplyr::filter(Element == "Export Value") %>% 
+  summarise_at(vars(Value), funs(min, mean, sd, 
+                                 quantile = list(as.tibble(as.list(quantile(., probs = c(0.25, 0.5, 0.75))))), 
+                                 max)) %>%
+  unnest(cols = c(quantile))
+
+## 2,1 Each continent 
 barplot_value_country <- function(target) { 
   FertilizersProduct %>% 
     dplyr::filter(Element == target) %>% 
@@ -150,28 +195,6 @@ barplot_value_country("Import Value")
 barplot_value_country("Agricultural Use")
 barplot_value_country("Production")
 
-
-
-FertilizersProduct %>% 
-  dplyr::filter(Element == "Export Quantity") %>% 
-  summarise_at(vars(Value), funs(min, mean, sd, 
-                                 quantile = list(as.tibble(as.list(quantile(., probs = c(0.25, 0.5, 0.75))))), 
-                                 max)) %>%
-  unnest(cols = c(quantile))
-
-FertilizersProduct %>% 
-  dplyr::filter(Element == "Export Value") %>% 
-  summarise_at(vars(Value), funs(min, mean, sd, 
-                                 quantile = list(as.tibble(as.list(quantile(., probs = c(0.25, 0.5, 0.75))))), 
-                                 max)) %>%
-  unnest(cols = c(quantile))
-
-FertilizersProduct %>% 
-  dplyr::filter(Element == "Export Quantity") %>% 
-  group_by(Continent) %>% 
-  summarise(sum = sum(Value))
-
-### 2.1.2 Using boxplot, Visualization about values of Export & Import
 # Distribution of element's values among the continent
 boxplot_value_continent <- function(target) {
   
@@ -225,7 +248,7 @@ barplot_value_continent("Agricultural Use")
 barplot_value_continent("Production")
 
 
-
+## 2.2 Whole world
 # Distribution of element's values among the item
 boxplot_value_item <- function(target) {
   
@@ -280,19 +303,41 @@ barplot_value_item("Agricultural Use")
 barplot_value_item("Production")
 
 
+## 2.3 # Trend of Random country 
+trend_country <- function(country) { 
+  
+  FertilizersProduct %>% 
+    dplyr::select(-matches(" ")) %>% 
+    dplyr::filter(Area == country) %>% 
+    group_by(Year, Element) %>% 
+    summarise(sum_value = sum(Value)) %>% 
+    ggplot(aes(x = Year, y = sum_value, color = Element, fill = Element)) +
+    geom_line(size = 1.5) + 
+    theme_minimal() + 
+    ggtitle(paste0('Line Plot of Each Element of ',  country)) + 
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
+    labs(x="Years", y="Amount") + 
+    scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3))
+  
+}
+
+trend_country(unique(FertilizersProduct$Area)[sample(length(unique(FertilizersProduct$Area)), 1)])
+
+# Trend of korea 
 FertilizersProduct %>% 
   dplyr::select(-matches(" ")) %>% 
   dplyr::filter(Area == "Republic of Korea") %>% 
   group_by(Year, Element) %>% 
   summarise(sum_value = sum(Value)) %>% 
   ggplot(aes(x = Year, y = sum_value, color = Element, fill = Element)) +
-  geom_line(group = 1) + 
+  geom_line(size = 1.5) + 
   facet_wrap(Element ~ ., ncol = 1, scales = "free_y") +
   theme_minimal() + 
-  ggtitle(paste0('Line plot about South Korea in Each Element')) + 
+  ggtitle(paste0('Line Plot of Each Element of Republic of Korea')) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "none") + 
-  labs(x="Years", y="Amount")
+  labs(x="Years", y="Amount") + 
+  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3))
 
 
 ```
