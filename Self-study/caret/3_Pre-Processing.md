@@ -19,8 +19,44 @@ head(model.matrix(survived ~ ., data = etitanic))
 dummies <- dummyVars(survived ~ ., data = etitanic)
 head(predict(dummies, newdata = etitanic))
 ```
-`dummyVars`로 만든 결과를 보면 intercept 열(column)이 존재하지 않고 각 범주형 변수들의 수준대로 가변수가 만들어진 것을 볼 수 있다. 이런 특성 때문에 `dummyVars`의 결과는 `lm`과 같은 일부 model 함수들에 적용하기에 적합하지 않을 수 있다.  
-> n개의 수준을 갖는 범주형 변수는 n-1개의 가변수를 생성해 표현할 수 있지만 `dummyVars`는 n개의 가변수를 생성해 표현한다. 예를 들어 m개의 범주형 변수가 존재하는 자료형에 대해 `dummyVars`로 가변수화를 시키는 경우, m개의 가변수가 추가로 생기는 것과 같다. 변수의 개수가 늘어난다는 것은 곧 [차원의 저주](https://en.wikipedia.org/wiki/Curse_of_dimensionality)에 대한 부담이 증가한다는 것과 일맥상통하므로 model 적합 및 예측에 적절하지 않을 수 있다는 것이다.  
+`dummyVars`로 만든 결과를 보면 intercept 열(column)이 존재하지 않고 각 범주형 변수들의 수준대로 가변수가 만들어진 것을 볼 수 있다. 이런 특성 때문에 `dummyVars`의 결과는 `lm`과 같은 일부 모델 함수들에 적용하기에 적합하지 않을 수 있다.  
+> n개의 수준을 갖는 범주형 변수는 n-1개의 가변수를 생성해 표현할 수 있지만 `dummyVars`는 n개의 가변수를 생성해 표현한다. 예를 들어 m개의 범주형 변수가 존재하는 자료형에 대해 `dummyVars`로 가변수화를 시키는 경우, m개의 가변수가 추가로 생기는 것과 같다. 변수의 개수가 늘어난다는 것은 곧 [차원의 저주](https://en.wikipedia.org/wiki/Curse_of_dimensionality)에 대한 부담이 증가한다는 것과 일맥상통하므로 모델 적합 및 예측에 적절하지 않을 수 있다는 것이다.  
 
 ## 3.2 0 그리고 0에 가까운 분산을 갖는 예측 변수(Zero- and Near Zero-Variance Predictors)  
-종종 어떤 경우의 시뮬레이션에서는 데이터 생성 매커니즘이 단일 유일값(Single unique value. 이 경우, "0의 분산을 갖는 예측변수", “zero-variance predictor”)을 갖는 예측변수를 생성할 수 있다.  
+종종 어떤 경우의 시뮬레이션에서는 데이터 생성 매커니즘이 오직 하나의 명목형 숫자값(Single unique value. 이 경우, "0의 분산을 갖는 예측변수", “zero-variance predictor”)을 갖는 예측변수를 생성할 수 있다. 이 상황에서 나무 기반 모델(Tree-based model)을 제외한 다수의 모델을 이용해 분석하면 적합 결과가 불안정하거나 적합 자체가 불가능할 수 있다.  
+비슷하게, 예측변수가 매우 낮은 빈도를 갖는 적은 수의 명목형 숫자값으로 이뤄진 경우가 있다. 예를 들어, `mdrrDescr` 데이터셋의 `nR11`변수의 경우 굉장히 적은 숫자의 명목형 숫자값로 이뤄져 있으며 이마저도 상당히 불균형하다.  
+```r
+data(mdrr)
+data.frame(table(mdrrDescr$nR11))
+```
+문제는 교차검증(Cross-validation)이나 부트스트랩 같이 데이터셋을 나누었을 때 분할된 표본 중 0의 분산을 갖는 예측변수가 생기거나 소수의 관측값이 모델에 지나치게 큰 영향을 미칠 수 있게 된다는 점이다. 이 "0에 가까운 분산"을 갖는 예측변수들은 모델링 전에 찾아내서 제거해야 할 필요성이 있다.   
+
+아래의 두 값을 계산해보면 "0에 가까운 분산"을 갖는 예측변수들을 찾을 수 있다.   
+* (가장 많이 등장하는 명목형 숫자값의 빈도 / 두번째로 많이 등장하는 명목형 숫자값의 빈도)를 계산(빈도수 비율, Frequency ratio) 해본다. 1에 가까우면 예측변수 안의 명목형 숫자값이 잘 분산되어 있는 것이고 값이 크면 클수록 높은 수준의 불균형을 갖고 있는 것이다.  
+* "명목형 숫자값의 백분율"(Percent of unique values)란 명목형 숫자값의 개수를 전체 관측치 숫자로 나눠준 것에 100을 곱한 것(백분율이므로)으로 0에 가까울 수록 해당 예측변수가 잘게 세분화된 것이다.  
+
+빈도수 비율이 미리 설정한 임계값(Threshold)보다 크고 명목형 숫자값의 백분율이 임계값보다 작으면 예측변수가 0에 가까운 분산을 같는 것으로 간주할 수 있다.  
+
+하지만 우리는 명목형 숫자값이 여러 값을 갖진 않지만 균일하게 분포된 데이터를 0에 가까운 분산을 갖는다고 판단하길 원하지 않는다. 두 가지 기준을 모두 사용했다는 사실이 임의의 예측 변수가 0에 가까운 분산을 갖는다고 보증해주진 않으므로 잘못 판단하는 것을 주의해야할 것이다.  
+
+`nearZeroVar` 함수를 이용해 MDRR 데이터셋에 "0에 가까운 분산"을 갖는 변수를 찾아볼 수 있다.(`saveMetrics`의 전달인자(Argument)를 통해서 각 변수에 대한 빈도수 비율과 명목형 숫자값의 백분율을 볼 것인지, 보지 않고 "0에 가까운 분산"을 갖는 변수의 자릿수만 받을 것인지 결정할 수 있다. 초기상태는 `FALSE`다.)
+
+```r
+nzv <- nearZeroVar(mdrrDescr, saveMetrics= TRUE)
+nzv[nzv$nzv,][1:10,]
+```
+```r
+dim(mdrrDescr)
+```
+
+```r
+nzv <- nearZeroVar(mdrrDescr)
+filteredDescr <- mdrrDescr[, -nzv]
+dim(filteredDescr)
+```
+`saveMetrics=FALSE`에 의해 nearZeroVar는 "0에 가까운 분산"을 갖는 것으로 보이는 변수들의 위치를 반환한다.  
+
+## 3.3 예측 변수들의 상관관계 확인하기(Identifying Correlated Predictors)  
+
+
+
