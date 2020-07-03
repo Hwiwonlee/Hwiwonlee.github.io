@@ -16,8 +16,44 @@ FertilizersProduct <- read_csv("FertilizersProduct.csv")
 
 ## 1.1 Expain columns and values
 names(FertilizersProduct)
-FertilizersProduct %>% 
-  count(Flag, sort = T)
+
+overview <- function(dataset, threshold_value = 0.005) { 
+  a <- unlist(lapply(dataset, class))
+  
+  b <- sapply(lapply(FertilizersProduct[, a == "numeric"], unique), length)
+  c <- names(d[which(d < round(nrow(dataset)*threshold_value, 0))])
+  a[which(names(a) %in% c)] <- "character"
+  
+  # Frequency of unique value of character or factor variables
+  unique_value_list <- lapply(dataset[, which(a == "character" | a == "factor")], table)
+  
+  # summary stats of numeric variables
+  summary_stat_list <- function(dataset){
+    
+    summary_stat <- function(target){ 
+      dataset %>% 
+        dplyr::select(target) %>% 
+        summarise_all(funs(min, 
+                           quantile = list(as.tibble(as.list(quantile(., probs = c(0.25, 0.5, 0.75))))), 
+                           max, 
+                           mean, sd)) %>%
+        unnest(cols = c(quantile))
+    } 
+    
+    list <- lapply(names(dataset[, which(a == "numeric")]), summary_stat)
+    names(list) <- names(dataset[, which(a == "numeric")])
+    
+    return(list)
+  }
+  
+  summary_stat_list <- summary_stat_list(FertilizersProduct)
+  
+  result <- list(unique_value_list, summary_stat_list)
+  names(result) <- c("Categorical varibles", "Numeric variables")
+  return(result)
+}
+overview(FertilizersProduct)
+
 
 # Area Code : Unique number for indentifying country like index
 # Area : Name of country
