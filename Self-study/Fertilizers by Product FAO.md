@@ -376,4 +376,308 @@ FertilizersProduct %>%
   scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3))
 
 
+FertilizersProduct %>% 
+  dplyr::select(-matches(" ")) %>% 
+  # mutate(Year = as.character(Year)) %>% 
+  dplyr::filter(Area == "Republic of Korea") %>% 
+  dplyr::filter(grepl("Import", Element)) %>% # target
+  group_by(Element, Item) %>%
+  mutate( across(contains('Value'), 
+                 .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+  ungroup() %>% 
+  group_by(Element) %>% 
+  mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+  dplyr::filter(Value_rank %in% seq(1,5,1)) %>% # select top n
+  mutate(Item = factor(Item, levels = unique(Item))) %>% 
+  ggplot(aes(x = as.numeric(Year), y = Value, color = Item)) +
+  geom_line(size = 1) + 
+  geom_point(size = 1.3) + 
+  facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
+  theme_minimal() + 
+  ggtitle(paste0('Line Plot of Each Element of Republic of Korea')) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        legend.position = "bottom") + 
+  labs(x="Years", y="Amount") + 
+  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+  
+
+FertilizersProduct %>% 
+  dplyr::select(-matches(" ")) %>% 
+  # mutate(Year = as.character(Year)) %>% 
+  dplyr::filter(Area == "Republic of Korea") %>% 
+  dplyr::filter(grepl("Export", Element)) %>% # target
+  group_by(Element, Item) %>%
+  mutate( across(contains('Value'), 
+                 .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+  ungroup() %>% 
+  group_by(Element) %>% 
+  mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+  dplyr::filter(Value_rank %in% seq(1,5,1)) %>% # select top n
+  mutate(Item = factor(Item, levels = unique(Item))) %>% 
+  ggplot(aes(x = as.numeric(Year), y = Value, color = Item)) +
+  geom_line(size = 1) + 
+  geom_point(size = 1.3) + 
+  facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
+  theme_minimal() + 
+  ggtitle(paste0('Line Plot of Each Element of Republic of Korea')) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        legend.position = "bottom") + 
+  labs(x="Years", y="Amount") + 
+  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+
+
+FertilizersProduct %>% 
+  dplyr::select(-matches(" ")) %>% 
+  # mutate(Year = as.character(Year)) %>% 
+  dplyr::filter(Area == "Republic of Korea") %>% 
+  dplyr::filter(grepl("Production", Element)) %>% # target
+  group_by(Element, Item) %>%
+  mutate( across(contains('Value'), 
+                 .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+  ungroup() %>% 
+  group_by(Element) %>% 
+  mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+  dplyr::filter(Value_rank %in% seq(1,5,1)) %>% # select top n
+  mutate(Item = factor(Item, levels = unique(Item))) %>% 
+  ggplot(aes(x = as.numeric(Year), y = Value, color = Item)) +
+  geom_line(size = 1) + 
+  geom_point(size = 1.3) + 
+  facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
+  theme_minimal() + 
+  ggtitle(paste0('Line Plot of Each Element of Republic of Korea')) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        legend.position = "bottom") + 
+  labs(x="Years", y="Amount") + 
+  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+
+FertilizersProduct %>% 
+  dplyr::select(-matches(" ")) %>% 
+  # mutate(Year = as.character(Year)) %>% 
+  dplyr::filter(Area == "Republic of Korea") %>% 
+  dplyr::filter(grepl("Use", Element)) %>% # target
+  group_by(Element, Item) %>%
+  mutate( across(contains('Value'), 
+                 .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+  ungroup() %>% 
+  group_by(Element) %>% 
+  mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+  dplyr::filter(Value_rank %in% seq(1,5,1)) %>% # select top n
+  mutate(Item = factor(Item, levels = unique(Item))) %>% 
+  ggplot(aes(x = as.numeric(Year), y = Value, color = Item)) +
+  geom_line(size = 1) + 
+  geom_point(size = 1.3) + 
+  facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
+  theme_minimal() + 
+  ggtitle(paste0('Line Plot of Each Element of Republic of Korea')) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        legend.position = "bottom") + 
+  labs(x="Years", y="Amount") + 
+  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+
+FertilizersProduct %>% 
+  dplyr::select(-matches(" ")) %>% 
+  # mutate(Year = as.character(Year)) %>% 
+  dplyr::filter(Area == "Republic of Korea") %>% 
+  dplyr::filter(grepl("Use", Element)) %>% # target
+  group_by(Element, Item) %>%
+  mutate( across(contains('Value'), 
+                 .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+  ungroup() %>% 
+  group_by(Element) %>% 
+  mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+  dplyr::filter(Value_rank %in% seq(3,5,1)) %>% # select top n
+  mutate(Item = factor(Item, levels = unique(Item))) %>% 
+  ggplot(aes(x = as.numeric(Year), y = Value, color = Item)) +
+  geom_line(size = 1) + 
+  geom_point(size = 1.3) + 
+  facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
+  theme_minimal() + 
+  ggtitle(paste0('Line Plot of Each Element of Republic of Korea')) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        legend.position = "bottom") + 
+  labs(x="Years", y="Amount") + 
+  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+
+
+FertilizersProduct %>% 
+  dplyr::select(-matches(" ")) %>% 
+  dplyr::filter(Area == "Republic of Korea") %>% 
+  dplyr::filter(grepl("Import", Element)) %>% # target
+  group_by(Element, Item) %>%
+  mutate( across(contains('Value'), 
+                 .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+  ungroup() %>% 
+  group_by(Element) %>% 
+  mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+  dplyr::filter(Value_rank %in% seq(1,5,1)) %>% # select top n
+  mutate(Item = factor(Item, levels = unique(Item))) %>% 
+  ggplot(aes(x = Year, y = Value, color = Item)) +
+  geom_line(size = 1) + 
+  geom_point(size = 1.3) + 
+  facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
+  theme_minimal() + 
+  ggtitle(paste0('Line Plot of Each Element of Republic of Korea')) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        legend.position = "bottom") + 
+  labs(x="Years", y="Amount") + 
+  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+
+
+
+General_lineplot <- function(dataset, country = country, Elements = Elements, start = n, end = m) { 
+
+  # dataset is target dataset, FertilizersProduct
+  # country is target country 
+  # Elements means one or more elements in "Element column"
+  # start, end are integer value that you want to see the position like rank. 
+    
+  dataset %>% 
+    
+    # Data set up 
+    dplyr::select(-matches(" ")) %>% 
+    dplyr::filter(Area == country) %>%
+    dplyr::filter(Element %in% Elements) %>% 
+    
+    # To arrange values use dense_rank function through the each groups mean value
+    group_by(Element, Item) %>% 
+    mutate( across(contains('Value'), 
+                   .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+    ungroup() %>% 
+    group_by(Element) %>% 
+    mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+    
+    # Just filter some items on your choice
+    # start value is n and end value in m
+    # In general, start is 1, end is 3, 5, or 10 for select just "top n"
+    # But if you need to spread the lines, you will select you wants
+    dplyr::filter(Value_rank %in% seq(start, end, 1)) %>% 
+    mutate(Item = factor(Item, levels = unique(Item))) %>%
+    
+    # ggplot part 
+    ggplot(aes(x = Year, y = Value, color = Item)) +
+    geom_line(size = 1.1) + 
+    geom_point(size = 1.3) + 
+    facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
+    theme_minimal() + 
+    ggtitle(paste0('Line Plot of Selected Element(s) of ', country)) + 
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+          legend.position = "bottom") + 
+    labs(x="Years", y="Amount") + 
+    scale_x_continuous(breaks=seq(min(dataset$Year), max(dataset$Year), 3)) +
+    scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+  
+}
+
+General_lineplot(dataset = FertilizersProduct, 
+                 country = "Republic of Korea", 
+                 Elements = c("Agricultural Use"), 
+                 start = 1, 
+                 end = 5)
+
+General_lineplot(dataset = FertilizersProduct, 
+                 country = "Republic of Korea", 
+                 Elements = c("Agricultural Use"), 
+                 start = 3, 
+                 end = 5)
+
+
+FertilizersProduct %>% 
+  dplyr::select(-matches(" ")) %>% 
+  dplyr::filter(Area == "Finland") %>% 
+  dplyr::filter(Element %in% c("Production", "Export Quantity")) %>% 
+  pivot_wider(names_from = Element, values_from = Value, names_prefix = "Value ") %>% 
+  mutate(across(contains("Value"), ~replace_na(.x, 0))) %>% 
+  pivot_longer(cols = c("Value Export Quantity", "Value Production"), 
+               names_to = "Element", values_to = "Value") %>% 
+  mutate(Element = str_remove(Element, "Value "))  %>% 
+  group_by(Item) %>% 
+  
+  
+  mutate( across(contains('Value'), 
+                 .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+  ungroup() %>% 
+  mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+  dplyr::filter(Value_rank %in% seq(1,5,1)) %>% 
+  
+  
+  
+  
+  
+  
+  dplyr::filter(Value_rank %in% seq(1,5,1)) %>%
+  arrange(Value_rank) %>% 
+  mutate(Item = factor(Item, levels = unique(Item))) %>% 
+  ggplot(aes(x = Year, y = Value, color = Element, fill = Element)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  facet_wrap(Item ~ ., ncol = 3, scales = "free_y") + 
+  theme_minimal() + 
+  ggtitle(paste0('Bar Plot of Each Element of Republic of Korea')) + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+        legend.position = "bottom") + 
+  labs(x="Years", y="Amount") + 
+  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+
+
+General_barplot <- function(dataset, country = country, Elements = Elements, start = n, end = m) { 
+  
+  # dataset is target dataset, FertilizersProduct
+  # country is target country 
+  # Elements means one or more elements in "Element column"
+  # start, end are integer value that you want to see the position like rank.
+    
+  dataset %>% 
+    dplyr::select(-matches(" ")) %>% 
+    dplyr::filter(Area == "Finland") %>% 
+    dplyr::filter(Element %in% Elements) %>% 
+    pivot_wider(names_from = Element, values_from = Value, names_prefix = "Value ") %>% 
+    mutate(across(contains("Value"), ~replace_na(.x, 0))) %>% 
+    pivot_longer(cols = paste0("Value ", Elements), 
+                 names_to = "Element", values_to = "Value") %>% 
+    mutate(Element = str_remove(Element, "Value "))  %>% 
+    group_by(Item) %>% 
+    
+    # 각각의 Item에 대하여 선택된 element의 value 평균을 구함.
+    # 문제는 평균이기 때문에 n개의 item을 선택하는 경우, 특정 element의 양이 큰 경우에 영향을 크게 받는다는 것. 
+    # 해결책은...특정 element에 대한 n개의 Item을 선택하고, 그 (Item, element)와 다른 element를 비교해보자는 것.
+    mutate( across(contains('Value'), 
+                   .fns = list(rank = ~mean(.x, na.rm = T))) ) %>% 
+    ungroup() %>% 
+    mutate(Value_rank = dense_rank(desc(Value_rank))) %>% 
+    
+    # Just filter some items on your choice
+    # start value is n and end value in m
+    # In general, start is 1, end is 3, 5, or 10 for select just "top n"
+    # But if you need to spread the lines, you will select you wants
+    dplyr::filter(Value_rank %in% seq(n,m,1)) %>%
+    arrange(Value_rank) %>% 
+    mutate(Item = factor(Item, levels = unique(Item))) %>% 
+    
+    # ggplot part 
+    ggplot(aes(x = Year, y = Value, color = Element, fill = Element)) +
+    geom_bar(stat = "identity", position = "dodge") + 
+    facet_wrap(Item ~ ., ncol = 3, scales = "free_y") + 
+    theme_minimal() + 
+    ggtitle(paste0('Bar Plot of Each Element of Republic of Korea')) + 
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+          legend.position = "bottom") + 
+    labs(x="Years", y="Amount") + 
+    scale_x_continuous(breaks=seq(min(dataset$Year), max(dataset$Year), 3)) + 
+    scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+  
+}
+
+General_barplot(dataset = FertilizersProduct, 
+                 country = "Republic of Korea", 
+                 Elements = c("Export Quantity", "Import Quantity", "Production"), 
+                 start = 1, 
+                 end = 5)
+
+
 ```
