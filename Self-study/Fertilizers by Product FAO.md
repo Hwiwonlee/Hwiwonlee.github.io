@@ -593,51 +593,81 @@ General_barplot <- function(dataset, country = country, base_Element = base_Elem
   # country is target country 
   # Elements means one or more elements in "Element column"
   # start, end are integer value that you want to see the position like rank.
-  rank_column <- paste0("Value ", base_Element, "_rank")
   
   dataset %>% 
-    dplyr::select(-matches(" ")) %>% 
     dplyr::filter(Area == country) %>% 
-    dplyr::filter(Element %in% c(base_Element, vs_Element)) %>% 
-    pivot_wider(names_from = Element, values_from = Value, names_prefix = "Value ") %>% 
-    mutate(across(contains("Value"), ~replace_na(.x, 0))) %>%
-    
     group_by(Item) %>% 
-    mutate(across(contains(base_Element), .fns = list(rank = ~mean(.x, na.rm = T)))) %>% 
-    arrange(desc(`Value Production`)) %>% 
-    ungroup() %>% 
-    mutate(across(contains("rank"), ~dense_rank(desc(.x)))) %>% 
+    dplyr::filter(Element == base_Element) %>% 
+    mutate(Value = ifelse(Value == 0, NA, Value)) %>% 
+    drop_na(Value) %>% 
+    count(Item) -> test_row 
+  
+  if (nrow(test_row) >= end) { 
+    rank_column <- paste0("Value ", base_Element, "_rank")
     
-    pivot_longer(cols = paste0("Value ", c(base_Element, vs_Element)), 
-                 names_to = "Element", values_to = "Value") %>% 
-    mutate(Element = str_remove(Element, "Value ")) %>% 
-    # Compute mean part
-    # Compute mean value of each Items for arrange
+    dataset %>% 
+      dplyr::select(-matches(" ")) %>% 
+      dplyr::filter(Area == country) %>% 
+      dplyr::filter(Element %in% c(base_Element, vs_Element)) %>% 
+      pivot_wider(names_from = Element, values_from = Value, names_prefix = "Value ") %>% 
+      mutate(across(contains("Value"), ~replace_na(.x, 0))) %>%
+      
+      group_by(Item) %>% 
+      mutate(across(contains(base_Element), .fns = list(rank = ~mean(.x, na.rm = T)))) %>% 
+      arrange(desc(`Value Production`)) %>% 
+      ungroup() %>% 
+      mutate(across(contains("rank"), ~dense_rank(desc(.x)))) %>% 
+      
+      pivot_longer(cols = paste0("Value ", c(base_Element, vs_Element)), 
+                   names_to = "Element", values_to = "Value") %>% 
+      mutate(Element = str_remove(Element, "Value ")) %>% 
+      # Compute mean part
+      # Compute mean value of each Items for arrange
+      
+      # Just filter some items on your choice
+      # start value is n and end value in m
+      # In general, start is 1, end is 3, 5, or 10 for select just "top n"
+      # But if you need to spread the lines, you will select you wants
+      dplyr::filter(!!as.symbol(rank_column) %in% seq(start,end,1)) %>% 
+      arrange(!!as.symbol(rank_column)) %>% 
+      mutate(Item = factor(Item, levels = unique(Item))) %>% 
+      
+      # ggplot part 
+      ggplot(aes(x = Year, y = Value, color = Element, fill = Element)) +
+      geom_bar(stat = "identity", position = "dodge") + 
+      facet_wrap(Item ~ ., ncol = 3, scales = "free_y") + 
+      theme_minimal() + 
+      ggtitle(paste0('Bar Plot of Selected Element(s) of ', country)) + 
+      theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
+            legend.position = "bottom") + 
+      labs(x="Years", y="Amount") + 
+      scale_x_continuous(breaks=seq(min(dataset$Year), max(dataset$Year), 3)) + 
+      scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
     
-    # Just filter some items on your choice
-    # start value is n and end value in m
-    # In general, start is 1, end is 3, 5, or 10 for select just "top n"
-    # But if you need to spread the lines, you will select you wants
-    dplyr::filter(!!as.symbol(rank_column) %in% seq(start,end,1)) %>% 
-    arrange(!!as.symbol(rank_column)) %>% 
-    mutate(Item = factor(Item, levels = unique(Item))) %>% 
     
-    # ggplot part 
-    ggplot(aes(x = Year, y = Value, color = Element, fill = Element)) +
-    geom_bar(stat = "identity", position = "dodge") + 
-    facet_wrap(Item ~ ., ncol = 3, scales = "free_y") + 
-    theme_minimal() + 
-    ggtitle(paste0('Bar Plot of Selected Element(s) of ', country)) + 
-    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
-          legend.position = "bottom") + 
-    labs(x="Years", y="Amount") + 
-    scale_x_continuous(breaks=seq(min(dataset$Year), max(dataset$Year), 3)) + 
-    scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+    
+  }
+  
+  else {
+    
+    print(paste0("The ", country, " you have chosen does not have enough observations for that ", base_Element, 
+                 ". So I recommand that change the ", base_Element, " or check the number of items having ", base_Element, " values"))
+  }
+  
   
 }
 
 General_barplot(dataset = FertilizersProduct, 
-                country = "Republic of Korea", 
+                country = "Finland", 
+                base_Element = "Production", 
+                vs_Element = c("Import Quantity", "Export Quantity"),
+                start = 1, 
+                end = 5)
+
+
+
+General_barplot(dataset = FertilizersProduct, 
+                country = unique(FertilizersProduct$Area)[sample(length(unique(FertilizersProduct$Area)), 1)], 
                 base_Element = "Production", 
                 vs_Element = c("Import Quantity", "Export Quantity"),
                 start = 1, 
