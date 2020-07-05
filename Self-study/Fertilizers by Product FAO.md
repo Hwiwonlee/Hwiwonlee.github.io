@@ -326,7 +326,7 @@ barplot_value_item <- function(target) {
           legend.position = "none") + 
     labs(x="Years", y="Amount") + 
     scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3))
-    
+  
 }
 
 barplot_value_item("Export Quantity")
@@ -400,7 +400,7 @@ FertilizersProduct %>%
   labs(x="Years", y="Amount") + 
   scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
-  
+
 
 FertilizersProduct %>% 
   dplyr::select(-matches(" ")) %>% 
@@ -642,5 +642,4 @@ General_barplot(dataset = FertilizersProduct,
                 vs_Element = c("Import Quantity", "Export Quantity"),
                 start = 1, 
                 end = 5)
-
 ```
