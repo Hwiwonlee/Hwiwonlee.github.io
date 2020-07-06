@@ -384,6 +384,8 @@ FertilizersProduct %>%
   scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
   scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 
+FertilizersProduct %>% 
+  dplyr::filter(Area == "Republic of Korea") -> KOR_FertilizersProduct
 
 # scale로 보면 수입량의 평균이 제일 커야하는데 생산량의 평균이 제일 크다. 
 KOR_FertilizersProduct %>% 
@@ -398,25 +400,6 @@ KOR_FertilizersProduct %>%
   # 어? 제대로 나오네? 
   
   pivot_wider(names_from = Element, values_from = sum) %>% as.data.frame()
-
-
-# case 1.
-KOR_FertilizersProduct %>% 
-  group_by(Element) %>% 
-  summarise(mean = mean(Value, na.rm = T)) %>% 
-  ungroup() %>% 
-  arrange(mean)
-
-# case 2.
-KOR_FertilizersProduct %>% 
-  group_by(Year, Element) %>% 
-  summarise(sum = sum(Value, na.rm = T)) %>% 
-  ungroup() %>% 
-  group_by(Element) %>%
-  summarise(mean = mean(sum, na.rm = T)) %>% arrange(mean)
-  
-
-
 
 
 FertilizersProduct %>% 
@@ -715,7 +698,7 @@ General_lineplot <- function(dataset, country = country, Elements = Elements, st
 
 FertilizersProduct %>% 
   count(Element, Unit)
-  
+
 General_lineplot(dataset = FertilizersProduct, 
                  country = "Republic of Korea", 
                  Elements = c("Agricultural Use"), 
@@ -825,4 +808,32 @@ General_barplot(dataset = FertilizersProduct,
                 vs_Element = c("Import Quantity", "Export Quantity"),
                 start = 1, 
                 end = 5)
+overview(KOR_FertilizersProduct)
+
+# case 1.
+KOR_FertilizersProduct %>% 
+  group_by(Element) %>% 
+  summarise(mean = mean(Value, na.rm = T)) %>% 
+  ungroup() %>% 
+  arrange(mean)
+
+KOR_FertilizersProduct %>% 
+  group_by(Element) %>% 
+  summarise(sum = sum(Value, na.rm = T))
+
+
+# case 2.
+KOR_FertilizersProduct %>% 
+  group_by(Year, Element) %>% 
+  summarise(sum = sum(Value, na.rm = T)) %>% 
+  ungroup() %>% 
+  group_by(Element) %>%
+  summarise(mean = mean(sum, na.rm = T))
+
+# 산수의 문제긴 한데, case 1과 case2의 평균값 차이는 나눠지는 n의 개수 차이다.
+# case 1은 단순히, Element들의 평균을 구하는 것이므로 Export Quantity의 평균을 구한다면 sum(Value)/n(Export Quantity)이다. 
+# case 2는 먼저. 각 연도에 대한 Element들의 sum(Value)을 계산한 상태에서 평균을 구한 것으로 Export Quantity의 평균을 구한다면 sum(Value)/n(년)이다. 
+# 그러니 차이가 날 수 밖에. 
+# 결론적으로 trend part에서의 line plot은 각 연도에 대해 각각의 element의 value합을 그린 것이므로 평균 또한 case 2를 사용해야 맞다. 
+# 만일, 특정 element의 value에서 NA가 발생할 경우는 또 다른 문제이다. 이 경우, na.rm를 하면 n(년)에 차이가 생기므로 na.rm가 아니라 NA를 0으로 바꿔주는 등의 작업을 거쳐야할 것이다. 
 ```
