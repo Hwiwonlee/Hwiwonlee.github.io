@@ -366,26 +366,26 @@ trend_country(unique(FertilizersProduct$Area)[sample(length(unique(FertilizersPr
 
 # Trend of korea 
 FertilizersProduct %>% 
+  dplyr::filter(Area == "Republic of Korea") -> KOR_FertilizersProduct
+
+KOR_FertilizersProduct %>% 
   dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
   group_by(Year, Element) %>% 
   mutate(sum_value = sum(Value)) %>%
   mutate(Element = factor(Element, levels = c("Import Value", "Export Value", "Import Quantity", "Export Quantity", 
                                               "Agricultural Use", "Production"))) %>% 
   arrange(Element) %>% 
   ggplot(aes(x = Year, y = sum_value, color = Element, fill = Element)) +
-  geom_line(size = 1.1) + 
+  geom_line(size = 1) + 
   geom_point(size = 1.3) + 
   facet_grid(cols = vars(Unit)) +
   theme_minimal() + 
-  ggtitle(paste0('Line Plot of Each Element of Republic of Korea')) + 
+  ggtitle(paste0('Line plot of each Element of Republic of Korea')) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15)) + 
   labs(x="Years", y="Amount") + 
   scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
   scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 
-FertilizersProduct %>% 
-  dplyr::filter(Area == "Republic of Korea") -> KOR_FertilizersProduct
 
 # 평균 비교 
 KOR_FertilizersProduct %>% 
@@ -393,13 +393,11 @@ KOR_FertilizersProduct %>%
   summarise(sum = sum(Value, na.rm = T)) %>% 
   ungroup() %>% 
   group_by(Element) %>%
-  summarise(mean = mean(sum, na.rm = T)) %>% arrange(desc(mean))
-  
-overview  
+  summarise(mean = mean(sum, na.rm = T)) %>%
+  arrange(desc(mean))
 
-FertilizersProduct %>% 
-  dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
+
+KOR_FertilizersProduct %>% 
   dplyr::filter(grepl("Import", Element)) %>%
   group_by(Element, Item) %>%
   mutate( across(contains('Value'), 
@@ -414,17 +412,14 @@ FertilizersProduct %>%
   geom_point(size = 1.3) + 
   facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
   theme_minimal() + 
-  ggtitle(paste0('Line Plot of Top 5 Fertilizers in Import part of Republic of Korea')) + 
+  ggtitle(paste0('Line plot of top 5 fertilizers in import part of Republic of Korea')) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "bottom") + 
   labs(x="Years", y="Amount") + 
   scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 
-
-FertilizersProduct %>% 
-  dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
+KOR_FertilizersProduct %>% 
   dplyr::filter(grepl("Export", Element)) %>%
   group_by(Element, Item) %>%
   mutate( across(contains('Value'), 
@@ -439,17 +434,14 @@ FertilizersProduct %>%
   geom_point(size = 1.3) + 
   facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
   theme_minimal() + 
-  ggtitle(paste0('Line Plot of Top 5 Fertilizers in Export part of Republic of Korea')) + 
+  ggtitle(paste0('Line plot of top 5 fertilizers in export part of Republic of Korea')) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "bottom") + 
   labs(x="Years", y="Amount") + 
   scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 
-
-FertilizersProduct %>% 
-  dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
+KOR_FertilizersProduct %>% 
   dplyr::filter(grepl("Production", Element)) %>%
   group_by(Element, Item) %>%
   mutate( across(contains('Value'), 
@@ -464,16 +456,14 @@ FertilizersProduct %>%
   geom_point(size = 1.3) + 
   facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
   theme_minimal() + 
-  ggtitle(paste0('Line Plot of Top 5 Fertilizers in Production of Republic of Korea')) + 
+  ggtitle(paste0('Line plot of top 5 fertilizers in production of Republic of Korea')) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "bottom") + 
   labs(x="Years", y="Amount") + 
   scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 
-FertilizersProduct %>% 
-  dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
+KOR_FertilizersProduct %>% 
   dplyr::filter(grepl("Use", Element)) %>%
   group_by(Element, Item) %>%
   mutate( across(contains('Value'), 
@@ -488,16 +478,14 @@ FertilizersProduct %>%
   geom_point(size = 1.3) + 
   facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
   theme_minimal() + 
-  ggtitle(paste0('Line Plot of Top 5 Fertilizers in Agricultural Use part of Republic of Korea')) + 
+  ggtitle(paste0('Line plot of top 5 fertilizers in Agricultural Use part of Republic of Korea')) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "bottom") + 
   labs(x="Years", y="Amount") + 
   scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 
-FertilizersProduct %>% 
-  dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
+KOR_FertilizersProduct %>% 
   dplyr::filter(grepl("Use", Element)) %>%
   group_by(Element, Item) %>%
   mutate( across(contains('Value'), 
@@ -512,7 +500,7 @@ FertilizersProduct %>%
   geom_point(size = 1.3) + 
   facet_wrap(Element ~ ., ncol = 3, scales = "free_y") + 
   theme_minimal() + 
-  ggtitle(paste0('Line Plot of 3nd-5th Fertilizers in Agricultural Use part of Republic of Korea')) + 
+  ggtitle(paste0('Line plot of 3nd-5th fertilizers in Agricultural Use part of Republic of Korea')) + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "bottom") + 
   labs(x="Years", y="Amount") + 
@@ -520,9 +508,8 @@ FertilizersProduct %>%
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 
 # drawing ratio plot 
-FertilizersProduct %>% 
+KOR_FertilizersProduct %>% 
   dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
   dplyr::filter(Element %in% c("Import Quantity", "Export Quantity")) %>% 
   pivot_wider(names_from = Element, values_from = Value, names_prefix = "Value ") %>% 
   mutate(across(contains("Value"), ~replace_na(.x, 0))) %>%
@@ -557,8 +544,7 @@ FertilizersProduct %>%
   geom_point()+
   facet_wrap(Item ~ ., nrow = 5, scales = "free_y") +
   theme_minimal() + 
-  labs(title = paste0("Line plot drawn with proportions(", "Export Quantity", "/", "Import Quantity", ") of Republic of Korea"), 
-       # subtitle = paste0('Bar Plot of Selected Element(s) of ', country),
+  labs(title = paste0("Line plot drawn with ratio(", "Export Quantity", "/", "Import Quantity", ") of Republic of Korea"), 
        x="Years", y="Amount") + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "bottom") + 
@@ -567,9 +553,8 @@ FertilizersProduct %>%
 
 
 # drawing ratio plot 
-FertilizersProduct %>% 
+KOR_FertilizersProduct %>% 
   dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
   dplyr::filter(Element %in% c("Import Value", "Export Value")) %>% 
   pivot_wider(names_from = Element, values_from = Value, names_prefix = "Value ") %>% 
   mutate(across(contains("Value"), ~replace_na(.x, 0))) %>%
@@ -604,8 +589,7 @@ FertilizersProduct %>%
   geom_point()+
   facet_wrap(Item ~ ., nrow = 5, scales = "free_y") +
   theme_minimal() + 
-  labs(title = paste0("Line plot drawn with proportions(", "Import Value", "/", "Export Value", ") of Republic of Korea"), 
-       # subtitle = paste0('Bar Plot of Selected Element(s) of ', country),
+  labs(title = paste0("Line plot drawn with ratio(", "Import Value", "/", "Export Value", ") of Republic of Korea"), 
        x="Years", y="Amount") + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "bottom") + 
@@ -613,9 +597,8 @@ FertilizersProduct %>%
   scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
 
 
-FertilizersProduct %>% 
+KOR_FertilizersProduct %>% 
   dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
   dplyr::filter(Element %in% c("Import Value", "Export Value")) %>% 
   pivot_wider(names_from = Element, values_from = Value, names_prefix = "Value ") %>% 
   mutate(across(contains("Value"), ~replace_na(.x, 0))) %>%
@@ -644,62 +627,43 @@ FertilizersProduct %>%
   mutate(Item = factor(Item, levels = unique(Item))) %>% 
   dplyr::filter(Element == "Ratio") %>% dplyr::filter(Item == "Ammonia, anhydrous") %>% as.data.frame()
 
-
-FertilizersProduct %>% 
+KOR_FertilizersProduct %>% 
   dplyr::select(-matches(" ")) %>% 
-  dplyr::filter(Area == "Republic of Korea") %>% 
   dplyr::filter(Element %in% c("Production", "Agricultural Use")) %>% 
   pivot_wider(names_from = Element, values_from = Value, names_prefix = "Value ") %>% 
-  mutate(across(contains("Value"), ~replace_na(.x, 0))) %>%
+  mutate(across(contains("Value"), ~replace_na(.x, 0))) %>% 
   
   group_by(Item) %>% 
-  mutate(across(contains("Agricultural"), .fns = list(rank = ~mean(.x, na.rm = T)))) %>% 
-  arrange(desc(`Value Agricultural Use`)) %>% 
+  mutate(across(contains("Value"), .fns = list(mean = ~mean(.x, na.rm = T)))) %>%
+  arrange(desc(`Value Production_mean`)) %>% 
   
-  # For comparing with base element and vs element, add the Ratio column 
-  mutate(Ratio = `Value Production`/`Value Agricultural Use`) %>% 
   ungroup() %>% 
-  mutate(across(contains("rank"), ~dense_rank(desc(.x)))) %>% 
+  mutate(across(contains("Production_mean"), .fns = list(rank = ~dense_rank(desc(.x))))) %>% 
   
-  pivot_longer(cols = c(paste0("Value ", c("Production", "Agricultural Use")), "Ratio"), 
+  pivot_longer(cols = c(paste0("Value ", c("Production", "Agricultural Use"), "_mean")), 
                names_to = "Element", values_to = "Value") %>% 
   mutate(Element = str_remove(Element, "Value ")) %>% 
-  # Compute mean part
-  # Compute mean value of each Items for arrange
+  
   
   # Just filter some items on your choice
   # start value is n and end value in m
   # In general, start is 1, end is 3, 5, or 10 for select just "top n"
   # But if you need to spread the lines, you will select you wants
-  dplyr::filter(`Value Agricultural Use_rank` %in% seq(1, 5, 1)) %>%
-  arrange(`Value Agricultural Use_rank`) %>% 
+  dplyr::filter(`Value Production_mean_rank` %in% seq(1, 5, 1)) %>%
+  arrange(`Value Production_mean_rank`) %>% 
   mutate(Item = factor(Item, levels = unique(Item))) %>% 
-  dplyr::filter(Element == "Ratio") %>% 
+  mutate(Element = str_remove(Element, "_mean")) %>% 
   
   # ggplot part 
-  ggplot(aes(x = Year, y = Value, color = Item, fill = Item)) +
-  geom_line() + 
-  geom_point()+
-  facet_wrap(Item ~ ., nrow = 5, scales = "free_y") +
+  ggplot(aes(x = Value, y = Element, color = Element, fill = Element)) +
+  geom_bar(stat = "identity") + 
+  facet_wrap(Item ~ ., nrow = 5, scales = "free_x") +
   theme_minimal() + 
-  labs(title = paste0("Line plot drawn with proportions(", "Agricultural Use", "/", "Production", ") of Republic of Korea"), 
-       # subtitle = paste0('Bar Plot of Selected Element(s) of ', country),
-       x="Years", y="Amount") + 
+  labs(title = paste0("Bar plot drawn with mean of Production and Agricultural Use of Republic of Korea"), 
+       x="Value", y="Element") + 
   theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 15), 
         legend.position = "bottom") + 
-  scale_x_continuous(breaks=seq(min(FertilizersProduct$Year), max(FertilizersProduct$Year), 3)) + 
-  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
-
-
-
-
-
-
-
-
-
-
-
+  scale_x_continuous(labels = function(x) format(x, scientific = FALSE))
 
 
 General_lineplot <- function(dataset, country = country, Elements = Elements, start = n, end = m) { 
