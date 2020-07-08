@@ -57,6 +57,25 @@ dim(filteredDescr)
 `saveMetrics=FALSE`에 의해 nearZeroVar는 "0에 가까운 분산"을 갖는 것으로 보이는 변수들의 위치를 반환한다.  
 
 ## 3.3 예측 변수들의 상관관계 확인하기(Identifying Correlated Predictors)  
+상관관계가 있는 예측변수를 이용한 PLS(partial least squares) 등을 제외한 모델들에서는 상관관계가 있는 예측변수들의 상관성을 줄여야 한다.  
+상관계수 행렬이 주어진 경우, `findCorrelation` 함수는 다음의 알고리즘을 따라 제거해야할, 즉 높은 수준의 상관관계를 갖고 있는 예측변수들을 지정한다.  
 
+```r
+descrCor <-  cor(filteredDescr)
+highCorr <- sum(abs(descrCor[upper.tri(descrCor)]) > .999)
+```
+이전에 본 MDRR 데이터에서, 65개의 예측변수(원문에서는 descriptors)에 대해 거의 완벽한 상관관계(상관계수의 절대값이 0.999 이상인 경우)가 발견되었다. 가령, IAC(total information index of atomic composition)와 TIC0(total information content index (neighborhood symmetry of 0-order))는 1의 상관계수를 갖는다. 아래의 코드들은 상관계수의 절댓값이 0.75 이상인 예측변수를 제거했을 때의 상관계수의 요약통계량을 보여준다.
 
+```r
+# 제거 하지 않은 경우 
+descrCor <- cor(filteredDescr)
+summary(descrCor[upper.tri(descrCor)])
+```
+```r
+# cutoff = 0.75의 값을 줘서 상관계수의 절댓값이 0.75를 넘는 예측변수를 제거한 경우
+highlyCorDescr <- findCorrelation(descrCor, cutoff = .75)
+filteredDescr <- filteredDescr[,-highlyCorDescr]
+descrCor2 <- cor(filteredDescr)
+summary(descrCor2[upper.tri(descrCor2)])
+```
 
