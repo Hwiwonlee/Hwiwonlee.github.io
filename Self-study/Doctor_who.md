@@ -58,16 +58,15 @@ change_list <- c("Jan 14, 1967", "Nov 11, 1967",
 # Correction the first_diffusion values using index and change_list
 doctor_who_all_detailsepisodes$first_diffusion[index] <- change_list
 
+
 doctor_who_all_detailsepisodes %>% 
   mutate(`first_diffusion` = 
            case_when ( 
              grepl("^[0-9]", `first_diffusion`) ~ parse_date_time(`first_diffusion`, orders = "%d %b, %Y"), 
              grepl("^[A-Z]", `first_diffusion`) ~ parse_date_time(`first_diffusion`, orders = "%b %d, %Y")
            )
-    ) %>% 
-  filter(is.na(first_diffusion))
-  # select(first_diffusion) %>% count(first_diffusion) %>% as.data.frame()
-         
+    ) -> doctor_who_all_detailsepisodes
+  # %>% filter(is.na(first_diffusion)) # just Shada 
 
 doctor_who_imdb_details         
          
