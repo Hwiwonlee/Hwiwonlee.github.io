@@ -159,9 +159,81 @@ doctor_who_all_detailsepisodes %>%
 # So if I merge the dataset about only the TV drama, will remove these all observation. 
 
 # It's a little late, but I have to deal with why the amount of episodes contained in each data set is different.
+# doctor_who_dwguide has greatest amount of episode. 
 # doctor_who_dwguide has most(maybe all) episodes except for special episodes such as audio, comics and clips.
+# Honestly, if focus on the just "title", doctor_who_all_detailsepisodes has a lot of episode, maybe also all episode too
+# However, in the doctor_who_all_detailsepisodes, some series be integrated just one title especially old season's series.
+# For example, series of An Unearthly Child at the 1st doctor.
+
+doctor_who_dwguide %>% 
+  filter(between(episodenbr, 1, 12)) %>% pull(title)
+
+doctor_who_all_detailsepisodes %>% 
+  filter(grepl("^1-", episodeid))
+
+# In the doctor_who_dwguide, series of "An Unearthly Child" has four episode and 
+# serise of "The Daleks" has seven episode. Then just numbering to 1 from 11. 
+# But in the doctor_who_all_detailsepisodes, series of "An Unearthly Child" sum up just only one observation,  
+# also serise of "The Daleks" too. The difference came from here.
 
 
+
+#### TO DO
+# 1) 시즌을 어떻게 통합할 것인가? : old season부터 하면 new season의 시작은 27시즌이 된다. 
+# 2) A에는 있는데 B에는 없는 에피소드 처리 : "The Night of the Doctor" 50주년 프리퀄
+
+
+# 1) episodeid split to season and number or add doctorid, season and number
+# 2) arrange using doctorid, season, number
+
+doctor_who_all_scripts %>% 
+  # change "3-1-5" to 3-1.5 at the episodeid 
+  mutate(episodeid = ifelse(episodeid == "3-1-5", "3-1.5", episodeid)) %>% 
+  filter(grepl("^[0-9]", episodeid)) %>% 
+  separate(episodeid, c("season", "number"), "-") %>% 
+  arrange(doctorid, season, number)
+
+doctor_who_all_detailsepisodes %>% 
+  mutate(episodeid = ifelse(episodeid == "3-1-5", "3-1.5", episodeid)) %>% 
+  filter(grepl("^[0-9]", episodeid)) %>% 
+  separate(episodeid, c("season", "number"), "-") %>% 
+  arrange(doctorid, season, number) %>% 
+  # %>% select(title) %>% pull(title) -> titles # for saving the titles at the doctor_who_all_detailsepisodes
+  filter(doctorid > 8) 
+
+doctor_who_imdb_details %>% 
+  select(season, number, everything()) %>% 
+  mutate(doctorid = )
+
+doctor_who_dwguide %>% 
+  arrange(episodenbr) # %>% pull(title) -> titles2 # for saving the titles at the doctor_who_dwguide
+
+titles %in% titles2
+
+
+sum(grepl(":", titles))
+sum(grepl(":", titles2))
+
+
+
+doctor_who_all_scripts %>% 
+  filter(grepl("3-1-5", episodeid))
+
+doctor_who_all_scripts %>% 
+  filter(grepl("^3-", episodeid)) %>% distinct(episodeid)
+
+doctor_who_all_detailsepisodes %>% 
+  filter(grepl("3-1-5", episodeid))
+
+doctor_who_dwguide %>% 
+  filter(title == "Mission to the Unknown")
+
+doctor_who_dwguide %>% 
+  filter(between(episodenbr, 86, 90)) %>% select(1:4) %>% as.data.frame()
+  
+  
+doctor_who_dwguide %>% 
+  filter(episodenbr == 30)
 
 doctor_who_all_scripts %>% 
   filter(grepl("37", episodeid)) %>% 
@@ -175,8 +247,8 @@ doctor_who_dwguide %>%
 
 doctor_who_imdb_details %>% 
   filter(grepl("The Great Detective", title))
-  
-  
+
+
 sort(doctor_who_dwguide$episodenbr)
 unique(doctor_who_all_scripts$episodeid)
 sort(unique(doctor_who_all_detailsepisodes$episodeid))
