@@ -3,15 +3,23 @@ library(googledrive)
 library(tidyverse)
 library(lubridate)
 
-drive_auth()
-data_in_drive <- drive_find(type = "csv", pattern = "doctor_who")
 
+drive_auth()
+#### 1. data load and setting ####
+# 20.07.11 작업용 노트북에서 drive_auth() 실행시 Can't get Google credentials 에러 발생
+# 1) https://github.com/tidyverse/googledrive/issues/276
+# 2) https://gargle.r-lib.org/articles/non-interactive-auth.html#provide-a-service-account-token-directly-1
+# 위 링크 들의 문제해결과 같진 않지만 에러 메시지를 좀 더 자세히 출력하는 options(gargle_quiet = FALSE)를 이용함.
+# 2)에서 json 파일을 이용한 인증을 방법으로 제시해서 따라해보았지만 실패.
+# options 설정 후 drive_auth(path = "mypath.json")를 실행하니 패키지 openssl이 설치되어 있지 않다는 에러 발견
+# openssl을 설치하고 평소와 같이 drive_auth()를 이용하니 바로 계정이 연결 됌.
+
+data_in_drive <- drive_find(type = "csv", pattern = "doctor_who")
 
 for(i in 1:4){ 
   drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
 }
 
-#### 1. data load and setting ####
 
 ### 1.1 load 
 doctor_who_dwguide <- read_csv("doctor_who_dwguide.csv")
@@ -20,19 +28,44 @@ doctor_who_all_scripts <- read_csv("doctor_who_all-scripts.csv")
 doctor_who_all_detailsepisodes <- read_csv("doctor_who_all-detailsepisodes.csv")
 
 
-### 1.2 modify the data set 
+### 1.2 some change valeu type in the data sets 
 ## 1.2.1 doctor_who_dwguide
+names(doctor_who_dwguide)
+
+# episodenbr : (numeric) Index of episode. Each episode has unique episodenbr value
+# title : (chr) episode title
+# weekday : (chr) broadcasting day based on UK
+# broadcastdate : (chr) broadcasting date based on UK, format = "%d %b %Y"
+# broadcasthour : (time) broadcasting hour based on UK, format = "00:00"
+# duration : (time) duration of episode, foramt ="00:00:00"
+# views : (chr) Average Audience, number of viewers based on UK
+# share : (chr) Audience Share based on UK
+# AI : (numeric) Appreciation Index in UK (https://en.wikipedia.org/wiki/Appreciation_Index)
+# chart : (numeric) position at the BARB(Broadcasters' Audience Research Board) Week Top 30 Chart
+# cast : (chr) List of actors and actresses
+# crew : (chr) List of crews
+# summary : (chr) summary of episode 
+
+
 # broadcastdate : Change to date column
 # views : remove the unit, "m" and change to numeric 
 doctor_who_dwguide %>% 
   mutate(broadcastdate = parse_date_time(broadcastdate, orders = "%d %b %Y")) %>% 
   mutate(views = as.numeric(str_remove(views, "m"))) -> doctor_who_dwguide
-  
+
 
 ## 1.2.2 doctor_who_all_detailsepisodes
+names(doctor_who_all_detailsepisodes)
+
+# epsodeid : (chr) index of episode, format : 0-0 or just chr like webS7, TimeRND2011...
+# title : (chr) title of episode
+# first_diffusion : (chr) first broadcast date based on UK, format = "%d %b, %Y", "%b %d, %Y" or just chr 
+# doctorid : (numeric) index of doctor
+
 # first_diffusion consist with character of two type, start with alphabet or numeric
 # extraction for modification
 # first diffusion of "Pond Life" is 27-31 Aug, 2012. 
+
 doctor_who_all_detailsepisodes %>% 
   filter(grepl("^[A-Z]", first_diffusion) | grepl("Pond Life", title)) %>% 
   pull(., first_diffusion) -> need_to_change
@@ -65,26 +98,92 @@ doctor_who_all_detailsepisodes %>%
              grepl("^[0-9]", `first_diffusion`) ~ parse_date_time(`first_diffusion`, orders = "%d %b, %Y"), 
              grepl("^[A-Z]", `first_diffusion`) ~ parse_date_time(`first_diffusion`, orders = "%b %d, %Y")
            )
-    ) -> doctor_who_all_detailsepisodes
-  # %>% filter(is.na(first_diffusion)) # just Shada 
+  ) -> doctor_who_all_detailsepisodes
+# %>% filter(is.na(first_diffusion)) # just Shada 
+
+## 1.2.3 doctor_who_imdb_details : the IMDB rating of the episode of the modern area (post 2005)
+names(doctor_who_imdb_details)
+
+# number : (numeric) episode number at the each season, not unique value
+# title : (chr) title of episode
+# rating : (numeric) rating of IMDb(Internet Movie Database)
+# nbr_votes : (numeric) number of vote at the IMDb rating 
+# description : (chr) summary of episode
+# season : (numeric) season number
 
 doctor_who_imdb_details         
-         
-doctor_who_all_scripts         
-         
 
 
 
-doctor_who_all_detailsepisodes[147, ]
+## 1.2.4 doctor_who_all_scripts
+names(doctor_who_all_scripts)
+
+# idx : (numeric) index of script
+# text : (chr) text which the location setting or content of talk
+# detail : (chr) speaker or speakers
+# episodeid : (chr) index of episode, format : 0-0
+# doctorid : (chr) index of doctor
+
+
+
+### 1.3 Handling the kind of index 
+# Each dataset has identifier, like the index, about each episode.
+# If I use this fact, wouldn't we be able to merge these four data sets?
+
+# doctor_who_dwguide has "episodenbr", "title"
+# doctor_who_all_detailsepisodes has "episodeid", "title"
+# doctor_who_imdb_details has "number", "title"
+# doctor_who_all_scripts has "episodeid"
+
+# In fact, The amount of the episode that each dataset has is as follow : 
+# doctor_who_dwguide(851) > doctor_who_all_detailsepisodes(328) > doctor_who_all_scripts(306) > doctor_who_imdb_details(148)
+
+
+# intersection between doctor_who_all_detailsepisodes(328) and doctor_who_all_scripts(306)
+unique(doctor_who_all_detailsepisodes$episodeid)[unique(doctor_who_all_detailsepisodes$episodeid) %in% unique(doctor_who_all_scripts$episodeid)]
+
+# The episode that doctor_who_all_detailsepisodes only has is as follow : 22. 
+unique(doctor_who_all_detailsepisodes$episodeid)[-which(unique(doctor_who_all_detailsepisodes$episodeid) %in% unique(doctor_who_all_scripts$episodeid))]
+
+# I think, should filter some value start with "string" in the "episodeid" 
+# First, check up the values 
+doctor_who_all_detailsepisodes %>% 
+  filter(grepl("^[A-Z]", episodeid)) %>% 
+  pull(episodeid)
+# "CIN2007", "Dreamland", "TimeRND2011", "CIN2012", "Bounty", "DeadTime", "PTemple" 
+
+# Actually, "Doctor who" has a lot of some kind of special contents not TV drama or holiday drama. 
+# For example, "Dreamland" is the comics at the 10th Doctor,  
+# "Bounty", "DeadTime", "PTemple", these three contents are audio drama at the 8th doctor and 
+# CIN2007, TimeRND2011, CIN2012, are some kind of shortest drama like the clip.
+# So if I merge the dataset about only the TV drama, will remove these all observation. 
+
+# It's a little late, but I have to deal with why the amount of episodes contained in each data set is different.
+# doctor_who_dwguide has most(maybe all) episodes except for special episodes such as audio, comics and clips.
+
+
+
+doctor_who_all_scripts %>% 
+  filter(grepl("37", episodeid)) %>% 
+  distinct(episodeid)
+
+doctor_who_all_detailsepisodes %>% 
+  filter(grepl("CIN2012", episodeid))
+
+doctor_who_dwguide %>% 
+  filter(between(year(broadcastdate), 1996, 2005)) %>% select(1:7)
+
+doctor_who_imdb_details %>% 
+  filter(grepl("The Great Detective", title))
   
-# lubridate test
-date <- doctor_who_dwguide$broadcastdate  
-date[1:10]
-mdy(date[1:10])
+  
+sort(doctor_who_dwguide$episodenbr)
+unique(doctor_who_all_scripts$episodeid)
+sort(unique(doctor_who_all_detailsepisodes$episodeid))
+nrow(doctor_who_imdb_details)
 
-set.seed(100)
-date[sample(seq(1, length(date), 1), 10)]
-set.seed(100)
-parse_date_time(date[sample(seq(1, length(date), 1), 10)], orders = "%d %b %Y")
+doctor_who_all_detailsepisodes$title
+doctor_who_dwguide$title
+doctor_who_imdb_details$title
 
 ```
