@@ -264,7 +264,7 @@ grep("Family of Blood", titles) # "The Family of Blood"
 grep("Curse of the Black Spot", titles) # "The Curse of the Black Spot"
 grep("The Doctor, the Widow, and the Wardrobe", titles) # "The Doctor, The Widow and the Wardrobe"
 grep("The Return of Doctor Mysterio, by Stephen Moffat", titles) # "The Return of Doctor Mysterio 
-
+titles2[grep("The End of Time", titles2)] # ":" change to ","
 
 titles[which(grepl("Wardrobe", titles))]
 titles2[which(grepl("Wardrobe", titles2))]
