@@ -177,43 +177,101 @@ doctor_who_all_detailsepisodes %>%
 # also serise of "The Daleks" too. The difference came from here.
 
 
-
-#### TO DO
-# 1) 시즌을 어떻게 통합할 것인가? : old season부터 하면 new season의 시작은 27시즌이 된다. 
-# 2) A에는 있는데 B에는 없는 에피소드 처리 : "The Night of the Doctor" 50주년 프리퀄
-
-
 # 1) episodeid split to season and number or add doctorid, season and number
 # 2) arrange using doctorid, season, number
 
 doctor_who_all_scripts %>% 
+  # Delete not broadcast episodes 
+  filter(!grepl("-0[0-9]$", episodeid)) %>%
+  filter(!grepl("^[A-Z]", episodeid)) %>% 
+  # "The Infinite Quest", comics episode 
+  filter(episodeid != "29-14") %>% 
+  # "Vastra Investigates", chrismas Prequel, webcast  
+  filter(episodeid != "33-59") %>% 
   # change "3-1-5" to 3-1.5 at the episodeid 
   mutate(episodeid = ifelse(episodeid == "3-1-5", "3-1.5", episodeid)) %>% 
   filter(grepl("^[0-9]", episodeid)) %>% 
   separate(episodeid, c("season", "number"), "-") %>% 
+  mutate(across(c(season, number), as.numeric)) %>% 
   arrange(doctorid, season, number)
 
 doctor_who_all_detailsepisodes %>% 
+  # Delete not broadcast episodes 
+  filter(!grepl("-0[0-9]$", episodeid)) %>%
+  filter(!grepl("^[A-Z]", episodeid)) %>% 
+  # "The Infinite Quest", comics episode 
+  filter(episodeid != "29-14") %>% 
+  # "Vastra Investigates", chrismas Prequel, webcast  
+  filter(episodeid != "33-59") %>% 
+  # change "3-1-5" to 3-1.5 at the episodeid 
   mutate(episodeid = ifelse(episodeid == "3-1-5", "3-1.5", episodeid)) %>% 
-  filter(grepl("^[0-9]", episodeid)) %>% 
   separate(episodeid, c("season", "number"), "-") %>% 
-  arrange(doctorid, season, number) %>% 
+  mutate(across(c(season, number), as.numeric)) %>% 
+  arrange(doctorid, season, number)
   # %>% select(title) %>% pull(title) -> titles # for saving the titles at the doctor_who_all_detailsepisodes
-  filter(doctorid > 8) 
+  
 
 doctor_who_imdb_details %>% 
   select(season, number, everything()) %>% 
-  mutate(doctorid = )
+  # Edit the season count using old season
+  mutate(season = season+26)
+
 
 doctor_who_dwguide %>% 
   arrange(episodenbr) # %>% pull(title) -> titles2 # for saving the titles at the doctor_who_dwguide
 
-titles %in% titles2
 
+
+
+# Have to make sure that the same titles obtained by doctor_who_all_detailsepisodes and
+# titles2 obtained by doctor_who_dwguide are the same
+
+titles %in% titles2
 
 sum(grepl(":", titles))
 sum(grepl(":", titles2))
 
+# There has some issues about the "title" 
+# In each title, Entire title are almost same but some characters are different(ex, ",", "the" moreover, upper and lower case)
+
+tolower(unique(str_remove(titles2, ":.*"))) # 313
+tolower(titles) # 319
+
+titles[-which(tolower(titles) %in% tolower(unique(str_remove(titles2, ":.*"))))]
+
+
+titles[194:196]
+grep("The Return of Doctor Mysterio, by Stephen Moffat", titles)
+grep("The Return Of Doctor Mysterio", unique(str_remove(titles2, ":.*")))
+
+unique(str_remove(titles2, ":.*"))[grep("Mysterio", unique(str_remove(titles2, ":.*")))]
+str_remove(titles2, ":.*")[grep("Curse of", str_remove(titles2, ":.*"))]
+
+# titles에 바꿀 목록
+grep("Reign of Terror", titles) # "The Reign of Terror"
+grep("Galaxy Four", titles) # "Galaxy 4"
+unique(str_remove(titles2, ":.*"))[grep("Master Plan", unique(str_remove(titles2, ":.*")))] # "The Dalek's Master Plan"
+unique(str_remove(titles2, ":.*"))[grep("Colony In Space", unique(str_remove(titles2, ":.*")))] # "The Daemons"
+grep("Masque of Mandragora", titles) # "The Masque of Mandragora"
+unique(str_remove(titles2, ":.*"))[grep("Gate", unique(str_remove(titles2, ":.*")))] # "Warrior's Gate"
+grep("Time Flight", titles) # "Time-Flight"
+grep("The Mysterious Planet", titles) # "The Trial Of A Time Lord (The Mysterious Planet)"
+grep("Mindwarp", titles) # "The Trial Of A Time Lord (Mindwarp)"
+grep("Terror of the Vervoids", titles) # "The Trial Of A Time Lord (Terror of the Vervoids)"
+grep("The Ultimate Foe", titles) # "The Trial Of A Time Lord (The Ultimate Foe)"
+grep("Love and Monsters", titles) # "Love & Monsters"
+grep("Family of Blood", titles) # "The Family of Blood"
+grep("Curse of the Black Spot", titles) # "The Curse of the Black Spot"
+grep("The Doctor, the Widow, and the Wardrobe", titles) # "The Doctor, The Widow and the Wardrobe"
+grep("The Return of Doctor Mysterio, by Stephen Moffat", titles) # "The Return of Doctor Mysterio 
+
+
+titles[which(grepl("Wardrobe", titles))]
+titles2[which(grepl("Wardrobe", titles2))]
+
+lowetitles
+
+tolower(titles)
 
 
 doctor_who_all_scripts %>% 
