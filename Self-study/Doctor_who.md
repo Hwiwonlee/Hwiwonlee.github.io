@@ -126,7 +126,7 @@ names(doctor_who_all_scripts)
 
 
 
-### 1.3 Handling the kind of index 
+### 1.3 Handling the index 
 # Each dataset has identifier, like the index, about each episode.
 # If I use this fact, wouldn't we be able to merge these four data sets?
 
@@ -207,20 +207,10 @@ doctor_who_all_detailsepisodes %>%
   mutate(episodeid = ifelse(episodeid == "3-1-5", "3-1.5", episodeid)) %>% 
   separate(episodeid, c("season", "number"), "-") %>% 
   mutate(across(c(season, number), as.numeric)) %>% 
-  arrange(doctorid, season, number)
-  # %>% select(title) %>% pull(title) -> titles # for saving the titles at the doctor_who_all_detailsepisodes
-  
-
-doctor_who_imdb_details %>% 
-  select(season, number, everything()) %>% 
-  # Edit the season count using old season
-  mutate(season = season+26)
-
+  arrange(doctorid, season, number) %>% select(title) %>% pull(title) -> titles # for saving the titles at the doctor_who_all_detailsepisodes
 
 doctor_who_dwguide %>% 
-  arrange(episodenbr) # %>% pull(title) -> titles2 # for saving the titles at the doctor_who_dwguide
-
-
+  arrange(episodenbr) %>% pull(title) -> titles2 # for saving the titles at the doctor_who_dwguide
 
 
 # Have to make sure that the same titles obtained by doctor_who_all_detailsepisodes and
@@ -237,21 +227,14 @@ sum(grepl(":", titles2))
 tolower(unique(str_remove(titles2, ":.*"))) # 313
 tolower(titles) # 319
 
+# A list to see how different it is.
 titles[-which(tolower(titles) %in% tolower(unique(str_remove(titles2, ":.*"))))]
 
-
-titles[194:196]
-grep("The Return of Doctor Mysterio, by Stephen Moffat", titles)
-grep("The Return Of Doctor Mysterio", unique(str_remove(titles2, ":.*")))
-
-unique(str_remove(titles2, ":.*"))[grep("Mysterio", unique(str_remove(titles2, ":.*")))]
-str_remove(titles2, ":.*")[grep("Curse of", str_remove(titles2, ":.*"))]
-
-# titles에 바꿀 목록
+# Results of above that
 grep("Reign of Terror", titles) # "The Reign of Terror"
 grep("Galaxy Four", titles) # "Galaxy 4"
 unique(str_remove(titles2, ":.*"))[grep("Master Plan", unique(str_remove(titles2, ":.*")))] # "The Dalek's Master Plan"
-unique(str_remove(titles2, ":.*"))[grep("Colony In Space", unique(str_remove(titles2, ":.*")))] # "The Daemons"
+unique(str_remove(titles2, ":.*"))[grep("The Dæmons", unique(str_remove(titles2, ":.*")))] # "The Daemons"
 grep("Masque of Mandragora", titles) # "The Masque of Mandragora"
 unique(str_remove(titles2, ":.*"))[grep("Gate", unique(str_remove(titles2, ":.*")))] # "Warrior's Gate"
 grep("Time Flight", titles) # "Time-Flight"
@@ -266,54 +249,69 @@ grep("The Doctor, the Widow, and the Wardrobe", titles) # "The Doctor, The Widow
 grep("The Return of Doctor Mysterio, by Stephen Moffat", titles) # "The Return of Doctor Mysterio 
 titles2[grep("The End of Time", titles2)] # ":" change to ","
 
-titles[which(grepl("Wardrobe", titles))]
-titles2[which(grepl("Wardrobe", titles2))]
-
-lowetitles
-
-tolower(titles)
-
-
-doctor_who_all_scripts %>% 
-  filter(grepl("3-1-5", episodeid))
-
-doctor_who_all_scripts %>% 
-  filter(grepl("^3-", episodeid)) %>% distinct(episodeid)
-
 doctor_who_all_detailsepisodes %>% 
-  filter(grepl("3-1-5", episodeid))
-
-doctor_who_dwguide %>% 
-  filter(title == "Mission to the Unknown")
-
-doctor_who_dwguide %>% 
-  filter(between(episodenbr, 86, 90)) %>% select(1:4) %>% as.data.frame()
-  
-  
-doctor_who_dwguide %>% 
-  filter(episodenbr == 30)
+  mutate(title = 
+           case_when(
+             title == "Reign of Terror" ~ "The Reign of Terror",
+             title == "Galaxy Four" ~ "Galaxy 4",
+             title == "Masque of Mandragora" ~ "The Masque of Mandragora",
+             title == "Time Flight" ~ "Time-Flight",
+             title == "The Mysterious Planet" ~ "The Trial Of A Time Lord (The Mysterious Planet)",
+             title == "Mindwarp" ~ "The Trial Of A Time Lord (Mindwarp)",
+             title == "Terror of the Vervoids" ~ "The Trial Of A Time Lord (Terror of the Vervoids)",
+             title == "The Ultimate Foe" ~ "The Trial Of A Time Lord (The Ultimate Foe)",
+             title == "Love and Monsters" ~ "Love & Monsters",
+             title == "Family of Blood" ~ "The Family of Blood",
+             title == "Curse of the Black Spot" ~ "The Curse of the Black Spot", 
+             title == "The Doctor, the Widow, and the Wardrobe" ~ "The Doctor, the Widow and the Wardrobe",
+             title == "The Return of Doctor Mysterio, by Stephen Moffat" ~ "The Return of Doctor Mysterio",
+             TRUE ~ title
+           )
+         ) %>% 
+  filter(!grepl("-0[0-9]$", episodeid)) %>%
+  filter(!grepl("^[A-Z]|^[a-z]", episodeid)) %>% 
+  filter(title != "Shada") %>% 
+  # "The Infinite Quest", comics episode 
+  filter(episodeid != "29-14") %>% 
+  # "Vastra Investigates", chrismas Prequel, webcast  
+  filter(episodeid != "33-59") %>% 
+  # change "3-1-5" to 3-1.5 at the episodeid 
+  mutate(episodeid = ifelse(episodeid == "3-1-5", "3-1.5", episodeid)) %>% 
+  separate(episodeid, c("season", "number"), "-") %>% 
+  mutate(across(c(season, number), as.numeric)) %>% 
+  arrange(doctorid, season, number) -> doctor_who_all_detailsepisodes
 
 doctor_who_all_scripts %>% 
-  filter(grepl("37", episodeid)) %>% 
-  distinct(episodeid)
-
-doctor_who_all_detailsepisodes %>% 
-  filter(grepl("CIN2012", episodeid))
-
-doctor_who_dwguide %>% 
-  filter(between(year(broadcastdate), 1996, 2005)) %>% select(1:7)
+  filter(!grepl("-0[0-9]$", episodeid)) %>%
+  filter(!grepl("^[A-Z]|^[a-z]", episodeid)) %>% 
+  # "The Infinite Quest", comics episode 
+  filter(episodeid != "29-14") %>% 
+  # "Vastra Investigates", chrismas Prequel, webcast  
+  filter(episodeid != "33-59") %>% 
+  # change "3-1-5" to 3-1.5 at the episodeid 
+  mutate(episodeid = ifelse(episodeid == "3-1-5", "3-1.5", episodeid)) %>%
+  separate(episodeid, c("season", "number"), "-") %>% 
+  mutate(across(c(season, number), as.numeric)) %>% 
+  arrange(doctorid, season, number) -> doctor_who_all_scripts
 
 doctor_who_imdb_details %>% 
-  filter(grepl("The Great Detective", title))
+  select(season, number, everything()) %>% 
+  # Edit the season count using old season
+  mutate(season = season+26) -> doctor_who_imdb_details
 
+doctor_who_dwguide %>% 
+  mutate(title = str_replace(title, "The Daleks' Master Plan", "The Dalek's Master Plan")) %>% 
+  mutate(title = str_replace(title, "The Dæmons", "The Daemons")) %>% 
+  mutate(title = str_replace(title, "Warriors' Gate", "Warrior's Gate")) %>% 
+  mutate(title = str_replace(title, "The End of Time:", "The End of Time,")) %>% 
+  filter(title != "The TV Movie") -> doctor_who_dwguide
 
-sort(doctor_who_dwguide$episodenbr)
-unique(doctor_who_all_scripts$episodeid)
-sort(unique(doctor_who_all_detailsepisodes$episodeid))
-nrow(doctor_who_imdb_details)
+# Let's see if the titles are the same.
+doctor_who_all_detailsepisodes$title -> new_titles
+doctor_who_dwguide %>% 
+  mutate(title = str_remove(title, ":.*")) %>% pull(title) %>% unique(.) -> new_titles2
 
-doctor_who_all_detailsepisodes$title
-doctor_who_dwguide$title
-doctor_who_imdb_details$title
+new_titles[!(tolower(new_titles) %in% tolower(new_titles2))]
+new_titles2[!(tolower(new_titles2) %in% tolower(new_titles))]
 
 ```
