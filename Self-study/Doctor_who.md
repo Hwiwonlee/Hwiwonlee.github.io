@@ -127,6 +127,7 @@ names(doctor_who_all_scripts)
 
 
 ### 1.3 Handling the index 
+## 1.3.1 Titles and episode id 
 # Each dataset has identifier, like the index, about each episode.
 # If I use this fact, wouldn't we be able to merge these four data sets?
 
@@ -304,7 +305,11 @@ doctor_who_dwguide %>%
   mutate(title = str_replace(title, "The Dæmons", "The Daemons")) %>% 
   mutate(title = str_replace(title, "Warriors' Gate", "Warrior's Gate")) %>% 
   mutate(title = str_replace(title, "The End of Time:", "The End of Time,")) %>% 
-  filter(title != "The TV Movie") -> doctor_who_dwguide
+  filter(title != "The TV Movie") %>% 
+  arrange(episodenbr) -> doctor_who_dwguide
+
+
+
 
 # Let's see if the titles are the same.
 doctor_who_all_detailsepisodes$title -> new_titles
@@ -313,5 +318,55 @@ doctor_who_dwguide %>%
 
 new_titles[!(tolower(new_titles) %in% tolower(new_titles2))]
 new_titles2[!(tolower(new_titles2) %in% tolower(new_titles))]
+# Same! 
+
+
+# How about "doctor_who_dwguide"? Is it same or not? 
+doctor_who_all_detailsepisodes %>% 
+  filter(season >= 27) %>% 
+  filter(!(toupper(title) %in% toupper(doctor_who_imdb_details$title)))
+
+# Is Is there really no "The End of Time" in doctor_who_imdb_details?
+doctor_who_imdb_details %>% 
+  filter(season == 30) # Yes
+
+# I don't understand that. Because "The End of Time" series was one of the best episode among the new season.
+# So I decided to look up the data about the 7 episodes above in imdb and add them to doctor_who_imdb_details
+
+doctor_who_all_detailsepisodes %>% 
+  filter(season >= 27) %>% 
+  filter(!(toupper(title) %in% toupper(doctor_who_imdb_details$title))) %>% 
+  select(season, number, title) -> add_imdb_details
+
+# I found them! 
+add_imdb_details %>% 
+  mutate(rating = c(7.4, 7.4, 8.8, 8.2, 8.9, 9.4, 8.4)) %>% 
+  mutate(nbr_votes = c(3990, 3945, 5035, 4653, 5258, 16801, 5798)) %>% 
+  mutate(description = c("The Doctor arrives in London on Christmas Eve in 1851 where he encounters the Cybermen and a man who claims he's a Time Lord called the Doctor.",
+                         "A meeting in a London bus with jewel thief Lady Christina takes a turn for the worst for the Doctor when the bus takes a detour to a desert-like planet, where the deadly Swarm awaits.",
+                         "In a Mars base the inhabitants are being infected by a mysterious water creature which takes over its victims. The Doctor is thrust into the middle of this catastrophe knowing a larger one is waiting around the corner.", 
+                         "The Ood have given a warning to The Doctor. The Master is returning yet that is not the biggest threat. A darkness is coming which brings with it The End of Time.", 
+                         "With almost everyone on Earth now recast in his image, The Master controls the Earth. He's shocked however when he realises one person hasn't changed; Donna Noble. The Doctor soon understands what the pounding in the Master's head is; it's the Time Lords, who are trying to return and re-establish Gallifrey. If they succeed, it'll mean the Last Great Time War will re-start, and all the horrors which came with it. In order to stop Rasillon's mad plan, the Doctor must make a choice. Finally, the Ood's prophecy for the Doctor becomes true, and he takes the TARDIS on a trip, to see friends for one last time, before he's to regenerate.", 
+                         "In 2013, something terrible is awakening in London's National Gallery; in 1562, a murderous plot is afoot in Elizabethan England; and somewhere in space an ancient battle reaches its devastating conclusion.", 
+                         "The Doctor's worst enemies, The Daleks, The Cybermen, The Angels and The Silence, return, as the doctor's eleventh life comes to a close, and his twelfth life begins.")
+         ) -> add_imdb_details
+
+doctor_who_imdb_details %>% 
+  bind_rows(add_imdb_details) %>% 
+  arrange(season, number) -> doctor_who_imdb_details
+
+# One more check 
+doctor_who_all_detailsepisodes %>% 
+  filter(season >= 27) %>% 
+  filter(!(toupper(title) %in% toupper(doctor_who_imdb_details$title)))
+
+
+# Add the doctorid to doctor_who_imdb_details
+doctor_who_imdb_details %>% 
+  left_join(doctor_who_all_detailsepisodes, by = "title", suffix = c(".keep", ".drop")) %>% 
+  select(-matches("drop|first|nbr")) %>% 
+  # dplyr 1.0.0: select, rename, relocate
+  # https://www.tidyverse.org/blog/2020/03/dplyr-1-0-0-select-rename-relocate/
+  rename_with(~str_remove(.x, ".keep"), contains("keep")) -> doctor_who_imdb_details
 
 ```
