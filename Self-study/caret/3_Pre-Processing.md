@@ -79,3 +79,34 @@ descrCor2 <- cor(filteredDescr)
 summary(descrCor2[upper.tri(descrCor2)])
 ```
 
+## 3.4 선형 종속과 선형 독립(Linear Dependencies)  
+함수 `findLinearCombos`는 QR 분해(QR decomposition)을 사용해 행렬의 선형 조합들의 집합들(sets of linear combinations)을 보여준다.(만약, 존재한다면) 예를 들어, less-than-full-rank parameterizations에 의해 만들어진 것으로 보이는 아래의 행렬을 살펴보자. 
+
+```r
+ltfrDesign <- matrix(0, nrow=6, ncol=6)
+ltfrDesign[,1] <- c(1, 1, 1, 1, 1, 1)
+ltfrDesign[,2] <- c(1, 1, 1, 0, 0, 0)
+ltfrDesign[,3] <- c(0, 0, 0, 1, 1, 1)
+ltfrDesign[,4] <- c(1, 0, 0, 1, 0, 0)
+ltfrDesign[,5] <- c(0, 1, 0, 0, 1, 0)
+ltfrDesign[,6] <- c(0, 0, 1, 0, 0, 1)
+```
+
+2열과 3열을 합치면 1열이 됨을 볼 수 있다. 비슷하게, 4,5,6열을 합치면 1열이 된다. `findLinearCombos`를 사용한다면 이러한 "종속성"을 볼 수 있을 것이다. 각각의 선형 조합에 대해 점진적으로 열을 제거하고 종속성이 제거되었는지 여부를 테스트한다. `findLinearCombos`는 선형 종속에 의해 삭제된 열 벡터의 위치 또한 알려줄 것이다. 
+
+```r
+comboInfo <- findLinearCombos(ltfrDesign)
+comboInfo
+```
+
+```r
+ltfrDesign[, -comboInfo$remove]
+```
+이러한 유형의 종속성들은 분자구조를 설명하기 위해 많은 수의 이진 케미컬 fingerprint들을 사용할 때 발생할 수 있다.  
+
+## 3.5 `preProcess` 함수(The `preProcess` Function)  
+`preProcess` 클래스는 중심화와 척도 표준화(centering and scaling)을 포함하여, 예측 변수에 대한 많은 연산에 사용할 수 있다. 함수 `preProcess`는 각각의 연산에 필요한 매개변수들을(parameters) 추정하고 `predict.preProcess`는 특정한 데이터 셋에 추정된 값을 적용할 때 사용할 수 있다. 이 함수는 `train` 함수를 사용할 때 인터페이스로도 사용할 수 있다.  
+
+다음 몇 개의 섹션에서 사용 방법의 여러 유형을 알려주고 어떻게 여러 방법들로 사용되는지에 대한 예시들 또한 보여주겠다. 모든 경우에 있어서, `preProcess` 함수는 필요한 값이 무엇이든 특정한 데이터 셋(가령, 트레이닝 셋)으로부터 추정한 후 다시 계산하지 않고 모든 데이터 셋에 그 값을 적용한다는 것을 꼭 알아두길 바란다.  
+
+
