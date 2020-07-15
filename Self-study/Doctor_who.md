@@ -404,5 +404,79 @@ doctor_who_imdb_details
 # Therefore this problem occur just old season, from the season 1 to season 26, values. 
 # Frankly speaking, I'm only going to analyze new season's data, but let's think about analyzing it with all the data to practice EDA.
 # Well, How can solve this problem? How can handle this problem?
+# In short, Here is just only one way no matter what I choice whether use episodeid or episodenbr because of unbalanced data.
+# The one way is that selects both index, episodeid and episodenbr.
+# More detail, The way is here, 
+# 1) doctor_who_dwguide be added episodeid based on each episode's main title and doctor_who_all_detatilsepisodes
+# 2) doctor_who_all_detatilsepisodes be added episodenbr based on each doctor_who_dwguide's first episode of each main title
+
+# Actually I wish I had unification of letter case of title earlier, but it's not too late now.
+doctor_who_all_detailsepisodes$title <- toupper(doctor_who_all_detailsepisodes$title)
+doctor_who_dwguide$title <- toupper(doctor_who_dwguide$title)
+doctor_who_imdb_details$title <- toupper(doctor_who_imdb_details$title)
+
+# First I add season and number(obtained by episodeid) to doctor_whodwguide
+doctor_who_dwguide %>% 
+  mutate(title = str_remove(string = title, pattern = ":.*")) %>% 
+  select(1,2) %>% 
+  group_by(title) %>% 
+  left_join(doctor_who_all_detailsepisodes, by = "title") %>% 
+  ungroup() %>% 
+  select(1,3,4,6) %>% 
+  left_join(doctor_who_dwguide, by = "episodenbr") -> doctor_who_dwguide
+  
+  # test of equality between original doctor_who_dwguide and atfer modification one.  
+  # select(-c(2:4)) %>% 
+  # all_equal(doctor_who_dwguide) # TRUE, Totally same.
+
+# Next, I add episodenbr(obtained by doctor_who_dwguide) to three datasets  
+doctor_who_dwguide %>% 
+  mutate(title = str_remove(string = title, pattern = ":.*")) %>% 
+  select(1, 5) %>% 
+  filter(!duplicated(title)) %>% 
+  right_join(doctor_who_all_detailsepisodes, by = "title") -> doctor_who_all_detailsepisodes
+  
+  # test of equality between original doctor_who_all_detailsepisodes and atfer modification one.  
+  # select(-1) %>% 
+  # all_equal(doctor_who_all_detailsepisodes) # TRUE, Totally same. 
+
+doctor_who_dwguide %>% 
+  mutate(title = str_remove(string = title, pattern = ":.*")) %>% 
+  select(1, 5) %>% 
+  filter(!duplicated(title)) %>% 
+  right_join(doctor_who_imdb_details, by = "title") -> doctor_who_imdb_details
+  
+  # test of equality between original doctor_who_imdb_details and atfer modification one.  
+  # select(-1) %>%
+  # all_equal(doctor_who_imdb_details) # TRUE, Totally same.
+  
+doctor_who_all_scripts %>% 
+  left_join(doctor_who_all_detailsepisodes, by = c("season", "number", "doctorid")) %>% 
+  select(-first_diffusion) -> doctor_who_all_scripts
+  
+  # test of equality between original doctor_who_all_scripts and atfer modification one.  
+  # select(-(8:10)) %>% 
+  # all_equal(doctor_who_all_scripts) # TRUE, Totally same.
+
+
+  
+# For the readability, unify the columns 
+doctor_who_dwguide %>% 
+  select(episodenbr, season, number, doctorid, title, everything()) -> doctor_who_dwguide
+
+doctor_who_all_detailsepisodes %>% 
+  select(episodenbr, season, number, doctorid, title, everything()) -> doctor_who_all_detailsepisodes
+
+doctor_who_imdb_details %>% 
+  select(episodenbr, season, number, doctorid, title, everything()) -> doctor_who_imdb_details
+
+doctor_who_all_scripts %>% 
+  select(episodenbr, season, number, doctorid, title, idx, everything()) -> doctor_who_all_scripts
+
+# Let's check 
+doctor_who_dwguide
+doctor_who_all_detailsepisodes
+doctor_who_imdb_details
+doctor_who_all_scripts
 
 ```
