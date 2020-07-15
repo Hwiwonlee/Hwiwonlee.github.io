@@ -109,4 +109,69 @@ ltfrDesign[, -comboInfo$remove]
 
 다음 몇 개의 섹션에서 사용 방법의 여러 유형을 알려주고 어떻게 여러 방법들로 사용되는지에 대한 예시들 또한 보여주겠다. 모든 경우에 있어서, `preProcess` 함수는 필요한 값이 무엇이든 특정한 데이터 셋(가령, 트레이닝 셋)으로부터 추정한 후 다시 계산하지 않고 모든 데이터 셋에 그 값을 적용한다는 것을 꼭 알아두길 바란다.  
 
+## 3.6 중심화와 척도 표준화(Centering and Scaling)  
+아래의 예에서와 같이, MDRR dataset의 절반을 이용해 예측 변수의 위치와 척도(the location and scale)를 추정하고자 한다. 이 예제에서 함수 `preProcess`는 이름과 다르게 전처리에 사용되지 않았다. 이 예제나 다른 데이터 셋을 이용한 전처리에 함수 `predict.preProcess`가 사용되었다.  
+```r
+set.seed(96)
+inTrain <- sample(seq(along = mdrrClass), length(mdrrClass)/2)
 
+training <- filteredDescr[inTrain,]
+test <- filteredDescr[-inTrain,]
+trainMDRR <- mdrrClass[inTrain]
+testMDRR <- mdrrClass[-inTrain]
+
+preProcValues <- preProcess(training, method = c("center", "scale"))
+
+trainTransformed <- predict(preProcValues, training)
+testTransformed <- predict(preProcValues, test)
+```
+`preProcess`의 옵션 중 "range"를 설정하면 척도 표준화를 0과 1사이로 해준다.  
+
+## 3.7 결측값 채워넣기(Imputation)  
+`preProcess`를 학습 데이터 셋의 정보에만 기반하여 결측값을 채워넣는데 사용할 수 있다. K-근접 이웃 방법이 그 중 하나이다. 임의의 샘플에 대하여, K-최근접 이웃 방법은 학습 데이터 셋과 그에 포함된 예측변수들을 이용해 결측값을 대체한다.(보통 평균이나 중간값과 같은 요약 통계량이 쓰인다.) 이 접근법을 사용하면 메서드 인수에 있는 내용에 관계없이 데이터를 중심화하고 척도표준화를 시키는 `preProcess`가 자동으로 설정된다. 결측값 대체를 위한 다른 방법으로, bagged tree 방법을 들 수 있다. 데이터의 각각의 예측 변수에 대하여, 학습 데이터 셋의 다른 모든 변수를 사용해 bagged tree(혹은 bagged 모형)가 만들어진다. 새로운 샘플이 결측값이 포함된 예측 변수를 갖는다면, bagged 모형을 사용해 그 값을 예측해낼 수 있다. 이론 상으로는 이 방법이 결측값 대체에 가장 강력한 방법이지만 계산량은 그 이상으로, 최근접 이웃 방법보다 압도적으로 많다. 
+
+## 3.8 예측 변수 변환 (Transforming Predictors)  
+종종, 주성분 분석(Principal Component Analysis, PCA)을 위해 데이터셋을 예측 변수간 상관관계가 없거나 극히 작도록 만들어야 한다. 이렇게 만들어진 데이터셋은 이전 예측 변수와는 다른 예측 변수를 갖고 차원 수 또한 매우 줄어든 상태가 된다. `preProcess` 클래스는 `"pca"`를 포함한 예측 변수 변환을 지원하며 이를 위한 인자(argument)를 갖는다. 예측 변수 변환에는 예측 변수 사이의 척도 표준화가 강제된다. 주성분 분석이 예측 변수 변환을 위한 방법 인자(method argument)로 들어간 경우, `predict.preProcess`는 열 이름을 `PC1`(Principal Component 1, 첫 번째 주성분), `PC2` 등으로 바꾼다.  
+이와 유사하게, 독립 성분 분석(Independent Component Analysis, ICA)은 원래 데이터 셋에서 선형 독립인 예측변수와 같이 선형 조합을 갖는 새로운 예측 변수를 찾는다.(상관관계가 없도록 만드는 PCA와는 반대이다.) 새로운 변수는 `IC1`(Independent Component 1, 첫 번째 독립성분), `IC2` 등으로 이름이 붙는다.  
+“spatial sign” transformation (Serneels et al, 2006)는 데이터셋의 예측 변수를 p 차원을 갖는 unit circle로 투영시키는 방법이다. 이 때의 p는 예측 변수의 숫자를 의미한다. [근본적으로, 데이터 셋의 벡터는 그 노름(norm)에 의해 나뉘어질 수 있다.](http://pages.cs.wisc.edu/~matthewb/pages/notes/pdf/linearalgebra/NormedVectorSpaces.pdf) 아래의 두 그림은 spatial sign transformation의 전과 후를 비교하기 위해 중심화, 척도 표준화된 MDRR 데이터셋으로 그린 것이다. spatial sign transformation를 사용하기 전에, 대상이 되는 예측변수들은 모두 중심화, 척도 표준화가 이뤄져야 한다.  
+
+```r
+library(AppliedPredictiveModeling)
+transparentTheme(trans = .4)
+```
+```r
+plotSubset <- data.frame(scale(mdrrDescr[, c("nC", "X4v")])) 
+xyplot(nC ~ X4v,
+       data = plotSubset,
+       groups = mdrrClass, 
+       auto.key = list(columns = 2))  
+```
+spatial sign transformation 후의 그림이다.  
+```r
+transformed <- spatialSign(plotSubset)
+transformed <- as.data.frame(transformed)
+xyplot(nC ~ X4v, 
+       data = transformed, 
+       groups = mdrrClass, 
+       auto.key = list(columns = 2)) 
+```
+또 다른 옵션으로, 데이터셋이 0보다 큰 경우 사용할 수 있는 Box–Cox transformation를 위한 `"BoxCox"`가 있다.  
+```r
+preProcValues2 <- preProcess(training, method = "BoxCox")
+trainBC <- predict(preProcValues2, training)
+testBC <- predict(preProcValues2, test)
+preProcValues2
+```
+
+```r
+## Created from 264 samples and 31 variables
+## 
+## Pre-processing:
+##   - Box-Cox transformation (31)
+##   - ignored (0)
+## 
+## Lambda estimates for Box-Cox transformation:
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+## -2.0000 -0.2500  0.5000  0.4387  2.0000  2.0000
+```
+`NA`는 Box–Cox transformation로 변환할 수 없는 예측 변수들과 관련있는 결측값이다. 이 변환은 대상이 되는 데이터셋의 값이 0보다 커야만 한다. 이와 유사한 예측 변수 변환 방법으로 Yeo-Johnson과 Manly의 지수 변환(1976) 등도 `preProcess`에서 사용 가능하다. 
