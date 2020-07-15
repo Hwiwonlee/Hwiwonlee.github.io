@@ -127,7 +127,7 @@ names(doctor_who_all_scripts)
 
 
 ### 1.3 Handling the index 
-## 1.3.1 Titles and episode id 
+## 1.3.1 Titles and episodeid 
 # Each dataset has identifier, like the index, about each episode.
 # If I use this fact, wouldn't we be able to merge these four data sets?
 
@@ -224,6 +224,19 @@ sum(grepl(":", titles2))
 
 # There has some issues about the "title" 
 # In each title, Entire title are almost same but some characters are different(ex, ",", "the" moreover, upper and lower case)
+# Exactly, the title in doctor_who_dwguide is some kind of the basic. 
+# Because in the old season, until season 26, Doctor who had nested structure which had one main title and several sub titles. 
+# For example, the first season and the first story, "An Unearthly Child" had four episodes.
+# This structure disappeared as it entered the new season.
+# Anyway, the title in doctor_who_dwguide has basic type title which is "main title : sub title"
+# But the title in doctor_who_all_detailsepisodes has incomplete title that sub title was gone.
+# Moreover, doctor_who_all_detailsepisodes has index, episodeid, that just identify main title but omit the sub titles.
+# That means, doctor_who_all_detailsepisodes has no information(for example, duration, views as you see at doctor_who_dwguide) about each episode in the old season. 
+# Which one is best? 
+# Well, the title and index in doctor_who_dwguide seem to be the best. 
+# because in the A, each episode contained main story has some unique values which are broadcasthour, duration, views and so on and then if the two data sets have the same title, the two data sets could be merged into one.
+# Unlike what seems to be seen, it is not an easy matter to judge.
+# Now I assume to merge two dataset, just focus on whether title in doctor_who_dwguide and doctor_who_all_detailsepisodes are the same or different.
 
 tolower(unique(str_remove(titles2, ":.*"))) # 313
 tolower(titles) # 319
@@ -268,7 +281,7 @@ doctor_who_all_detailsepisodes %>%
              title == "The Return of Doctor Mysterio, by Stephen Moffat" ~ "The Return of Doctor Mysterio",
              TRUE ~ title
            )
-         ) %>% 
+  ) %>% 
   filter(!grepl("-0[0-9]$", episodeid)) %>%
   filter(!grepl("^[A-Z]|^[a-z]", episodeid)) %>% 
   filter(title != "Shada") %>% 
@@ -349,7 +362,7 @@ add_imdb_details %>%
                          "With almost everyone on Earth now recast in his image, The Master controls the Earth. He's shocked however when he realises one person hasn't changed; Donna Noble. The Doctor soon understands what the pounding in the Master's head is; it's the Time Lords, who are trying to return and re-establish Gallifrey. If they succeed, it'll mean the Last Great Time War will re-start, and all the horrors which came with it. In order to stop Rasillon's mad plan, the Doctor must make a choice. Finally, the Ood's prophecy for the Doctor becomes true, and he takes the TARDIS on a trip, to see friends for one last time, before he's to regenerate.", 
                          "In 2013, something terrible is awakening in London's National Gallery; in 1562, a murderous plot is afoot in Elizabethan England; and somewhere in space an ancient battle reaches its devastating conclusion.", 
                          "The Doctor's worst enemies, The Daleks, The Cybermen, The Angels and The Silence, return, as the doctor's eleventh life comes to a close, and his twelfth life begins.")
-         ) -> add_imdb_details
+  ) -> add_imdb_details
 
 doctor_who_imdb_details %>% 
   bind_rows(add_imdb_details) %>% 
@@ -368,5 +381,28 @@ doctor_who_imdb_details %>%
   # dplyr 1.0.0: select, rename, relocate
   # https://www.tidyverse.org/blog/2020/03/dplyr-1-0-0-select-rename-relocate/
   rename_with(~str_remove(.x, ".keep"), contains("keep")) -> doctor_who_imdb_details
+
+doctor_who_all_detailsepisodes
+doctor_who_all_scripts
+doctor_who_dwguide
+doctor_who_imdb_details
+
+# As so far, I just check the title in each variable and split the episodeid to season and number. 
+# What remains is to unify the index between datasets.
+
+## 1.3.2 Index for identify each episdoe
+# As I mentioned at 1.3.1, because of different index, These datasets have problem to merge. 
+# Except doctor_who_dwguide, three dataset use the episodeid(spliited by two part, season and number) as index. 
+# only doctor_who_dwguide uses episodenbr as index. 
+# So, Which index would be better? Or how can we unify the indexes, episodeid and episodenbr?
+# Honestly, If I analysis about only "new season", all problem will be gone. 
+# Because, in only "old season", episodenbr has unique value of each episode but episodeid has unique value of each main title. 
+# As all the old season does but here is just one example, the first main title at the first season is An Unearthly Child. 
+# In the datasets using "episodeid" as index, An Unearthly Child has index value, "1-1"
+# But, In the dataset using "episodenbr" as index, An Unearthly Child has index value according to number of the "sub title".
+# In this case, An Unearthly Child has four subtitle from "None" to "The Firemaker". So episodenbr has unique value from 1 to 4 in same maintitle, An Unearthly Child.
+# Therefore this problem occur just old season, from the season 1 to season 26, values. 
+# Frankly speaking, I'm only going to analyze new season's data, but let's think about analyzing it with all the data to practice EDA.
+# Well, How can solve this problem? How can handle this problem?
 
 ```
