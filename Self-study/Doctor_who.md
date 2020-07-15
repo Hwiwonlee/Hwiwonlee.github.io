@@ -479,4 +479,29 @@ doctor_who_all_detailsepisodes
 doctor_who_imdb_details
 doctor_who_all_scripts
 
+# This is end of Handling the index part. 
+# In next part, I will extract the "new season" data at these four dataset and then analysis. 
+
+#### 2. Analysis ####
+# Before the analysis I should extract the "new season" data.
+doctor_who_dwguide %>% 
+  filter(season >= 27) -> new_doctor_who_dwguide
+
+doctor_who_all_detailsepisodes %>% 
+  filter(season >= 27) -> new_doctor_who_all_detailsepisodes
+
+doctor_who_imdb_details %>% 
+  filter(season >= 27) -> new_doctor_who_imdb_details
+
+doctor_who_all_scripts %>% 
+  filter(season >= 27) -> new_doctor_who_all_scripts
+
+# Note that some episodes is missing in the doctor_who_all_scripts.
+# As below result, new_doctor_who_all_scripts has 137 episode not 155 episode which included in other dataset
+new_doctor_who_all_scripts %>% 
+  count(episodenbr) # 137 unique episodenbr
+
+# Now I'm ready to analyze.
+### 2.1 Drawing some plots
+
 ```
