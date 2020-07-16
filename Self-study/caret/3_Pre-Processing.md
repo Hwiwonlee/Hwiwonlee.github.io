@@ -226,3 +226,44 @@ head(transformed)
 ## 5        E -0.5804713  -0.9564504 -0.0615593  -0.554123 -0.902085020 Fri
 ## 6        E -0.5804713  -0.9564504 -0.0615593  -0.554123  0.698108782 Wed
 ```
+두 개의 예측변수가 "무시됨"(ignored)으로 표시된 것은 7개의 예측 변수 중 중심화가 불가능한 명목형 예측 변수가 2개 있기 때문이다. 그러나 숫자형으로 저장되어 있어 걸러내지 못한 NumPending 예측 변수는 매우 희박하고 불균형한 분포를 갖는다. 
+```r
+mean(schedulingData$NumPending == 0)
+```
+```r
+## [1] 0.7561764
+```
+다른 일부 모형에서 이러한 불균형한 분포를 갖는 예측 변수는 문제가 될 수 있다. (특별히, 재표집(resample)이나 [down-sample](https://en.wikipedia.org/wiki/Downsampling_(signal_processing)을 하는 경우가 그렇다.) 0 혹은 0에 가까운 분산을 갖는 예측 변수가 있는지 확인하고 걸러내는 작업을 `preProcess`에 추가해보자. 
+```r
+pp_no_nzv <- preProcess(schedulingData[, -8], 
+                        method = c("center", "scale", "YeoJohnson", "nzv"))
+pp_no_nzv
+```
+```r
+## Created from 4331 samples and 7 variables
+## 
+## Pre-processing:
+##   - centered (4)
+##   - ignored (2)
+##   - removed (1)
+##   - scaled (4)
+##   - Yeo-Johnson transformation (4)
+## 
+## Lambda estimates for Yeo-Johnson transformation:
+## -0.08, -0.03, -1.05, 1.44
+```
+```r
+predict(pp_no_nzv, newdata = schedulingData[1:6, -8])
+```
+```r
+##   Protocol  Compounds InputFields Iterations         Hour Day
+## 1        E  1.2289592  -0.6324580 -0.0615593  0.004586516 Tue
+## 2        E -0.6065826  -0.8120473 -0.0615593 -0.043733201 Tue
+## 3        E -0.5719534  -1.0131504 -2.7894869 -0.034967177 Thu
+## 4        E -0.6427737  -1.0047277 -0.0615593 -0.964170752 Fri
+## 5        E -0.5804713  -0.9564504 -0.0615593 -0.902085020 Fri
+## 6        E -0.5804713  -0.9564504 -0.0615593  0.698108782 Wed
+````
+"삭제됨"(removed)로 표시된 예측 변수가 추가 되었음에 주목해보자. 우리가 추가한 인수에 의해 0이나 0에 가까운 분산을 갖는 예측 변수가 삭제되었음을 의미한다. 
+
+## 3.10 클래스 간 거리 계산(Class Distance Calculations)  
