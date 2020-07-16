@@ -174,4 +174,55 @@ preProcValues2
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ## -2.0000 -0.2500  0.5000  0.4387  2.0000  2.0000
 ```
-`NA`는 Box–Cox transformation로 변환할 수 없는 예측 변수들과 관련있는 결측값이다. 이 변환은 대상이 되는 데이터셋의 값이 0보다 커야만 한다. 이와 유사한 예측 변수 변환 방법으로 Yeo-Johnson과 Manly의 지수 변환(1976) 등도 `preProcess`에서 사용 가능하다. 
+`NA`는 Box–Cox transformation로 변환할 수 없는 예측 변수들과 관련있는 결측값이다. 이 변환은 대상이 되는 데이터셋의 값이 0보다 커야만 한다. 이와 유사한 예측 변수 변환 방법으로 Yeo-Johnson과 Manly의 지수 변환(1976) 등도 `preProcess`에서 사용 가능하다.  
+
+## 3.9 총 정리(Putting It All Together)  
+책, [Applied Predictive Modeling](http://appliedpredictivemodeling.com/)에서 고성능 컴퓨팅 환경에서 작업 실행 시간을 예측하는 사례연구를 보자. 데이터는 다음과 같다.  
+
+```r
+library(AppliedPredictiveModeling)
+data(schedulingData)
+str(schedulingData)
+```
+```
+## 'data.frame':    4331 obs. of  8 variables:
+##  $ Protocol   : Factor w/ 14 levels "A","C","D","E",..: 4 4 4 4 4 4 4 4 4 4 ...
+##  $ Compounds  : num  997 97 101 93 100 100 105 98 101 95 ...
+##  $ InputFields: num  137 103 75 76 82 82 88 95 91 92 ...
+##  $ Iterations : num  20 20 10 20 20 20 20 20 20 20 ...
+##  $ NumPending : num  0 0 0 0 0 0 0 0 0 0 ...
+##  $ Hour       : num  14 13.8 13.8 10.1 10.4 ...
+##  $ Day        : Factor w/ 7 levels "Mon","Tue","Wed",..: 2 2 4 5 5 3 5 5 5 3 ...
+##  $ Class      : Factor w/ 4 levels "VF","F","M","L": 2 1 1 1 1 1 1 1 1 1 ...
+```
+데이터는 숫자형 예측 변수들과 명목형 예측 변수들로 이뤄져 있다. 이제 우리가 연속형 예측 변수들에 중심화와 척도 표준화를 시킨 뒤 Yeo-Johnson 변환의 작업을 한다고 가정해보자. 또한 나무 기반 모형(Tree-based model)을 사용할 것으로 가정하여 명목형 예측 변수들의 더미변수화를 하지 않을 것이다. 마지막 예측 변수, Class를 제외한 예측 변수로 위의 과정을 실행한 뒤 결과를 확인해보자.  
+```r
+pp_hpc <- preProcess(schedulingData[, -8], 
+                     method = c("center", "scale", "YeoJohnson"))
+pp_hpc
+```
+```r
+## Created from 4331 samples and 7 variables
+## 
+## Pre-processing:
+##   - centered (5)
+##   - ignored (2)
+##   - scaled (5)
+##   - Yeo-Johnson transformation (5)
+## 
+## Lambda estimates for Yeo-Johnson transformation:
+## -0.08, -0.03, -1.05, -1.1, 1.44
+```
+```r
+transformed <- predict(pp_hpc, newdata = schedulingData[, -8])
+head(transformed)
+```
+```r
+##   Protocol  Compounds InputFields Iterations NumPending         Hour Day
+## 1        E  1.2289592  -0.6324580 -0.0615593  -0.554123  0.004586516 Tue
+## 2        E -0.6065826  -0.8120473 -0.0615593  -0.554123 -0.043733201 Tue
+## 3        E -0.5719534  -1.0131504 -2.7894869  -0.554123 -0.034967177 Thu
+## 4        E -0.6427737  -1.0047277 -0.0615593  -0.554123 -0.964170752 Fri
+## 5        E -0.5804713  -0.9564504 -0.0615593  -0.554123 -0.902085020 Fri
+## 6        E -0.5804713  -0.9564504 -0.0615593  -0.554123  0.698108782 Wed
+```
