@@ -445,21 +445,29 @@ doctor_who_dwguide %>%
   select(1, 5) %>% 
   filter(!duplicated(title)) %>% 
   right_join(doctor_who_imdb_details, by = "title") -> doctor_who_imdb_details
-  
-  # test of equality between original doctor_who_imdb_details and atfer modification one.  
-  # select(-1) %>%
-  # all_equal(doctor_who_imdb_details) # TRUE, Totally same.
-  
+
+
+doctor_who_dwguide %>% 
+  filter(episodenbr %in% c(728, 729, 745, 777, 795, 817, 840, 841)) %>% 
+  pull(doctorid) -> putinimdb
+
+
+doctor_who_imdb_details$doctorid[which(is.na(doctor_who_imdb_details$doctorid))] <- putinimdb
+
+# test of equality between original doctor_who_imdb_details and atfer modification one.  
+# select(-1) %>%
+# all_equal(doctor_who_imdb_details) # TRUE, Totally same.
+
 doctor_who_all_scripts %>% 
   left_join(doctor_who_all_detailsepisodes, by = c("season", "number", "doctorid")) %>% 
   select(-first_diffusion) -> doctor_who_all_scripts
-  
-  # test of equality between original doctor_who_all_scripts and atfer modification one.  
-  # select(-(8:10)) %>% 
-  # all_equal(doctor_who_all_scripts) # TRUE, Totally same.
+
+# test of equality between original doctor_who_all_scripts and atfer modification one.  
+# select(-(8:10)) %>% 
+# all_equal(doctor_who_all_scripts) # TRUE, Totally same.
 
 
-  
+
 # For the readability, unify the columns 
 doctor_who_dwguide %>% 
   select(episodenbr, season, number, doctorid, title, everything()) -> doctor_who_dwguide
@@ -503,5 +511,36 @@ new_doctor_who_all_scripts %>%
 
 # Now I'm ready to analyze.
 ### 2.1 Drawing some plots
+
+new_doctor_who_imdb_details %>% 
+  mutate(season = season-26) %>% 
+  ggplot(aes(x = episodenbr, y = rating)) +
+  geom_line(aes(color = factor(season))) + 
+  geom_point(aes(color = factor(season))) + 
+  theme_minimal() + 
+  labs(color = "Season", 
+       x = "Episode number", 
+       y = "Rating at IMdb") + 
+  theme(legend.position = "bottom")
+  
+new_doctor_who_imdb_details %>% 
+  ggplot(aes(x = episodenbr, y = rating)) +
+  geom_line(aes(color = factor(doctorid))) + 
+  geom_point(aes(color = factor(doctorid))) + 
+  theme_minimal() + 
+  labs(color = "Doctor",
+       x = "Episode number", 
+       y = "Rating at IMdb") + 
+  theme(legend.position = "bottom")
+
+
+new_doctor_who_imdb_details %>% 
+  ggplot(aes(x = doctorid, y = rating, group = doctorid)) + 
+  geom_boxplot(aes(fill = factor(doctorid))) + 
+  theme_minimal() + 
+  labs(fill = "Doctor",
+       x = "Episode number", 
+       y = "Rating at IMdb") + 
+  theme(legend.position = "bottom")
 
 ```
