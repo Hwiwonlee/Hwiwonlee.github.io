@@ -476,7 +476,11 @@ doctor_who_all_detailsepisodes %>%
   select(episodenbr, season, number, doctorid, title, everything()) -> doctor_who_all_detailsepisodes
 
 doctor_who_imdb_details %>% 
-  select(episodenbr, season, number, doctorid, title, everything()) -> doctor_who_imdb_details
+  select(episodenbr, season, number, doctorid, title, everything()) %>% 
+  # This is wrong. episodenbr 804, Twice Upon a Time is the last episode of 12th doctor. 
+  # Even if appear new doctor, 13th doctor, this is wrong numbering. 
+  mutate(season = ifelse(episodenbr == 840, 36, season)) %>% 
+  mutate(number = ifelse(episodenbr == 840, 13, number)) -> doctor_who_imdb_details
 
 doctor_who_all_scripts %>% 
   select(episodenbr, season, number, doctorid, title, idx, everything()) -> doctor_who_all_scripts
@@ -533,14 +537,15 @@ new_doctor_who_imdb_details %>%
        y = "Rating at IMdb") + 
   theme(legend.position = "bottom")
 
-
 new_doctor_who_imdb_details %>% 
-  ggplot(aes(x = doctorid, y = rating, group = doctorid)) + 
+  mutate(season = season-26) %>% 
+  ggplot(aes(x = factor(season), y = rating)) + 
   geom_boxplot(aes(fill = factor(doctorid))) + 
-  theme_minimal() + 
-  labs(fill = "Doctor",
-       x = "Episode number", 
+  theme_minimal() +
+  labs(fill = "Season",
+       x = "Doctor index", 
        y = "Rating at IMdb") + 
   theme(legend.position = "bottom")
+
 
 ```
