@@ -513,39 +513,155 @@ doctor_who_all_scripts %>%
 new_doctor_who_all_scripts %>% 
   count(episodenbr) # 137 unique episodenbr
 
+# some practice 
+# Which one is the best or worst episode(based on some metric) for each season and doctor
+new_doctor_who_dwguide %>% 
+  mutate(share = as.numeric(str_remove(share, "%"))) %>% 
+  # select the season or doctor
+  group_by(season) %>% 
+  # group_by(doctorid) %>% 
+  
+  # select the metric
+  
+  # filter(AI == max(AI)) %>% 
+  # filter(AI == max(views)) %>% 
+  # filter(AI == max(chart)) %>% 
+  filter(share == max(share)) %>% 
+  
+  select(season, number, doctorid, title, AI, views, share, chart)
+
+
 # Now I'm ready to analyze.
 ### 2.1 Drawing some plots
-
-new_doctor_who_imdb_details %>% 
+# Barplot to show difference of number of episode for each season and doctor
+new_doctor_who_dwguide %>% 
   mutate(season = season-26) %>% 
-  ggplot(aes(x = episodenbr, y = rating)) +
-  geom_line(aes(color = factor(season))) + 
-  geom_point(aes(color = factor(season))) + 
-  theme_minimal() + 
+  mutate(episodenbr = episodenbr - min(episodenbr) + 1) %>% 
+  group_by(doctorid) %>% 
+  count(season) %>% 
+  ggplot(aes(x = season, y = n, color = factor(doctorid), fill = factor(doctorid))) +
+  geom_bar(stat = "identity") + 
+  labs(color = "Doctor",
+       fill = "Doctor",
+       x = "Season", 
+       y = "Number of Episodes") + 
+  theme_minimal() +
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Number of Episodes for Each Season and Doctor")
+
+## 2.1.1 Using lineplot part
+lineplot <- function(dataset, x, y, color) { 
+  
+  lineplot <- dataset %>% 
+    mutate(season = season-26) %>% 
+    mutate(episodenbr = episodenbr - min(episodenbr) + 1) %>% 
+    # https://stackoverflow.com/questions/58786357/how-to-pass-aes-parameters-of-ggplot-to-function
+    # https://adv-r.hadley.nz/evaluation.html#tidy-evaluation
+    ggplot(aes(x = {{x}}, y = {{y}}, color = factor({{color}}))) +
+    geom_line() + 
+    geom_point() + 
+    theme_minimal()
+  return(lineplot)
+  
+  }
+
+# To show that rating trend for each season
+lineplot(new_doctor_who_imdb_details, x = episodenbr, y = rating, color = season) + 
   labs(color = "Season", 
        x = "Episode number", 
-       y = "Rating at IMdb") + 
-  theme(legend.position = "bottom")
-  
-new_doctor_who_imdb_details %>% 
-  ggplot(aes(x = episodenbr, y = rating)) +
-  geom_line(aes(color = factor(doctorid))) + 
-  geom_point(aes(color = factor(doctorid))) + 
-  theme_minimal() + 
+       y = "Rating") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Rating Trend for Each Season")
+
+# To show that rating trend for each doctor
+lineplot(new_doctor_who_imdb_details, x = episodenbr, y = rating, color = doctorid) + 
   labs(color = "Doctor",
        x = "Episode number", 
-       y = "Rating at IMdb") + 
-  theme(legend.position = "bottom")
+       y = "Rating") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Rating Trend for Each Doctor")
 
-new_doctor_who_imdb_details %>% 
-  mutate(season = season-26) %>% 
-  ggplot(aes(x = factor(season), y = rating)) + 
-  geom_boxplot(aes(fill = factor(doctorid))) + 
-  theme_minimal() +
-  labs(fill = "Season",
-       x = "Doctor index", 
-       y = "Rating at IMdb") + 
-  theme(legend.position = "bottom")
+# To show that AI(Appreciation Index) trend for each doctor
+lineplot(new_doctor_who_dwguide, x = episodenbr, y = AI, color = doctorid) + 
+  labs(color = "Season", 
+       x = "Episode number", 
+       y = "Rating") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Rating Trend for Each Season")
+
+# To show that views trend for each doctor
+lineplot(new_doctor_who_dwguide, x = episodenbr, y = views, color = doctorid) + 
+  labs(fill = "Doctor",
+       x = "Episode number", 
+       y = "Views") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "View Trend for Each Season")
+
+# To show that chart trend for each doctor
+lineplot(new_doctor_who_dwguide, x = episodenbr, y = chart, color = doctorid) + 
+  labs(fill = "Doctor",
+       x = "Episode number", 
+       y = "Chart") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Chart Trend for Each Season")
+
+## 2.1.2 Using boxplot part
+boxplot <- function(dataset, x, y, color) { 
+  
+  boxplot <- dataset %>% 
+    mutate(season = season-26) %>% 
+    mutate(episodenbr = episodenbr - min(episodenbr) + 1) %>% 
+    # https://stackoverflow.com/questions/58786357/how-to-pass-aes-parameters-of-ggplot-to-function
+    # https://adv-r.hadley.nz/evaluation.html#tidy-evaluation
+    ggplot(aes(x = factor({{x}}), y = {{y}})) +
+    geom_boxplot(aes(fill = factor({{color}}))) + 
+    theme_minimal()
+  
+  return(boxplot)
+  
+}
+
+# Using boxplot, To show that rating trend for each doctor
+boxplot(new_doctor_who_imdb_details, x = season, y = rating, color = doctorid) + 
+  labs(fill = "Doctor",
+       x = "Season", 
+       y = "Rating") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Boxplot Showing Rating Trend for Each Season and Doctor")
+
+# Using boxplot, To show that AI(Appreiciation Index) trend for each doctor
+boxplot(new_doctor_who_dwguide, x = season, y = AI, color = doctorid) + 
+  labs(fill = "Doctor",
+       x = "Season", 
+       y = "Rating") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Boxplot Showing AI Trend for Each Season and Doctor")
+
+# Using boxplot, To show that views trend for each doctor
+boxplot(new_doctor_who_dwguide, x = season, y = views, color = doctorid) + 
+  labs(fill = "Doctor",
+       x = "Season", 
+       y = "Views") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Box Plot Showing View Trend for Each Season and Doctor")
+
+# Using boxplot, To show that chart trend for each doctor
+boxplot(new_doctor_who_dwguide, x = season, y = chart, color = doctorid) + 
+  labs(fill = "Doctor",
+       x = "Season", 
+       y = "Chart") + 
+  theme(legend.position = "bottom", 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
+  ggtitle(label = "Box Plot Showing Chart Trend for Each Season and Doctor")
 
 
 ```
