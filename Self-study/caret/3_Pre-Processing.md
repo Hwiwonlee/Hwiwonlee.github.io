@@ -233,7 +233,7 @@ mean(schedulingData$NumPending == 0)
 ```r
 ## [1] 0.7561764
 ```
-다른 일부 모형에서 이러한 불균형한 분포를 갖는 예측 변수는 문제가 될 수 있다. (특별히, 재표집(resample)이나 [down-sample](https://en.wikipedia.org/wiki/Downsampling_(signal_processing)을 하는 경우가 그렇다.) 0 혹은 0에 가까운 분산을 갖는 예측 변수가 있는지 확인하고 걸러내는 작업을 `preProcess`에 추가해보자. 
+다른 일부 모형에서 이러한 불균형한 분포를 갖는 예측 변수는 문제가 될 수 있다. (특별히, 재표집(resample)이나 [down-sample](https://en.wikipedia.org/wiki/Downsampling_(signal_processing))을 하는 경우가 그렇다.) 0 혹은 0에 가까운 분산을 갖는 예측 변수가 있는지 확인하고 걸러내는 작업을 `preProcess`에 추가해보자. 
 ```r
 pp_no_nzv <- preProcess(schedulingData[, -8], 
                         method = c("center", "scale", "YeoJohnson", "nzv"))
