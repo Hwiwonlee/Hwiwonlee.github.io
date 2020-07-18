@@ -267,3 +267,33 @@ predict(pp_no_nzv, newdata = schedulingData[1:6, -8])
 "삭제됨"(removed)로 표시된 예측 변수가 추가 되었음에 주목해보자. 우리가 추가한 인수에 의해 0이나 0에 가까운 분산을 갖는 예측 변수가 삭제되었음을 의미한다. 
 
 ## 3.10 클래스 간 거리 계산(Class Distance Calculations)  
+[caret](https://cran.r-project.org/web/packages/caret/index.html) 패키지에는 class 중심으로부터의 거리에 근거해 새로운 예측 변수를 만드는(선형 판별 분석에서 사용하는 것과 비슷한 방법으로) 함수들이 포함되어 있다. 명목형 변수들의 각 수준에 대하여 class 중심과 공분산 행렬을 계산해낼 수 있다. 새로운 표본을 이용해, 각 class 중심으로부터 마할라노비스 거리([Mahalanobis distance](https://en.wikipedia.org/wiki/Mahalanobis_distance))를 계산한 후 거리 계산을 기반으로 새로운 예측 변수를 추가했다. 이는 의사 결정 경계(decision boundary)가 선형인 경우, 비 선형 모델에 유용할 수 있다. (This can be helpful for non-linear models when the true decision boundary is actually linear.)  
+> 이게 정확히 무슨 의미인 지 모르겠다.  
+
+한 class 내에서 표본보다 많은 예측 변수가 있는 경우, `classDist` 함수에서 사용 가능한 `pca`와 `keep`인자를 사용하면 주성분 분석 중, 특이 공분산 행렬(singular covariance matrix)에 발생할 수 있는 문제를 피할 수 있다. (이 부분은 선형대수의 기초 지식이 필요한 부분이다. stackoverflow에서 괜찮은 Q&A를 찾았다. [(1)](https://stats.stackexchange.com/questions/60622/why-is-a-sample-covariance-matrix-singular-when-sample-size-is-less-than-number), [(2)](https://stats.stackexchange.com/questions/108065/singular-covariance-matrix-in-exploratory-factor-analysis), [(3)](https://stats.stackexchange.com/questions/70899/what-correlation-makes-a-matrix-singular-and-what-are-implications-of-singularit))   
+
+그 후, `predict.classDist`는 클래스 거리에 대한 예측 변수를 만들 수 있다. 초기 설정에 의하여, 클래스 거리는 남아있겠지만 `trans` 인자에 따라 바뀔 수 있다.  
+
+예를 들어, MDRR dataset을 다시 사용해보자. 
+```r
+centroids <- classDist(trainBC, trainMDRR)
+distances <- predict(centroids, testBC)
+distances <- as.data.frame(distances)
+head(distances)
+```
+```r
+##                dist.Active dist.Inactive
+## ACEPROMAZINE      3.787139      3.941234
+## ACEPROMETAZINE    4.306137      3.992772
+## MESORIDAZINE      3.707296      4.324115
+## PERIMETAZINE      4.079938      4.117170
+## PROPERICIAZINE    4.174101      4.430957
+## DUOPERONE         4.355328      6.000025
+```
+아래의 이미지는 위의 예제에서 만들어진 클래스의 거리 변수를 이용해 그린 산점도이다. 
+```r
+xyplot(dist.Active ~ dist.Inactive,
+       data = distances, 
+       groups = testMDRR, 
+       auto.key = list(columns = 2))
+```
