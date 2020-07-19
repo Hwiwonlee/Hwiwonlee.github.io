@@ -424,10 +424,10 @@ doctor_who_dwguide %>%
   ungroup() %>% 
   select(1,3,4,6) %>% 
   left_join(doctor_who_dwguide, by = "episodenbr") -> doctor_who_dwguide
-  
-  # test of equality between original doctor_who_dwguide and atfer modification one.  
-  # select(-c(2:4)) %>% 
-  # all_equal(doctor_who_dwguide) # TRUE, Totally same.
+
+# test of equality between original doctor_who_dwguide and atfer modification one.  
+# select(-c(2:4)) %>% 
+# all_equal(doctor_who_dwguide) # TRUE, Totally same.
 
 # Next, I add episodenbr(obtained by doctor_who_dwguide) to three datasets  
 doctor_who_dwguide %>% 
@@ -435,10 +435,10 @@ doctor_who_dwguide %>%
   select(1, 5) %>% 
   filter(!duplicated(title)) %>% 
   right_join(doctor_who_all_detailsepisodes, by = "title") -> doctor_who_all_detailsepisodes
-  
-  # test of equality between original doctor_who_all_detailsepisodes and atfer modification one.  
-  # select(-1) %>% 
-  # all_equal(doctor_who_all_detailsepisodes) # TRUE, Totally same. 
+
+# test of equality between original doctor_who_all_detailsepisodes and atfer modification one.  
+# select(-1) %>% 
+# all_equal(doctor_who_all_detailsepisodes) # TRUE, Totally same. 
 
 doctor_who_dwguide %>% 
   mutate(title = str_remove(string = title, pattern = ":.*")) %>% 
@@ -512,6 +512,7 @@ doctor_who_all_scripts %>%
 # As below result, new_doctor_who_all_scripts has 137 episode not 155 episode which included in other dataset
 new_doctor_who_all_scripts %>% 
   count(episodenbr) # 137 unique episodenbr
+
 
 # some practice 
 # Which one is the best or worst episode(based on some metric) for each season and doctor
