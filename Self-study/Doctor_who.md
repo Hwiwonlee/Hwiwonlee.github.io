@@ -491,6 +491,53 @@ doctor_who_all_detailsepisodes
 doctor_who_imdb_details
 doctor_who_all_scripts
 
+# 1.4 Edit the character value
+# doctor_who_dwguide has character values in "cast" and "crew".
+# As the variable name of the "cast" and "crew", "cast" and "crew" have information of "role" and "name".
+# Here is just one difference between these variables, the role of "cast" is character in the "Doctor who"
+# but the role of "crew" is handling part in the "Doctor who"
+# If you focuses on these variables, may be little bit confused because of format of values in variables.
+# The raw setting, these values contains a lots of the "specific characters" like brackets, back slash and comma, etc. 
+# For further analysis, need to edit these values to take the more prefer format. 
+
+# doctor_who_dwguide %>% 
+#   mutate(cast = str_replace_all(cast, "\"", " ")) %>% 
+#   mutate(cast = str_replace_all(cast, "\\},\\{", "\n")) %>% 
+#   mutate(cast = str_remove_all(cast, "\\[\\{")) %>% 
+#   mutate(cast = str_remove_all(cast, "\\}\\]")) %>% 
+#   # cast values, vector, change to list format 
+#   # https://stackoverflow.com/questions/30474729/string-split-into-list-r
+#   mutate(cast_list = str_split(cast, "\n")) %>% 
+#   # Re-save unlist cast values with out "\n"
+#   # https://stackoverflow.com/questions/45909696/how-to-display-the-elements-of-a-list-within-a-tibble
+#   mutate(cast = map_chr(cast_list, toString)) -> doctor_who_dwguide
+# 
+# doctor_who_dwguide %>% 
+#   mutate(crew = str_replace_all(crew, "\"", " ")) %>% 
+#   mutate(crew = str_replace_all(crew, "\\},\\{", "\n")) %>% 
+#   mutate(crew = str_remove_all(crew, "\\[\\{")) %>% 
+#   mutate(crew = str_remove_all(crew, "\\}\\]")) %>% 
+#   mutate(crew_list = str_split(crew, "\n")) %>% 
+#   mutate(crew = map_chr(crew_list, toString)) -> doctor_who_dwguide
+
+# This is just one pipe line code which same result of above two pipe line code 
+doctor_who_dwguide %>% 
+  # select(across(starts_with("c") | where(is.character))) %>%
+  mutate(across(starts_with("c") & where(is.character), ~str_replace_all(.x, "\"", " "))) %>% 
+  mutate(across(starts_with("c") & where(is.character), ~str_replace_all(.x, "\\},\\{", "\n"))) %>% 
+  mutate(across(starts_with("c") & where(is.character), ~str_remove_all(.x, "\\[\\{"))) %>% 
+  mutate(across(starts_with("c") & where(is.character), ~str_remove_all(.x, "\\}\\]"))) %>% 
+  # cast values, vector, change to list format 
+  # https://stackoverflow.com/questions/30474729/string-split-into-list-r
+  mutate(across(starts_with("c") & where(is.character), ~str_split(.x, "\n"), .names = "{col}_list")) %>% 
+  mutate(across(starts_with("c") & where(is.character), ~str_remove_all(.x, "\n"))) -> doctor_who_dwguide
+
+# Check the results   
+cat(doctor_who_dwguide$crew[1])
+doctor_who_dwguide$crew_list[[1]]
+
+# If you use these lists(_list) or character vectors(crew and cast), can analysis about cast or crew.
+
 # This is end of Handling the index part. 
 # In next part, I will extract the "new season" data at these four dataset and then analysis. 
 
