@@ -1,8 +1,24 @@
 ```r
-library(googledrive)
-library(tidyverse)
-library(lubridate)
+library(googledrive) # To connect google drive 
+library(tidyverse) # core tools for analysis
+library(lubridate) # tools which handling the "date" values
 
+library(rJava) # must be install to use NLP4kec
+library(tm) # Tools which make and handle the word cloud 
+library(wordcloud2) # Tools which make and handle the word cloud 
+library(RColorBrewer) # Tools which set the colors 
+library(SnowballC) # for text stemming
+
+
+library(devtools)
+devtools::install_github("NamyounKim/NLP4kec")
+library(NLP4kec)
+# 설치가 안돼서 에러 메시지를 살펴보니 Rtools version이 old version인 3.5라 문제임을 발견
+# Rtools 4.0을 설치하니 Rterm.exe와 Rsession.exe에서 시작 프로시저를 못찾겠다는 에러창이 뜸
+# 심지어 rJava package load가 안됨. 
+# 잘 신경 쓰지 않던 package load warning 메세지가 눈에 띄어 혹시나 싶어 R 버전을 4.0.2로 업그레이드 함. 
+# 모든 에러가 사라지고 NLP4kec도 설치가 됨. 
+# ....도대체 뭐지? 
 
 drive_auth()
 #### 1. data load and setting ####
@@ -538,8 +554,10 @@ doctor_who_dwguide$crew_list[[1]]
 
 # If you use these lists(_list) or character vectors(crew and cast), can analysis about cast or crew.
 
+
 # This is end of Handling the index part. 
 # In next part, I will extract the "new season" data at these four dataset and then analysis. 
+
 
 #### 2. Analysis ####
 # Before the analysis I should extract the "new season" data.
@@ -612,7 +630,7 @@ lineplot <- function(dataset, x, y, color) {
     theme_minimal()
   return(lineplot)
   
-  }
+}
 
 # To show that rating trend for each season
 lineplot(new_doctor_who_imdb_details, x = episodenbr, y = rating, color = season) + 
@@ -710,6 +728,52 @@ boxplot(new_doctor_who_dwguide, x = season, y = chart, color = doctorid) +
   theme(legend.position = "bottom", 
         plot.title = element_text(face = "bold", hjust = 0.5, size = 13)) + 
   ggtitle(label = "Box Plot Showing Chart Trend for Each Season and Doctor")
+
+
+
+### 2.2 Text mining
+# These datasets have several character variable and huge character values (ex, scripts in each episode)
+# For practice, Creat the word cloud using main villian's scripts
+
+new_doctor_who_all_scripts %>% 
+  filter(details == "DALEK") %>% 
+  select(text, details) %>% 
+  na.omit() %>% 
+  as.data.frame() -> DALEK_script
+
+# http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know
+# Text mining and word cloud fundamentals in R
+scripts <- tm::Corpus(tm::VectorSource(DALEK_script$text))
+
+# view elements of scripts
+tm::inspect(scripts)
+
+
+toSpace <- tm::content_transformer(function(x, pattern) gsub(pattern, " ", x))
+
+# Upper case change to lower case
+scripts <- tm::tm_map(scripts, content_transformer(tolower))
+# Remove numbers 
+scripts <- tm::tm_map(scripts, removeNumbers)
+# Remove english stopwords
+scripts <- tm::tm_map(scripts, removeWords, stopwords("english"))
+# Remove the penctuation(ex : ".", ",", "!", "?", etc )
+scripts <- tm::tm_map(scripts, removePunctuation)
+# Remove some white space. 
+# Even if use the "stripwhitespace", there will be remain some white space because of using white space for indentifying each words
+scripts <- tm::tm_map(scripts, stripWhitespace)
+
+# Generate Kind of frequency matrix
+tdm <- tm::TermDocumentMatrix(scripts)
+matrix <- as.matrix(tdm)
+vector <- sort(rowSums(matrix), decreasing = T)
+dataframe <- data.frame(word = names(vector), freq = vector)
+
+head(dataframe)
+
+set.seed(1234)
+# Draw the word cloud 
+wordcloud2(dataframe, minSize = 10)
 
 
 ```
