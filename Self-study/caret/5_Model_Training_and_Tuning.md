@@ -207,5 +207,6 @@ ggplot(gbmFit2)
 
 `caret` 패키지는 `plot`이외에도 resampling들로부터 계산된 성능 지표를 좀 더 자세히 그릴 수 있는 `xyplot.train`([histogram.train](https://rdrr.io/cran/caret/man/histogram.train.html), [xyplot.resamples](https://rdrr.io/cran/caret/man/xyplot.resamples.html)) 함수를 지원한다.  
 > ?xyplot.train으로 검색해보면 `histogram.train`이 나오고 rdrr에서 검색해보면 xyplot.resamples가 나온다. 좀 더 이상한 건 실제 R에서 사용할 때는 둘 다 나오지 않고 `xyplot`이 그 자체로 존재한다. 아마, [`lattice`](https://rdrr.io/cran/lattice/man/Lattice.html) 패키지로부터 참조해서 사용하는 구조 같은데, 그럼 `lattice` 패키지 안의 [`xyplot`의 도움말](https://rdrr.io/cran/lattice/man/xyplot.html)을 보는 게 더 낫지 않을까?   
+
 위와 같은 그림을 유지한 상태에서 다른 tuning parameters들을 표현하고 싶은 경우도 있을 것이다. [`update.train`](https://rdrr.io/cran/caret/man/update.train.html)을 사용하면 처음부터 전체 과정을 반복할 필요없이 최종 모델에 재적합 시켜 결과값만 바꿀 수 있다.  
 
