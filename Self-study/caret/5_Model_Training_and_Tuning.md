@@ -177,6 +177,28 @@ gbmFit2
 "random search"([pdf](http://www.jmlr.org/papers/volume13/bergstra12a/bergstra12a.pdf)), 즉 가능한 tuning parameter 조합에서 무작위 추출을 이용한 parameter tuning 방법도 사용할 수 있다. 이 방법에 대한 내용은 [이 페이지](https://topepo.github.io/caret/random-hyperparameter-search.html)를 참고하자.  
 random search를 사용하기 위해서는 `trainControl`에서 search = "random"을 입력해주어야 한다. 이 경우, `tuneLength` parameter는 parameter 조합의 전체 개수로 정의된다.  
 
-### 5.5.3 그림을 이용한 Resampling 정보 표현 (Plotting the Resampling Profile)  
-
- 
+### 5.5.3 그림을 이용해 Resampling들의 성능 지표 표현하기 (Plotting the Resampling Profile)  
+`plot` 함수를 이용하면 계산된 성능 지표와 tuning parameter들의 관계를 한 눈에 알아볼 수 있다. 가령, `plot`에 아무런 arg로 설정하지 않은 채로 `train`의 결과만을 넣으면 첫 번째의 성능 지표를 기준으로 그림을 그려준다. 
+```r
+trellis.par.set(caretTheme())
+plot(gbmFit2)  
+```
+<img src = "https://topepo.github.io/caret/basic/train_plot1-1.svg">
+다른 성능 지표를 기준으로 그림을 그려보고 싶다면 `metric`에서 지정해주면 된다.  
+```r
+trellis.par.set(caretTheme())
+plot(gbmFit2, metric = "Kappa")
+```
+<img src = "https://topepo.github.io/caret/basic/train_plot2-1.svg">
+다른 형태의 그림도 그릴 수 있다. [?plot.train](https://rdrr.io/cran/caret/man/plot.train.html)에 더욱 자세한 내용이 있으니 참고하자. 한 가지 예로 아래의 코드를 이용하면 `plot`으로 hitmap을 그릴 수 있다.
+```r
+trellis.par.set(caretTheme())
+plot(gbmFit2, metric = "Kappa", plotType = "level",
+     scales = list(x = list(rot = 90)))
+```
+<img src = "https://topepo.github.io/caret/basic/train_plot3-1.svg">
+더불어, 흔히 사용하는 `ggplot`으로도 그릴 수 있다.  
+```r
+ggplot(gbmFit2) 
+```
+<img src = "https://topepo.github.io/caret/basic/train_plot4-1.svg">
