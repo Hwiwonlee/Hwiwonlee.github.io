@@ -99,7 +99,17 @@ gradient boosting machine (GBM) model의 대표적인 튜닝 파라메터들을 
   - learning rate, 얼마나 빠르게 알고리즘을 습득할 것인지를 결정하는 파라메터(shrinkage)
   - training set을 이용해 node를 나눌 때 기준이 될 최소 샘플 갯수(n.minobsinnode)
 
-위 모델의 tuning parameter의 테스트 결과는 처음 두 열에 표시된다.(후보 모델의 grid set가 모두 이러한 tuning parameter에 대해 단일 값을 사용하기 때문에 shrinkage와 n.minobsinnode는 표시되지 않는다.) 정확도(Accuracy)는 여러차례 반복된 CV의 결과에 평균 정확도이다. 
+위 모델의 tuning parameter의 테스트 결과는 처음 두 열에 표시된다.(후보 모델의 grid set가 모두 이러한 tuning parameter에 대해 단일 값을 사용하기 때문에 shrinkage와 n.minobsinnode는 표시되지 않는다.) 정확도(Accuracy)는 여러차례 반복된 CV의 결과로 구한 평균 정확도이다. 표준편차 또한 반복된 CV의 결과를 평균내어 구할 수 있다. Kappa([wiki](https://en.wikipedia.org/wiki/Cohen%27s_kappa), [추가 설명](https://thedatascientist.com/performance-measures-cohens-kappa-statistic/))는 Cohen's(unweighted) Kappa 통계량을 의미하며 여기서는 각 resampling 결과들의 kappa를 평균하여 구한 값이다. 이와 같이 `train`을 사용해 특정 모델을 설정하여 훈련 시킬 수 있다. `train`에서 사용할 모델을 설정하면, 자동적으로 grid 디자인의 tuning paramters 테스트를 진행하고 결과를 저장한다. 기본적으로 p가 tuning parameter의 개수라면 grid의 크기는 3^p가 된다. 또 다른 예로 Regularized Discriminant Analysis(RDA) 모델은 2개의 parameter(`gamma`와 `lambda`)를 갖는데, 두 parameter 모두 0과 1사이에 존재한다. 따라서 트레이닝 grid는 2차원 공간의 3^2 = 9개의 조합으로 구성된다.  
+
+## 5.4 재현성에 대하여 (Notes on Reproducibility)  
+많은 모델들이 parameter를 추정하는데 난수를 사용한다. 또한 resampling index도 난수를 사용한다. 재현가능한 결과를 위해 무작위성을 조정하는 대표적인 두 가지 방법을 알아보자.   
+  - `train`에서 재현성을 갖도록 항상 같은 resample들을 사용하도록 하는 두 가지 방법이 있다. 첫 번째는 `train`을 실행하기 전에 `set.seed`에서 seed number를 설정하는 것이다. 이 방법을 사용하면 난수들이 고정되어 resampling에 대한 정보가 남고 같은 resampling을 재현할 수 있게 된다. 데이터셋을 나누기 위해 설정한 방법이 있다면, `trainControl`의 `index` arg를 사용할 수 있다. 이 부분은 위에서 간단히 설명했었으니 참고하길 바란다.   
+  - resampling 안에서 모델을 만들고자 할 때 재현성을 갖추려면 seed들 또한 설정해야 한다. `train`을 실행하기 전에 seed를 설정하면 항상 같은 난수를 생성해 재현성을 갖도록 하지만 [병렬처리 환경](https://topepo.github.io/caret/parallel-processing.html)에서는 재현성을 갖지 못하게 될 수도 있다(이 부분은 병렬 처리에 대한 기술적 문제이다.). 모델 fitting seeds를 설정하기 위해 `trainControl`의 `seeds` arg를 사용할 수 있다. `set.seeds`의 사용법과 마찬가지로 `seeds`에 seeds로 사용할 정수 벡터의 리스트를 넣어 사용한다. `trainControl`의 도움말에서 `seeds` arg의 적절한 사용 방법을 볼 수 있으니 참고하길 바란다.  
+
+패키지가 어떤 언어를 기반으로 하느냐에 따라 난수의 재현성 확보 여부가 불가능한 경우가 있다(물론 대부분 가능하다. 재현성은 굉장히 중요한 문제다.). 특별히 C 언어로 계산 과정이 실행되는 경우, 난수에 대한 seed를 설정할 수 없는 경우는 정말 드물다. 또한 일부 패키지는 load되는 순간에 난수도 함께 load되어(직접적으로 혹은 namespace를 통해서) 재현성에 영향을 미치기도 하니 주의해야 할 것이다. 
+
+## 5.5 파라메터 튜닝을 해보자 (Customizing the Tuning Process)  
+Tuning/complexity parameters를 선택하고 최종 모델을 만드는 과정을 알아보자. 
 
 
-The column labeled “Accuracy” is the overall agreement rate averaged over cross-validation iterations. The agreement standard deviation is also calculated from the cross-validation results. The column “Kappa” is Cohen’s (unweighted) Kappa statistic averaged across the resampling results. train works with specific models (see train Model List or train Models By Tag). For these models, train can automatically create a grid of tuning parameters. By default, if p is the number of tuning parameters, the grid size is 3^p. As another example, regularized discriminant analysis (RDA) models have two parameters (gamma and lambda), both of which lie between zero and one. The default training grid would produce nine combinations in this two-dimensional space.
+ 
