@@ -109,7 +109,74 @@ gradient boosting machine (GBM) model의 대표적인 튜닝 파라메터들을 
 패키지가 어떤 언어를 기반으로 하느냐에 따라 난수의 재현성 확보 여부가 불가능한 경우가 있다(물론 대부분 가능하다. 재현성은 굉장히 중요한 문제다.). 특별히 C 언어로 계산 과정이 실행되는 경우, 난수에 대한 seed를 설정할 수 없는 경우는 정말 드물다. 또한 일부 패키지는 load되는 순간에 난수도 함께 load되어(직접적으로 혹은 namespace를 통해서) 재현성에 영향을 미치기도 하니 주의해야 할 것이다. 
 
 ## 5.5 파라메터 튜닝을 해보자 (Customizing the Tuning Process)  
-Tuning/complexity parameters를 선택하고 최종 모델을 만드는 과정을 알아보자. 
+Tuning/complexity parameters를 선택하고 최종 모델을 만드는 과정을 알아보자.   
 
+## 5.5.1 전처리 옵션 (Pre-Processing Options)  
+전에 말한 것과 같이, [`train` 함수 안의 `preProcess` arg](https://www.rdocumentation.org/packages/caret/versions/6.0-86/topics/train)에 적절한 값을 넣어 주기만 하면 `train` 함수로 모델 fitting 앞서, dataset에 전처리를 할 수 있다. 적절한 값이란 앞에서 보았듯, centering과 scaling, 결측값 채워넣기(아래에서 자세히 다루겠다), spatial sign 변환을 적용하거나 PCA나 ICA를 위한 변수 변환 등을 의미하는 값들을 의미한다. 이 값들은 "문자형"으로 들어가야하며 [`preProcess` 함수](https://topepo.github.io/caret/pre-processing.html)에서 `method`에 사용되는 값과 같다. `trainControl` 함수를 통해 `preProcess`에 대한 추가적인 옵션을 사용할 수 있다.  
+이러한 전처리 과정은 `predict.train`, `extractPrediction` 혹은 `extractProbs`(이 두 함수는 이 장의 뒤에서 알아보도록 하자) 등의 함수를 이용한 예측 변수 처리 과정동안 똑같이 사용할 수 있다. `preProcess`를 사용한 전처리는 `object$finalModel` 객체를 직접적으로 이용한 예측에는 **사용할 수 없다**.  
+결측값을 채워넣는 방법에 한해, 사용할 수 있는 다음의 세 가지 방법이 있다.  
+  - k-nearest neighbors 방법은 결측치가 포함된 샘플을 가지고 training set에서 가장 가까운 k개의 샘플을 구한다. 해당 예측 변수에 대한 결측값을 채우기 위해 k개의 training set의 값을 평균내어 결측값을 대체한다. training set 샘플의 거리를 계산할 때, 계산 과정에서 사용된 예측 변수는 해당 표본에서 결측치가 없고 training set에서도 결측치가 없는 변수이다. 
+  - 또 다른 방법은 training set을 이용해 각 예측 변수에 대한 bagged tree model을 적합시키는 것이다. bagged tree model은 일반적으로 꽤 정확한 모델이며 결측치를 다루기에도 좋은 방법이다. 표본에서 예측 변수에 결측치를 채워넣을 때, 다른 예측 변수들의 값들이 bagged tree를 통해 모델을 계산해내고 새로운 값을 예측하여 내놓는다. 이 방법은 상당한 양의 계산 과정이 필요하므로 충분한 시간을 갖고 실행하거나 높은 수준의 계산 능력을 갖춘 장비로 실행하길 권한다. 
+  - 매우 간단한 방법으로, 결측치가 포함된 예측 변수의 중앙값으로 결측치를 채우는 방법이 있다.  
+
+training set 안에 결측치가 있다면 PCA와 ICA 모델은 결측치가 없는 예측 변수들만으로 구성된 training set을 사용하여 fitting된다.  
+
+## 5.5.2 tuning grid 설정 (Alternate Tuning Grids)  
+`train`에서 tuning paramter grid가 만족스럽지 못하다면(사용자에 따라 혹은 경우에 따라 너무 촘촘하다고 생각할 수도 혹은 너무 넉넉하다고 생각할 수도 있다) grid를 따로 설정할 수 있다. `tuneGrid` arg에 각 tuning parameter를 열로 갖는 데이터 프레임을 넣어 grid를 설정할 수 있다. 앞서 본 RDA 예제에서, `gamma`와 `lambda`의 tuning parameter grid를 설정해보자. `expand.grid`로 정의한 grid를 `train`에 넣으면 설정된 grid를 사용해 parameter tuning이 실행된다. 
+boosted tree model을 사용한다면, learning rate를 고정할 수 있고 3개 이상의 `n.trees`를 평가할 수 있다.  
+```r
+gbmGrid <-  expand.grid(interaction.depth = c(1, 5, 9), 
+                        n.trees = (1:30)*50, 
+                        shrinkage = 0.1,
+                        n.minobsinnode = 20)
+                        
+nrow(gbmGrid)
+
+set.seed(825)
+gbmFit2 <- train(Class ~ ., data = training, 
+                 method = "gbm", 
+                 trControl = fitControl, 
+                 verbose = FALSE, 
+                 ## Now specify the exact models 
+                 ## to evaluate:
+                 tuneGrid = gbmGrid)
+gbmFit2
+```
+```r
+## Stochastic Gradient Boosting 
+## 
+## 157 samples
+##  60 predictor
+##   2 classes: 'M', 'R' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold, repeated 10 times) 
+## Summary of sample sizes: 141, 142, 141, 142, 141, 142, ... 
+## Resampling results across tuning parameters:
+## 
+##   interaction.depth  n.trees  Accuracy  Kappa
+##   1                    50     0.78      0.56 
+##   1                   100     0.81      0.61 
+##   1                   150     0.82      0.63 
+##   1                   200     0.83      0.65 
+##   1                   250     0.82      0.65 
+##   1                   300     0.83      0.65 
+##   :                   :        :         : 
+##   9                  1350     0.85      0.69 
+##   9                  1400     0.85      0.69 
+##   9                  1450     0.85      0.69 
+##   9                  1500     0.85      0.69 
+## 
+## Tuning parameter 'shrinkage' was held constant at a value of 0.1
+## 
+## Tuning parameter 'n.minobsinnode' was held constant at a value of 20
+## Accuracy was used to select the optimal model using the largest value.
+## The final values used for the model were n.trees = 1200,
+##  interaction.depth = 9, shrinkage = 0.1 and n.minobsinnode = 20.
+```
+"random search"([pdf](http://www.jmlr.org/papers/volume13/bergstra12a/bergstra12a.pdf)), 즉 가능한 tuning parameter 조합에서 무작위 추출을 이용한 parameter tuning 방법도 사용할 수 있다. 이 방법에 대한 내용은 [이 페이지](https://topepo.github.io/caret/random-hyperparameter-search.html)를 참고하자.  
+random search를 사용하기 위해서는 `trainControl`에서 search = "random"을 입력해주어야 한다. 이 경우, `tuneLength` parameter는 parameter 조합의 전체 개수로 정의된다.  
+
+### 5.5.3 그림을 이용한 Resampling 정보 표현 (Plotting the Resampling Profile)  
 
  
