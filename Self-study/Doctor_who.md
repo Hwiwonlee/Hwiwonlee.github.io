@@ -734,20 +734,20 @@ boxplot(new_doctor_who_dwguide, x = season, y = chart, color = doctorid) +
 ### 2.2 Text mining
 # These datasets have several character variable and huge character values (ex, scripts in each episode)
 # For practice, Creat the word cloud using main villian's scripts
-
+# First, using Dalek's scripts draws word cloud.
 new_doctor_who_all_scripts %>% 
-  filter(details == "DALEK") %>% 
+  filter(grepl("DALEK", details)) %>% 
   select(text, details) %>% 
   na.omit() %>% 
   as.data.frame() -> DALEK_script
 
 # http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know
 # Text mining and word cloud fundamentals in R
+# https://rpubs.com/LuizFelipeBrito/NLP_Text_Mining_001
 scripts <- tm::Corpus(tm::VectorSource(DALEK_script$text))
 
 # view elements of scripts
 tm::inspect(scripts)
-
 
 toSpace <- tm::content_transformer(function(x, pattern) gsub(pattern, " ", x))
 
@@ -773,7 +773,55 @@ head(dataframe)
 
 set.seed(1234)
 # Draw the word cloud 
+# https://cran.r-project.org/web/packages/wordcloud2/vignettes/wordcloud.html
 wordcloud2(dataframe, minSize = 10)
+
+# Second, using cyberman's scripts draws word cloud 
+# Moreover Based on the first process, I will define and use the function for drawing the word cloud
+
+Draw_wordcloud<- function(dataset, speaker, minimum) { 
+  
+  
+  dataset %>% 
+    filter(grepl(speaker, details)) %>% 
+    select(text, details) %>% 
+    na.omit() %>% 
+    as.data.frame() -> script
+  
+  scripts <- tm::Corpus(tm::VectorSource(script$text))
+  
+  toSpace <- tm::content_transformer(function(x, pattern) gsub(pattern, " ", x))
+  
+  # Upper case change to lower case
+  scripts <- tm::tm_map(scripts, content_transformer(tolower))
+  # Remove numbers 
+  scripts <- tm::tm_map(scripts, removeNumbers)
+  scripts <- tm::tm_map(scripts, removeWords, "will")
+  
+  # Remove english stopwords
+  scripts <- tm::tm_map(scripts, removeWords, stopwords("english"))
+  # Remove the penctuation(ex : ".", ",", "!", "?", etc )
+  scripts <- tm::tm_map(scripts, removePunctuation)
+  # Remove some white space. 
+  # Even if use the "stripwhitespace", there will be remain some white space because of using white space for indentifying each words
+  scripts <- tm::tm_map(scripts, stripWhitespace)
+  
+  # Generate Kind of frequency matrix
+  tdm <- tm::TermDocumentMatrix(scripts)
+  matrix <- as.matrix(tdm)
+  vector <- sort(rowSums(matrix), decreasing = T)
+  dataframe <- data.frame(word = names(vector), freq = vector)
+  
+  drawing_dataframe <- dataframe[which(dataframe$freq >= minimum), ]
+  
+  
+  set.seed(1234)
+  result <- wordcloud2(drawing_dataframe, minSize = 10)
+  
+  return(result)
+}
+# Fine work
+Draw_wordcloud(new_doctor_who_all_scripts, "CYBER", 10)
 
 
 ```
