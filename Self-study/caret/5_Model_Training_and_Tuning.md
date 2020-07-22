@@ -212,3 +212,5 @@ ggplot(gbmFit2)
 
 ### 5.5.4 `trainControl` 함수 (The `trainControl` Function)  
 위에서부터 본 적 있겠지만 `trainControl`함수는 파라메터 최적화에 사용되는 핵심 함수이므로 아래의 내용을 잘 숙지해서 `trainControl`에 어떤 arg가 있는지, 그 목적과 쓰임을 기억하도록 하자.  
+  - `method` : resampling 방법을 설정한다. `"boot"`, `"cv"`, `"LOOCV"`, `"LGOCV"`, `"repeatedcv"`, `"timeslice"`, `"none"`와 `"oob"` 등을 사용할 수 있다. 마지막에 있는 `oob`는 out-of-bag estimates로 random forest, bagged trees, bagged earth, bagged flexible discriminant analysis, 혹은 conditional tree forest models 등에서만 사용할 수 있는 resampling 방법이다.  `oob`를 사용할 수 있는 모델에 GBM 모델들은 포함되지 않는다([`gbm`](https://cran.r-project.org/web/packages/gbm/index.html) 패키지 관리자는 boosted trees 모델에 OOB error 추정값들을 기준으로 tuning parameter 값을 고르는 것은 좋은 방법이 아니라고 했다). 또한, leave-one-out cross-validation의 resampled performance measures의 불확실성에 대한 추정값은 제공되지 않으니 알아두길 바란다. 
+  - `number` 와 `repeats` : 먼저 `number`는 cross-validation의 fold 개수나 resampling 반복 횟수 등을 설정하는 arg다. `repeats`는 K-fold crossvalidation에서만 사용할 수 있는 arg로 몇 번 K-fold crossvalidation를 반복 수행할 지 결정하는 arg다. 
