@@ -210,3 +210,5 @@ ggplot(gbmFit2)
 
 위와 같은 그림을 유지한 상태에서 다른 tuning parameters들을 표현하고 싶은 경우도 있을 것이다. [`update.train`](https://rdrr.io/cran/caret/man/update.train.html)을 사용하면 처음부터 전체 과정을 반복할 필요없이 최종 모델에 재적합 시켜 결과값만 바꿀 수 있다.  
 
+### 5.5.4 `trainControl` 함수 (The `trainControl` Function)  
+위에서부터 본 적 있겠지만 `trainControl`함수는 파라메터 최적화에 사용되는 핵심 함수이므로 아래의 내용을 잘 숙지해서 `trainControl`에 어떤 arg가 있는지, 그 목적과 쓰임을 기억하도록 하자.  
