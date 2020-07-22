@@ -213,4 +213,17 @@ ggplot(gbmFit2)
 ### 5.5.4 `trainControl` 함수 (The `trainControl` Function)  
 위에서부터 본 적 있겠지만 `trainControl`함수는 파라메터 최적화에 사용되는 핵심 함수이므로 아래의 내용을 잘 숙지해서 `trainControl`에 어떤 arg가 있는지, 그 목적과 쓰임을 기억하도록 하자.  
   - `method` : resampling 방법을 설정한다. `"boot"`, `"cv"`, `"LOOCV"`, `"LGOCV"`, `"repeatedcv"`, `"timeslice"`, `"none"`와 `"oob"` 등을 사용할 수 있다. 마지막에 있는 `oob`는 out-of-bag estimates로 random forest, bagged trees, bagged earth, bagged flexible discriminant analysis, 혹은 conditional tree forest models 등에서만 사용할 수 있는 resampling 방법이다.  `oob`를 사용할 수 있는 모델에 GBM 모델들은 포함되지 않는다([`gbm`](https://cran.r-project.org/web/packages/gbm/index.html) 패키지 관리자는 boosted trees 모델에 OOB error 추정값들을 기준으로 tuning parameter 값을 고르는 것은 좋은 방법이 아니라고 했다). 또한, leave-one-out cross-validation의 resampled performance measures의 불확실성에 대한 추정값은 제공되지 않으니 알아두길 바란다. 
-  - `number` 와 `repeats` : 먼저 `number`는 cross-validation의 fold 개수나 resampling 반복 횟수 등을 설정하는 arg다. `repeats`는 K-fold crossvalidation에서만 사용할 수 있는 arg로 몇 번 K-fold crossvalidation를 반복 수행할 지 결정하는 arg다. 
+  - `number` 와 `repeats` : 먼저 `number`는 cross-validation의 fold 개수나 resampling 반복 횟수 등을 설정하는 arg다. `repeats`는 K-fold crossvalidation에서만 사용할 수 있는 arg로 몇 번 K-fold crossvalidation를 반복 수행할 지 결정하는 arg다. 예를 들어, `method = "repeatedcv"`, `number = 10` 그리고 `repeats = 3`으로 설정하면 10-fold cross-validations를 3번 실행하라는 의미가 된다.  
+  - 특별히, `method = "timeslice"`를 사용할 때 `trainControl`에서 `initialWindow`, `horizon` and `fixedWindow`의 옵션을 사용하여 [시계열 데이터에 대한 cross-validation을 할 수 있다.](https://topepo.github.io/caret/data-splitting.html#time)
+  - `verboseIter` : 논리형 값을 취하는 arg, training 로그 출력 여부를 설정.
+  - `returnData` : 논리형 값을 취하는 arg, 데이터를 trainingData로 저장할 지 여부를 설정.
+  - `p` : leave-group out cross-validation을 사용할 때 the training dataset의 비율을 결정.
+  - `classProbs` : 논리형 값을 취하는 arg, resampling 중 보류 샘플에 대한 class 확률을 계산해야 하는지 여부를 결정.
+  - `index` 와 `indexOut` : optional lists with elements for each resampling iteration. Each list element is the sample rows used for training at that iteration or should be held-out. When these values are not specified, train will generate them.
+  - `summaryFunction` : 추가적인 결과 요약을 계산하기 위한 함수. 
+  - `selectionFunction` : 최적의 tuning parameters를 선택하기 위한 함수. 
+  - `PCAthresh`, `ICAcomp` 그리고 `k` : `preProcess` 함수에서 해당 방법들을 사용할 때 전달되는 옵션들. 
+  - `returnResamp` : "all", "final" or "none"의 문자열 중 하나를 취하는 arg. This specifies how much of the resampled performance measures to save.
+  - `allowParallel` : training 과정에서 병렬처리가 가능한 경우, 사용 여부를 결정하기 위한 arg.  
+이외에도 많은 옵션들이 존재하지만 이 정도만 알아도 사용하는데 큰 문제는 없을 것이다.  
+
