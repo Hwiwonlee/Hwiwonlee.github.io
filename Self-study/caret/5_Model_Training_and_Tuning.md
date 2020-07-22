@@ -225,5 +225,6 @@ ggplot(gbmFit2)
   - `PCAthresh`, `ICAcomp` 그리고 `k` : `preProcess` 함수에서 해당 방법들을 사용할 때 전달되는 옵션들. 
   - `returnResamp` : "all", "final" or "none"의 문자열 중 하나를 취하는 arg. This specifies how much of the resampled performance measures to save.
   - `allowParallel` : training 과정에서 병렬처리가 가능한 경우, 사용 여부를 결정하기 위한 arg.  
+  
 이외에도 많은 옵션들이 존재하지만 이 정도만 알아도 사용하는데 큰 문제는 없을 것이다.  
 
