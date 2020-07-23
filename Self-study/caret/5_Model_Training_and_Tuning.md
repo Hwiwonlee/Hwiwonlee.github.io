@@ -302,6 +302,6 @@ gbmFit3
 ## The final values used for the model were n.trees = 1450,
 ##  interaction.depth = 5, shrinkage = 0.1 and n.minobsinnode = 20.
 ```
-100개의 resample들을 이용해 계산한 평균 AUC의 최댓값은 0.922로 결과에서 최적 tuning parameter, n.trees = 1450, interaction.depth = 5, shrinkage = 0.1 and n.minobsinnode = 20를 찾을 수 있다.  
+100개의 resample들을 이용해 계산한 평균 AUC의 최댓값은 0.922로 결과에서 최적 tuning parameter, `n.trees = 1450`, `interaction.depth = 5`, `shrinkage = 0.1` 과 `n.minobsinnode = 20`를 찾을 수 있다.  
 
 ## 5.6 최종 모델 선택 (Choosing the Final Model)
