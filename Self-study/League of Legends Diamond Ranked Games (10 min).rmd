@@ -1,0 +1,100 @@
+---
+title: "League of Legends Diamond Ranked Games(10mins)"
+author: "Hwi Won Lee"
+date: "`r format(Sys.Date())`"
+output: 
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+  html_document:
+    fig_height: 6
+    fig_width: 10
+    highlight: textmate
+    theme: cosmo
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  # pdf_document:
+  #   fig_height: 6
+  #   fig_width: 10
+  #   toc: no
+  # word_document:
+  #   fig_height: 6
+  #   fig_width: 9
+  #   toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png")
+# echo : 코드 출력 여부 설정
+# message : 메시지 출력 여부 설정 
+# warning : warning 출력 여부 설정
+# fig.height : 그림의 높이 설정
+# fig.align : 그림의 위치 설정 
+# cache : 캐시로 남길 것인지 설정
+# dpi : 그림의 해상도 설정
+# dev : 그림의 저장 형태 설정
+```
+
+## 1. Introduction
+```{r, echo = FALSE, fig.cap = "League of Legend"}
+library(knitr)
+include_graphics("http://static.inven.co.kr/column/2019/09/18/news/i14662270021.jpg")
+```
+**[League of Legend(LOL)](https://kr.leagueoflegends.com/en-us/)** is the one of famous game in the world. Especially in my nation, South Korea, LOL is the game with largest share(based on the third week of July, [(almost 50%)](http://www.tgdaily.co.kr/news/articleView.html?idxno=301443) at the online game market. LOL has **Tier system** for gathering players which have almost same capacity.
+
+```{r echo = FALSE, fig.cap = "Based on [LEAGUE OF GRAPHS](https://www.leagueofgraphs.com/ko/rankings/rank-distribution) data"}
+library(tidyverse)
+library(ggrepel)
+
+iron = 0.054
+bronze = 0.21
+silver = 0.34
+gold = 0.26
+platinum = 0.096
+diamond = 0.0234
+master = 0.00037
+gmaster = 0.0003
+challenger = 0.00013
+
+dataset <- data.frame(n=c(iron, bronze, silver, gold, platinum, diamond, master, gmaster, challenger), 
+                      Tier = c("Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Grand master", "Challenger"))
+
+dataset %>%
+  mutate(across(where(is.character), ~factor(.x, levels = c("Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Grand master", "Challenger")))) %>%
+  mutate(label = paste0(n*100, "%")) %>% 
+  mutate(position = (cumsum(c(0, n)) + c(n/2, .01))[1:nrow(.)]) %>% 
+  ggplot(aes(x = 1, weight = n,  fill = fct_rev(Tier))) + 
+  geom_bar(width = 1, position = "stack") +
+  coord_polar("y") +
+  geom_label_repel(aes(x = 1.4, y = position, label = label), 
+                   nudge_x = .3, 
+                   segment.size = .7, 
+                   show.legend = FALSE) +
+  theme_minimal() + 
+  # guide : legend의 element를 reordering
+  # https://www.datanovia.com/en/blog/ggplot-legend-title-position-and-labels/
+  scale_fill_manual(name = "Tier",
+                    labels = c("Challenger", "Grand master", "Master", "Diamond", "Platinum", "Gold", "Silver", "Bronze", "Iron"), 
+                    values = c("antiquewhite1", "firebrick3", "darkorchid2", "darkslategray2", "darkseagreen2", "goldenrod2", "gray72", "tan3", "dimgray"), 
+                    guide = guide_legend(reverse=TRUE)) + 
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid  = element_blank(),
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 18), 
+        legend.title = element_text(face = "bold", size = 12)) + 
+  labs(title = "Distribution of Tier Population at The Korea Server") + 
+  xlab("") + ylab("")
+
+```
+Here is the distribution of solo queue tier population at the korea sever. Strictly speaking, the tiers from Iron to Diamond are distinguish by I-IV but most players may agree that here is not problem whether more detailed divided or not except Diamond Tier(Generally, most players think that there is a significant gap between Diamond I Tier players and Diamond IV Tier players, even if they are the same Diamond Tier players.). So all observation of the dataset(high_diamond_ranked_10min.csv) were obtained by the records of quite high ranked players. There are 9879 game records until just first 10 mininutes. In the LOL, Some players may think that 10 minutes is too short to conclude the win or loss, but others may think this is enough time to judge the result. If we use this data set, we can obtain good prediction or not? If we can get it, can we know the factors(ex. kill score and object score) that affect the results? If we can't, can we know why the reason?
+
+
+
+## 2. Exploratory Data Analysis (EDA)
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
