@@ -228,3 +228,80 @@ ggplot(gbmFit2)
   
 이외에도 많은 옵션들이 존재하지만 이 정도만 알아도 사용하는데 큰 문제는 없을 것이다.  
 
+### 5.5.5 또 다른 성능 측정 기준 지표 (Alternate Performance Metrics)   
+"얼마만큼 좋은 모델"인가는 성능 측정 기준에 따라 달라질 수 있으므로 목적에 따라 `train` 함수의 `metric` arg를 설정하여 성능 측정 기준을 바꿀 수 있다. 기본적으로, RMSE, R2와 mean absolute error (MAE)는 회귀분석 모델에서 계산되며 정확도와 Kapp는 분류 모델에서 계산되며 기본적으로 회귀분석 모델에서는 RMSE가, 분류 모델에서는 정확도가 성능 측정 기준으로 설정되어 있다. 예를 들어, 하나의 class가 갖는 비율이 적은 경우, `metric = "Kappa"`를 사용하면 정확도를 사용하는 경우의 최종 모델보다 더 좋은 성능을 볼 수 있다.  
+모든 성능 측정 기준 지표가 마음에 들지 않거나, 사용하기 적합하지 않다면 `trainControl`의 `summaryFunction` arg를 사용하여 사용자 스스로 본인의 성능 측정 기준 지표를 만들 수 있다. `summaryFunction`은 다음의 포함된 함수 형태여야 한다.  
+  - `data` 참조될 데이터셋으로 data frame이나 행렬의 형태여야하며 관측값으로 이뤄진 `obs`와 예측값으로 이뤄진 `pred` 열을 가져야 한다(회귀 모델을 사용했다면 숫자형이, 분류 모델을 사용했다면 문자형 데이터가 있을 것이다.). 이 때, class 확률은 `summaryFunction`에 선언된 함수에서 사용되지 않는다. 데이터의 값은 tuning parameter들의 단일 조합에 대한 보류된 예측값(및 관련 참조 값)이다. 만약 `trainControl`에서 `classProbs = TRUE`로 설정했다면, 데이터의 추가 열이 class 확률을 포함하는 것으로 나타난다. 추가되는 열들의 이름들은 class들의 이름들과 같다. 또한 `train`에서 특정한 `weights`를 사용한 경우, 데이터셋에 weights의 이름을 가진 열이 추가될 것이다. 더불어 `train`에서 `recipe`를 사용했다면([사용 방법은 여기를 참고하자.]((https://topepo.github.io/caret/using-recipes-with-train.html)) 모델에 사용되지 않은 다른 변수들도 포함될 것이다. 이는 recipe of `"performance var"`에 역할을 추가함으로써 가능하다. recipe section에 예제가 있으니 참고하도록 하자.  
+  - `lev`는 training data로부터 얻은 결과 factor level을 가진 문자열이다. 회귀 모델에서는 `NULL`처리 된다. 
+  - `model`은 사용한 model에 대한 문자열을 갖는다. (즉, `train`의 `method` arg에서 설정된 값이 넘어 온다.)
+
+함수에 대한 출력은 이름을 가진 숫자형 요약 지표 벡터여야 한다. 기본적으로 `train`은 예측된 클래스에 따라 분류 모델을 평가한다. 추가로 class 확률 또한 성능 측정 지표로 사용될 수 있다. resampling 과정에서 class 확률의 예측값을 얻으려면 `trainControl`의 `classProbs`가 반드시 `TRUE`로 설정되어 있어야 한다. 이렇게 하면 class 확률 열이 각 resampling에서 생성된 예측값에 병합된다(class마다 열이 있고 열 이름은 class 이름이다).  
+마지막 부분에서 본 것과 같이 성능 측정 기준 지표에 대한 사용자 정의 함수는 resample 전체에 대한 평균값으로 계산된다. `summaryFunction`에 사용할 수 있는 built-in function인 `twoClassSummary`를 예로 들어 실제 사용 방법을 알아보겠다. `twoClassSummary`는 sensitivity와 specificity를 계산해주며 이를 바탕으로 AUC와 ROC를 성능 측정 지표로 사용할 수 있게 해준다. 
+```r
+head(twoClassSummary)
+```
+```r
+##                                                                                                                     
+## 1 function (data, lev = NULL, model = NULL)                                                                         
+## 2 {                                                                                                                 
+## 3     lvls <- levels(data$obs)                                                                                      
+## 4     if (length(lvls) > 2)                                                                                         
+## 5         stop(paste("Your outcome has", length(lvls), "levels. The twoClassSummary() function isn't appropriate."))
+## 6     requireNamespaceQuietStop("ModelMetrics")
+```
+이 성능 측정 지표를 사용하여 boosted tree model을 재구축하기 위해 다음 코드를 사용하자. 결과로부터 tuning parameter와 ROC 곡선 아래의 영역 사이의 관계를 확인할 수 있다.
+```r
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 10,
+                           repeats = 10,
+                           ## Estimate class probabilities
+                           classProbs = TRUE,
+                           ## Evaluate performance using 
+                           ## the following function
+                           summaryFunction = twoClassSummary)
+
+set.seed(825)
+gbmFit3 <- train(Class ~ ., data = training, 
+                 method = "gbm", 
+                 trControl = fitControl, 
+                 verbose = FALSE, 
+                 tuneGrid = gbmGrid,
+                 ## Specify which metric to optimize
+                 metric = "ROC")
+gbmFit3
+```
+```r
+## Stochastic Gradient Boosting 
+## 
+## 157 samples
+##  60 predictor
+##   2 classes: 'M', 'R' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold, repeated 10 times) 
+## Summary of sample sizes: 141, 142, 141, 142, 141, 142, ... 
+## Resampling results across tuning parameters:
+## 
+##   interaction.depth  n.trees  ROC   Sens  Spec
+##   1                    50     0.86  0.86  0.69
+##   1                   100     0.88  0.85  0.75
+##   1                   150     0.89  0.86  0.77
+##   1                   200     0.90  0.87  0.78
+##   1                   250     0.90  0.86  0.78
+##   1                   300     0.90  0.87  0.78
+##   :                   :        :     :      :    
+##   9                  1350     0.92  0.88  0.81
+##   9                  1400     0.92  0.88  0.80
+##   9                  1450     0.92  0.88  0.81
+##   9                  1500     0.92  0.88  0.80
+## 
+## Tuning parameter 'shrinkage' was held constant at a value of 0.1
+## 
+## Tuning parameter 'n.minobsinnode' was held constant at a value of 20
+## ROC was used to select the optimal model using the largest value.
+## The final values used for the model were n.trees = 1450,
+##  interaction.depth = 5, shrinkage = 0.1 and n.minobsinnode = 20.
+```
+100개의 resample들을 이용해 계산한 평균 AUC의 최댓값은 0.922로 결과에서 최적 tuning parameter, n.trees = 1450, interaction.depth = 5, shrinkage = 0.1 and n.minobsinnode = 20를 찾을 수 있다.  
+
+## 5.6 최종 모델 선택 (Choosing the Final Model)
