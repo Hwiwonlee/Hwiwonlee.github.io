@@ -32,19 +32,18 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8,
 # cache : 캐시로 남길 것인지 설정
 # dpi : 그림의 해상도 설정
 # dev : 그림의 저장 형태 설정
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(ggrepel) # for geom_label_repel()
 ```
 
 ## 1. Introduction
 ```{r, echo = FALSE, fig.cap = "League of Legend"}
-library(knitr)
 include_graphics("http://static.inven.co.kr/column/2019/09/18/news/i14662270021.jpg")
 ```
 **[League of Legend(LOL)](https://kr.leagueoflegends.com/en-us/)** is the one of famous game in the world. Especially in my nation, South Korea, LOL is the game with largest share(based on the third week of July, [(almost 50%)](http://www.tgdaily.co.kr/news/articleView.html?idxno=301443) at the online game market. LOL has **Tier system** for gathering players which have almost same capacity.
 
 ```{r echo = FALSE, fig.cap = "Based on [LEAGUE OF GRAPHS](https://www.leagueofgraphs.com/ko/rankings/rank-distribution) data"}
-library(tidyverse)
-library(ggrepel)
-
 iron = 0.054
 bronze = 0.21
 silver = 0.34
