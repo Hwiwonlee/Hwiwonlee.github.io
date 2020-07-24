@@ -54,10 +54,8 @@ diamond = 0.0234
 master = 0.00037
 gmaster = 0.0003
 challenger = 0.00013
-
 dataset <- data.frame(n=c(iron, bronze, silver, gold, platinum, diamond, master, gmaster, challenger), 
                       Tier = c("Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Grand master", "Challenger"))
-
 dataset %>%
   mutate(across(where(is.character), ~factor(.x, levels = c("Iron", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Grand master", "Challenger")))) %>%
   mutate(label = paste0(n*100, "%")) %>% 
@@ -83,7 +81,6 @@ dataset %>%
         legend.title = element_text(face = "bold", size = 12)) + 
   labs(title = "Distribution of Tier Population at The Korea Server") + 
   xlab("") + ylab("")
-
 ```
 Here is the distribution of solo queue tier population at the korea sever. Strictly speaking, the tiers from Iron to Diamond are distinguish by I-IV but most players may agree that here is not problem whether more detailed divided or not except Diamond Tier(Generally, most players think that there is a significant gap between Diamond I Tier players and Diamond IV Tier players, even if they are the same Diamond Tier players.). So all observation of the dataset(high_diamond_ranked_10min.csv) were obtained by the records of quite high ranked players. There are 9879 game records until just first 10 minute. In the LOL, Some players may think that 10 minutes is too short to conclude the win or loss, but others may think this is enough time to judge the result. If we use this data set, we can obtain good prediction or not? If we can get it, can we know the factors(ex. kill score and object score) that affect the results? If we can't, can we know why the reason?
 
@@ -95,18 +92,50 @@ As you known, the EDA step is basic part in the statistic analysis but quite imp
 ### 2.1 Load Dataset And Explain About The Columns
 
 
-```{r}
+```{r echo = FALSE}
 drive_auth()
 data_in_drive <- drive_find(type = "csv", pattern = "10min")
 
 for(i in 1:1){ 
   drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
 }
+```
 
 
+```{r}
 # load dataset
 high_diamond_ranked_10min <- read_csv("high_diamond_ranked_10min.csv")
 head(high_diamond_ranked_10min)
+dim(high_diamond_ranked_10min) # 9879 x 40
 ```
+The dataset has 9879 observations(rows) and 40 variables(columns). all observation is the unique game which identified by `gameId`, first column. Except `gameID`, we can divide just 2 part, start with `blue` or `red` from the 39 columns. `blue` and `red` mean the team. Then let's divide columns into two parts using start word. 
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+names(high_diamond_ranked_10min)[grepl("^blue", names(high_diamond_ranked_10min))] # column start with "blue"
+names(high_diamond_ranked_10min)[grepl("^red", names(high_diamond_ranked_10min))] # columns start with "red"
+```
+From the result, we can see difference between number of columns. The number of column start with `blue` is 20 but The number of column start with `red` is 19.
+
+```{r}
+str_remove(names(high_diamond_ranked_10min)[grepl("^blue", names(high_diamond_ranked_10min))], "^blue")[
+  which(str_remove(names(high_diamond_ranked_10min)[grepl("^blue", names(high_diamond_ranked_10min))], "^blue") %in% 
+  str_remove(names(high_diamond_ranked_10min)[grepl("^red", names(high_diamond_ranked_10min))], "^red"))
+  ]
+
+str_remove(names(high_diamond_ranked_10min)[grepl("^blue", names(high_diamond_ranked_10min))], "^blue")[
+  -which(str_remove(names(high_diamond_ranked_10min)[grepl("^blue", names(high_diamond_ranked_10min))], "^blue") %in% 
+  str_remove(names(high_diamond_ranked_10min)[grepl("^red", names(high_diamond_ranked_10min))], "^red"))
+  ]
+```
+First, There are 19 columns like intersection between `blue` and `red`. Next, there is only one column, `Wins`. Strictly speaking, 
+`blueWins`. Because win and defeat are concept of categorical value which just consist of just two levels. The observation, `gameId == 4519157822` has `blueWins == 0` that means `redWins == 1` but there is no need to add `redWins` because it is already sufficient in itself to express the condition. In fact, it is very important to filter out columns with overlapping meanings because it has the advantages of preventing multi-collinearity or reducing risk of curse of dimension and the hassle of future variable selection.  
+
+You might have noticed if you've ever played LOL, but there's a column here that has overlapping meanings. It's `FirstBlood`. The `FirstBlood` means the first killing in the game. So same as case of the `Wins`, Only one column is enough. 
+
+```{r}
+high_diamond_ranked_10min %>% 
+  select(contains("First")) %>% 
+  mutate(test = rowSums(.)) %>% 
+  map_dbl(sum)
+
+```
