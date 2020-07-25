@@ -10,7 +10,7 @@ output:
     highlight: textmate
     theme: cosmo
     toc: yes
-    toc_depth: 3
+    toc_depth: 4
     toc_float: yes
   # pdf_document:
   #   fig_height: 6
@@ -42,7 +42,7 @@ library(googledrive) # Import dataset from the google drive
 ```{r, echo = FALSE, fig.cap = "League of Legend"}
 include_graphics("http://static.inven.co.kr/column/2019/09/18/news/i14662270021.jpg")
 ```
-**[League of Legend(LOL)](https://kr.leagueoflegends.com/en-us/)** is the one of famous game in the world. Especially in my nation, South Korea, LOL is the game with largest share(based on the third week of July, [(almost 50%)](http://www.tgdaily.co.kr/news/articleView.html?idxno=301443) at the online game market. LOL has **Tier system** for gathering players which have almost same capacity.
+**[League of Legend(LOL)](https://kr.leagueoflegends.com/en-us/)** is the one of famous game in the world. Especially in my nation, South Korea, LOL is the game with largest share(based on the third week of July, [(almost 50%)](http://www.tgdaily.co.kr/news/articleView.html?idxno=301443) at the online game market. LOL has many game modes, Summoner's Rift, Howling Abyss, Teamfight Tactics and Event mode(like URF, Ultra Rapid Fire). Especially, the Summoner's Rift is the original one in the LOL, most player enjoy to play the Summoner's Rift and the data we will analyze are data from the Summoner's Rift. Therefore, this report will not be divided according to game modes and will be referred to as **LOL**. LOL has **Tier system** for gathering players which have almost same capacity.
 
 ```{r echo = FALSE, fig.cap = "Based on [LEAGUE OF GRAPHS](https://www.leagueofgraphs.com/ko/rankings/rank-distribution) data"}
 iron = 0.054
@@ -134,8 +134,39 @@ You might have noticed if you've ever played LOL, but there's a column here that
 
 ```{r}
 high_diamond_ranked_10min %>% 
-  select(contains("First")) %>% 
-  mutate(test = rowSums(.)) %>% 
-  map_dbl(sum)
+  select(contains("First")) %>% # select blueFirstBlood and redFirstBlood
+  mutate(test = rowSums(.)) %>% # test = blueFirstBlood + redFirstBlood
+  map_dbl(sum) # result of column-wise summation
+```
+Value of test column(`blueFisrtBlood + redFisrtBlood`) is the 9879 same as total number of column that means `blueFisrtBlood` and `redFisrtBlood` are the mutual exclusivity event. It's a bonus to find out that two columns have no missing values. So we can remove the `redFirstBlood`
 
+```{r}
+high_diamond_ranked_10min %>% 
+  select(-redFirstBlood) -> high_diamond_ranked_10min
+```
+
+Now let's take a look at the meanings of each column. I will explain the columns divided into **KDA**(`Kills`, `Deaths`, `Assists`, `FirstBlood`), Object (`TowersDestroyed`, `EliteMonsters`, `Dragons`, `Heralds`), CS(Creep Score, `TotalMinionsKilled`, `TotalJungleMinionsKilled`, `CSPerMin`), important metrics(`TotalGold`, `GoldDiff`, `GoldPerMin`, `TotalExperience`, `ExperienceDiff`) and Ward(`WardsPlaced`, `WardsDestroyed`) according to the meanings.
+
+#### 2.1.1 KDA
+
+
+
+
+```{r}
+high_diamond_ranked_10min %>% 
+  select(matches("Total"))
+```
+
+
+
+
+
+
+
+
+
+
+```{r, echo=FALSE, fig.cap = "Dragons and Herald"}
+include_graphics("https://static.news.zumst.com/images/29/2019/10/25/2a2b88f80a5b4a409e64f47587cae136.jpg")
+include_graphics("https://ww.namu.la/s/23df70c3db001d091b07979dea6afbc0ec73f1a8628a4e7ad0bd367c9564c28fe88d997adb224dab13589ec09185c35ad3bef8e36e8ff28b349c0744f700b42cc1b2eea6cecd30fbd63f9b591053edfc11ac328f99f7cebf1a0c4b0d8e757ca3")
 ```
