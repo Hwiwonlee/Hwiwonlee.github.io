@@ -4,7 +4,9 @@ author: "Hwi Won Lee"
 date: "`r format(Sys.Date())`"
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
-  html_document:
+  bookdown::html_document2:
+    number_sections: TRUE
+    fig_caption: TRUE
     fig_height: 6
     fig_width: 10
     highlight: textmate
@@ -20,6 +22,9 @@ output:
   #   fig_height: 6
   #   fig_width: 9
   #   toc: no
+header-includes:
+  - \usepackage{subfig}
+  - \usepackage{subcaption}
 ---
 
 ```{r setup, include=FALSE}
@@ -32,19 +37,22 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8,
 # cache : 캐시로 남길 것인지 설정
 # dpi : 그림의 해상도 설정
 # dev : 그림의 저장 형태 설정
+
+knitr::opts_knit$set(eval.after = "fig.cap")
 library(knitr) # for include_graphics()
 library(tidyverse) # as you known, core package
 library(ggrepel) # for geom_label_repel()
 library(googledrive) # Import dataset from the google drive
 ```
 
-## 1. Introduction
-```{r, echo = FALSE, fig.cap = "League of Legend"}
+# Introduction
+```{r fig-1, echo = FALSE, fig.cap = "League of Legend"}
 include_graphics("http://static.inven.co.kr/column/2019/09/18/news/i14662270021.jpg")
 ```
-**[League of Legend(LOL)](https://kr.leagueoflegends.com/en-us/)** is the one of famous game in the world. Especially in my nation, South Korea, LOL is the game with largest share(based on the third week of July, [(almost 50%)](http://www.tgdaily.co.kr/news/articleView.html?idxno=301443) at the online game market. LOL has many game modes, Summoner's Rift, Howling Abyss, Teamfight Tactics and Event mode(like URF, Ultra Rapid Fire). Especially, the Summoner's Rift is the original one in the LOL, most player enjoy to play the Summoner's Rift and the data we will analyze are data from the Summoner's Rift. Therefore, this report will not be divided according to game modes and will be referred to as **LOL**. LOL has **Tier system** for gathering players which have almost same capacity.
+**[League of Legend(LOL)](https://kr.leagueoflegends.com/en-us/)** is the one of famous game in the world. Especially in my nation, South Korea, LOL is the game with largest share(based on the third week of July, [(almost 50%)](http://www.tgdaily.co.kr/news/articleView.html?idxno=301443) at the online game market. LOL has many game modes, Summoner's Rift, Howling Abyss, Teamfight Tactics and Event mode(like URF, Ultra Rapid Fire). Especially, the Summoner's Rift is the original one in the LOL, most player enjoy to play the Summoner's Rift and the data we will analyze are data from the Summoner's Rift. Therefore, this report will not be divided according to game modes and will be referred to as **LOL** after this part. The game at the Summoner's Rift consist of two team, blue and red, and each team members are five which cover the position according to lane(TOP, MID, BOTTOM) or job(JUNGLER, Attack Damage Carry, SUPPORTER; ADC and SUPPORTER are also called by the BOTTOM). The goal is that destroy Nexus of opposite side at the Summoner's Rift. Therefore it is important that gather players which have almost same capacity. So LOL has the **Tier system**
 
-```{r echo = FALSE, fig.cap = "Based on [LEAGUE OF GRAPHS](https://www.leagueofgraphs.com/ko/rankings/rank-distribution) data"}
+```{r  fig-2, echo = FALSE, fig.cap = "Distribution of Tier Population at The Korea Server  \n Based on [LEAGUE OF GRAPHS](https://www.leagueofgraphs.com/ko/rankings/rank-distribution) data"}
+
 iron = 0.054
 bronze = 0.21
 silver = 0.34
@@ -85,12 +93,10 @@ dataset %>%
 Here is the distribution of solo queue tier population at the korea sever. Strictly speaking, the tiers from Iron to Diamond are distinguish by I-IV but most players may agree that here is not problem whether more detailed divided or not except Diamond Tier(Generally, most players think that there is a significant gap between Diamond I Tier players and Diamond IV Tier players, even if they are the same Diamond Tier players.). So all observation of the dataset(high_diamond_ranked_10min.csv) were obtained by the records of quite high ranked players. There are 9879 game records until just first 10 minute. In the LOL, Some players may think that 10 minutes is too short to conclude the win or loss, but others may think this is enough time to judge the result. If we use this data set, we can obtain good prediction or not? If we can get it, can we know the factors(ex. kill score and object score) that affect the results? If we can't, can we know why the reason?
 
 
-
-## 2. Exploratory Data Analysis (EDA)
+# Exploratory Data Analysis (EDA)
 As you known, the EDA step is basic part in the statistic analysis but quite important part. I will try to understand the dataset through the process from loading dataset to trying some basic analysis in this part.
 
-### 2.1 Load Dataset And Explain About The Columns
-
+## Load Dataset And Explain About The Columns
 
 ```{r echo = FALSE}
 drive_auth()
@@ -145,28 +151,55 @@ high_diamond_ranked_10min %>%
   select(-redFirstBlood) -> high_diamond_ranked_10min
 ```
 
-Now let's take a look at the meanings of each column. I will explain the columns divided into **KDA**(`Kills`, `Deaths`, `Assists`, `FirstBlood`), Object (`TowersDestroyed`, `EliteMonsters`, `Dragons`, `Heralds`), CS(Creep Score, `TotalMinionsKilled`, `TotalJungleMinionsKilled`, `CSPerMin`), important metrics(`TotalGold`, `GoldDiff`, `GoldPerMin`, `TotalExperience`, `ExperienceDiff`) and Ward(`WardsPlaced`, `WardsDestroyed`) according to the meanings.
+Now let's take a look at the meanings of each column. I will explain the columns divided into **KDA**(`Kills`, `Deaths`, `Assists`, `FirstBlood`), **Object Scores**(`TowersDestroyed`, `Dragons`, `Heralds`, `EliteMonsters`), **Creep Score**(CS, `TotalMinionsKilled`, `TotalJungleMinionsKilled`, `CSPerMin`), **Important Metrics**(`TotalGold`, `GoldDiff`, `GoldPerMin`, `TotalExperience`, `ExperienceDiff`) and **Ward**(`WardsPlaced`, `WardsDestroyed`) according to the meanings.
 
-#### 2.1.1 KDA
-
-
-
+### KDA
+The KDA(Kill, Death and Assist) is important metric which show player's and team's capacity in the LOL. There is a calculation method to see three components at once. 
+\begin{align}
+    KDA = \displaystyle \frac{Kill+Assist}{Death}
+\end{align}
+In fact, this metric is quite reasonable because of the fractional form of scoring and losing points. Using this format, more information can be identified as an value because the loss in the scoring process can be seen at once. Moreover If we used this metric, can reduce number of columns.
 
 ```{r}
 high_diamond_ranked_10min %>% 
-  select(matches("Total"))
+  mutate(blueKDA = (blueKills + blueAssists) / blueDeaths) %>% 
+  mutate(redKDA = (redKills + redAssists) / redDeaths) %>% 
+  select(-matches("Kills|Deaths|Assists")) -> high_diamond_ranked_10min
 ```
 
+### Object Scores
+LOL has several objects. The dataset contains some information about whether or not each object, **Tower**, **Dragon**, **Herald** was destroyed or hunted. 
 
+```{r, fig.height= 3, fig.cap = "Objects contained by dataset  \n Tower, Dragons, Herald in turn", echo=FALSE}
 
+library(magick)
+library(png)
+library(grid)
+library(gridExtra)
 
+x1 <- image_read("https://i2.ruliweb.com/img/18/11/18/16726903d75f4a3f.png")
+x2 <- image_read("https://static.news.zumst.com/images/29/2019/10/25/2a2b88f80a5b4a409e64f47587cae136.jpg")
+x3 <- image_read("http://attach.s.op.gg/forum/20170419193247_887673.jpg")
 
+image_write(image_scale(x1, "350x300!"), path = paste0("x1.png"), format = "png")
+image_write(image_scale(x2, "350x300!"), path = paste0("x2.png"), format = "png")
+image_write(image_scale(x3, "350x300!"), path = paste0("x3.png"), format = "png")
 
+f1 <- readPNG('x1.png')
+f2 <- readPNG('x2.png')
+f3 <- readPNG('x3.png')
 
-
-
-
-```{r, echo=FALSE, fig.cap = "Dragons and Herald"}
-include_graphics("https://static.news.zumst.com/images/29/2019/10/25/2a2b88f80a5b4a409e64f47587cae136.jpg")
-include_graphics("https://ww.namu.la/s/23df70c3db001d091b07979dea6afbc0ec73f1a8628a4e7ad0bd367c9564c28fe88d997adb224dab13589ec09185c35ad3bef8e36e8ff28b349c0744f700b42cc1b2eea6cecd30fbd63f9b591053edfc11ac328f99f7cebf1a0c4b0d8e757ca3")
+grid.arrange(rasterGrob(f1),
+             rasterGrob(f2),
+             rasterGrob(f3),
+             ncol=3)
 ```
+First, the **Tower** is a pretty important thing. In particular, if someone hit the tower more than a certain portion or even destroyed before 14 minutes, can get a lot of gold. Moreover, sometimes it can be interpreted that succeeding in destroying the tower has overwhelmed the someone (because we don't know that which lane tower is destroyed or who is the destroyer)in opponent party. I just guess there are some correlation with destroying tower, teamgold, moreover winning. `TowersDestroyed` in the dataset has integer that means the number of towers destroyed by the team.
+
+```{r}
+high_diamond_ranked_10min %>% 
+  select(contains("TowersDestroyed")) %>% 
+  pivot_longer(cols = ends_with("ed")) %>% 
+  group_by(name) %>% count(value)
+```
+Blue team destroyed more towers than Red team, as shown in the results. 
