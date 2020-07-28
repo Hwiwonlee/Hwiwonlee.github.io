@@ -1,6 +1,6 @@
 ---
 title: "League of Legends Diamond Ranked Games(10mins)"
-author: "Hwi Won Lee"
+author: "Hwiwon Lee"
 date: "`r format(Sys.Date())`"
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
@@ -194,7 +194,7 @@ grid.arrange(rasterGrob(f1),
              rasterGrob(f3),
              ncol=3)
 ```
-First, the **Tower** is a pretty important thing. In particular, if someone hit the tower more than a certain portion or even destroyed before 14 minutes, can get a lot of gold. Moreover, sometimes it can be interpreted that succeeding in destroying the tower has overwhelmed the someone (because we don't know that which lane tower is destroyed or who is the destroyer)in opponent party. I just guess there are some correlation with destroying tower, teamgold, moreover winning. `TowersDestroyed` in the dataset has integer that means the number of towers destroyed by the team.
+First, the **Tower** is a pretty important thing. In particular, if someone hit the tower more than a certain portion or even destroyed before 14 minutes, can get a lot of gold. Moreover, sometimes it can be interpreted that succeeding in destroying the tower has overwhelmed the someone (because we don't know that which lane tower is destroyed or who is the destroyer)in opponent party. I just guess there are some correlation with destroying tower, teamgold, moreover winning. `TowersDestroyed` in the dataset has integer that means the number of towers destroyed by the team. 
 
 ```{r}
 high_diamond_ranked_10min %>% 
@@ -203,3 +203,100 @@ high_diamond_ranked_10min %>%
   group_by(name) %>% count(value)
 ```
 Blue team destroyed more towers than Red team, as shown in the results. 
+
+Second, The **Dragon** appears five minutes after the start of the game and is an object that gives buffs to teams that have succeeded in hunting. Since it takes 5 minutes to regenerate, it is impossible to succeed in hunting twice in 10 minutes, so what we saw in `FirstBlood` and `Dragons` can also be understood as logical values. Considering that JUNGLER usually takes more than a minute to hunt a dragon alone, one can assume that the team that succeeded in hunting the dragon is in a more advantageous situation. 
+```{r}
+high_diamond_ranked_10min %>% 
+  select(matches("Dragons")) %>% 
+  pivot_longer(cols = ends_with("Dragons")) %>% 
+  group_by(name) %>% count(value)
+```
+Unlike `TowerDestroyed`, red team has hunted more dragons this time.
+
+Third, The **Herald** is an object that is created eight minutes after the game starts, and can cause great damage to the  opponent's tower using *Eye of The Herald*, which can be obtained if hunting is successful, so it is an object that affects tower destruction and gold acquisition. By 10 minutes after the start of the game, both teams cannot afford to hunt Herald in most games, so the team that hunts Herald is more likely to be in a better situation than the opponent.
+
+```{r}
+high_diamond_ranked_10min %>% 
+  select(matches("Heralds")) %>% 
+  pivot_longer(cols = ends_with("Heralds")) %>% 
+  group_by(name) %>% count(value)
+```
+Similar to the destruction of the tower, blue team has more Herald hunting times.
+
+It's off the list, but the fourth, The **Elite Monster** column was included in the dataset. The reason of out of the list is that **Elite Monster** column is just sum of **Dragon** and **Herald**. As I mentioned before, if there were some columns which overlapping meaning with other columns we can remove the columns. Well, before the remove, we have to decision about direction of analysis. As shown above, `TowerDestroyed` and `Heralds` increase together, so you may think that there is a relationship between `TowerDestroyed` and `Heralds`. If so, it would be better to see them divided into `Dragons` and `Heralds`, not `Elite Monsters`. Otherwise, it would be okay to consider it as `Elite Monsters` if the success of the hunt of `Dragons` and `Heralds` meant a good situation than opponent team. This is entirely up to the researchers. I'll let it pass as it is.
+
+```{r}
+high_diamond_ranked_10min %>% 
+  select(matches("Elite|Dragons|Heralds")) %>% 
+  mutate(blue_test = blueDragons + blueHeralds) %>% 
+  mutate(red_test = redDragons + redHeralds) %>% 
+  select(-matches("Dragons|Heralds")) %>% 
+  map_dbl(sum)
+```
+```{r}
+high_diamond_ranked_10min %>% 
+  select(matches("EliteMonsters")) %>% 
+  pivot_longer(cols = ends_with("EliteMonsters")) %>% 
+  group_by(name) %>% count(value)
+
+```
+The summation of **Dragon** and **Herald** to the number of hunting shows that the red team has succeeded in hunting more than the blue team.
+
+
+
+
+### Creep Score
+
+```{r, fig.height= 3, fig.cap = "Lane Minions and Jungle Minions  \n Lane Minions and the typical Jungle Minion, *Razorbeak* in turn. ", echo=FALSE}
+
+library(magick)
+library(png)
+library(grid)
+library(gridExtra)
+
+x1 <- image_read("https://upcle.me/wp-content/uploads/2020/05/2-300x210.png")
+x2 <- image_read("https://mblogthumb-phinf.pstatic.net/MjAxOTAxMTdfMjQz/MDAxNTQ3NzI4ODgxMTM5.og9OBVgUtbM0RXjbLfTMXkxRPK8iypuZ_9S59pfg2aYg._jq9Ce2k6LiUQz-1E-BnNF4DNqYC8kI0B4cLxVaAAlQg.JPEG.hcw061303/IMG_2885.JPG?type=w800")
+
+image_write(image_scale(x1, "450x300!"), path = paste0("x1.png"), format = "png")
+image_write(image_scale(x2, "450x300!"), path = paste0("x2.png"), format = "png")
+
+f1 <- readPNG('x1.png')
+f2 <- readPNG('x2.png')
+
+grid.arrange(rasterGrob(f1),
+             rasterGrob(f2),
+             ncol=2)
+```
+There is the **Minions** in LOL, and how many **Minions** are killed is sometimes used as a measure of proficiency because if you kill **Minions**, you can get gold. So Creep Score, or CS, means the number of times Minions has been killed(It may be strange to call the number of times Minions were killed as Creep Score, but early LOL players borrowed the Dota's term, the Creep, which affected LOL, and it has been going on so far.). In fact, most players don't think CS is divided into `TotalMinionsKilled` and `TotalJungleMinionsKilled`, but they are stored separately in the our dataset.
+
+According to [data description](https://www.kaggle.com/bobbyscience/league-of-legends-diamond-ranked-games-10-min), **Minions** is divided into two classes, so a summation of `TotalMinionsKilled` and `TotalJungleMinionsKilled` would allow for the calculation of commonly thought CS. In addition, `CSperMin` is calculated based on `TotalMinionsKilled`, so it will have to be recalculated on CS. 
+
+But If someone has question about the `TotalMinionsKilled + TotalJungleMinionsKilled`, I have to explain the reason of the why do this. The reason is that `TotalMinionsKilled` regarded as team's total CS is quite small at the high rank game. Until 10 miniute, About 100 minions are sent to each lane. Including Jungle minions, each team's the maximum value of CS is 350 or higher. 
+
+```{r}
+high_diamond_ranked_10min %>% 
+  select(matches("MinionsKilled")) %>% 
+  mutate(blueTotalMinionsKilledNew = blueTotalMinionsKilled + blueTotalJungleMinionsKilled) %>% 
+  mutate(redTotalMinionsKilledNew = redTotalMinionsKilled + redTotalJungleMinionsKilled) %>% 
+  pivot_longer(cols = matches("TotalMinionsKilled")) %>% 
+  mutate(name = factor(name, levels = c("blueTotalMinionsKilled", "redTotalMinionsKilled", "blueTotalMinionsKilledNew", "redTotalMinionsKilledNew"))) %>% 
+  mutate(index = ifelse(str_detect(name, "New"), "Using the summation", "Using TotalMinionKilled")) %>% 
+  ggplot(aes(x = value)) + 
+  geom_histogram(aes(fill = factor(name))) + facet_grid(index ~ ., scales = "free") + 
+  theme_minimal() + 
+  scale_fill_manual(name = "TotalMinionsKilled",
+                    labels = c("Blue team", "Red team", "Blue team(new)", "Red team(new)"), 
+                    values = c("dodgerblue4", "firebrick4", "dodgerblue1", "firebrick1"))
+  
+```
+
+
+
+
+### Important Metrics
+
+`TotalGold`, `GoldDiff`, `GoldPerMin`, `TotalExperience`, `ExperienceDiff`
+
+### Ward
+
+`WardsPlaced`, `WardsDestroyed`
