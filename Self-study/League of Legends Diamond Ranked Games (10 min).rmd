@@ -151,7 +151,7 @@ high_diamond_ranked_10min %>%
   select(-redFirstBlood) -> high_diamond_ranked_10min
 ```
 
-Now let's take a look at the meanings of each column. I will explain the columns divided into **KDA**(`Kills`, `Deaths`, `Assists`, `FirstBlood`), **Object Scores**(`TowersDestroyed`, `Dragons`, `Heralds`, `EliteMonsters`), **Creep Score**(CS, `TotalMinionsKilled`, `TotalJungleMinionsKilled`, `CSPerMin`), **Important Metrics**(`TotalGold`, `GoldDiff`, `GoldPerMin`, `TotalExperience`, `ExperienceDiff`) and **Ward**(`WardsPlaced`, `WardsDestroyed`) according to the meanings.
+Now let's take a look at the meanings of each column. I will explain the columns divided into **KDA**(`Kills`, `Deaths`, `Assists`, `FirstBlood`), **Object Scores**(`TowersDestroyed`, `Dragons`, `Heralds`, `EliteMonsters`), **Creep Score**(CS, `TotalMinionsKilled`, `TotalJungleMinionsKilled`, `CSPerMin`), **Important Metrics**(`TotalGold`, `GoldDiff`, `GoldPerMin`, `TotalExperience`, `ExperienceDiff`, `AvgLevel`) and **Ward**(`WardsPlaced`, `WardsDestroyed`) according to the meanings.
 
 ### KDA
 The KDA(Kill, Death and Assist) is important metric which show player's and team's capacity in the LOL. There is a calculation method to see three components at once. 
@@ -267,36 +267,137 @@ grid.arrange(rasterGrob(f1),
              rasterGrob(f2),
              ncol=2)
 ```
-There is the **Minions** in LOL, and how many **Minions** are killed is sometimes used as a measure of proficiency because if you kill **Minions**, you can get gold. So Creep Score, or CS, means the number of times Minions has been killed(It may be strange to call the number of times Minions were killed as Creep Score, but early LOL players borrowed the Dota's term, the Creep, which affected LOL, and it has been going on so far.). In fact, most players don't think CS is divided into `TotalMinionsKilled` and `TotalJungleMinionsKilled`, but they are stored separately in the our dataset.
+There is the **Minions** in LOL, and how many **Minions** are killed is sometimes used as a measure of proficiency because if you kill **Minions**, you can get gold. So **Creep Score**, or **CS**, means the number of times Minions has been killed(It may be strange to call the number of times Minions were killed as Creep Score, but early LOL players borrowed the Dota's term, the Creep, which affected LOL, and it has been going on so far.). In fact, most players don't think CS is divided into `TotalMinionsKilled` and `TotalJungleMinionsKilled`, but they are stored separately in the our dataset.
 
 According to [data description](https://www.kaggle.com/bobbyscience/league-of-legends-diamond-ranked-games-10-min), **Minions** is divided into two classes, so a summation of `TotalMinionsKilled` and `TotalJungleMinionsKilled` would allow for the calculation of commonly thought CS. In addition, `CSperMin` is calculated based on `TotalMinionsKilled`, so it will have to be recalculated on CS. 
 
-But If someone has question about the `TotalMinionsKilled + TotalJungleMinionsKilled`, I have to explain the reason of the why do this. The reason is that `TotalMinionsKilled` regarded as team's total CS is quite small at the high rank game. Until 10 miniute, About 100 minions are sent to each lane. Including Jungle minions, each team's the maximum value of CS is 350 or higher. 
+But If someone has question about the `TotalMinionsKilled + TotalJungleMinionsKilled`, I have to explain the reason of the why do this. The reason is that `TotalMinionsKilled` regarded as team's total CS is quite small at the high rank game. Until 10 minute, About 100-110 minions are sent to each lane. Including Jungle minions, each team's the maximum value of CS is 370 or higher. 
 
-```{r}
+```{r, echo = FALSE, fig.cap = "Distribution with `Minions + Jungleminions` and `Minions`"}
 high_diamond_ranked_10min %>% 
   select(matches("MinionsKilled")) %>% 
   mutate(blueTotalMinionsKilledNew = blueTotalMinionsKilled + blueTotalJungleMinionsKilled) %>% 
   mutate(redTotalMinionsKilledNew = redTotalMinionsKilled + redTotalJungleMinionsKilled) %>% 
   pivot_longer(cols = matches("TotalMinionsKilled")) %>% 
-  mutate(name = factor(name, levels = c("blueTotalMinionsKilled", "redTotalMinionsKilled", "blueTotalMinionsKilledNew", "redTotalMinionsKilledNew"))) %>% 
-  mutate(index = ifelse(str_detect(name, "New"), "Using the summation", "Using TotalMinionKilled")) %>% 
+  mutate(name = factor(name, levels = c("blueTotalMinionsKilledNew", "redTotalMinionsKilledNew", "blueTotalMinionsKilled", "redTotalMinionsKilled"))) %>% 
+  mutate(index = ifelse(str_detect(name, "New"), 0, 1)) %>% 
   ggplot(aes(x = value)) + 
-  geom_histogram(aes(fill = factor(name))) + facet_grid(index ~ ., scales = "free") + 
+  geom_density(aes(color = factor(name), fill = factor(name)), alpha = 0.5) + 
+  # https://stackoverflow.com/questions/59596250/how-to-use-superscript-in-facet-wrap-labels-in-r
+  facet_wrap(~ index, nrow = 2, scales = "free_y", 
+             # https://ggplot2.tidyverse.org/reference/as_labeller.html
+             labeller=as_labeller(c(`0` = "(1) Distribution of Creep Score in Minion + Jungleminion", 
+                                    `1` = "(2) Distribution of Creep Score in Minion"))
+                                  ) + 
   theme_minimal() + 
   scale_fill_manual(name = "TotalMinionsKilled",
-                    labels = c("Blue team", "Red team", "Blue team(new)", "Red team(new)"), 
-                    values = c("dodgerblue4", "firebrick4", "dodgerblue1", "firebrick1"))
-  
+                    labels = c("Blue team(new)", "Red team(new)", "Blue team", "Red team"), 
+                    values = c("dodgerblue1", "firebrick1", "dodgerblue4", "firebrick4")) + 
+  scale_color_manual(name = "TotalMinionsKilled",
+                    labels = c("Blue team(new)", "Red team(new)", "Blue team", "Red team"), 
+                    values = c("dodgerblue1", "firebrick1", "dodgerblue4", "firebrick4"))
 ```
+```{r}
+high_diamond_ranked_10min %>% 
+  select(matches("MinionsKilled")) %>% 
+  mutate(`Blue team(new)` = blueTotalMinionsKilled + blueTotalJungleMinionsKilled) %>% 
+  mutate(`Red team(new)` = redTotalMinionsKilled + redTotalJungleMinionsKilled) %>% 
+  rename(`Blue team` = blueTotalMinionsKilled, `Red team` = redTotalMinionsKilled) %>% 
+  select(-matches("Jungle")) %>% 
+  pivot_longer(cols = matches("team")) %>% 
+  group_by(name) %>% 
+  summarise_all(funs(min, mean, median, max)) %>% 
+  # https://stackoverflow.com/questions/46129322/arranging-rows-in-custom-order-using-dplyr
+  arrange(match(name, c("Blue team", "Red team", "Blue team(new)", "Red team(new)"))) %>% 
+  kable(caption = "Summary stats with `Minions + Jungleminions` and `Minions`", 
+        digits = c(0, 0, 2, 0, 0))
+```
+I compared two CS, `TotalMinionsKilled + TotalJungleMinionsKilled` and `TotalMinionsKilled` with figure and table. Because of these observation obtained by highest tier game, I think it is right to define CS with `TotalMinionsKilled + TotalJungleMinionsKilled`. So I modified the dataset. 
 
-
-
-
+```{r}
+high_diamond_ranked_10min %>% 
+  mutate(blueTotalMinionsKilledNew = blueTotalMinionsKilled + blueTotalJungleMinionsKilled) %>% 
+  mutate(redTotalMinionsKilledNew = redTotalMinionsKilled + redTotalJungleMinionsKilled) %>%
+  mutate(blueCSPerMinNew = blueTotalMinionsKilledNew/10) %>% 
+  mutate(redCSPerMinNew = redTotalMinionsKilledNew/10) %>%
+  select(-matches("MinionsKilled$|CSPerMin$")) -> high_diamond_ranked_10min
+```
 ### Important Metrics
+**KDA**, **Team Gold** and **Level** are indicators of which team is advantageous or disadvantageous in LOL at a glance. In fact, these values have positive correlation obviously. `TotalGold` is the total amount of Gold obtained. `GoldPerMin` is the result of `TotalGold/10`. `GoldDiff` is the difference about total amount of Gold between red and blue. `TotalExperience` and `ExperienceDiff` are the ones that changed Gold to Experience in the description above. `Avglevel` is just average of five player's Levels.
+```{r, fig.cap = "Distribution with `TotalExperience` and `TotalGold`"}
+high_diamond_ranked_10min %>% 
+  select(matches("TotalExperience|TotalGold")) %>% 
+  pivot_longer(cols = everything()) %>% 
+  mutate(index = ifelse(str_detect(name, "blue"), 0, 1)) %>% 
+  mutate(name = str_remove(name , "^blue|^red")) %>% 
+  ggplot(aes(x = value)) +
+  geom_density(aes(color = factor(index), fill = factor(index)), alpha = 0.5) +
+  facet_wrap( ~ name, nrow = 2, scales = "free", 
+             labeller=as_labeller(c(`TotalExperience` = "(1) Distribution of Total Experience", 
+                                    `TotalGold` = "(2) Distribution of Total Gold"))
+  ) + 
+  scale_color_manual(name = "Team color",
+                    labels = c("Blue team", "Red team"), 
+                    values = c("dodgerblue1", "firebrick1")) +
+  scale_fill_manual(name = "Team color",
+                    labels = c("Blue team", "Red team"), 
+                    values = c("dodgerblue1", "firebrick1")) + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) + 
+  theme_minimal()
+```
+Both Gold and Experience, we can see that red team has acquired more.
 
-`TotalGold`, `GoldDiff`, `GoldPerMin`, `TotalExperience`, `ExperienceDiff`
 
 ### Ward
+```{r, fig.height= 3, fig.cap = "Ward", echo=FALSE}
 
-`WardsPlaced`, `WardsDestroyed`
+library(magick)
+library(png)
+library(grid)
+library(gridExtra)
+
+x1 <- image_read("http://appdata.hungryapp.co.kr/data_file/data_img/201504/23/W142975952890699197.jpg")
+
+image_write(image_scale(x1, "450x300!"), path = paste0("x1.png"), format = "png")
+
+f1 <- readPNG('x1.png')
+
+grid.arrange(rasterGrob(f1),
+             ncol=1)
+```
+
+The **Ward** is an item that is used to locate the opponent party, and its location is more important than the number of installations or destruction. For example, if the location where red team's Ward is installed is close to blue team's area, red team's "Field control" is higher, and usually this situation is more favorable to red team than blue team. Of course, destroying a ward that disappears over time is not a pointless data at all, because the situation must be advantageous.
+
+
+```{r, fig.cap = "Distribution with `WardsPlaced` and `WardsDestroyed`"}
+high_diamond_ranked_10min %>% 
+  select(matches("Ward")) %>% 
+  pivot_longer(cols = everything()) %>% 
+  mutate(index = ifelse(str_detect(name, "blue"), 0, 1)) %>% 
+  mutate(name = str_remove(name , "^blue|^red")) %>% 
+  mutate(name = factor(name, levels = c("WardsPlaced", "WardsDestroyed"))) %>% 
+  ggplot(aes(x = value)) +
+  geom_density(aes(color = factor(index), fill = factor(index)), position = "dodge", alpha = 0.5) +
+  facet_wrap( ~ name, nrow = 2, scales = "free", 
+             labeller=as_labeller(c(`WardsPlaced` = "(1) Distribution of Wards Placed", 
+                                    `WardsDestroyed` = "(2) Distribution of Wards Destroyed"))
+  ) + 
+  scale_color_manual(name = "Team color",
+                    labels = c("Blue team", "Red team"), 
+                    values = c("dodgerblue1", "firebrick1")) +
+  scale_fill_manual(name = "Team color",
+                    labels = c("Blue team", "Red team"), 
+                    values = c("dodgerblue1", "firebrick1")) + 
+  theme_minimal()
+```
+```{r}
+high_diamond_ranked_10min %>% 
+  select(matches("Ward")) %>% 
+  pivot_longer(cols = everything()) %>% 
+  group_by(name) %>% 
+  summarise_all(funs(min, mean, median, max)) %>% 
+  arrange(match(name, c("blueWardsPlaced", "redWardsPlaced", "blueWardsDestroyed", "redWardsDestroyed"))) %>% 
+  kable(caption = "Summary stats with `WardsPlaced` and `WardsDestroyed`", 
+        digits = c(0, 0, 2, 0, 0))
+```
+The maximum number of times **Ward** is installed seems to be too high, but there are players who sell all the items and install only **Ward** to deliberately lose, so I won't revise it now.
