@@ -404,3 +404,34 @@ The maximum number of times **Ward** is installed seems to be too high, but ther
 
 
 So far, we have done a brief analysis through the explanation of each variable and the EDA. In the next chapter, I will create a model for winning and losing, and learn what factors affect winning and losing, and how much.
+
+# Analysis throught the models
+Before analysis, need to modify the dataset format for utility of the analysis process.
+
+```{r}
+high_diamond_ranked_10min %>% 
+  select(-matches("diff|EliteMonsters")) %>% 
+  mutate(redWins = ifelse((blueWins - 1) < 0, 1, 0)) %>% 
+  mutate(redFirstBlood = ifelse((blueFirstBlood - 1) < 0, 1, 0)) %>% 
+  pivot_longer(cols = -c(gameId)) %>% 
+  mutate(`team index` = ifelse(str_detect(name, "blue"), 1, 0)) %>% 
+  mutate(name = str_remove(name, "red|blue")) %>% 
+  pivot_wider(id_cols = c(gameId, `team index`), names_from = name, values_from = value) %>% 
+  group_by(gameId) %>% 
+  # https://stackoverflow.com/questions/39080716/find-difference-between-two-rows-using-dplyr-suppresswarnings-leads-to-na-for
+  # https://dplyr.tidyverse.org/reference/lead-lag.html
+  mutate(across(.cols = everything(), ~(lag(.x) - .x))) %>% 
+  drop_na() %>% ungroup() %>% 
+  select(-`team index`) %>% 
+  select(Wins, KDA, FirstBlood, 
+         TowersDestroyed, Dragons, Heralds, 
+         TotalMinionsKilledNew, CSPerMinNew,
+         TotalGold, GoldPerMin, TotalExperience, AvgLevel,
+         WardsPlaced, WardsDestroyed, Heralds) %>% 
+  mutate(across(c(Wins, Dragons, Heralds), as.factor)) -> modified_dataset
+
+modified_dataset
+
+modified_dataset %>% count(TowersDestroyed)
+```
+The main reason of dataset modication is the utility for using function. The original data set, `high_diamond_ranked_10min` has several columns, but it is just divided into blue team and red team, with many overlapping meanings. So I can use the difference concept and the result is the same as seen above. In the modified dataset, `modified_dataset`, there is just two types **features**, factor and numeric. Factor features are `Wins`, `FirstBlood` which have binary value, 1 or -1, and `Dragons`, `Heralds` which have just one more level, the 0.  
