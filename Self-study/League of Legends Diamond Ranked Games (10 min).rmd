@@ -166,6 +166,23 @@ high_diamond_ranked_10min %>%
   mutate(redKDA = (redKills + redAssists) / redDeaths) %>% 
   select(-matches("Kills|Deaths|Assists")) -> high_diamond_ranked_10min
 ```
+But here is the thing, sometime `KDA` has `inf` values. Using the concept of proportion, if **KDA is inf**, it means that **no one on the team has ever died**. 
+```{r}
+high_diamond_ranked_10min %>% 
+  count(blueKDA) %>% arrange(desc(blueKDA))
+```
+```{r}
+high_diamond_ranked_10min %>% 
+  count(redKDA) %>% arrange(desc(redKDA))
+```
+It would be very good for the game performance, but the `inf` is the value that must be modified in data analysis. Therefore, I will change the inf to the highest value of KDA, 40, plus 5 to **45**(Five is an arbitrary addition. It remains unchanged that the KDA is very high at 40 or 45).
+
+```{r}
+high_diamond_ranked_10min %>% 
+  mutate(across(matches("KDA"), ~ifelse(is.infinite(.x), 45, .x))) -> high_diamond_ranked_10min
+```
+ 
+
 
 ### Object Scores
 LOL has several objects. The dataset contains some information about whether or not each object, **Tower**, **Dragon**, **Herald** was destroyed or hunted. 
@@ -428,10 +445,81 @@ high_diamond_ranked_10min %>%
          TotalMinionsKilledNew, CSPerMinNew,
          TotalGold, GoldPerMin, TotalExperience, AvgLevel,
          WardsPlaced, WardsDestroyed, Heralds) %>% 
-  mutate(across(c(Wins, Dragons, Heralds), as.factor)) -> modified_dataset
+  mutate(across(c(Wins, FirstBlood, Dragons, Heralds), as.factor)) -> modified_dataset
 
 modified_dataset
 
 modified_dataset %>% count(TowersDestroyed)
 ```
 The main reason of dataset modication is the utility for using function. The original data set, `high_diamond_ranked_10min` has several columns, but it is just divided into blue team and red team, with many overlapping meanings. So I can use the difference concept and the result is the same as seen above. In the modified dataset, `modified_dataset`, there is just two types **features**, factor and numeric. Factor features are `Wins`, `FirstBlood` which have binary value, 1 or -1, and `Dragons`, `Heralds` which have just one more level, the 0.  
+
+And then to evaluation the model performance, I use the `caret` package to divide the dataset into `train_set` and `test_set`.
+```{r}
+library(caret)
+set.seed(1234)
+trainIndex <- createDataPartition(modified_dataset$Wins, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+train_set <- modified_dataset[trainIndex, ]
+test_set <- modified_dataset[-trainIndex, ]
+```
+```{r}
+dim(train_set) # 7904 x 14
+```
+```{r}
+dim(test_set) # 1975 x 14
+```
+Because the dividing ratio is set to **0.8** , `train_set` has 7,904 observations and `test_set` has 1,975 observations.
+
+
+```{r}
+repeatedcv <- trainControl(## 10-fold Cross-validation
+                           method = "repeatedcv",
+                           number = 10,
+                           ## with repeated ten times
+                           repeats = 10, 
+                           classProbs = TRUE)
+```
+
+
+
+## Models
+### Logistic regression with LASSO 
+
+
+
+### Penalized Logistic Regression
+```{r}
+
+train_set %>% 
+  mutate(across(c(Wins), ~ifelse(.x == -1, "Red", "Blue"))) %>% 
+  mutate(across(c(Wins), ~factor(.x, 
+                                 levels = c("Red", "Blue")))) %>%
+  mutate(across(c(FirstBlood), ~ifelse(.x == -1, "R", "B"))) %>% 
+  mutate(across(c(FirstBlood), ~factor(.x, 
+                                 levels = c("R", "B")))) %>% 
+  mutate(across(c(Dragons, Heralds), ~ifelse(.x == -1, "R", 
+                                             ifelse(.x == 1, "B", "No")))) %>% 
+  mutate(across(c(Dragons, Heralds), ~factor(.x, 
+                                             levels = c("R", "B", "No")))) -> train_test
+set.seed(1234)
+LASSOfit <- train(Wins ~ . , data = train_test, 
+                 method = "plr", 
+                 trControl = repeatedcv, 
+                 metric = "ROC", tuneLength = 2)
+
+```
+
+```{r}
+# Loading the library
+library(glmnet)
+
+set.seed(1234)
+cv_output <- cv.glmnet(model.matrix(Wins ~ ., train_set)[, -1], train_set$Wins, family = "binomial",
+                       alpha = 1, lambda = 10^seq(2, -2, by = -.1), 
+                       nfolds = 10)
+glimpse(model.matrix(Wins ~ ., train_set)[, -1])
+# identifying best lamda
+best_lam <- cv_output$lambda.min
+best_lam
+```
