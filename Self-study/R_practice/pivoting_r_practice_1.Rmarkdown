@@ -169,7 +169,7 @@ GermanCredit %>%
 
 
 ```{r}
-# pivot_longer(
+# pivot_longer( 
 #     data, # dataset  
 #     cols, # 필수, pivot_longer()의 타겟이 되는 열을 지정합니다.   
 #     names_to = "name", # 대상이 된 열들이 저장될 열의 이름을 지정합니다.   
@@ -196,7 +196,7 @@ GermanCredit %>%
     - [tidyselect](https://tidyselect.r-lib.org/reference/language.html)에서 볼 수 있는 것처럼 `starts_with()`이나 `ends_with()` 또는 `contatins()`나 `matches()`를 사용하는 방법
     - `is.factor`, `is.numeric` 처럼 열이 가진 value들의 type을 이용하는 방법
     - 위의 방법에 `!`, `&`, `|`를 적용, 조건을 이용해 선택하는 방법
-3. **names_to**, values_to : 문자열(character), `pivot_longer()`의 결과로 추가될 열의 이름을 정합니다. `names_to`는 대상이 되는 열들이 저장될 열의 이름을, `values_to`는 대상이 되는 열들이 갖고 있던 값이 저장될 열의 이름을 문자열로 갖습니다.   
+3. **names_to**, **values_to** : 문자열(character), `pivot_longer()`의 결과로 추가될 열의 이름을 정합니다. `names_to`는 대상이 되는 열들이 저장될 열의 이름을, `values_to`는 대상이 되는 열들이 갖고 있던 값이 저장될 열의 이름을 문자열로 갖습니다.   
 4. names_prefix : 문자열(character), 대상이 되는 열의 이름에서 제외하고자 하는 문자열을 지정해줍니다. 
 5. **names_sep** : 문자열(character),`names_to`에 여러 값을 넣었을 때, 값의 분기점이 되는 문자열을 넣어주면 넣어준 값을 기준으로 생성되는 열의 이름이 나뉩니다. 
 6. **names_pattern** : 문자열(character), **대상이 되는 열들이 여러 의미를 가진 경우**, 이름들의 패턴을 넣어 `name_to`에서 설정한 열의 이름들에  정의된 열 이름들이 **쪼개어 저장**되도록 합니다. 
@@ -259,6 +259,22 @@ who %>% pivot_longer(cols = new_sp_m014 : newrel_f65,
 
 
     - **b.**는 `names_pattern`의 예제입니다. `names_pattern`은 `name_sep`보다 더 복잡하게 구성된 열 이름을 구분하기 위해 사용됩니다. `names_pattern`에 선언된 문자열은 [정규표현식](https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html)으로 다른 프로그래밍 언어에서 사용하는 것과 크게 다르지 않습니만... 저는 자주 까먹으므로 따로 정리해보도록 하겠습니다. 다시 돌아와서, 결과 코드에서 보시는 것과 같이 `names_pattern`에 보이는 `(.*)`, `(.)`, `(.*)`에 해당하는 문자열을 차례로 `names_to`에 선언된 `diagnosis`, `gender`, `age`에 분할해서 저장해주는 매우 편리한 argument입니다. 
+    
+    
+7. names_transform, values_transform : 리스트, `pivot_longe()r`의 결과로 생겨날 열의 타입을 바꾸기 위한 argument입니다. 리스트 형태로 선언해주어야 하므로 **b.**의 예제에서 `names_transform = list(age = as.integer)`를 추가해주면 age열의 value들이 character에서 integer로 바뀌게 됩니다. 
+
+
+8. names_repair : `c("minimal", "unique", "universal", "check_unique")` 중 하나, 여러 열을 대상으로 `pivot_longer()`을 시행하는 경우에 발생할 수 있는 열 이름 중복을 막기 위한 argument입니다. 위의 4가지 세팅이 존재하며 default 세팅은 `"chek_unique"`로 되어 있으며 이는 중복 열이 발생하는 경우에 에러를 리턴하는 옵션입니다. 자세한 내용은 [`vctrs::vec_as_names()`](https://vctrs.r-lib.org/reference/vec_as_names.html)를 참고하시길 바랍니다. 
+
+
+9. values_drop_na : 논리형, `TRUE` or `FALSE`로 value에 NA가 포함된 경우 해당 행을 drop할지 하지 않을지 설정하는 argument입니다. 
+
+
+10. names_ptypes, values_ptypes : ????, 이 부분을 좀 더 공부해보고 싶었지만 [Data Wrangling](https://dcl-wrangle.stanford.edu/pivot_advanced.html)의 예제나 [R for Data Science](https://r4ds.had.co.nz/tidy-data.html#pivoting)의 12.3.3 예제와 똑같은 코드를 써도 ptype을 바꿀 수 없다는 에러가 발생합니다. 다만 [Data Wrangling](https://dcl-wrangle.stanford.edu/pivot_advanced.html)의 결과물을 보면 `names_transform`, `values_transform`와 크게 다르지 않은 것처럼 보입니다. 개인적으로 ptype, 즉 **prototype**은 S4 classes object에서 설정하는 것으로 알고 있는데 `pivot_longer()`에서 어떤 역할을 하는지 좀 더 알아봐야 할 것 같습니다. 
+
+
+지금까지 여러 열들을 세로로 길게 쌓아 세로형 데이터셋을 만드는 `pivot_longer()`에 대해 알아보았습니다. 이제 데이터셋의 value을 넓게 퍼트려서 가로형 데이터셋을 만드는  `pivot_wider()`에 대해 알아보겠습니다. 
+
 
 
 
