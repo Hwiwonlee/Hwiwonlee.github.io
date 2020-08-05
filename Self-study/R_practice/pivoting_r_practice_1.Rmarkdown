@@ -14,7 +14,7 @@ output:
       toc: yes
       toc_depth: 4
       toc_float: yes
-mainfont: NanumGothic
+      mainfont: NanumGothic
 ---
 
 ```{css echo=FALSE}
@@ -421,3 +421,99 @@ AirCrash %>%
 
 
 8. names_prefix, names_sep, names_repair : `pivot_longer()`에서 설명한 것과 같은 방식으로 사용되는 argument입니다. 
+
+
+지금까지 `pivot_wider()`에 대한 기본적인 내용을 예제를 통해 알아보았습니다. 여기까지만 알아도 pivoting에는 문제가 없겠지만 [Pivoting](https://tidyr.tidyverse.org/articles/pivot.html#longer-then-wider-1)를 참고해 `pivot_longer()`와 `pivot_wider()`를 함께 쓰는 방법을 소개해보겠습니다. 
+
+
+
+# **Longer, then wider**
+
+
+`pivot_longer()` 혹은 `pivot_wider()`, 하나만 사용해서는 할 수 없는 작업들이 있습니다. 어찌어지 구현할 수 있더라도 비효율적인 코드로 구성될 것입니다. 그런 경우, 두 함수를 순차적으로 사용해 문제해결을 하는 방법이 있습니다. 이제 예제를 통해 문제 상황과 해결 방법을 보여드리겠습니다. 
+
+
+## World Bank 데이터셋을 통한 시연
+`world_bank_pop`는 World Bank로부터 얻은 *각 나라의 00년부터 18년까지의 인구수*를 정리한 데이터셋입니다. 
+
+```{r}
+world_bank_pop
+```
+
+
+`world_bank_pop`을 이용해 하고 싶은 작업은 1) 2000-2018의 열을 하나의 열로 쌓은 후 2) `indicator`를 의미에 맞게 쪼개어 열로 퍼트리는 것 입니다. 1)에는 `pivot_longer()`를, 2)에는 `pivot_wider()`를 사용하면 되겠군요. 아래의 코드는 [Pivoting](https://tidyr.tidyverse.org/articles/pivot.html#world-bank-1)의 코드입니다. 
+```{r}
+# Pivoting의 예제 코드 
+world_bank_pop %>% 
+  pivot_longer(cols = `2000`:`2017`, 
+               names_to = "year", 
+               values_to = "value") %>% 
+  separate(indicator, c(NA, "area", "variable")) %>% 
+  pivot_wider(names_from = variable, values_from = value)
+```
+
+
+데이터셋의 문자열값을 가진 열을 설정에 따라 여러 열로 쪼개주는 `separate`를 쓴 예제코드 대신 pivot을 여러번 사용한 아래의 코드로 같은 결과를 만들 수 있습니다. 효율적인 코드는 아니지만 이런 방법도 가능하다는 것을 보여드리고 싶었습니다. 
+
+
+```{r}
+# 똑같은 결과를 만들기 위한 나의 코드
+world_bank_pop %>% 
+  pivot_longer(cols = `2000`:`2017`, 
+               names_to = "year", 
+               values_to = "value") %>% 
+  mutate(indicator = str_remove(indicator, "^SP\\.")) %>% 
+  pivot_wider(names_from = indicator, values_from = value) %>% 
+  pivot_longer(cols = URB.TOTL:POP.GROW,
+               names_to = c("area", "variable"),
+               names_pattern = "(.*)\\.(.*)") %>%
+  pivot_wider(names_from = variable, values_from = value) %>% 
+  select(country, area, year, TOTL, GROW) %>% 
+  arrange(desc(area))
+```
+
+
+## Multi-choice
+
+
+[Pivoting](https://tidyr.tidyverse.org/articles/pivot.html#multi-choice-1)에 나온 또 다른 예제입니다. 이 예제는 [Maxime Wack이 제시한 이슈](https://github.com/tidyverse/tidyr/issues/384)에 의해 추가된 예제로 `pivot_longer()`과 `pivot_wider()`를 이용한 명목형 변수의 recording을 보여주고 있습니다. 천천히 따라가보겠습니다. 
+
+```{r}
+multi <- tribble(
+  ~id, ~choice1, ~choice2, ~choice3,
+  1, "A", "B", "C",
+  2, "C", "B",  NA,
+  3, "D",  NA,  NA,
+  4, "B", "D",  NA
+)
+```
+
+사용할 예제 데이터입니다. 이제 이 데이터를 이용해 1) `pivot_longer()`를 이용해 `NA`를 없앤 후, 2) `pivot_wider()`로 A부터 D까지의 선택 여부를 보여주는 데이터셋으로 만들어보겠습니다. 
+
+
+```{r}
+multi2 <- multi %>%
+  pivot_longer(-id, values_drop_na = TRUE) %>%
+  mutate(checked = TRUE)
+multi2
+```
+`pivot_longer()`를 사용해 choice1부터 3까지를 name열에 넣어 `NA`를 없앤 후 `mutate()`로 `checked`을 만든 모습입니다. 이제 여기에 `pivot_wider()`를 적용해 A부터 D까지 선택 여부에 따라 `checked`에 TRUE or FALSE가 들어가는 데이터셋으로 바꿔 보겠습니다. 
+
+```{r}
+multi2 %>% 
+  pivot_wider(
+    id_cols = id,
+    names_from = value,
+    values_from = checked,
+    values_fill = FALSE
+  )
+```
+
+이 예제에서 볼 수 있는 것처럼 pivoting으로 데이터셋을 변환할 수 있습니다. 
+
+# **Summary**
+
+
+**Pivoting**은 **tidy data**를 만들기 위해서도, 분석에서 필요한 여러 요약 통계량을 확인하기 위한 데이터셋으로 만들거나 곧바로 구해볼 수도 있는 매우 유용한 기술입니다. 제대로 사용하면 데이터 분석에서 가장 많은 시간을 차지하는 전처리에서도 효율성을 더할 수 있을 것입니다. 
+
+이번 포스트를 작성하며 두 함수의 argument까지 찬찬히 뜯어보고 예제에 적용해봄으로써 Pivoting에 대해 많은 것을 배웠습니다. 추후 더 좋은 예제가 있다면 추가해서 공유해보도록 하겠습니다. 감사합니다. 
