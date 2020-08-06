@@ -1,0 +1,78 @@
+---
+title: "dplyr의 기초와 across()"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+output: 
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+    bookdown::html_document2:
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+    mainfont: NanumGothic
+---
+
+<style type="text/css">
+
+body, td {
+  font-family: NanumGothic;
+}
+code.r{
+  font-size: 14px;
+  font-family: NanumGothic;
+}
+pre {
+  font-size: 14px
+  font-family: NanumGothic;
+}
+</style>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 10)
+options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+```
+
+
+# **dplyr 패키지** 
+
+
+데이터 분석의 첫 단계는 데이터셋을 분석에 적합하도록 가공하는 전처리(pre-process)입니다. 전처리 단계에서의 속도와 효율은 데이터 분석가가 가진 **데이터 핸들링의 숙련도**에 의해 결정됩니다. 
+
+
+
+
+[**dplyr 패키지**](https://dplyr.tidyverse.org/articles/dplyr.html)는 [tidyverse](https://www.tidyverse.org/)의 기초가 되는 패키지로 pipeline과 데이터 핸들링에 꼭 필요한 함수를 지원합니다. 
+
+
+
+
+dplyr의 대표적인 함수로 `mutate()`, `select()`, `filter()`, `summarise()`, `arrange()`, `group_by()`, `join()` 등이 있습니다. 
+
+
+```{r, class.source="bg-primary"}
+library(caret)
+data(GermanCredit)
+tibble(GermanCredit) # 1000 x 62
+```
+
+```{r}
+names(GermanCredit)[1:20]
+```
+```{r}
+names(GermanCredit)[grepl("Purpose.", names(GermanCredit))]
+```
