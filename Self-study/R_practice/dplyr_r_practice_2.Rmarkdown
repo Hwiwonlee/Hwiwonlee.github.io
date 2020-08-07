@@ -277,4 +277,4 @@ marvel_dc_characters %>%
   rename_with(.fn = ~tolower(.x))
 ```
 
-R을 이용한 분석에 익숙하지 않으신 분이라면 **b.b)**에서 조금 당황하셨을 수도 있을 것 같습니다. `.fn`에서 사용된 `~`, 물결표(tilde)와 `.x`에 낯설음을 느끼셨다면 일단 넘어가시길 바랍니다. 이 문서의 뒤에서 [**dplyr과 across()**](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)의 사용 방법을 다루면서 천천히 설명해드리겠습니다. 
+**b.b)**의 `.fn`에서 사용된 `~`, 물결표(tilde)와 `.x`에 낯설음을 느끼셨다면 일단 넘어가시길 바랍니다. 이 문서의 뒤에서 [**dplyr과 across()**](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)의 사용 방법을 다루면서 천천히 설명해드리겠습니다. 
