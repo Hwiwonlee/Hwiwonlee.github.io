@@ -1,0 +1,86 @@
+---
+title: "데이터 시각화 교과서(Fundamentals of Data Visualization)"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+output: 
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+    bookdown::html_document2:
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+    # mainfont: NanumGothicLight
+---
+
+<style type="text/css">
+
+body, td {
+  font-family: NanumGothicLight;
+}
+code.r{
+  font-size: 14px;
+  font-family: NanumGothicLight;
+}
+pre {
+  font-size: 14px
+  font-family: NanumGothicLight;
+}
+</style>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 5)
+# options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(googledrive) # Import dataset from the google drive
+library(readr) # To read csv file
+```
+
+
+```{r}
+drive_auth()
+data_in_drive <- drive_find(type = "csv", pattern = "19_temp")
+
+for(i in 1:8){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r}
+seoul <- read_csv("seoul_19_temp.csv", col_names = FALSE, skip = 1)
+busan <- read_csv("busan_19_temp.csv", col_names = FALSE, skip = 1)
+deajeon <- read_csv("deajeon_19_temp.csv", col_names = FALSE, skip = 1)
+incheon <- read_csv("incheon_19_temp.csv", col_names = FALSE, skip = 1)
+gwangju <- read_csv("gwangju_19_temp.csv", col_names = FALSE, skip = 1)
+ulsan <- read_csv("ulsan_19_temp.csv", col_names = FALSE, skip = 1)
+deagu <- read_csv("deagu_19_temp.csv", col_names = FALSE, skip = 1)
+jeju <- read_csv("jeju_19_temp.csv", col_names = FALSE, skip = 1)
+
+rbind(seoul, busan, deajeon, incheon, gwangju, ulsan, deagu, jeju) %>% 
+  as.tibble() %>% 
+  mutate(index = rep(c("seoul", "busan", "deajeon", "incheon", "gwangju", "ulsan", "deagu", "jeju"), each = 12)) %>% 
+  rename(month = X1, location = X2, max = X3, min = X4, mean = X5) %>% 
+  select(index, everything())
+
+
+```
+
+
+
+#  
+
+
+
