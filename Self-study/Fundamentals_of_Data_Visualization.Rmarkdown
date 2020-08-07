@@ -71,16 +71,27 @@ jeju <- read_csv("jeju_19_temp.csv", col_names = FALSE, skip = 1)
 
 rbind(seoul, busan, deajeon, incheon, gwangju, ulsan, deagu, jeju) %>% 
   as.tibble() %>% 
-  mutate(index = rep(c("seoul", "busan", "deajeon", "incheon", "gwangju", "ulsan", "deagu", "jeju"), each = 12)) %>% 
+  mutate(index = rep(c("Seoul", "Busan", "Deajeon", "Incheon", "Gwangju", "Ulsan", "Deagu", "Jeju"), each = 12)) %>% 
   rename(month = X1, location = X2, max = X3, min = X4, mean = X5) %>% 
-  select(index, everything())
+  select(index, everything()) %>% 
+  mutate(month = 
+           factor(
+             str_remove(month, "-19"), 
+             levels = c("Jan","Feb","Mar","Apr","May","Jun", "Jul","Aug","Sep","Oct","Nov","Dec")
+             )
+         ) %>% 
+  ggplot(aes(x = month, y = index, fill = mean)) + 
+  geom_tile(width = .95, height = 0.95) + 
+  scale_fill_viridis_c(option = "B", begin = 0.15, end = 0.98,
+                       name = "Celsisu (°C)") + 
+  scale_y_discrete(name = NULL) +
+  coord_fixed(expand = FALSE) +
+  # theme_dviz_open() +
+  theme(axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        #axis.text.y = element_text(size = 14),
+        legend.title = element_text(size = 12)
+        )
 
 
 ```
-
-
-
-#  
-
-
-
