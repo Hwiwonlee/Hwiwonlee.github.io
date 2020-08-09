@@ -385,7 +385,6 @@ marvel_dc_characters %>%
 marvel_dc_characters %>% 
   # Alignment에 따른 요약 통계량 계산을 위한 group_by
   group_by(Alignment) %>% 
-  
   # 요약 통계량 계산, 평균, 중간값, 최소, 최대, 1사분위수, 3사분위수
   summarise(mean = mean(Appearances, na.rm = TRUE), 
             median = median(Appearances, na.rm = TRUE), 
@@ -393,17 +392,23 @@ marvel_dc_characters %>%
             max = max(Appearances, na.rm = TRUE),
             `1st quantile` = quantile(Appearances, 0.25, prob = 0.25, na.rm = TRUE), 
             `3nd quantile` = quantile(Appearances, 0.75, prob = 0.75, na.rm = TRUE)) %>% 
-  
   # transpose를 위한 pivoting
-  pivot_longer(-Alignment) %>% 
+  pivot_longer(-Alignment) %>%  
   pivot_wider(names_from = Alignment, values_from = value)
 ```
+먼저 `group_by()`를 이용해 `Alignment`의 수준 별로 grouping 해준 후 `summarise()`를 적용해보았습니다. 
+
+
+
 
 ```{r}
 # b. across()를 이용한 summarise()
 marvel_dc_characters %>% 
   mutate(Fame = Appearances^2) %>% 
   group_by(Alignment) %>%
+  
+  # https://www.datanovia.com/en/product/practical-guide-to-cluster-analysis-in-r/
+  # https://stackoverflow.com/questions/57975212/how-to-get-quantiles-to-work-with-summarise-at-and-group-by-dplyr
   summarise(across(
     .cols = c(Appearances, Fame),
     .fns = list(Mean = mean, Median = median, Min = min, Max = max, 
