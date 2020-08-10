@@ -50,7 +50,7 @@ library(readr) # To read csv file
 ```
 
 
-```{r}
+```{r, echo=FALSE}
 drive_auth()
 data_in_drive <- drive_find(type = "csv", pattern = "19_temp")
 
@@ -59,7 +59,11 @@ for(i in 1:8){
 }
 ```
 
-```{r}
+## ch 2, P.35
+여러 지역의 월 별 온도 대비를 tile로 보여준다는 것이 심미적으로도 차이를 드러내는 것에도 큰 장점으로 보인다. 우리나라 주요도시의 19년 월 별 온도 데이터를 이용해 같은 방식으로 해보자.  
+
+```{r, fig.cap="19년도 대한민국 주요 도시의 월 별 평균 온도", fig.height=6}
+# 데이터셋 로드 
 seoul <- read_csv("seoul_19_temp.csv", col_names = FALSE, skip = 1)
 busan <- read_csv("busan_19_temp.csv", col_names = FALSE, skip = 1)
 deajeon <- read_csv("deajeon_19_temp.csv", col_names = FALSE, skip = 1)
@@ -69,29 +73,47 @@ ulsan <- read_csv("ulsan_19_temp.csv", col_names = FALSE, skip = 1)
 deagu <- read_csv("deagu_19_temp.csv", col_names = FALSE, skip = 1)
 jeju <- read_csv("jeju_19_temp.csv", col_names = FALSE, skip = 1)
 
+# bind 후 간단한 편집
 rbind(seoul, busan, deajeon, incheon, gwangju, ulsan, deagu, jeju) %>% 
   as.tibble() %>% 
   mutate(index = rep(c("Seoul", "Busan", "Deajeon", "Incheon", "Gwangju", "Ulsan", "Deagu", "Jeju"), each = 12)) %>% 
-  rename(month = X1, location = X2, max = X3, min = X4, mean = X5) %>% 
+  rename(Month = X1, location = X2, max = X3, min = X4, mean = X5) %>% 
   select(index, everything()) %>% 
-  mutate(month = 
+  mutate(Month = 
            factor(
-             str_remove(month, "-19"), 
+             str_remove(Month, "-19"), 
              levels = c("Jan","Feb","Mar","Apr","May","Jun", "Jul","Aug","Sep","Oct","Nov","Dec")
              )
          ) %>% 
-  ggplot(aes(x = month, y = index, fill = mean)) + 
+  
+  ## ggplot 시작 ## 
+  ggplot(aes(x = Month, y = index, fill = mean)) + 
+  
+  # geom_tile 이용
   geom_tile(width = .95, height = 0.95) + 
   scale_fill_viridis_c(option = "B", begin = 0.15, end = 0.98,
                        name = "Celsisu (°C)") + 
   scale_y_discrete(name = NULL) +
   coord_fixed(expand = FALSE) +
-  # theme_dviz_open() +
   theme(axis.line = element_blank(),
         axis.ticks = element_blank(),
-        #axis.text.y = element_text(size = 14),
+        axis.text.y = element_text(size = 12),
         legend.title = element_text(size = 12)
         )
 
 
 ```
+
+
+
+## ch 5
+
+To draw list 
+
+- Mosaic plot, Tree map, Parallel sets : 여러 그룹 변수에 따라 비율이 정해지는 경우 사용
+
+- 2차원 상자, 육각형 상자 : 데이퍼 값이 많은 데이터셋을 그릴 때 유용
+
+- 지리 데이터를 이용한 시각화
+
+- 눈 모양(eyes) 도표, 감은 눈 모양(half-eyes) 도표 
