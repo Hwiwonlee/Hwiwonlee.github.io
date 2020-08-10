@@ -326,7 +326,18 @@ marvel_dc_characters %>%
   rename_with(.fn = ~tolower(.x))
 ```
 
-**b.b)**의 `.fn`에서 사용된 `~`, 물결표(tilde)와 `.x`에 낯설음을 느끼셨다면 일단 넘어가시길 바랍니다. 이 문서의 뒤에서 [**dplyr과 across()**](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)의 사용 방법을 다루면서 천천히 설명해드리겠습니다. 
+
+#### 수정할 것 ####
+**b.b)**의 `.fn`에서 사용된 `~`, 물결표(tilde)와 `.x`가 낯설 수 있습니다. `.x`는 column을 의미하는 것으로 선택된 column을 vector로 불러오기 위한 argument입니다. `~`는 **tidyverse**를 이루는 또 다른 패키지, `purrr`의 [**익명함수**](https://riptutorial.com/ko/r/example/12721/%EC%9D%B5%EB%AA%85-%ED%95%A8%EC%88%98) 표기법입니다. `~`를 이용해 formula를 정의하셨던 적이 있으시다면 `y ~ x`가 `y에 대한 x의 함수`라는 것을 아실 겁니다. 이 경우에 똑같이 적용해서 `.fn = ~tolower()`를 `.fn
+
+
+사실 익명 함수, 혹은 lambda function, lambda expression이라는 용어는 
+
+
+
+이 문서의 뒤에서 [**dplyr과 across()**](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)의 사용 방법을 다루면서 천천히 설명해드리겠습니다. 
+#### 수정할 것 ####
+
 
 <div style="margin-bottom:25px;">
 </div>
