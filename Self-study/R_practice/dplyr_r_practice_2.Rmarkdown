@@ -427,6 +427,29 @@ marvel_dc_characters %>%
 먼저 `group_by()`를 이용해 `Alignment`의 수준 별로 grouping 해준 후 `Appearances`열을 대상으로 `summarise()`를 적용해보았습니다. `summarise()` 안에 평균, 중간값, 최소, 최대, 1사분위수, 3사분위수를 계산하는 함수를 넣어 요약 통계량 테이블을 만들었습니다. 요약 통계량을 근거로 `Good` 진영의 캐릭터 등장횟수가 높은 편임을 알 수 있습니다. 
 
 
+<div style="margin-bottom:25px;">
+</div>
+
+### dplyr 함수의 다양한 버전
+
+지금까지 보신 **dplyr** 함수 중 대부분은 여러 버전을 갖습니다. 가령, `summarise()`의 경우 `summarise_at()`, `summarise_all()`, `summarise_each()`, `summarise_if()` 등의 버전으로 세분화됩니다. 이 버전들은 모두 용도에 따라 구분된 것으로 접미사에 따라 특별한 argument를 갖기도 합니다. 
+
+데이터 핸들링에서 필요한 여러 기능들을 함수로 지원하는 것은 꽤 만족스러운 일이지만 함수의 종류가 지나치게 많아 사용자의 부담이 늘어나는 것 또한 사실입니다. 
+
+그래서일까요? 최근 dplyr패키지가 1.0.0으로 업데이트 되면서 `across()`를 활용하는 방법이 추가되었습니다. 따라서 다음 장에서는 함수의 세부 버전보다는 최근 추가된 `across()`를 이용한 dplyr 패키지 함수 사용법에 대해 알아보도록 하겠습니다. 
+
+<div style="margin-bottom:25px;">
+</div>
+
+## dplyr 1.0.0의 세계 : `across()`를 이용한 함수 활용
+
+지난 4월 3일, [dplyr 1.0.0에서 추가될 `across()`를 이용한 함수 활용이 소개](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)되었습니다. [`across()`에 대한 페이지](https://dplyr.tidyverse.org/reference/across.html)나 [**Column-wise operations**](https://dplyr.tidyverse.org/dev/articles/colwise.html)에도 `across()`에 대한 설명과 간단한 예제를 확인하실 수 있습니다. 
+
+위의 글들을 요약하면 "열을 선택하는 방법에 `across()`를 이용하는 방법이 추가되었고 이전의 세분화된 함수를 사용하는 것보다 효과적이다."로 정리할 수 있습니다. 
+
+
+
+
 
 ```{r}
 # b. across()를 이용한 summarise()
