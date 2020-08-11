@@ -1,7 +1,7 @@
 ---
 title: "dplyr 시리즈 (1) : dplyr패키지의 기초"
 author: "Hwiwon Lee"
-date: ""2020-08-11""
+date: "2020-08-11"
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
     bookdown::html_document2:
@@ -137,9 +137,9 @@ marvel_dc_characters
 
 **dplyr**의 함수 뿐 아니라 **tidyverse**의 함수들을 사용할 때 알아두면 좋은 개념을 간단히만 짚고 넘어가려고 합니다. 바로 **tidy-select**와 **data-masking** 입니다. 
 
-**tidy-select**와 **data-masking**는 argument type으로 특정 함수를 사용할 때 필요한 argument입니다. 위에서 본 **dplyr**의 함수들은 모두 **tidy-select**나 **data-masking**의 argument를 반드시 선언해주어야 합니다. 
+**tidy-select**와 **data-masking**는 parameter type으로 특정 함수를 사용할 때 필요한 parameter입니다. 위에서 본 **dplyr**의 함수들은 모두 **tidy-select**나 **data-masking**의 parameter를 반드시 선언해주어야 합니다. 
 
-패키지 안에 포함된 함수는 많지만 반드시 있어야 하는 argument type이 같게 설계되어 있다는 것은 사용자 입장에서 굉장한 장점입니다. 함수는 다르지만 argument type이 같다면 같은 형식으로 설정해도 함수를 실행할 수 있다는 말이기 때문입니다. 두 개념은 [Programming with dplyr](https://dplyr.tidyverse.org/articles/programming.html)에 정리되어 있으며 다른 문서에서 저도 정리해볼 생각입니다. 이번엔 간단히 용례만 살펴보고 지나가겠습니다. 
+패키지 안에 포함된 함수는 많지만 반드시 있어야 하는 parameter type이 같게 설계되어 있다는 것은 사용자 입장에서 굉장한 장점입니다. 함수는 다르지만 parameter type이 같다면 같은 형식으로 설정해도 함수를 실행할 수 있다는 말이기 때문입니다. 두 개념은 [Programming with dplyr](https://dplyr.tidyverse.org/articles/programming.html)에 정리되어 있으며 다른 문서에서 저도 정리해볼 생각입니다. 이번엔 간단히 용례만 살펴보고 지나가겠습니다. 
 
 <div style="margin-bottom:25px;">
 </div>
@@ -329,7 +329,7 @@ marvel_dc_characters %>%
 
 ```{r}
 # b. rename_with()을 사용해 열 이름 바꾸기
-# b.a) argument, .fn와.col를 사용해서 열 이름 바꾸기
+# b.a) parameter, .fn와.col를 사용해서 열 이름 바꾸기
 marvel_dc_characters %>% 
   # select()로 열 순서 바꾸기 
   select(EyeColor, HairColor, everything()) %>% 
@@ -338,7 +338,7 @@ marvel_dc_characters %>%
 ```
 
 ```{r}
-# b.b) argument, .fn를 사용해서 열 이름 바꾸기
+# b.b) parameter, .fn를 사용해서 열 이름 바꾸기
 marvel_dc_characters %>% 
   # select()로 열 순서 바꾸기 
   select(EyeColor, HairColor, everything()) %>% # EyeColor, HairColor를 앞으로 당겨오기 위한 select()
@@ -346,7 +346,7 @@ marvel_dc_characters %>%
 ```
 
 
-**b.b)**의 `.fn`에서 사용된 `~`, 물결표(tilde)와 `.x`에 대한 설명을 간단히 하겠습니다. `~`와 `.x`를 이용해 함수를 argument로 선언하는 것은 [**purrr 패키지**에서 지원하는 **익명 함수 사용 방법**](https://purrr.tidyverse.org/reference/map.html)입니다. 
+**b.b)**의 `.fn`에서 사용된 `~`, 물결표(tilde)와 `.x`에 대한 설명을 간단히 하겠습니다. `~`와 `.x`를 이용해 함수를 parameter로 선언하는 것은 [**purrr 패키지**에서 지원하는 **익명 함수 사용 방법**](https://purrr.tidyverse.org/reference/map.html)입니다. 
 
 말은 어렵지만 선형모델을 이용한 적합에서 사용하는 `y ~ x`, 즉 `y에 대한 x의 함수`라는 의미로 이해하실 수도 있으며 이 방법으로 이해하신다면 **"`rename_with(`)에 대한 `.x`의 함수로 `tolower()`를 사용한다."**가 될 것입니다. 
 
@@ -359,7 +359,7 @@ marvel_dc_characters %>%
 
 ### [`relocate()`](https://dplyr.tidyverse.org/reference/relocate.html)로 열 순서 바꾸기
 
-`rename()`의 **b.**에서 `select()`와 `everything()`을 이용해 열 순서를 바꿔보았습니다. 사실, **열의 순서를 바꾼다**는 목적에 있어서는 `relocate()`의 효율이 더 좋습니다. `relocate()`가 가진 argument, `.before`과 `.after`로 다양한 상황에 대처할 수 있기 때문입니다. 예제를 통해 알아보도록 하겠습니다. 
+`rename()`의 **b.**에서 `select()`와 `everything()`을 이용해 열 순서를 바꿔보았습니다. 사실, **열의 순서를 바꾼다**는 목적에 있어서는 `relocate()`의 효율이 더 좋습니다. `relocate()`가 가진 parameter, `.before`과 `.after`로 다양한 상황에 대처할 수 있기 때문입니다. 예제를 통해 알아보도록 하겠습니다. 
 
 
 ```{r}
@@ -457,7 +457,7 @@ marvel_dc_characters %>%
 
 ### dplyr 함수의 다양한 버전
 
-지금까지 보신 **dplyr** 함수 중 대부분은 여러 버전을 갖습니다. 가령, `summarise()`의 경우 `summarise_at()`, `summarise_all()`, `summarise_each()`, `summarise_if()` 등의 버전으로 세분화됩니다. 이 버전들은 모두 용도에 따라 구분된 것으로 접미사에 따라 특별한 argument를 갖기도 합니다. 
+지금까지 보신 **dplyr** 함수 중 대부분은 여러 버전을 갖습니다. 가령, `summarise()`의 경우 `summarise_at()`, `summarise_all()`, `summarise_each()`, `summarise_if()` 등의 버전으로 세분화됩니다. 이 버전들은 모두 용도에 따라 구분된 것으로 접미사에 따라 특별한 parameter를 갖기도 합니다. 
 
 데이터 핸들링에서 필요한 여러 기능들을 함수로 지원하는 것은 꽤 만족스러운 일이지만 함수의 종류가 지나치게 많아 사용자의 부담이 늘어나는 것 또한 사실입니다. 
 
@@ -466,14 +466,6 @@ marvel_dc_characters %>%
 <div style="margin-bottom:25px;">
 </div>
 
-## **dplyr 1.0.0의 세계 : `across()`를 이용한 함수 활용**
-
-지난 4월 3일, [dplyr 1.0.0에서 추가될 `across()`를 이용한 함수 활용이 소개](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)되었습니다. [`across()`에 대한 페이지](https://dplyr.tidyverse.org/reference/across.html)나 [**Column-wise operations**](https://dplyr.tidyverse.org/dev/articles/colwise.html)에도 `across()`에 대한 설명과 간단한 예제를 확인하실 수 있습니다. 
-
-위의 글들을 요약하면 "열을 선택하는 방법에 `across()`를 이용하는 방법이 추가되었고 이전의 세분화된 함수를 사용하는 것보다 효과적이다."로 정리할 수 있습니다. 
-
-<div style="margin-bottom:40px;">
-</div>
 
 # **Summary**
 
