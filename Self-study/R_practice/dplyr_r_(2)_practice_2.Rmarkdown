@@ -122,7 +122,6 @@ dplyr 시리즈(2)에서 물결표(~, tilde)를 이용한 익명 함수 사용 �
 
 ```{r}
 # mtcars데이터셋의 중량(wt)와 연료 효율(mpg) 사이의 선형 모델 적합
-lm(formula = mpg ~ wt, data = mtcars)
 summary(lm(formula = mpg ~ wt, data = mtcars))
 ```
 
