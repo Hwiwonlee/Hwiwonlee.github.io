@@ -1,5 +1,5 @@
 ---
-title: "dplyr의 기초와 across()"
+title: "dplyr 시리즈 (1) : dplyr패키지의 기초"
 author: "Hwiwon Lee"
 date: "`r format(Sys.Date())`"
 output: 
@@ -66,7 +66,7 @@ library(readr) # To read csv file
 </div>
 
 
-## Marvel Superheroes
+## **Marvel Superheroes**
 [Marvel Superheroes](https://www.kaggle.com/dannielr/marvel-superheroes)는 캐글(kaggle)에 업로드된 오픈 데이터셋으로, 이름과는 다르게 Marvel 코믹스 뿐 아니라 DC 코믹스에 등장하는 캐릭터들의 정보 또한 포함하고 있습니다. 위의 링크를 통해 간단히 다운받을 수 있으며 저는 8개의 파일 중 `marvel_dc_characters.csv`만 로드해서 사용하도록 하겠습니다. 
 
 
@@ -90,7 +90,7 @@ marvel_dc_characters
 <div style="margin-bottom:40px;">
 </div>
 
-## 하나의 데이터 테이블에서 사용할 수 있는 함수들
+## **하나의 데이터 테이블에서 사용할 수 있는 함수들**
 
 [**Introduction to dplyr**](https://dplyr.tidyverse.org/articles/dplyr.html#single-table-verbs-1)에서는 다음의 세 가지 카테고리를 이용해 dplyr에서 지원하는 대표적임 함수들을 구분하고 있습니다. 
 
@@ -120,12 +120,12 @@ marvel_dc_characters
 
 **tidy-select**와 **data-masking**는 argument type으로 특정 함수를 사용할 때 필요한 argument입니다. 위에서 본 **dplyr**의 함수들은 모두 **tidy-select**나 **data-masking**의 argument를 반드시 선언해주어야 합니다. 
 
-패키지 안에 포함된 함수는 많지만 반드시 있어야 하는 argument type이 같게 설계되어 있다는 것은 사용자 입장에서 굉장한 장점입니다. 각 함수마다 취하는 argument type이 다를 수는 있지만 argument type이 같다면 같은 형식으로 설정해도 함수를 실행할 수 있다는 말이기 때문입니다. 두 개념은 [Programming with dplyr](https://dplyr.tidyverse.org/articles/programming.html)에 정리되어 있으며 저도 정리해볼 생각입니다. 이번엔 간단히 용례만 살펴보고 지나가겠습니다. 
+패키지 안에 포함된 함수는 많지만 반드시 있어야 하는 argument type이 같게 설계되어 있다는 것은 사용자 입장에서 굉장한 장점입니다. 함수는 다르지만 argument type이 같다면 같은 형식으로 설정해도 함수를 실행할 수 있다는 말이기 때문입니다. 두 개념은 [Programming with dplyr](https://dplyr.tidyverse.org/articles/programming.html)에 정리되어 있으며 다른 문서에서 저도 정리해볼 생각입니다. 이번엔 간단히 용례만 살펴보고 지나가겠습니다. 
 
 <div style="margin-bottom:25px;">
 </div>
 
-#### tidy-select
+#### **tidy-select**
 
 **tidy-select**는 변수의 자리나 이름, 타입을 이용해 열을 선택하는 방법으로 아래와 같이 사용합니다.  **tidy-select**를 사용하는 대표적인 함수로 `across()`, `relocate()`, `rename()`, `select()`, `pull()` 등이 있습니다.
 
@@ -139,7 +139,7 @@ marvel_dc_characters
 <div style="margin-bottom:15px;">
 </div>
 
-#### data-masking
+#### **data-masking**
 
 **data-masking**은 데이터의 변수를 환경 변수처럼 사용할 수 있도록 해 가독성과 함수 활용성을 높히는 방법입니다. **data-masking**을 사용하는 대표적인 함수로 `arrange()`, `count()`, `filter()`, `group_by()`,` mutate()`, `summarise()` 등이 있습니다. 
   
@@ -217,7 +217,7 @@ marvel_dc_characters %>%
   slice_max(Appearances, n = 10) # Appearance가 큰 순서대로 10개의 행 선택
 ```
 
-추가로 `slice_sample(prop = 0.x)`을 이용해 랜덤하게 x%의 행을 선택할 수도 있습니다. 
+추가로 `slice_sample(prop = 0.x)`을 이용해 랜덤하게 데이터셋의 `x%`만큼의 행을 선택할 수도 있습니다. 
 
 <div style="margin-bottom:25px;">
 </div>
@@ -323,20 +323,15 @@ marvel_dc_characters %>%
 marvel_dc_characters %>% 
   # select()로 열 순서 바꾸기 
   select(EyeColor, HairColor, everything()) %>% # EyeColor, HairColor를 앞으로 당겨오기 위한 select()
-  rename_with(.fn = ~tolower(.x))
+  rename_with(.fn = ~ tolower(.x))
 ```
 
 
-#### 수정할 것 ####
-**b.b)**의 `.fn`에서 사용된 `~`, 물결표(tilde)와 `.x`가 낯설 수 있습니다. `.x`는 column을 의미하는 것으로 선택된 column을 vector로 불러오기 위한 argument입니다. `~`는 **tidyverse**를 이루는 또 다른 패키지, `purrr`의 [**익명함수**](https://riptutorial.com/ko/r/example/12721/%EC%9D%B5%EB%AA%85-%ED%95%A8%EC%88%98) 표기법입니다. `~`를 이용해 formula를 정의하셨던 적이 있으시다면 `y ~ x`가 `y에 대한 x의 함수`라는 것을 아실 겁니다. 이 경우에 똑같이 적용해서 `.fn = ~tolower()`를 `.fn
+**b.b)**의 `.fn`에서 사용된 `~`, 물결표(tilde)와 `.x`에 대한 설명을 간단히 하겠습니다. `~`와 `.x`를 이용해 함수를 argument로 선언하는 것은 [**purrr 패키지**에서 지원하는 **익명 함수 사용 방법**](https://purrr.tidyverse.org/reference/map.html)입니다. 
 
+말은 어렵지만 선형모델을 이용한 적합에서 사용하는 `y ~ x`, 즉 `y에 대한 x의 함수`라는 의미로 이해하실 수도 있으며 이 방법으로 이해하신다면 **"`rename_with(`)에 대한 `.x`의 함수로 `tolower()`를 사용한다."**가 될 것입니다. 
 
-사실 익명 함수, 혹은 lambda function, lambda expression이라는 용어는 
-
-
-
-이 문서의 뒤에서 [**dplyr과 across()**](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)의 사용 방법을 다루면서 천천히 설명해드리겠습니다. 
-#### 수정할 것 ####
+**익명함수**나 위의 용법에 대해서는 **purrr패키지**를 설명해드리거나 **`across()`**를 이용한 **dplyr** 함수 사용을 설명해드릴 때 조금 더 자세히 설명해보겠습니다. 
 
 
 <div style="margin-bottom:25px;">
@@ -447,40 +442,26 @@ marvel_dc_characters %>%
 
 데이터 핸들링에서 필요한 여러 기능들을 함수로 지원하는 것은 꽤 만족스러운 일이지만 함수의 종류가 지나치게 많아 사용자의 부담이 늘어나는 것 또한 사실입니다. 
 
-그래서일까요? 최근 dplyr패키지가 1.0.0으로 업데이트 되면서 `across()`를 활용하는 방법이 추가되었습니다. 따라서 다음 장에서는 함수의 세부 버전보다는 최근 추가된 `across()`를 이용한 dplyr 패키지 함수 사용법에 대해 알아보도록 하겠습니다. 
+그래서일까요? 최근 dplyr패키지가 1.0.0으로 업데이트 되면서 `across()`를 활용하는 방법이 추가되었습니다. 따라서 다음 글에서 함수의 세부 버전보다는 최근 추가된 `across()`를 이용한 dplyr 패키지 함수 사용법에 대해 알아보도록 하겠습니다. 
 
 <div style="margin-bottom:25px;">
 </div>
 
-## dplyr 1.0.0의 세계 : `across()`를 이용한 함수 활용
+## **dplyr 1.0.0의 세계 : `across()`를 이용한 함수 활용**
 
 지난 4월 3일, [dplyr 1.0.0에서 추가될 `across()`를 이용한 함수 활용이 소개](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)되었습니다. [`across()`에 대한 페이지](https://dplyr.tidyverse.org/reference/across.html)나 [**Column-wise operations**](https://dplyr.tidyverse.org/dev/articles/colwise.html)에도 `across()`에 대한 설명과 간단한 예제를 확인하실 수 있습니다. 
 
 위의 글들을 요약하면 "열을 선택하는 방법에 `across()`를 이용하는 방법이 추가되었고 이전의 세분화된 함수를 사용하는 것보다 효과적이다."로 정리할 수 있습니다. 
 
+<div style="margin-bottom:40px;">
+</div>
 
+# **Summary**
 
+**dplyr**은 R 기반의 효율적인 코딩을 지원하는 **pipeline**을 비롯해 데이터핸들링에 필요한 여러 함수들을 지원하는 패키지입니다. 많은 함수을 포함하고 있지만 위에서 소개해드린 dplyr의 대표적인 함수정도만 숙지하셔도 데이터 핸들링에 큰 어려움은 없을 것이라 생각합니다. 함수의 용법을 알고 넘어가는 것도 중요하지만 **tidyverse** 전반에서 통용되는 **tidy-select**와 **data-masking**에 대해서도 한 번 더 읽고 넘어가시는 것을 추천해드립니다. 
 
+`across()`를 이용한 **dplyr** 패키지 함수 사용법으로 찾아뵙겠습니다. 감사합니다. 
 
-```{r}
-# b. across()를 이용한 summarise()
-marvel_dc_characters %>% 
-  mutate(Fame = Appearances^2) %>% 
-  group_by(Alignment) %>%
-  
-  # https://www.datanovia.com/en/product/practical-guide-to-cluster-analysis-in-r/
-  # https://stackoverflow.com/questions/57975212/how-to-get-quantiles-to-work-with-summarise-at-and-group-by-dplyr
-  summarise(across(
-    .cols = c(Appearances, Fame),
-    .fns = list(Mean = mean, Median = median, Min = min, Max = max, 
-                Q1 = ~ quantile(., probs = 0.25, na.rm = TRUE),
-                Q3 = ~ quantile(., probs = 0.75, na.rm = TRUE)), na.rm = TRUE,
-    .names = "{col}_{fn}"
-    ) 
-  ) %>% 
-  pivot_longer(-Alignment) %>%  
-  pivot_wider(names_from = Alignment, values_from = value)
-```
 
 
 
