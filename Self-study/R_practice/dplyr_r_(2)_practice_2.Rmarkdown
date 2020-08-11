@@ -107,7 +107,11 @@ marvel_dc_characters
 
 - .fns : `.cols`에 의해 선택된 각각의 열들에 적용할(apply) 함수 혹은 함수의 리스트를 갖는 parameter입니다. 함수의 이름을 넣어도 되지만 **purrr** 패키지에서 지원하는 **익명함수 표기법**을 이용할 수도 있습니다.
 
-## **물결표를 이용한 formula 사용 방법**
+<div style="margin-bottom:40px;">
+</div>
+
+
+## **익명함수와 물결표(~)를 이용한 formula**
 
 dplyr 시리즈(2)에서 물결표(~, tilde)를 이용한 익명 함수 사용 방법에 대해 간단히 설명한 적이 있었습니다. `across()`의 중요 parameter인 `.fns`에서 익명함수를 갖는 경우가 많기 때문에 이 부분에 대한 자세한 설명을 해보려 합니다. 
 
