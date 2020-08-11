@@ -1,7 +1,7 @@
 ---
 title: "dplyr 시리즈 (1) : dplyr패키지의 기초"
 author: "Hwiwon Lee"
-date: "`r format(Sys.Date())`"
+date: ""2020-08-11""
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
     bookdown::html_document2:
@@ -14,21 +14,37 @@ output:
       toc: yes
       toc_depth: 4
       toc_float: yes
-    # mainfont: NanumGothicLight
+# https://stackoverflow.com/questions/535616/can-css-choose-a-different-default-font-and-size-depending-on-language
+# css setting 
 ---
 
 <style type="text/css">
 
-body, td {
-  font-family: NanumGothicLight;
+body {
+  .lang-en {
+    font-family:Verdana;
+    font-size:14px;
+  }
+
+  .lang-kr {
+    font-family:NanumGothicLight;
+    font-size:14px;
+  }
 }
-code.r{
-  font-size: 14px;
-  font-family: NanumGothicLight;
+code {
+  font-family:NanumGothicCoding;
+  font-size:14px;
 }
 pre {
-  font-size: 14px
-  font-family: NanumGothicLight;
+  .lang-en {
+    font-family:Verdana;
+    font-size:14px;
+  }
+
+  .lang-kr {
+    font-family:NanumGothicLight;
+    font-size:14px;
+  }
 }
 </style>
 
