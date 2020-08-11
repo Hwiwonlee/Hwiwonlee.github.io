@@ -1,7 +1,7 @@
 ---
 title: "Tidyverse와 pivoting"
 author: "Hwiwon Lee"
-date: "2020-08-05"
+date: "`r format(Sys.Date())`"
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
     bookdown::html_document2:
@@ -14,18 +14,40 @@ output:
       toc: yes
       toc_depth: 4
       toc_float: yes
-      mainfont: NanumGothic
+      
+# https://stackoverflow.com/questions/535616/can-css-choose-a-different-default-font-and-size-depending-on-language
+# css setting 
 ---
 
-```{css echo=FALSE}
-#r-markdown  {
-  margin-top: 20em;
-}
+<style type="text/css">
 
-#r-markdown p:first-of-type {
-  margin-bottom: 20em;
+body {
+  .lang-en {
+    font-family:Verdana;
+    font-size:14px;
+  }
+
+  .lang-kr {
+    font-family:NanumGothicLight;
+    font-size:14px;
+  }
 }
-``` 
+code {
+  font-family:NanumGothicCoding;
+  font-size:14px;
+}
+pre {
+  .lang-en {
+    font-family:Verdana;
+    font-size:14px;
+  }
+
+  .lang-kr {
+    font-family:NanumGothicLight;
+    font-size:14px;
+  }
+}
+</style>
 
 
 ```{r setup, include=FALSE}
@@ -517,3 +539,22 @@ multi2 %>%
 **Pivoting**은 **tidy data**를 만들기 위해서도, 분석에서 필요한 여러 요약 통계량을 확인하기 위한 데이터셋으로 만들거나 곧바로 구해볼 수도 있는 매우 유용한 기술입니다. 제대로 사용하면 데이터 분석에서 가장 많은 시간을 차지하는 전처리에서도 효율성을 더할 수 있을 것입니다. 
 
 이번 포스트를 작성하며 두 함수의 argument까지 찬찬히 뜯어보고 예제에 적용해봄으로써 Pivoting에 대해 많은 것을 배웠습니다. 추후 더 좋은 예제가 있다면 추가해서 공유해보도록 하겠습니다. 감사합니다. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
