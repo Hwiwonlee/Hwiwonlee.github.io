@@ -194,9 +194,9 @@ GermanCredit %>%
 `pivot_longer()`후에 행의 개수가 늘어난 것이 바로 이러한 이유 때문입니다. 단순히 `11*1000`해서 증가한 것이죠. 추가된 `Purpose`열로 `Pupose.목적`의 열이 들어갔으니 11개의 열이 줄었고 `Purpose`와 `Purpose_value`가 생겼으니 2개의 열이 늘어서 총 9개의 열이 줄어든 53개의 열을 갖게 되는 것입니다(`index`는 제가 임의로 추가한 것이라 제외했습니다).
 
 
-예제 데이터를 통해 `pivot_longer()` 효과를 살펴보았습니다. 이제 `pivot_longer()`을 좀 더 잘 쓰기 위해 `pivot_longer()`가 가진 argument와 효과를 알아보겠습니다. 
+예제 데이터를 통해 `pivot_longer()` 효과를 살펴보았습니다. 이제 `pivot_longer()`을 좀 더 잘 쓰기 위해 `pivot_longer()`가 가진 parameter와 효과를 알아보겠습니다. 
 
-## `pivot_longer()`의 argument
+## `pivot_longer()`의 parameter
 
 
 ```{r}
@@ -289,16 +289,16 @@ who %>% pivot_longer(cols = new_sp_m014 : newrel_f65,
     - **a.(b)**는 special name, **.value**를 이용한 `name_sep`의 응용 활용입니다. **.value**는 `pivot_loger()`의 대상이 되는 열 이름 자체에 **value**가 있을 때 사용할 수 있는 방법입니다. 선언된 구분자와 **.value**의 위치에 따라 무엇을 value로 저장할 것인지 설정됩니다. 위의 경우, **.value_Country**의 형태로 선언되었으므로 Country에 해당하는 USA와 Eurupe을 Country열의 value로 저장하고 나머지 dob와 gender를 각각의 열로 저장된 것입니다. 
 
 
-    - **b.**는 `names_pattern`의 예제입니다. `names_pattern`은 `name_sep`보다 더 복잡하게 구성된 열 이름을 구분하기 위해 사용됩니다. `names_pattern`에 선언된 문자열은 [정규표현식](https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html)으로 다른 프로그래밍 언어에서 사용하는 것과 크게 다르지 않습니만... 저는 자주 까먹으므로 따로 정리해보도록 하겠습니다. 다시 돌아와서, 결과 코드에서 보시는 것과 같이 `names_pattern`에 보이는 `(.*)`, `(.)`, `(.*)`에 해당하는 문자열을 차례로 `names_to`에 선언된 `diagnosis`, `gender`, `age`에 분할해서 저장해주는 매우 편리한 argument입니다. 
+    - **b.**는 `names_pattern`의 예제입니다. `names_pattern`은 `name_sep`보다 더 복잡하게 구성된 열 이름을 구분하기 위해 사용됩니다. `names_pattern`에 선언된 문자열은 [정규표현식](https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html)으로 다른 프로그래밍 언어에서 사용하는 것과 크게 다르지 않습니만... 저는 자주 까먹으므로 따로 정리해보도록 하겠습니다. 다시 돌아와서, 결과 코드에서 보시는 것과 같이 `names_pattern`에 보이는 `(.*)`, `(.)`, `(.*)`에 해당하는 문자열을 차례로 `names_to`에 선언된 `diagnosis`, `gender`, `age`에 분할해서 저장해주는 매우 편리한 parameter입니다. 
     
     
-7. names_transform, values_transform : 리스트, `pivot_longe()r`의 결과로 생겨날 열의 타입을 바꾸기 위한 argument입니다. 리스트 형태로 선언해주어야 하므로 **b.**의 예제에서 `names_transform = list(age = as.integer)`를 추가해주면 age열의 value들이 character에서 integer로 바뀌게 됩니다. 
+7. names_transform, values_transform : 리스트, `pivot_longe()r`의 결과로 생겨날 열의 타입을 바꾸기 위한 parameter입니다. 리스트 형태로 선언해주어야 하므로 **b.**의 예제에서 `names_transform = list(age = as.integer)`를 추가해주면 age열의 value들이 character에서 integer로 바뀌게 됩니다. 
 
 
-8. names_repair : `c("minimal", "unique", "universal", "check_unique")` 중 하나, 여러 열을 대상으로 `pivot_longer()`을 시행하는 경우에 발생할 수 있는 열 이름 중복을 막기 위한 argument입니다. 위의 4가지 세팅이 존재하며 default 세팅은 `"chek_unique"`로 되어 있으며 이는 중복 열이 발생하는 경우에 에러를 리턴하는 옵션입니다. 자세한 내용은 [`vctrs::vec_as_names()`](https://vctrs.r-lib.org/reference/vec_as_names.html)를 참고하시길 바랍니다. 
+8. names_repair : `c("minimal", "unique", "universal", "check_unique")` 중 하나, 여러 열을 대상으로 `pivot_longer()`을 시행하는 경우에 발생할 수 있는 열 이름 중복을 막기 위한 parameter입니다. 위의 4가지 세팅이 존재하며 default 세팅은 `"chek_unique"`로 되어 있으며 이는 중복 열이 발생하는 경우에 에러를 리턴하는 옵션입니다. 자세한 내용은 [`vctrs::vec_as_names()`](https://vctrs.r-lib.org/reference/vec_as_names.html)를 참고하시길 바랍니다. 
 
 
-9. values_drop_na : 논리형, `TRUE` or `FALSE`로 value에 NA가 포함된 경우 해당 행을 drop할지 하지 않을지 설정하는 argument입니다. 
+9. values_drop_na : 논리형, `TRUE` or `FALSE`로 value에 NA가 포함된 경우 해당 행을 drop할지 하지 않을지 설정하는 parameter입니다. 
 
 
 10. names_ptypes, values_ptypes : ????, 이 부분을 좀 더 공부해보고 싶었지만 [Data Wrangling](https://dcl-wrangle.stanford.edu/pivot_advanced.html)의 예제나 [R for Data Science](https://r4ds.had.co.nz/tidy-data.html#pivoting)의 12.3.3 예제와 똑같은 코드를 써도 ptype을 바꿀 수 없다는 에러가 발생합니다. 다만 [Data Wrangling](https://dcl-wrangle.stanford.edu/pivot_advanced.html)의 결과물을 보면 `names_transform`, `values_transform`와 크게 다르지 않은 것처럼 보입니다. 개인적으로 ptype, 즉 **prototype**은 S4 classes object에서 설정하는 것으로 알고 있는데 `pivot_longer()`에서 어떤 역할을 하는지 좀 더 알아봐야 할 것 같습니다. 
@@ -381,10 +381,10 @@ AirCrash %>%
               values_from = Fatalities)
 ```
 
-두 가지의 방법으로 `pivot_wider()`의 사용 방법을 간단히 보았습니다. 이전에 본 `pivot_longer()`과 비슷한 부분도, 다른 부분도 있으니 `pivot_wider()`의 argument를 자세히 알아보겠습니다. 
+두 가지의 방법으로 `pivot_wider()`의 사용 방법을 간단히 보았습니다. 이전에 본 `pivot_longer()`과 비슷한 부분도, 다른 부분도 있으니 `pivot_wider()`의 parameter를 자세히 알아보겠습니다. 
 
 
-## **`pivot_wider()`의 argument**
+## **`pivot_wider()`의 parameter**
 
 
 ```{r}
@@ -410,17 +410,17 @@ AirCrash %>%
 
 2. **id_cols** : [tidyselect](https://tidyselect.r-lib.org/reference/language.html), 형태를 그대로 유지할 열을 선택합니다. default 설정에 의해 `names_from`과 `values_from`에 선언된 열을 제외한 모든 열은 `id_cols`에 자동으로 선언됩니다. 
 
-    - `pivot_longer()`에서 `cols` argument가 변환할 모든 열을 선택하는 것과 반대로 `id_cols`는 적용하지 않는 모든 열을 선택합니다. 
+    - `pivot_longer()`에서 `cols` parameter가 변환할 모든 열을 선택하는 것과 반대로 `id_cols`는 적용하지 않는 모든 열을 선택합니다. 
 
 
 
-3. **names_from**, **values_from** : [tidyselect](https://tidyselect.r-lib.org/reference/language.html), `names_from`은 명목형 값을 이용해 넓게 퍼트릴 열을, `values_from`은 `names_from`으로 생성될 열들에 들어갈 값을 가진 열을 설정해줍니다. 두 argument 모두 tidyselect을 지원하고 있으므로 여러 열을 한 번에 선택하는 것이 가능합니다. 
+3. **names_from**, **values_from** : [tidyselect](https://tidyselect.r-lib.org/reference/language.html), `names_from`은 명목형 값을 이용해 넓게 퍼트릴 열을, `values_from`은 `names_from`으로 생성될 열들에 들어갈 값을 가진 열을 설정해줍니다. 두 parameter 모두 tidyselect을 지원하고 있으므로 여러 열을 한 번에 선택하는 것이 가능합니다. 
 
-    - `pivot_longer()`의 `names_to`, `values_to`와 비슷한 기능을 하는 argument입니다. 
+    - `pivot_longer()`의 `names_to`, `values_to`와 비슷한 기능을 하는 parameter입니다. 
 
 
 
-4. **names_glue** : 문자열(character), 넓게 퍼트려질 열의 이름을 수정하기 위한 argument로 이름에 대한 패턴을 설정해 사용합니다. 예를 들어, 위의 *사고 원인과 운항 단계를 이용한 평균 사망자 테이블 만들기* 코드에 `Cause_`라는 말머리를 추가해보겠습니다. 
+4. **names_glue** : 문자열(character), 넓게 퍼트려질 열의 이름을 수정하기 위한 parameter로 이름에 대한 패턴을 설정해 사용합니다. 예를 들어, 위의 *사고 원인과 운항 단계를 이용한 평균 사망자 테이블 만들기* 코드에 `Cause_`라는 말머리를 추가해보겠습니다. 
 
     ```{r}
 # names_glue를 사용해 열 이름 편집하기
@@ -437,15 +437,15 @@ AirCrash %>%
     - `pivot_longer()`의 `names_pattern`이 열 이름들의 패턴을 받아 패턴대로 열 이름을 쪼개어 각각의 새로운 열로 저장했다면 `pivot_wider()`의 `names_glue`는 퍼트려질 열 이름들의 패턴을 정의해 수정합니다. 
 
 
-5. names_sort : 논리형, `pivot_wider()`의 결과로 만들어질 열 이름들을 알파벳 순서대로 정렬할 지에 대한 여부를 설정하는 argument입니다. 
+5. names_sort : 논리형, `pivot_wider()`의 결과로 만들어질 열 이름들을 알파벳 순서대로 정렬할 지에 대한 여부를 설정하는 parameter입니다. 
 
 
-6. values_fill : 숫자 혹은 문자열, 새로 생겨나는 열의 `NA`를 대체하기 위한 argument입니다. 
+6. values_fill : 숫자 혹은 문자열, 새로 생겨나는 열의 `NA`를 대체하기 위한 parameter입니다. 
 
-7. **values_fn** : 함수의 이름, summary statistic을 이용한 table을 만들기 위한 argument입니다. 각 셀의 value에 `values_fn`에서 설정된 함수를 적용합니다. 
+7. **values_fn** : 함수의 이름, summary statistic을 이용한 table을 만들기 위한 parameter입니다. 각 셀의 value에 `values_fn`에서 설정된 함수를 적용합니다. 
 
 
-8. names_prefix, names_sep, names_repair : `pivot_longer()`에서 설명한 것과 같은 방식으로 사용되는 argument입니다. 
+8. names_prefix, names_sep, names_repair : `pivot_longer()`에서 설명한 것과 같은 방식으로 사용되는 parameter입니다. 
 
 
 지금까지 `pivot_wider()`에 대한 기본적인 내용을 예제를 통해 알아보았습니다. 여기까지만 알아도 pivoting에는 문제가 없겠지만 [Pivoting](https://tidyr.tidyverse.org/articles/pivot.html#longer-then-wider-1)를 참고해 `pivot_longer()`와 `pivot_wider()`를 함께 쓰는 방법을 소개해보겠습니다. 
@@ -541,7 +541,7 @@ multi2 %>%
 
 **Pivoting**은 **tidy data**를 만들기 위해서도, 분석에서 필요한 여러 요약 통계량을 확인하기 위한 데이터셋으로 만들거나 곧바로 구해볼 수도 있는 매우 유용한 기술입니다. 제대로 사용하면 데이터 분석에서 가장 많은 시간을 차지하는 전처리에서도 효율성을 더할 수 있을 것입니다. 
 
-이번 포스트를 작성하며 두 함수의 argument까지 찬찬히 뜯어보고 예제에 적용해봄으로써 Pivoting에 대해 많은 것을 배웠습니다. 추후 더 좋은 예제가 있다면 추가해서 공유해보도록 하겠습니다. 감사합니다. 
+이번 포스트를 작성하며 두 함수의 parameter까지 찬찬히 뜯어보고 예제에 적용해봄으로써 Pivoting에 대해 많은 것을 배웠습니다. 추후 더 좋은 예제가 있다면 추가해서 공유해보도록 하겠습니다. 감사합니다. 
 
 
 
