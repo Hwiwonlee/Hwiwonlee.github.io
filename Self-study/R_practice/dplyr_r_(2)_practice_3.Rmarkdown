@@ -388,7 +388,7 @@ marvel_dc_characters %>%
 
 따라서 [**Column-wise**](https://dplyr.tidyverse.org/articles/colwise.html)에 소개된 것처럼 `across()`와 `filter()`, `group_by()`, `count()`, `distinct()`의 활용법을 간단히 설명해보겠습니다. 
 
-## **`across()`와 `[filter()](https://dplyr.tidyverse.org/reference/filter.html)`**
+## **`across()`와 `[`filter()`](https://dplyr.tidyverse.org/reference/filter.html)`**
 
 `filter()`는 임의의 조건을 설정해 조건에 부합하는 행을 추려내는 함수입니다. `across()`의 `.fns`에 조건을, `.cols`에 조건 부합 여부를 판단할 열을 넣어주시면 됩니다. 
 
@@ -448,3 +448,14 @@ marvel_dc_characters %>%
 **b.**는 `count()`에 대한 예제입니다. `count()`는 관측치를 세어 주는 함수로 `EyeColor`열에 대한 각 경우의 수를 세어 보았습니다. 
 
 **c.**는 `distinct()`에 대한 예제입니다. `distinct()`는 경우의 수를 세어 주는 함수입니다. `ends_with()`을 이용해 열 이름의 끝에 "ty"가 포함된, `Identity`열이 가진 관측치의 경우의 수를 보여주고 있습니다. 
+
+
+`mutate()`부터 `distinct()`까지 `across()`를 활용한 사용법을 알아보았습니다. 많은 함수를 한 번에 다뤘기 때문에 깊게 다루지는 못했지만 `across()`를 이용한 용법 자체가 크게 다르지 않아 **dplyr**의 함수만 숙지하신다면 사용하시는데 큰 무리는 없을 것이라 생각합니다. 
+
+`across()`에 대한 조금 더 자세한 설명이 필요하시다면 **dplyr**의 [`across()` 페이지](https://dplyr.tidyverse.org/reference/across.html)와 [`Column-wise` 페이지](https://dplyr.tidyverse.org/articles/colwise.html)를 참고하시길 바랍니다. 
+
+# **Summary**
+
+**tidy-select**을 지원하는 열 선택 방법과 무궁무진한 함수를 argument로 가지는`.fns`을 가진 `across()`의 활용법을 다뤄보았습니다. 다소 프로그래밍 시점의 설명이 있어 이해하기 쉽지 않으셨을 것이라 생각되지만 **알아두면 쓸데 있는 내용**이므로 굳이 넣어보았습니다. 이 때문에 혼란스러우셨다면 죄송합니다. 
+
+**dplyr**의 함수만으로도 많은 것을 할 수 있지만 `across()`를 함께 사용한다면 작업의 효율이 크게 향상될 것이라 생각합니다. 
