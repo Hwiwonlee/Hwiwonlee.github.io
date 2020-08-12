@@ -426,3 +426,25 @@ marvel_dc_characters %>%
 ## **`across()`와 [`group_by()`](https://dplyr.tidyverse.org/reference/group_by.html), [`count()`](https://dplyr.tidyverse.org/reference/count.html), [`distinct()`](https://dplyr.tidyverse.org/reference/distinct.html)**
 
 `group_by()`, `count()` 그리고 `distinct()`는 각각의 함수에 이미 특정 동작이 설정되어 있으므로 `across()`에서 `.fns()`를 생략할 수 있는 특징을 가집니다. 
+
+```{r}
+# a. across()와 group_by()
+marvel_dc_characters %>% 
+  group_by(across(starts_with("Al"))) %>% 
+  count()
+```
+```{r}
+# b. across()와 count()
+marvel_dc_characters %>% 
+  count(across(matches("EyeColor")))
+```
+```{r}
+# c. across()와 distinct()
+marvel_dc_characters %>% 
+  distinct(across(ends_with("ty")))
+```
+**a.**는 `group_by()`에 대한 예제입니다. `group_by()`는 grouping만 해줄 뿐 다른 함수처리는 되어있지 않아 `count()`를 추가해서 `Alignment`별로 관측치 개수를 세보았습니다. 
+
+**b.**는 `count()`에 대한 예제입니다. `count()`는 관측치를 세어 주는 함수로 `EyeColor`열에 대한 각 경우의 수를 세어 보았습니다. 
+
+**c.**는 `distinct()`에 대한 예제입니다. `distinct()`는 경우의 수를 세어 주는 함수입니다. `ends_with()`을 이용해 열 이름의 끝에 "ty"가 포함된, `Identity`열이 가진 관측치의 경우의 수를 보여주고 있습니다. 
