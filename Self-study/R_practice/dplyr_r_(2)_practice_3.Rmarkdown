@@ -384,4 +384,45 @@ marvel_dc_characters %>%
 
 # **dplyr 그리고 `across()`**
 
-ㅐ
+[**tidyverse**에 올라온 글](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)을 보면 `across()`는 **dplyr**의 어떤 함수(You can use it with any dplyr verb.)라도 사용 가능하다고 나오지만 [**Column-wise**](https://dplyr.tidyverse.org/articles/colwise.html#other-verbs-1)에는 `select()`와 `rename()`에서는 작동하지 않는다고 합니다. `select()`는 **열을 선택만 하는 함수**이기 때문에 `across()`의 `.cols`와 겹치기 때문이고 `rename()`은 한 차례 소개해드린 함수를 이용해 열 이름을 바꾸는 `rename_with()`이 이미 존재하기 때문입니다. 
+
+따라서 [**Column-wise**](https://dplyr.tidyverse.org/articles/colwise.html)에 소개된 것처럼 `across()`와 `filter()`, `group_by()`, `count()`, `distinct()`의 활용법을 간단히 설명해보겠습니다. 
+
+## **`across()`와 `[filter()](https://dplyr.tidyverse.org/reference/filter.html)`**
+
+`filter()`는 임의의 조건을 설정해 조건에 부합하는 행을 추려내는 함수입니다. `across()`의 `.fns`에 조건을, `.cols`에 조건 부합 여부를 판단할 열을 넣어주시면 됩니다. 
+
+```{r}
+# a. across()와 filter()
+marvel_dc_characters %>% 
+  filter(across(c(FirstAppearance), .fns = ~ str_detect(pattern = "^[0-9]", string = .x)))
+```
+
+물론, 앞에서 본 `mutate()`와 `summarise()`를 함께 사용해도 문제 없습니다. 
+
+```{r}
+# b. a.에 mutate()와 summarise() 이어 붙이기
+marvel_dc_characters %>% 
+  filter(across(c(FirstAppearance), .fns = ~ str_detect(pattern = "^[0-9]", string = .x))) %>% 
+  mutate(across(
+    .cols = c(Appearances), 
+    .fns = ~ .x^2, 
+    .names = "Fame"
+    )
+  ) %>% 
+  
+  group_by(Alignment) %>%
+  
+  summarise(across(
+    .cols = c(Appearances, Fame), 
+    .fns = mean, na.rm = TRUE,
+    .names = "{col}_mean"
+    )
+  ) 
+
+```
+
+
+## **`across()`와 [`group_by()`](https://dplyr.tidyverse.org/reference/group_by.html), [`count()`](https://dplyr.tidyverse.org/reference/count.html), [`distinct()`](https://dplyr.tidyverse.org/reference/distinct.html)**
+
+`group_by()`, `count()` 그리고 `distinct()`는 각각의 함수에 이미 특정 동작이 설정되어 있으므로 `across()`에서 `.fns()`를 생략할 수 있는 특징을 가집니다. 
