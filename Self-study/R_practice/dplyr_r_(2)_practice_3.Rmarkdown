@@ -1,0 +1,387 @@
+---
+title: "dplyr 시리즈 (2) : across()를 이용한 dplyr 패키지 사용"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+output: 
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+    bookdown::html_document2:
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+# https://stackoverflow.com/questions/535616/can-css-choose-a-different-default-font-and-size-depending-on-language
+# css setting 
+---
+
+<style type="text/css">
+
+body {
+  .lang-en {
+    font-family:Verdana;
+    font-size:14px;
+  }
+
+  .lang-kr {
+    font-family:NanumGothicLight;
+    font-size:14px;
+  }
+}
+code {
+  font-family:NanumGothicCoding;
+  
+  h1,h2,h3,h4,h5,h6{
+     font-size: 24pt;
+  }
+}
+pre {
+  .lang-en {
+    font-family:Verdana;
+    font-size:14px;
+  }
+
+  .lang-kr {
+    font-family:NanumGothicLight;
+    font-size:14px;
+  }
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 5)
+# options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(googledrive) # Import dataset from the google drive
+library(readr) # To read csv file
+```
+
+```{r, echo = FALSE, eval = FALSE}
+drive_auth()
+data_in_drive <- drive_find(type = "csv", pattern = "marvel_dc_characters")
+
+for(i in 1:1){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r, echo = FALSE, include = FALSE}
+marvel_dc_characters <- read_csv("marvel_dc_characters.csv")
+marvel_dc_characters
+```
+
+# **dplyr 1.0.0의 세계 : `across()`를 이용한 함수 활용**
+
+지난 4월 3일, [dplyr 1.0.0에서 추가될 `across()`를 이용한 함수 활용이 소개](https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-colwise/)되었습니다. 이 글에서 `summarise()`와 `mutate()`의 여러 버전과 `across()`의 활용을 비교하며 `across()` 사용의 이점을 보여주고 있습니다. 소개된 장점 4가지는 아래와 같습니다. 
+
+- `across()`를 이용하면 이전에는 불가능했던 작업들을 수행할 수 있다. 
+
+- **dplyr** 패키지의 함수 개수를 줄일 수 있고 이는 패키지 관리나 사용 측면에서 이점을 갖는다. 
+
+- `across()`를 이용해 `_at`과 `_if`의 작업을 통합할 수 있다. 
+
+- `across()` `_at()`과 다르게 `vars()`를 필요로 하지 않는다. `vars()`는 column을 직접 선택하는 함수로 `_at()` 함수들에서 사용되었는데 `across()`로 column을 선택하는 것이 더 효율적이므로 `vars()`를 사용하지 않아도 된다. 
+
+"열을 선택하는 방법에 `across()`를 이용하는 방법이 추가되었고 이전의 세분화된 함수를 사용하는 것보다 효과적이다." 정도 정리 가능한 내용들이니 그런가보다 하고 넘어가셔도 됩니다. 
+
+이제 **tidyvese**의 페이지를 참고해 `across()` 함수에 대해 간단히 설명한 후, **dplyr** 패키지의 주요 함수에서 `across()`를 어떻게 사용하는지 예제를 통해 보여드리겠습니다. 
+
+<div style="margin-bottom:60px;">
+</div>
+
+# **`across()`란?**
+
+`across()`는 [**Column-wise operations**](https://dplyr.tidyverse.org/dev/articles/colwise.html)로 데이터셋의 열을 좀 더 쉽고 편리하게 선택하기 위해 설계되었습니다. `across()`는 두 개의 필수 parameter, `.cols`와 `.fns`를 갖습니다. 
+
+- .cols : 열을 선택하는 parameter입니다. [**tidy-select**](https://dplyr.tidyverse.org/reference/select.html)를 이용한 열 선택을 지원합니다. 
+
+- .fns : `.cols`에 의해 선택된 각각의 열들에 적용할(apply) 함수 혹은 함수의 리스트를 갖는 parameter입니다. 함수의 이름을 넣어도 되지만 **purrr** 패키지에서 지원하는 **익명함수 표기법**을 이용할 수도 있습니다.
+
+<div style="margin-bottom:40px;">
+</div>
+
+
+## **물결표(~)를 이용한 익명함수와 formula**
+
+dplyr 시리즈(2)에서 물결표(~, tilde)를 이용한 익명 함수 사용 방법에 대해 간단히 설명한 적이 있었습니다. `across()`의 중요 parameter인 `.fns`에서 익명함수를 갖는 경우가 많기 때문에 이 부분에 대한 자세한 설명을 해보려 합니다. 
+
+익명 함수 혹은 lambda expression(혹은 lambda function)은 **프로그래밍** 용어입니다. R도 엄밀히 말하면 프로그래밍 언어 중 하나지만 통계 분석을 목적으로 하기 때문에 이 용어가 낯설 수 있습니다. 더욱이 R에서는 물결표를 `formula` 선언에 사용하고 있어 이 부분이 더욱 혼란스러우실 수 있습니다. 따라서 익명 함수가 무엇이고 왜 사용하느냐보다는 **R에서 물결표가 의미하는 것이 무엇이냐**에 초점을 맞춰 설명하도록 하겠습니다. 
+
+
+아마 이 글을 읽는 분들 중 대부분은 선형 모델 적합에서 물결표를 보신 적이 있으실 겁니다. 
+
+```{r}
+# mtcars데이터셋의 중량(wt)와 연료 효율(mpg) 사이의 선형 모델 적합
+summary(lm(formula = mpg ~ wt, data = mtcars))
+```
+
+이 때의 물결표는 `response ~ variable`의 구조로 사용되며 의미는 `reponse에 대한 variable의 함수`입니다. 이제 `mpg ~ wt`가 들어간 parameter를 보시면 `formula`라는 이름의 parameter를 발견하실 수 있습니다. `formula`가 단순히 parameter의 이름이라고 생각하실 수도 있지만 놀랍게도 `formula`는 R에 존재하는 `object`중 하납니다. 즉, lm의 `formula` parameter는 그 이름대로 `formula`를 필요로 하는 parameter라는 것이죠. 
+
+
+```{r}
+# 문자열을 formula로 바꿔주는 as.formula와 formula를 판단하는 is_formula
+purrr::is_formula(stats::as.formula("y ~ x"))
+```
+`mpg ~ wt`가 `formula`가 된 이유는 간단합니다. 바로 물결표, `~` 때문이죠. [**R에서 물결표는 `formula`를 만드는 operator입니다.**](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/formula) 
+
+R에서 `formula` object는 특정한 방법(method)이나 함수를 저장하는 역할을 합니다. method를 model로 이해하셔도 됩니다. 마치, `mpg ~ wt + hp`가 `mpg = wt + hp`로 해석되는 것처럼 말이죠. 여기서 중요한 것은 함수를 저장한다는 것이고 이는 `across()`의 `.fns` parameter에 왜 물결표가 쓰이는지 이해할 수 있는 핵심이 됩니다. 
+
+`.fns`에 넣고 싶은 함수의 형태가 두 개 이상의 함수가 중첩된 형태일 때, 물결표를 이용해 중첩된 함수를 `formula` object로 바꿔 parameter에 넣을 수 있기 때문입니다. 아래의 예제를 통해 설명드리겠습니다. 
+
+
+```{r}
+marvel_dc_characters %>% 
+  select(ID, Name, Appearances) %>% 
+  dplyr::filter(across(Appearances, .fns = ~ is.na(.x)))
+```
+```{r}
+marvel_dc_characters %>% 
+  select(ID, Name, Appearances) %>% 
+  dplyr::filter(across(Appearances, .fns = is.na))
+```
+
+
+`Appearances`에서 `NA`를 갖는 데이터 값을 선택하기 위해 사용한 `.fns = ~ is.na(.x)`와 `.fns = is.na`의 결과는 
+같습니다. 그러나 함수를 중첩해서 사용하는 경우에는 다른 결과가 나옵니다. 
+
+
+```{r}
+marvel_dc_characters %>% 
+  select(ID, Name, Appearances) %>% 
+  dplyr::filter(across(Appearances, .fns = ~ !is.na(.x)))
+# dplyr::filter(across(Appearances, .fns = !is.na)) # error
+```
+`Appearances`에서 `NA`를 갖지 않는 데이터 값을 선택하기 위해 `!`를 추가한 결과입니다. `.fns = ~ !is.na(.x)`는 제대로 결과가 나온 반면, `.fns = !is.na`를 사용하면 에러가 발생합니다. 
+
+물결표를 이용해 `formula`로 정의된 `!is.na(.x)`는 parameter에 사용하기 적합한, 다시 말해 그 자체로는 실행되지 않는 형태로 변환된 상태입니다. 그러나 `!is.na`는 argument로 사용되기 적절하지 않은 그 자체로 실행될 수 있는 형태이기 때문에 에러가 발생합니다. 
+
+장황하게 설명했지만 함수를 중첩된 형태로 `.fns`에 넣기 위해선 `~`와 `.x`를 사용한다고 이해하셔도 됩니다. 혹시 이 부분에 대해 더 궁금하시다면 [**Non-standard evalution**](https://cran.r-project.org/web/packages/lazyeval/vignettes/lazyeval.html)을 정독해보시길 추천드립니다. 데이터 분석가의 시각보다는 프로그래머의 시각으로 적힌 글이라 이해하기 어려우시겠지만 R을 통한 프로그래밍을 이해하는데 도움이 되실 것이라 생각됩니다. 
+
+<div style="margin-bottom:40px;">
+</div>
+
+## **예제로 보는 `across()`의 장점**
+
+`across()`는 선택된 열에 대해 지정된 함수(혹은 함수들)을 적용하는 역할을 합니다. 따라서 `mutate()`나 `summarise()`처럼 단독으로 쓰이는 경우는 없습니다. 앞으로 `across()`를 사용한 예제들을 보시겠지만 `across()`는 항상 **1) 데이터셋에서 열을 선택하는 함수**와 **2) 적용할 함수**를 이용해 사용됩니다. 
+
+여러 함수와 함께 사용되기 때문에 `across()`의 예제들에서는 설명이 필요한 다른 함수가 등장합니다. 아직 `across()`를 이용한 **dplyr** 함수 사용법에 대한 설명을 드리지 않았으므로 이번 절에서는 **함수의 목적에 따라 구분된 여러 함수들을 통합할 수 있다**는 `across()`의 장점을 보여드리려고 합니다. 
+
+사용할 함수는 `mutate()`입니다. `mutate()`는 조건에 맞는 열을 선택하는 `_if()`, 특정 열을 선택하는 `_at()`, 모든 열을 선택하는 `_all()` 등으로 세분됩니다. 이 3개의 함수의 용례와 `across()`를 비교해보겠습니다.  
+
+```{r, echo = FALSE, include = FALSE}
+x <- rnorm(1000)
+y <- rnorm(1000, 5, 2)
+
+mat <- matrix(0, 100, 6)
+
+apply(mat, 2, function(a){sample(x, 100)}) %>% 
+  as.data.frame() %>% 
+  rename_with(
+    .cols = matches("[$V][1-3]"), 
+    .fn = ~str_replace(.x, "V", "X")
+  ) %>% 
+  rename_with(
+    .cols = matches("[$V][4-6]"), 
+    .fn = ~str_replace(.x, "V", "Y")
+  ) %>% as.tibble() -> data
+```
+
+```{r}
+# 임의로 만든 데이터 셋
+data
+```
+
+
+```{r, eval = FALSE}
+# a. mutate()의 각 버전(_at, _if, _all)을 이용한 예제
+mutate_at(.tbl = data, .vars = vars(starts_with("Y")), .funs = mean, na.rm = TRUE)
+mutate_if(.tbl = data, .predicate = is.numeric, .funs = mean, na.rm = TRUE)
+mutate_all(.tbl = data, .funs = mean, na.rm = TRUE)
+```
+```{r, eval = FALSE}
+# b. mutate()와 across()를 이용한 예제
+mutate(.data = data, across(.cols = starts_with("Y"), .fns = mean, na.rm = TRUE))
+mutate(.data = data, across(.cols = is.numeric, .fns = mean, na.rm = TRUE))
+mutate(.data = data, across(.cols = everything(), .fns = mean, na.rm = TRUE))
+```
+**a.**와 **b.**의 형태는 다르지만 결과는 같습니다. 두 예제를 같이 놓고 보면 `_at()`, `_if()`, `_all()`의 세 개의 함수가 열을 선택하는 과정이 `across()`로 통합되는 것을 알 수 있습니다. 
+
+
+- `_all()`은 parameter에서 선택을 하는 부분이 보이지 않지만 전체 열을 선택해 설정된 함수(이 경우에는 `mean`)를 적용시킵니다. 즉, `_all()`는 parameter에서 선택할 열을 고르는 것이 아닌 함수 그 자체로 전체 열을 선택하도록 default setting이 되어 있는 것으로, `across()`와 조금 달라보이지만 실행되는 논리는 같습니다. 
+
+
+목적에 따라 함수를 구분해 사용하는 것이 아니라 argument를 구분해 사용하는 것이 `across()`의 장점입니다. 이제 `across()`와 자주 쓰이는 대표적인 함수, `mutate()`, `summarise()`에 대한 용례로 `across()`와 **dplyr** 패키지 함수 사용을 설명드리겠습니다. 
+
+
+<div style="margin-bottom:40px;">
+</div>
+
+
+# **`mutate()`, `summarise()` 그리고 `across()`**
+
+`mutate()`와 `summarise()`는 단독으로 사용할 수 없다는 점에서 `across()`와 비슷한 특징을 갖는 함수들입니다. 두 함수를 사용하는 목적과 방법을 자세히 보면 두 함수에 `across()`를 사용하는 것이 꽤 논리적임을 알 수 있습니다. 
+
+
+- `mutate()` : 선택된 열(혹은 열들)을 지정된 함수를 이용해 **편집이나 생성하기 위한 함수**
+
+- `summarise()` : 선택된 열(혹은 열들)을 지정된 함수를 이용해 **요약하기 위한 함수**
+
+- `across()` : 선택된 열(혹은 열들)에 지정된 함수를 **적용하기 위한 함수**
+
+이제 `marvel_dc_characters` 데이터셋을 이용해 `across()`을 통한 `mutate()`, `summarise()` 사용방법을 알려드리겠습니다. 
+
+
+
+```{r}
+# dataset 
+marvel_dc_characters
+```
+
+```{r}
+# a. mutate()와 summarise()에 across()를 사용한 첫 번째 예제
+marvel_dc_characters %>% 
+  # (a) mutate 시작 : Apprearance를 제곱한 새로운 열, Fame 생성
+  mutate(across(
+    # column 선택
+    .cols = c(Appearances), 
+    # 적용할 함수 지정
+    .fns = ~ .x^2, 
+    # 결과를 저장할 새로운 열의 이름 지정
+    .names = "Fame"
+    )
+  ) %>% # mutate 끝 
+  
+  # 진영에 따라 grouping
+  group_by(Alignment) %>%
+  
+  # (b) summarise 시작 : 진영에 따라 Apprearance와 Fame의 평균 구하기 
+  summarise(across(
+    # column 선택
+    .cols = c(Appearances, Fame), 
+    # 적용할 함수 지정
+    .fns = mean, na.rm = TRUE,
+    .names = "{col}_mean"
+    )
+  ) # summarise 끝
+```
+
+첫 번째 예제입니다. `mutate()`안에 `across()`를 이용해 `Appearances`열을 선택했고 해당 열의 값을 제곱시키는 함수를 지정해주었습니다. parameter `names`는 `across()`의 결과가 저장될 열 이름 형식을 지정해주는 역할을 합니다. 여기서는 "Fame"이라는 이름으로 설정했습니다. 
+
+`summarise()` 또한 비슷한 순서로 진행됩니다. `Appearances`와 `Fame`을 선택하고 적용할 함수로 `mean`을 설정했습니다. `.name`으로 이름의 형식을 정해주었습니다. `"{col}_mean"`에서 `"{col}"`는 [**glue** 패키지](https://glue.tidyverse.org/index.html)의 용법으로 `col`에 저장된 내용을 가져오라는 의미 정도로 이해하시고 넘어가셔도 됩니다. 
+
+- `col`을 직접 만들지 않았지만 `across()` 함수 내부적으로 만들어진 **지역 변수(local variable)**에 의해 사용 가능한 것입니다. **전역 변수(global variable)**이나 지역 변수에 대해 처음 보거나 들으셨다면 본문에 설명드린 내용만 기억하셔도 충분합니다. 
+
+
+
+
+```{r}
+# b. mutate()와 summarise()에 across()를 사용한 두 번째 예제
+
+# 임의의 값을 제곱하는 함수 생성
+square <- function(x){
+  result <- x^2
+  return(result)
+}
+
+marvel_dc_characters %>% 
+  mutate(across(
+    .cols = c(Appearances), 
+    # 사용자 정의 함수, square 사용
+    .fns = square,
+    .names = "Fame"
+    )
+  ) %>%
+  group_by(Alignment) %>%
+  
+  # https://www.datanovia.com/en/product/practical-guide-to-cluster-analysis-in-r/
+  # https://stackoverflow.com/questions/57975212/how-to-get-quantiles-to-work-with-summarise-at-and-group-by-dplyr
+  
+  # summarise 시작 : 각 진영별로 Apprearances와 Fame의 평균, 중앙값, 최소, 최대, 1사분위수, 3사분위수를 이용한 요약통계량 테이블 생성 
+  summarise(across(
+    .cols = c(Appearances, Fame),
+    .fns = list(Mean = mean, Median = median, Min = min, Max = max, 
+                Q1 = ~ quantile(., probs = 0.25, na.rm = TRUE),
+                Q3 = ~ quantile(., probs = 0.75, na.rm = TRUE)), na.rm = TRUE,
+    .names = "{col}_{fn}"
+    ) 
+  ) %>% 
+  
+  # transpose를 위한 pivoting 
+  pivot_longer(-Alignment) %>%  
+  pivot_wider(names_from = Alignment, values_from = value)
+```
+두 번째 예제는 꽤 복잡해보입니다. 이해를 위해 항목별로 끊어서 설명해보겠습니다. 
+
+- `mutate()` : 사용자 정의 함수를 사용할 수 있음을 보여드리기 위해 제곱값을 리턴하는 `square`를 만들어 이용했습니다. 
+
+- `summarise()`
+    - 여러 요약 통계량을 사용하기 위해 `list()`로 argument를 설정했습니다. 
+    - `list()`안에는 제가 사용할 요약 통계량의 함수들과 이름이 설정되어 있습니다. `Mean = mean`에서 `mean`은 평균을 위한 함수이고 `Mean`은 `mean`의 결과를 저장할 열의 이름입니다. 이 `Mean`이 `fn`이라는 object의 component로 저장되고 `.names`에서 보이는 `"{fn}"`에 사용됩니다. 
+    - `quantitle()`을 물결표를 이용해 **formula**로 만든 이유는 parameter, `probs`때문입니다. 이 절의 마지막 부분에서 추가로 설명드리겠습니다. 
+
+- `pivot_longer()`과 `_wider()` : 행과 열을 바꾸는 전치(transpose)를 위해 사용했습니다. 함수, `t()`를 이용할 수도 있지만 행과 열의 이름이 바뀌기 때문에 **pivoting**으로 전치시켰습니다.     
+
+
+`across()`를 통한 다른 **dplyr** 함수의 사용을 알아보기 전에 중요한 부분을 짚고 넘어가겠습니다. 바로 `across()`의 핵심 parameter, `.fns`에서 받는 argument의 차이입니다. 
+
+
+## **`across()`의 핵심 parameter, `.fns`**
+
+예제 코드를 주의 깊게 살펴보신 분이라면 **a.**와 **b.**의 `summarise()`와 `across()` 안에 있는 `.fns`의 용법에 대해 의문을 가지실 수도 있는 부분이 있습니다. **a.** 예제에서 `.fns`안에 있는 `na.rm = TRUE`의 위치를 보시죠. 
+
+```{r, eval=FALSE, error=FALSE, warning=FALSE}
+marvel_dc_characters %>% 
+  ...
+    summarise(across(
+    # column 선택
+      .cols = c(Appearances, Fame), 
+    # 적용할 함수 지정
+      .fns = mean, na.rm = TRUE,
+      .names = "{col}_mean"
+      )
+    )
+```
+
+`na.rm = TRUE`는 `mean()`에 속한 parameter와 argument입니다. 그런데 `mean()` 바깥에 있고 실제로 `mean()`안에 있는 것처럼 작동합니다. 하나 더 보시면 **b.**예제에서 사용한 평균, 중앙값, 최소, 최대의 함수 모두 함수 안에 `na.rm = TRUE`를 넣어주지 않았지만 넣어준 것처럼 결과가 나왔음을 볼 수 있습니다. 
+
+`.fns`가 가진 중요한 특징으로 **함수 이름**으로 함수(혹은 함수들)를 지정해줄 때, **지정된 함수에 존재하는 paramter와 argument를 함수 안이 아닌 바깥**에 넣어주어야 하며 **지정된 함수들이 공통적인 paramter를 갖는다면, 단 한 번의 설정으로 모든 함수들의 paramter의 argument를 지정**해줄 수 있습니다. 아래처럼 `na.rm = TRUE`를 `mean()` 안쪽에 넣어줄 경우, 에러가 발생합니다. 
+
+```{r, eval=FALSE}
+marvel_dc_characters %>% 
+  summarise(across(
+    .cols = c(Appearances), 
+    .fns = mean(na.rm = TRUE),
+    .names = "{col}_mean"
+    )
+  )
+```
+
+이유는 **물결표(~)를 이용한 익명함수와 formula**에서 설명한 대로 .fns parameter의 argument로 들어가려면 특별한 형태를 가져야 하기 때문입니다. `.fns = mean(na.rm = TRUE)`의 경우, `mean()`가 가진 핵심 parameter, `x`, 그러니까 평균을 구할 대상이 빠져있기 때문에 에러가 발생합니다. `.fns = mean, na.rm = TRUE`는 함수의 이름과 옵션만 `.fns`의 argument로 지정했기 때문에 `across()`와 `summarise()` 내부적으로 잘 실행됩니다. 
+
+- 좀 더 엄밀히 설명하면 `.fns = mean(na.rm = TRUE)`는 `mean`을 argument로 보내는 것이 아닌 그 자리에서 `mean`을 실행시켜버리기 때문에 에러가 발생하는 것입니다. **argument로 지정될 수 있는 형식**을 유념하셔야 합니다. 
+
+
+**물결표(~)를 이용한 익명함수와 formula**에서 설명한 것이 하나 더 있었습니다. `formula`입니다. **b.**에서 `formula`를 통해 1사분위수와 3사분위수를 구한 것과 `formula`를 사용한 이유가 `quantitle`이 가진 `prob` 때문이라고 한 것을 보셨을 겁니다. 방금 설명드린 내용, `.fns`에 함수 이름으로 함수를 지정하는 경우에 대한 내용을 되새겨보시면 `.fns`에 `formula`를 사용하는 경우를 유추해보실 수 있습니다. 
+
+**모든 함수들의 parameter의 argument를 지정**한다는 얘기는 통일시켜버린다는 것과 같습니다. 그러나 `quantitle()`로 구하고자한 것은 1사분위수와 3사분위수로 각각 `prob = 0.25`와 `prob = 0.75`를 가져야 합니다. **공통된 parameter를 가졌지만 다른 argument를 지정해주고 싶을 때**, `.fns`에 `formula`를 사용합니다. 
+
+- 두 영역이 딱 떨어지는 것처럼 설명했지만 모든 경우에 `formula`를 사용할 수 있습니다. 그러나 효율의 문제에서 굳이 평균, 중간값, 최소, 최대를 각각 `formula`로 사용할 필요는 없을 겁니다. 가능, 불가능의 문제가 아닌 선택의 문제입니다. 
+
+
+여기까지가 `across()`를 이용한 `mutate()`, `summarise()` 활용 예제 및 `.fns` parameter까지의 내용입니다. 다소 프로그래밍적인 개념이 등장해서 분야에 대한 경험이 없으시다면 굉장히 어려운 내용들로 읽힐 것 같습니다. 데이터 분석을 위한 R 활용에는 큰 도움이 되는 내용이 아니므로 경우와 용법을 외워서 사용하셔도 큰 문제는 없으실 겁니다. 다만, 알아두시면 R이라는 언어를 이해하는데 도움이 되기 때문에 소개해드렸습니다. 
+
+이제 다른 **dplyr**의 함수까지 섞어서 사용해보겠습니다. 
+
+# **dplyr 그리고 `across()`**
+
+ㅐ
