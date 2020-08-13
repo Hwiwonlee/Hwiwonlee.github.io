@@ -15,12 +15,15 @@ output:
       toc_depth: 4
       toc_float: yes
 # https://stackoverflow.com/questions/535616/can-css-choose-a-different-default-font-and-size-depending-on-language
+# https://rpubs.com/stevepowell99/floating-css
 # css setting 
 ---
 
 <style type="text/css">
 
 body {
+  line-height: 25px;
+  
   .lang-en {
     font-family:Verdana;
     font-size:14px;
@@ -32,6 +35,8 @@ body {
   }
 }
 code {
+  line-height: 25px;
+
   font-family:NanumGothicCoding;
   
   h1,h2,h3,h4,h5,h6{
@@ -459,3 +464,5 @@ marvel_dc_characters %>%
 **tidy-select**을 지원하는 열 선택 방법과 무궁무진한 함수를 argument로 가지는`.fns`을 가진 `across()`의 활용법을 다뤄보았습니다. 다소 프로그래밍 시점의 설명이 있어 이해하기 쉽지 않으셨을 것이라 생각되지만 **알아두면 쓸데 있는 내용**이므로 굳이 넣어보았습니다. 이 때문에 혼란스러우셨다면 죄송합니다. 
 
 **dplyr**의 함수만으로도 많은 것을 할 수 있지만 `across()`를 함께 사용한다면 작업의 효율이 크게 향상될 것이라 생각합니다. 
+
+다음 번엔 **tidyverse**의 또 다른 패키지 [**tibble**](https://tibble.tidyverse.org/articles/tibble.html)에 대한 설명으로 찾아뵙겠습니다. 감사합니다. 
