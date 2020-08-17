@@ -1,0 +1,73 @@
+---
+title: "Tibble 그리고 data.frame"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+summary : "Tibble pacakge를 이용한 tibble 생성 및 data.frame과의 비교"
+categories:
+  - tidyverse
+tags:
+  - R
+  - tidyverse
+  - tibble
+output: 
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+    bookdown::html_document2:
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+      css: "post_style.css"
+# https://stackoverflow.com/questions/535616/can-css-choose-a-different-default-font-and-size-depending-on-language
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 5)
+# options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(googledrive) # Import dataset from the google drive
+library(readr) # To read csv file
+```
+
+# **Tibble과 data.frame**
+
+[**Tidyverse**](https://www.tidyverse.org/)는 **tibble 패키지**를 통해 **tibble**이라는 데이터셋 형태를 지원합니다. **tibble**은 우리가 일반적으로 사용하고 있는 데이터셋 형태, **data.frame**과 크게 다르지 않으며 그래서 인지 R을 활용하는 많은 데이터 분석가들은 **tibble**과 **data.frame**을 엄격히 구분하지 않습니다. 오늘은 **tibble**이란 무엇이며 **data.frame**과 어떻게 다른지에 대해 얘기해보겠습니다. 
+
+# **Tibble의 특성**
+
+`tibble()`을 다루고 있는 [**Build a data frame**](https://tibble.tidyverse.org/reference/tibble.html)과 **tibble**의 중요한 요소인 tbl_df를 다루고 있는 [tbl_df class](https://tibble.tidyverse.org/reference/tbl_df-class.html)에서 **tibble**과 **data.frame**의 차이를 다음과 같이 서술하고 있습니다. 
+
+- `tbl_df` 클래스를 가진 **data.frame**이 **tibble**이다. 
+
+- 열 데이터의 형태를 강제하지 않는다. 가령, 문자열로된 열 데이터를 factor로 바꾸지 않는다. 
+
+ - **Recyling**은 길이 1의 input에서만 발생한다.[`vctrs::vec_recycle()`](https://vctrs.r-lib.org/reference/vec_recycle.html)에 자세한 내용이 있다.
+
+- 누락된 열 이름은 자동으로 채워지지만 열 이름이 삭제되는 경우는 없다. 비어져 있거나 중복되는 열 이름으로 인해 실행되지 않을 수 있으니 이에 대한 해결 방법을 arg로 설정 해야 한다. [`vctrs::vec_as_names()`](https://tibble.tidyverse.org/reference/tbl_df-class.html)에 자세한 내용이 있다. 
+
+- 행 이름을 가질 수 없다. 자세한 내용은 [rownames](https://tibble.tidyverse.org/reference/rownames.html)를 참고 바란다. 
+
+- `df[, j]`는 똑같이 tibble형태로 반환되며 벡터 형태로 반환되지 않는다. `df[, j, drop = FALSE]`가 디폴트다. 자세한 내용은 [subsetting](https://tibble.tidyverse.org/reference/subsetting.html)을 참고 바란다. 
+
+- `$`를 사용한 열 이름 인덱싱에서 존재하지 않는 열 이름을 사용했을 경우 `NULL`이 반환된다. 자세한 내용은 [subsetting](https://tibble.tidyverse.org/reference/subsetting.html)을 참고 바란다. 
+
+- 출력과 검토는 **tibble의 핵심**이다. 크고 복잡한 데이터셋이라도 간결하게 최대한 많은 정보를 전달하고자 고안된 것이 tibble이다. [formatting](https://tibble.tidyverse.org/reference/formatting.html)에 이와 관련된 자세한 내용이 있다. 
+
+
+
+```{r}
+
+```
