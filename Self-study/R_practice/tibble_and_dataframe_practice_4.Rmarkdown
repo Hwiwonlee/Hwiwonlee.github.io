@@ -68,6 +68,32 @@ library(readr) # To read csv file
 
 
 
-```{r}
+```{r, eval = FALSE}
+length(tibble(
+  x = integer(3),
+  y = 1:3,
+  z = 1
+))
+
+
+length(data.frame(
+  x = integer(3),
+  y = 1:3,
+  z = 1
+))
+
+xs <- list(integer(0), 1L, 1:3)
+lapply(xs, function(x) tibble::tibble(x = x, y = 1))
+
+xs <- list(integer(0), 1L, 1:3)
+lapply(xs, function(x) tibble::tibble(x = x, y = rep_along(1, x)))
+
+xs <- list(integer(0), 1L, 1:3)
+lapply(xs, function(x) data.frame(x = x, y = 1))
+
+
+tibble(x = integer(0), y = 1)
+data.frame(x = integer(0), y = 1)
 
 ```
+zero-length를 가진 vector를 에러가 아닌 zero-length로 유지하는 것. 단, recycle을 하지 않을 뿐. recylcle은 길이 1인 vector에만 적용한다. 
