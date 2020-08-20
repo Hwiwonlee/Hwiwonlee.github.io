@@ -117,3 +117,86 @@ To draw list
 - 지리 데이터를 이용한 시각화
 
 - 눈 모양(eyes) 도표, 감은 눈 모양(half-eyes) 도표 
+
+
+## ch 6. 수량 데이터의 시각화
+### 점 도표와 히트맵 : 히트맵
+- `점 도표와 히트맵`을 선택한 이유 : `막대도표의 다양한 활용`나 `묶은 막대와 누적 막대`에서 다루는 내용이 **익숙한 그래프의 올바른 활용**이라면 `점 도표와 히트맵`은 상대적으로 익숙하지 않은 히트맵의 사용에 대해 다루기 있기 때문
+
+```{r}
+library(vcdExtra)
+vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra"))
+```
+
+```{r, echo = FALSE, eval = FALSE}
+drive_auth()
+data_in_drive <- drive_find(type = "csv", pattern = "us-counties")
+
+for(i in 1:1){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r}
+us_counties <- read_csv("us-counties.csv")
+us_counties[, "date"]
+
+library(pheatmap)
+us_counties %>% 
+  filter(!(state %in% c("District of Columbia",
+                        "Guam",
+                        "Northern Mariana Islands",
+                        "Puerto Rico",
+                        "Virgin Islands"))) %>% 
+  filter(
+    lubridate::month(date) > 
+      lubridate::month("2020-01-21")
+  ) %>% 
+  mutate(
+    month_index = 
+      case_when(
+        lubridate::month(date) == 2 ~ "Feb", 
+        lubridate::month(date) == 3 ~ "Mar",
+        lubridate::month(date) == 4 ~ "Apr", 
+        lubridate::month(date) == 5 ~ "May",
+        lubridate::month(date) == 6 ~ "Jun",
+        lubridate::month(date) == 7 ~ "Jul",
+        lubridate::month(date) == 8 ~ "Aug", 
+      )
+  ) %>% 
+  mutate(month_index = factor(month_index, levels = c("Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"))) %>% 
+  group_by(state, month_index) %>% 
+  summarise(sum_cases = sum(cases)) %>% ungroup() %>% 
+  group_by(month_index) %>% 
+  mutate(month_total = sum(sum_cases)) %>% 
+  mutate(month_case_rate = sum_cases/5000000) %>% 
+  ungroup() %>% 
+  mutate(month_case_rate = ifelse(month_case_rate > 1, 1, month_case_rate)) %>% 
+  ggplot(aes(x = month_index, y = state, fill = month_case_rate)) +
+  geom_tile(color = "white", size = 0.25) +
+  scale_fill_viridis_c(
+    option = "A", begin = 0.0002, end = 1,
+    
+    name = "internet users / 100 people",
+    guide = guide_colorbar(
+      direction = "horizontal",
+      label.position = "bottom",
+      title.position = "top",
+      ticks = FALSE,
+      barwidth = grid::unit(3.5, "in"),
+      barheight = grid::unit(0.2, "in")
+    )
+  ) + 
+  # scale_x_continuous(expand = c(0, 0), name = NULL) +
+  scale_y_discrete(name = NULL, position = "right") + 
+  theme(
+    axis.line = element_blank(),
+    axis.ticks = element_blank(),
+    axis.ticks.length = grid::unit(1, "pt"),
+    legend.position = "top",
+    legend.justification = "left",
+    legend.title.align = 0.5,
+    legend.title = element_text(size = 12*12/14)
+  )
+  
+```
