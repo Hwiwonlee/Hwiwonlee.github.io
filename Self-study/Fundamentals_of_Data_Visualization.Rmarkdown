@@ -143,15 +143,18 @@ us_counties[, "date"]
 
 library(pheatmap)
 us_counties %>% 
+  # 50개주만 따로 선택
   filter(!(state %in% c("District of Columbia",
                         "Guam",
                         "Northern Mariana Islands",
                         "Puerto Rico",
                         "Virgin Islands"))) %>% 
+  # 1월 후반부터 측정되었으므로 1월 자료는 제외
   filter(
     lubridate::month(date) > 
       lubridate::month("2020-01-21")
   ) %>% 
+  # 월마다 index 추가
   mutate(
     month_index = 
       case_when(
@@ -164,20 +167,36 @@ us_counties %>%
         lubridate::month(date) == 8 ~ "Aug", 
       )
   ) %>% 
+  
+  # 추가된 index를 factor로 변환 : 정렬을 위함
   mutate(month_index = factor(month_index, levels = c("Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"))) %>% 
+  
+  # 주마다 월별 확진자 수 합산을 위한 grouping 
   group_by(state, month_index) %>% 
-  summarise(sum_cases = sum(cases)) %>% ungroup() %>% 
-  group_by(month_index) %>% 
+  # 주, 월 별 확진자 수 생성
+  summarise(sum_cases = sum(cases)) %>% 
+  # 월 별 총 확진자 수를 위한 group_by
+  ungroup() %>% group_by(month_index) %>% 
+  # 월 별 총 확진자수 생성
   mutate(month_total = sum(sum_cases)) %>% 
+  # 주, 월 별 5백만명 당 확진자 비율 생성
   mutate(month_case_rate = sum_cases/5000000) %>% 
+  
+  # state 정렬을 위한 group_by
+  ungroup() %>% group_by(state) %>% 
+  arrange(desc(month_case_rate)) %>% ungroup() %>% 
+  mutate(state = fct_rev(factor(state, levels = unique(state)))) %>% 
+  
+  # 5백만명 이상 확진자가 있는 경우를 처리하기 위한 값 변환. 
+  mutate(month_case_rate = ifelse(month_case_rate > 1, 1, month_case_rate)) %>%
   ungroup() %>% 
-  mutate(month_case_rate = ifelse(month_case_rate > 1, 1, month_case_rate)) %>% 
+  
+  # ggplot part 
   ggplot(aes(x = month_index, y = state, fill = month_case_rate)) +
   geom_tile(color = "white", size = 0.25) +
   scale_fill_viridis_c(
     option = "A", begin = 0.0002, end = 1,
-    
-    name = "internet users / 100 people",
+    name = "incidence per 5 million",
     guide = guide_colorbar(
       direction = "horizontal",
       label.position = "bottom",
@@ -198,5 +217,4 @@ us_counties %>%
     legend.title.align = 0.5,
     legend.title = element_text(size = 12*12/14)
   )
-  
 ```
