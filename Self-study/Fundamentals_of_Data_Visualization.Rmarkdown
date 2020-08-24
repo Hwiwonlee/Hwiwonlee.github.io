@@ -2,6 +2,11 @@
 title: "데이터 시각화 교과서(Fundamentals of Data Visualization)"
 author: "Hwiwon Lee"
 date: "`r format(Sys.Date())`"
+categories:
+  - visualization
+tags:
+  - R
+  - visualization
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
     bookdown::html_document2:
@@ -14,24 +19,8 @@ output:
       toc: yes
       toc_depth: 4
       toc_float: yes
-    # mainfont: NanumGothicLight
+      css: "post_style.css"
 ---
-
-<style type="text/css">
-
-body, td {
-  font-family: NanumGothicLight;
-}
-code.r{
-  font-size: 14px;
-  font-family: NanumGothicLight;
-}
-pre {
-  font-size: 14px
-  font-family: NanumGothicLight;
-}
-</style>
-
 
 
 ```{r setup, include=FALSE}
@@ -47,6 +36,9 @@ library(knitr) # for include_graphics()
 library(tidyverse) # as you known, core package
 library(googledrive) # Import dataset from the google drive
 library(readr) # To read csv file
+library(lubridate)
+library(operators)
+library(magrittr)
 ```
 
 
@@ -62,7 +54,7 @@ for(i in 1:8){
 ## ch 2, P.35
 여러 지역의 월 별 온도 대비를 tile로 보여준다는 것이 심미적으로도 차이를 드러내는 것에도 큰 장점으로 보인다. 우리나라 주요도시의 19년 월 별 온도 데이터를 이용해 같은 방식으로 해보자.  
 
-```{r, fig.cap="19년도 대한민국 주요 도시의 월 별 평균 온도", fig.height=6}
+```{r 19년도 대한민국 주요 도시의 월 별 평균 온도, fig.cap="19년도 대한민국 주요 도시의 월 별 평균 온도", fig.height=6}
 # 데이터셋 로드 
 seoul <- read_csv("seoul_19_temp.csv", col_names = FALSE, skip = 1)
 busan <- read_csv("busan_19_temp.csv", col_names = FALSE, skip = 1)
@@ -77,7 +69,7 @@ jeju <- read_csv("jeju_19_temp.csv", col_names = FALSE, skip = 1)
 rbind(seoul, busan, deajeon, incheon, gwangju, ulsan, deagu, jeju) %>% 
   as.tibble() %>% 
   mutate(index = rep(c("Seoul", "Busan", "Deajeon", "Incheon", "Gwangju", "Ulsan", "Deagu", "Jeju"), each = 12)) %>% 
-  rename(Month = X1, location = X2, max = X3, min = X4, mean = X5) %>% 
+  dplyr::rename(Month = X1, location = X2, max = X3, min = X4, mean = X5) %>% 
   select(index, everything()) %>% 
   mutate(Month = 
            factor(
@@ -118,54 +110,44 @@ To draw list
 
 - 눈 모양(eyes) 도표, 감은 눈 모양(half-eyes) 도표 
 
-
 ## ch 6. 수량 데이터의 시각화
 ### 점 도표와 히트맵 : 히트맵
 - `점 도표와 히트맵`을 선택한 이유 : `막대도표의 다양한 활용`나 `묶은 막대와 누적 막대`에서 다루는 내용이 **익숙한 그래프의 올바른 활용**이라면 `점 도표와 히트맵`은 상대적으로 익숙하지 않은 히트맵의 사용에 대해 다루기 있기 때문
 
-```{r}
-library(vcdExtra)
-vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra"))
-```
-
-```{r, echo = FALSE, eval = FALSE}
+```{r, echo=FALSE}
 drive_auth()
 data_in_drive <- drive_find(type = "csv", pattern = "us-counties")
 
 for(i in 1:1){ 
   drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
 }
+us_counties <- read_csv("us-counties.csv")
 ```
 
-```{r}
-us_counties <- read_csv("us-counties.csv")
-us_counties[, "date"]
-
-library(pheatmap)
+```{r, fig.cap="미국의 5백만명당 코로나 확진자 추세", fig.height=6}
 us_counties %>% 
   # 50개주만 따로 선택
-  filter(!(state %in% c("District of Columbia",
+  dplyr::filter(!(state %in% c("District of Columbia",
                         "Guam",
                         "Northern Mariana Islands",
                         "Puerto Rico",
                         "Virgin Islands"))) %>% 
   # 1월 후반부터 측정되었으므로 1월 자료는 제외
-  filter(
+  dplyr::filter(
     lubridate::month(date) > 
       lubridate::month("2020-01-21")
   ) %>% 
   # 월마다 index 추가
-  mutate(
-    month_index = 
-      case_when(
-        lubridate::month(date) == 2 ~ "Feb", 
-        lubridate::month(date) == 3 ~ "Mar",
-        lubridate::month(date) == 4 ~ "Apr", 
-        lubridate::month(date) == 5 ~ "May",
-        lubridate::month(date) == 6 ~ "Jun",
-        lubridate::month(date) == 7 ~ "Jul",
-        lubridate::month(date) == 8 ~ "Aug", 
-      )
+  mutate(month_index = 
+           case_when(
+             lubridate::month(date) == 2 ~ "Feb", 
+             lubridate::month(date) == 3 ~ "Mar",
+             lubridate::month(date) == 4 ~ "Apr", 
+             lubridate::month(date) == 5 ~ "May",
+             lubridate::month(date) == 6 ~ "Jun",
+             lubridate::month(date) == 7 ~ "Jul",
+             lubridate::month(date) == 8 ~ "Aug"
+           )
   ) %>% 
   
   # 추가된 index를 factor로 변환 : 정렬을 위함
@@ -173,12 +155,11 @@ us_counties %>%
   
   # 주마다 월별 확진자 수 합산을 위한 grouping 
   group_by(state, month_index) %>% 
-  # 주, 월 별 확진자 수 생성
-  summarise(sum_cases = sum(cases)) %>% 
+  # dplyr::summarise로 사용하지 않으면 knit 중 에러 발생
+  # Q. masking이 된 것도 아닌데 왜지? 
+  dplyr::summarise(sum_cases = sum(cases)) %>% 
   # 월 별 총 확진자 수를 위한 group_by
   ungroup() %>% group_by(month_index) %>% 
-  # 월 별 총 확진자수 생성
-  mutate(month_total = sum(sum_cases)) %>% 
   # 주, 월 별 5백만명 당 확진자 비율 생성
   mutate(month_case_rate = sum_cases/5000000) %>% 
   
@@ -190,7 +171,6 @@ us_counties %>%
   # 5백만명 이상 확진자가 있는 경우를 처리하기 위한 값 변환. 
   mutate(month_case_rate = ifelse(month_case_rate > 1, 1, month_case_rate)) %>%
   ungroup() %>% 
-  
   # ggplot part 
   ggplot(aes(x = month_index, y = state, fill = month_case_rate)) +
   geom_tile(color = "white", size = 0.25) +
@@ -207,14 +187,116 @@ us_counties %>%
     )
   ) + 
   # scale_x_continuous(expand = c(0, 0), name = NULL) +
-  scale_y_discrete(name = NULL, position = "right") + 
+  scale_y_discrete(name = NULL, position = "right") +
+  labs(x = "Month") + 
   theme(
     axis.line = element_blank(),
     axis.ticks = element_blank(),
     axis.ticks.length = grid::unit(1, "pt"),
     legend.position = "top",
     legend.justification = "left",
-    legend.title.align = 0.5,
-    legend.title = element_text(size = 12*12/14)
-  )
+    legend.title.align = 0.5
+  ) 
 ```
+
+
+
+```{r 미국, 주별, 한달 주기 5백만명당 코로나 확진자, fig.cap="미국의 5백만명당 코로나 확진자 추세", fig.height=6}
+# 이전 plot은 1월 데이터를 모두 제거하고 2월 데이터로만 진행했다. 
+# 초기 확진자 등장 또한 중요한 정보이므로 삭제하지 않는 것이 더 좋지 않을까? 
+# date는 20년 1월 21일부터 20년 8월 18일까지 존재하므로 30일주기로 간격을 설정한 후 그래프를 다시 그려보자. 
+
+# 날짜 index를 위한 지역 설정 : 미국
+Sys.setlocale("LC_TIME", "English_United States.1252")
+
+us_counties %>% 
+  # 50개주만 따로 선택
+  filter(!(state %in% c("District of Columbia",
+                        "Guam",
+                        "Northern Mariana Islands",
+                        "Puerto Rico",
+                        "Virgin Islands"))) %>% 
+  # 기간 index를 추가
+  # Q. 이 반복을 처리할 방법이 있을탠데
+  mutate(term_index = 
+           case_when(
+             date[1] + 30 >= date ~ paste0(format(date[1], "%b %d"), "~", format(date[1] + 30, "%b %d")) ,
+             date[1] + 60 >= date ~ paste0(format(date[1] + 31, "%b %d"), "~", format(date[1] + 60, "%b %d")), 
+             date[1] + 90 >= date ~ paste0(format(date[1] + 61, "%b %d"), "~", format(date[1] + 90, "%b %d")), 
+             date[1] + 120 >= date ~ paste0(format(date[1] + 91, "%b %d"), "~", format(date[1] + 120, "%b %d")), 
+             date[1] + 150 >= date ~ paste0(format(date[1] + 121, "%b %d"), "~", format(date[1] + 150, "%b %d")), 
+             date[1] + 180 >= date ~ paste0(format(date[1] + 151, "%b %d"), "~", format(date[1] + 180, "%b %d")), 
+             date[1] + 210 >= date ~ paste0(format(date[1] + 181, "%b %d"), "~", format(date[1] + 210, "%b %d")) 
+           )  
+  ) %>%
+  # 추가된 index를 factor로 변환 : 정렬을 위함
+  mutate(term_index = factor(term_index, 
+                             levels = c("Jan 21~Feb 20",
+                                        "Feb 21~Mar 21",
+                                        "Mar 22~Apr 20",
+                                        "Apr 21~May 20",
+                                        "May 21~Jun 19",
+                                        "Jun 20~Jul 19",
+                                        "Jul 20~Aug 18"))
+  ) %>% 
+  
+  # 주마다 월별 확진자 수 합산을 위한 grouping 
+  group_by(state, term_index) %>% 
+  # 주, 월 별 확진자 수 생성
+  
+  # dplyr::summarise로 사용하지 않으면 knit 중 에러 발생
+  # Q. masking이 된 것도 아닌데 왜지? 
+  dplyr::summarise(sum_cases = sum(cases)) %>% 
+  # 월 별 총 확진자 수를 위한 group_by
+  ungroup() %>% group_by(term_index) %>% 
+  # 주, 월 별 5백만명 당 확진자 비율 생성
+  mutate(term_case_rate = sum_cases/5000000) %>% 
+  
+  # state 정렬을 위한 group_by
+  ungroup() %>% group_by(state) %>% 
+  arrange(desc(term_case_rate)) %>% ungroup() %>% 
+  mutate(state = fct_rev(factor(state, levels = unique(state)))) %>% 
+  
+  # 5백만명 이상 확진자가 있는 경우를 처리하기 위한 값 변환. 
+  mutate(term_case_rate = ifelse(term_case_rate > 1, 1, term_case_rate)) %>%
+  ungroup() %>% 
+  
+  # ggplot part 
+  ggplot(aes(x = term_index, y = state, fill = term_case_rate)) +
+  geom_tile(color = "white", size = 0.25) +
+  scale_fill_viridis_c(
+    option = "A", begin = 0.0002, end = 1,
+    name = "incidence per 5 million",
+    guide = guide_colorbar(
+      direction = "horizontal",
+      label.position = "bottom",
+      title.position = "top",
+      ticks = FALSE,
+      barwidth = grid::unit(3.5, "in"),
+      barheight = grid::unit(0.2, "in")
+    )
+  ) + 
+  # scale_x_continuous(expand = c(0, 0), name = NULL) +
+  scale_y_discrete(name = NULL, position = "right") +
+  labs(x = "Term") + 
+  theme(
+    axis.line = element_blank(),
+    axis.ticks = element_blank(),
+    axis.ticks.length = grid::unit(1, "pt"),
+    legend.position = "top",
+    legend.justification = "left",
+    legend.title.align = 0.5
+  )
+
+Sys.setlocale("LC_TIME", "Korean_Korea.949")
+```
+
+
+
+
+
+
+
+
+
+
