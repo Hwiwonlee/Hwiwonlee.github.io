@@ -1,0 +1,127 @@
+---
+title: "lubridate 패키지를 이용한 날짜 데이터 다루기"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+summary : "날짜형 데이터 핸들링을 지원하는 lubridate 패키지의 기초"
+categories:
+  - tidyverse
+tags:
+  - R
+  - tidyverse
+  - lubridate
+output:
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+    bookdown::html_document2:
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+      css: "post_style.css"
+# https://stackoverflow.com/questions/535616/can-css-choose-a-different-default-font-and-size-depending-on-language
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 5)
+# options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(googledrive) # Import dataset from the google drive
+library(readr) # To read csv file
+```
+
+# **lubridate package**
+
+R을 활용해 데이터 분석을 하다보면 만나는 **날짜형 데이터**에 고생해보신 경험, 한 두 번 정도는 있으실 겁니다. 오늘은 **날짜형 데이터**를 다루는데 특화된 [**lubridate**](https://lubridate.tidyverse.org/index.html)에 대해 알아보겠습니다. 
+
+**lubridate**는 **tidyverse**에 속한 패키지로 날짜형 데이터를 효과적으로 다루기 위한 패키지입니다. R Base에서도 날짜형 데이터를 다루는 함수들을 지원하긴 하지만 사용자 친화적이지 않기 때문에 추천드리지 않습니다. 더불어 날짜형 데이터를 다루는 **zoo**와 **xts**와 같은 다른 패키지들이 존재하지만 상대적으로 사용이 편리하고 구글에 자료가 풍부해 troubleshooting에 용이한 **lubridate**의 사용을 권해드립니다. 
+
+날짜형 데이터는 왜 다루기 어려운 걸까요? [R for Data Science](https://r4ds.had.co.nz/dates-and-times.html)를 참고해 제 나름대로 정리해보겠습니다.
+
+> 날짜형 데이터를 다루기 어려운 이유는 우리에게 너무나 익숙한 시간이 실제로는 다소 불규칙적으로 나열되어있기 때문이다. 10년 정도의 시간으로 가상의 데이터를 만든다고 해보자. 어떤 연도는 365일이 아닐 것이다. 서머 타임을 적용하면 어떤 날들은 24시간이 아닐 것이다. 여기에 시차까지 적용해 여러 나라의 10년 정도의 시간을 만든다고 해보자. 이건 절대 쉬운 일이 아니다. 
+
+**lubridate**로 날짜형 데이터를 다루기 전에, 먼저 날짜형 데이터란 무엇인지에 대해 짚고 넘어갈 필요성이 있습니다. 날짜형 데이터는 어떻게 구성되어있을까요? 
+
+
+## **날짜형 데이터 : 날짜(Date)와 시간(Time)**
+**날짜형 데이터**는 다음의 3개의 value로 세분화할 수 있습니다. 
+
+- 연월일(Year, Month, Day)로 구성되는 **날짜(Date)**
+
+- 시분초(Hour, Minute, Second)로 구성되는 **시간(Time)**
+
+- 날짜와 시간이 합쳐진 **날짜-시간(Date-Time)**
+
+```{r}
+# load lubridate
+library(lubridate)
+```
+
+```{r}
+# date, time, date-time의 생성
+date <- lubridate::as_date("2020-01-01")
+time <- hms::as_hms(3600) # using hms package
+`date-time` <- lubridate::as_datetime("2020-01-01 01:00:00", tz = "UTC")
+ date; time; `date-time`
+```
+`date-time`에 보이는 `UTC`는 [협정 세계시](https://ko.wikipedia.org/wiki/%ED%98%91%EC%A0%95_%EC%84%B8%EA%B3%84%EC%8B%9C)를 뜻합니다. `date`와 `time`가 연월일, 시분초로만 구성되어있는 것에 비해 `date-time`은 좀 더 구체적인 시간 정보를 갖고 있다고 생각하셔도 좋습니다. 
+
+`time`을 제외한 `date`와 `date-time`은 R base의 함수로도 생성할 수 있습니다. 
+
+```{r}
+date_base <- as.Date("2020-01-01")
+`date-time_base` <- as.POSIXct("2020-01-01 01:00:00", tz = "UTC")
+```
+```{r, collapse=TRUE}
+# date와 date_base가 같음을 확인 
+identical(date, date_base)
+```
+```{r, collapse=TRUE}
+# date와 date_base가 같음을 확인
+identical(`date-time`, `date-time_base`)
+```
+
+딱 이 정도가 R base와 **lubridate**의 공통점입니다. 이제 **lubridate**를 활용한 예제로 **lubridate**가 가지고 있는 장점을 알아보겠습니다. 
+
+
+### **몰라도 좋고 알면 더 좋은 날짜형 데이터의 class**
+
+앞서 보았던 날짜형 데이터, `date`, `time`, `date-time`은 각각 다른 `class`를 가집니다. 하나씩 짚어보면서 설명드리겠습니다. 
+    ```{r, collapse=TRUE}
+    class(date)
+    ```
+- `"Date" class`는 **연산 가능한 날짜 데이터**로 가장 기초적인 형태의 날짜 데이터입니다.  `1970-01-01`을 기준연월일로 하여 일단위에 대한 정수값을 가지고 이를 이용해 날짜 연산을 지원합니다. 
+    ```{r, collapse=TRUE}
+    date + 1
+    ```
+    ```{r, collapse=TRUE}
+    unclass(date) # 2020년 1월 1일은 1970년 1월 1일 이후 18262일이 지났다. 
+    ```
+
+    ```{r, collapse=TRUE}
+    class(time)
+    ```
+- `"difftime class`는 **시간의 차이**만을 저장하는 `class`로 이미 R base에서 구현되어 있지만 시간 그 자체를 저장하고 표현하기엔 어렵다는 단점이 있습니다. 이 문제를 해결하기 위해 나타난 것이 [hms 패키지](https://hms.tidyverse.org/index.html)입니다. 
+
+- hms 패키지에서 추가된 `"hms" class`는 `"difftime" class`를 기반으로 **시간**을 저장하기 위해 설계된 `class`입니다. **시간** 데이터을 간편하게 사용할 수 있는 패키지이므로 알아두시길 바랍니다. 
+
+    ```{r, collapse=TRUE}
+    class(`date-time`)
+    ```
+- `"POSIXct" class`는 **연산 가능한 날짜-시간(date-time) 데이터**로 날짜와 시간, 그리고 타임존에 대한 정보를 가지고 있는 `class`입니다. `"POSIXct"`와 비슷한 `"POSIXlt"`도 존재합니다. `"POSIXct"`는 데이터 프레임에 넣기 용이한 형태이며 `"POSIXlt"`는 사람이 읽고 이해하기 편한 형태라는 구성의 차이만을 갖습니다.  
+
+- `"POSIXt" class`는 `"POSIXct"`, `"POSIXlt"` 두 `class`를 상속받는 vitual class로 두 `class` 사이의 연산을 지원하기 위해 존재합니다. 자세한 설명은 [Date-Time Classes](https://stat.ethz.ch/R-manual/R-devel/library/base/html/DateTimeClasses.html)을 참고하시길 바랍니다. 
+
+
