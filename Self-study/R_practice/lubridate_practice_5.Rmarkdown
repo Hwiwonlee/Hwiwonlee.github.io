@@ -40,6 +40,7 @@ library(knitr) # for include_graphics()
 library(tidyverse) # as you known, core package
 library(googledrive) # Import dataset from the google drive
 library(readr) # To read csv file
+library(lubridate)
 ```
 
 # **lubridate package**
@@ -48,21 +49,23 @@ R을 활용해 데이터 분석을 하다보면 만나는 **날짜형 데이터*
 
 **lubridate**는 **tidyverse**에 속한 패키지로 날짜형 데이터를 효과적으로 다루기 위한 패키지입니다. R Base에서도 날짜형 데이터를 다루는 함수들을 지원하긴 하지만 사용자 친화적이지 않기 때문에 추천드리지 않습니다. 더불어 날짜형 데이터를 다루는 **zoo**와 **xts**와 같은 다른 패키지들이 존재하지만 상대적으로 사용이 편리하고 구글에 자료가 풍부해 troubleshooting에 용이한 **lubridate**의 사용을 권해드립니다. 
 
-날짜형 데이터는 왜 다루기 어려운 걸까요? [R for Data Science](https://r4ds.had.co.nz/dates-and-times.html)를 참고해 제 나름대로 정리해보겠습니다.
+날짜형 데이터는 왜 다루기 어려운 걸까요? [**R for science : 16 Dates and times**](https://r4ds.had.co.nz/dates-and-times.html)의 introduction을 참고해 제 나름대로 정리해보겠습니다.
 
 > 날짜형 데이터를 다루기 어려운 이유는 우리에게 너무나 익숙한 시간이 실제로는 다소 불규칙적으로 나열되어있기 때문이다. 10년 정도의 시간으로 가상의 데이터를 만든다고 해보자. 어떤 연도는 365일이 아닐 것이다. 서머 타임을 적용하면 어떤 날들은 24시간이 아닐 것이다. 여기에 시차까지 적용해 여러 나라의 10년 정도의 시간을 만든다고 해보자. 이건 절대 쉬운 일이 아니다. 
 
 **lubridate**로 날짜형 데이터를 다루기 전에, 먼저 날짜형 데이터란 무엇인지에 대해 짚고 넘어갈 필요성이 있습니다. 날짜형 데이터는 어떻게 구성되어있을까요? 
 
 
-## **날짜형 데이터 : 날짜(Date)와 시간(Time)**
+## **날짜형 데이터 : 날짜(date), 시간(time) 그리고 날짜-시간(date-time)**
 **날짜형 데이터**는 다음의 3개의 value로 세분화할 수 있습니다. 
 
-- 연월일(Year, Month, Day)로 구성되는 **날짜(Date)**
+- 연월일(Year, Month, Day)로 구성되는 **날짜(date)**
 
-- 시분초(Hour, Minute, Second)로 구성되는 **시간(Time)**
+- 시분초(Hour, Minute, Second)로 구성되는 **시간(time)**
 
-- 날짜와 시간이 합쳐진 **날짜-시간(Date-Time)**
+- 날짜와 시간이 합쳐진 **날짜-시간(date-time)**
+
+보통의 경우, 날짜형 데이터(date type)보다는 날짜-시간(date-time) 혹은 날짜/시간(date/time) 등으로 표기합니다. 엄밀히 말하면 세 개의 개념이 각각 다르기 때문에 경우에 따라 다른 단어를 사용하는 것이 옳습니다만 이 포스트에서는 위 3개의 데이터를 통칭하기 위해 날짜형 데이터라는 말을 사용하겠습니다.
 
 ```{r}
 # load lubridate
@@ -76,6 +79,7 @@ time <- hms::as_hms(3600) # using hms package
 `date-time` <- lubridate::as_datetime("2020-01-01 01:00:00", tz = "UTC")
  date; time; `date-time`
 ```
+
 `date-time`에 보이는 `UTC`는 [협정 세계시](https://ko.wikipedia.org/wiki/%ED%98%91%EC%A0%95_%EC%84%B8%EA%B3%84%EC%8B%9C)를 뜻합니다. `date`와 `time`가 연월일, 시분초로만 구성되어있는 것에 비해 `date-time`은 좀 더 구체적인 시간 정보를 갖고 있다고 생각하셔도 좋습니다. 
 
 `time`을 제외한 `date`와 `date-time`은 R base의 함수로도 생성할 수 있습니다. 
@@ -98,10 +102,10 @@ identical(`date-time`, `date-time_base`)
 
 ### **몰라도 좋고 알면 더 좋은 날짜형 데이터의 class**
 
-앞서 보았던 날짜형 데이터, `date`, `time`, `date-time`은 각각 다른 `class`를 가집니다. 하나씩 짚어보면서 설명드리겠습니다. 
-    ```{r, collapse=TRUE}
-    class(date)
-    ```
+`class`에 대한 정보는 데이터 분석을 위해서보단 R 프로그래밍 그 자체를 이해하는데 도움이 될 수 있습니다. 앞서 보았던 날짜형 데이터, `date`, `time`, `date-time`은 각각 다른 `class`를 가집니다. 하나씩 짚어보면서 설명드리겠습니다. 
+```{r, collapse=TRUE}
+class(date)
+```
 - `"Date" class`는 **연산 가능한 날짜 데이터**로 가장 기초적인 형태의 날짜 데이터입니다.  `1970-01-01`을 기준연월일로 하여 일단위에 대한 정수값을 가지고 이를 이용해 날짜 연산을 지원합니다. 
     ```{r, collapse=TRUE}
     date + 1
@@ -110,18 +114,78 @@ identical(`date-time`, `date-time_base`)
     unclass(date) # 2020년 1월 1일은 1970년 1월 1일 이후 18262일이 지났다. 
     ```
 
-    ```{r, collapse=TRUE}
-    class(time)
-    ```
-- `"difftime class`는 **시간의 차이**만을 저장하는 `class`로 이미 R base에서 구현되어 있지만 시간 그 자체를 저장하고 표현하기엔 어렵다는 단점이 있습니다. 이 문제를 해결하기 위해 나타난 것이 [hms 패키지](https://hms.tidyverse.org/index.html)입니다. 
+```{r, collapse=TRUE}
+class(time)
+```
+- `"difftime class`는 **시간의 차이**만을 저장하는 `class`로 이미 R base에서 구현되어 있지만 시간 그 자체를 저장하고 표현하기엔 어렵다는 단점이 있습니다. 이 문제를 해결하기 위해 고안된 것이 [hms 패키지](https://hms.tidyverse.org/index.html)입니다. 
 
 - hms 패키지에서 추가된 `"hms" class`는 `"difftime" class`를 기반으로 **시간**을 저장하기 위해 설계된 `class`입니다. **시간** 데이터을 간편하게 사용할 수 있는 패키지이므로 알아두시길 바랍니다. 
 
-    ```{r, collapse=TRUE}
-    class(`date-time`)
-    ```
+```{r, collapse=TRUE}
+class(`date-time`)
+```
 - `"POSIXct" class`는 **연산 가능한 날짜-시간(date-time) 데이터**로 날짜와 시간, 그리고 타임존에 대한 정보를 가지고 있는 `class`입니다. `"POSIXct"`와 비슷한 `"POSIXlt"`도 존재합니다. `"POSIXct"`는 데이터 프레임에 넣기 용이한 형태이며 `"POSIXlt"`는 사람이 읽고 이해하기 편한 형태라는 구성의 차이만을 갖습니다.  
 
 - `"POSIXt" class`는 `"POSIXct"`, `"POSIXlt"` 두 `class`를 상속받는 vitual class로 두 `class` 사이의 연산을 지원하기 위해 존재합니다. 자세한 설명은 [Date-Time Classes](https://stat.ethz.ch/R-manual/R-devel/library/base/html/DateTimeClasses.html)을 참고하시길 바랍니다. 
 
+# **lubridate을 이용한 날짜-시간 데이터 핸들링**
+[**lubridate CHEAT SHEET**](https://rawgit.com/rstudio/cheatsheets/master/lubridate.pdf)와 [**lubridate : Function reference**](https://lubridate.tidyverse.org/reference/index.html), 그리고 [**R for science : 16 Dates and times**](https://r4ds.had.co.nz/dates-and-times.html)을 참고해 **lubridate**의 부분을 다음과 같이 크게 세 부분으로 나눠보았습니다. 
 
+- 날짜형 데이터 변환 및 생성
+
+- 날짜형 데이터를 이루는 요소 다루기(component handling)
+
+- 날짜형 데이터 연산 : 기간(period), 지속(duration), 간격(interval)
+
+순서대로 찬찬히 살펴보겠습니다. 
+
+
+## **날짜형 데이터 변환 및 생성**
+
+R에서 날짜형 데이터를 생성하는 경우를 생각해볼 때, 가장 먼저 떠오르는 것은 문자열 또는 숫자 형태로 저장된 날짜 데이터를 날짜형 데이터로 바꿔 생성하는 일입니다. 실제로 DB에 저장된 데이터를 SQL 등으로 가져오는 것이 아닌, 흔히 접하는 엑셀 형태의 원자료(raw data)들은 엄밀한 의미의 **날짜형 데이터**가 없습니다. 문자열이나 숫자를 날짜형 데이터의 모습으로 저장하고 있을 뿐입니다. 
+
+따라서 원자료에 속한 날짜 데이터들을 날짜형 데이터로 바꿔주어야 원활한 분석이 가능합니다. **lubridate**는 대상이 되는 날짜 데이터의 정보에 따라 사용할 수 있는 여러 함수들을 지원합니다. 예제를 이용해 [**Date/time parsing**](https://lubridate.tidyverse.org/reference/index.html)의 함수 사용법을 알아보겠습니다.
+
+### **날짜형 데이터를 이루는 요소들을 이용한 데이터 형 변환**
+
+날짜 데이터가 가진 날짜와 시간 정보에 따라 `ymd()`와 `ymd_hms()`로 대표되는 두 함수꼴을 사용할 수 있습니다. 함수 이름부터 굉장히 직관적인데, `ymd()`는 **y**ear, **m**month, **d**ay를 의미하고 `ymd_hms()`는 앞의 ymd에 **h**our, **m**inute, **s**econd를 추가한 것입니다. 여기에 앞서 보신 `hms()`도 같은 맥락으로 사용 가능합니다. 
+
+`ymd()`, `ymd_hms()`, `hms()`는 날짜와 시간 정보가 어떤 꼴이냐에 따라 다시 한 번 세분화되기 때문에 전처리 과정에서 마주치는 대부분의 날짜 데이터를 날짜형 데이터로 손쉽게 바꿀 수 있습니다. `ymd()`의 경우를 예로 들어보겠습니다. 
+
+```{r, collapse=TRUE}
+# ymd(), ydm(), mdy(), myd(), dmy(), dym()
+
+ymd("2020-01-10")
+ydm("201001")
+mdy("m 1 d 10 y 20")
+myd("1/20/10")
+dmy("10 !! 01 ?? 20")
+dym("10 테 20 스 1 트")
+```
+
+
+
+
+ 
+
+
+
+# **Summary** 
+
+
+# **Reference**
+
+
+- [lubridate main page](https://lubridate.tidyverse.org/index.html)
+
+- [lubridate CHEAT SHEET](https://rawgit.com/rstudio/cheatsheets/master/lubridate.pdf)
+
+- [lubridate : Function reference](https://lubridate.tidyverse.org/reference/index.html)
+
+- [hms main page](https://hms.tidyverse.org/index.html)
+
+- [R for science : 16 Dates and times](https://r4ds.had.co.nz/dates-and-times.html)
+
+- [데이터 과학 : 시간 데이터 기초](https://statkclee.github.io/data-science/ds-date-basics.html)
+
+- [R에서 lubridate package 에 대해](https://lovetoken.github.io/r/2016/09/18/lubridate_package.html)
