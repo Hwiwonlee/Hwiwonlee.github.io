@@ -39,6 +39,9 @@ library(readr) # To read csv file
 library(lubridate)
 library(operators)
 library(magrittr)
+# install.packages("remotes")
+# remotes::install_github("SimonCoulombe/pkgsimon")
+library(pkgsimon)
 ```
 
 
@@ -199,9 +202,7 @@ us_counties %>%
   ) 
 ```
 
-
-
-```{r 미국, 주별, 한달 주기 5백만명당 코로나 확진자, fig.cap="미국의 5백만명당 코로나 확진자 추세", fig.height=6}
+```{r 미국의-주별-한달-주기-5백만명당-코로나-확진자-추세, fig.cap='미국의 주별, 한달 주기 5백만명당 코로나 확진자 추세', fig.height=6}
 # 이전 plot은 1월 데이터를 모두 제거하고 2월 데이터로만 진행했다. 
 # 초기 확진자 등장 또한 중요한 정보이므로 삭제하지 않는 것이 더 좋지 않을까? 
 # date는 20년 1월 21일부터 20년 8월 18일까지 존재하므로 30일주기로 간격을 설정한 후 그래프를 다시 그려보자. 
@@ -289,6 +290,114 @@ us_counties %>%
   )
 
 Sys.setlocale("LC_TIME", "Korean_Korea.949")
+```
+
+
+```{r, include=FALSE}
+library(vcdExtra)
+vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra", "tidyr"))
+```
+
+
+```{r 타이타닉-탑승자의-생존여부에-따른-나이-분포-분할-그래프, fig.cap="타이타닉 탑승자의 생존여부에 따른 나이 분포 분할 그래프"}
+# geom_density_line()을 위한 패키지 로드
+library(ggridges)
+# darken()을 위한 패키지 로드
+library(tinter)
+
+
+# legend의 order를 "생존", "사망"으로 만들기 위함
+# https://stackoverflow.com/questions/50420205/how-to-reorder-overlaying-order-of-geoms-but-keep-legend-order-intact-in-ggplot
+Titanicp$survived2 <- factor(Titanicp$survived, levels = c("survived", "died"), labels = c("생존", "사망"))
+
+Titanicp %>% 
+  mutate(survived = factor(survived, levels = c("survived", "died"), labels = c("생존", "사망"))) %>% 
+  mutate(survived = fct_rev(survived)) %>% # density 범위의 overlap 때문에 조정
+  
+  # ggplot part
+  ggplot(aes(x = age, y = stat(count), 
+             color = fct_rev(survived2), 
+             fill = fct_rev(survived2))) + 
+  geom_density_line(bw = 2, alpha = 0.5) + 
+  # x축 조정
+  scale_x_continuous(name = "나이(세)",  # 이름
+                     limits = c(0, 85), # x축의 최소, 최대 범위
+                     expand = c(0, 0)) + # 원점에서의 시작, x축 끝의 여백을 최소화하기 위한 expand
+  
+  scale_y_continuous(name = "등장 횟수", # 이름 
+                     limits = c(0, 27), # y축의 최소, 최대 범위 
+                     expand = c(0, 0)) + # 원점에서의 시작, y축 끝의 여백을 최소화하기 위한 expand
+  
+  # plot의 색깔 조정
+  scale_fill_manual(name = "생존여부", # 범례 이름
+                    values = c("#3399FF", "#FF9933"), # 채움 색깔 설정
+                    breaks = levels(Titanicp$survived2)) + # 범례 순서를 위한 breaks
+  
+  scale_color_manual(name = "생존여부", # 범례이름
+                     values = darken(c("#3399FF", "#FF9933"), 0.5), # 라인 색깔 설정
+                     breaks = levels(Titanicp$survived2)) + # 범례 순서를 위한 breaks
+  
+  
+  theme_dviz_hgrid() + # background 설정
+  # guides(fill = guide_legend(override.aes = list(linetype = 0))) + # 차이를 모르겠는데1
+  # coord_cartesian(clip = "on") + # 차이를 모르겠는데2
+  theme(
+    axis.line.x = element_blank(),
+    legend.position = c(.9, .7),
+    legend.justification = c("right", "top"),
+    legend.box.background = element_rect(fill = "white", color = "white"),
+    plot.margin = margin(10, 10, 10, 10) # 상, 우, 하, 좌
+  )
+```
+```{r}
+Titanicp %>% 
+  mutate(survived = factor(survived, levels = c("survived", "died"), labels = c("생존", "사망"))) %>% 
+  
+# ggplot part
+  ggplot(aes(x = age, y = stat(count))) + 
+  
+  geom_density_line(
+    data = select(Titanicp, -survived), aes(fill = "전체 탑승객"),
+    color = "transparent"
+  ) + 
+  geom_density_line(aes(fill = survived), bw = 2, color = "transparent") +
+  
+  # x축 조정
+  scale_x_continuous(name = "탑승객의 나이(세)",  # 이름
+                     limits = c(0, 85), # x축의 최소, 최대 범위
+                     expand = c(0, 0)) + # 원점에서의 시작, x축 끝의 여백을 최소화하기 위한 expand
+  
+  scale_y_continuous(name = "등장 횟수", # 이름 
+                     limits = c(0, 45), # y축의 최소, 최대 범위 
+                     expand = c(0, 0)) + # 원점에서의 시작, y축 끝의 여백을 최소화하기 위한 expand
+
+  scale_fill_manual(
+    values = c("#A0A0A0", "#3399FF", "#FF9933"), 
+    breaks = c("전체 탑승객", "생존", "사망"),
+    labels = c("전체 탑승객", "생존  ", "사망"),
+    name = NULL,
+    guide = guide_legend(direction = "horizontal")
+  ) +
+  
+  coord_cartesian(clip = "off") +
+  
+  facet_wrap(~survived) +
+  
+  theme_dviz_hgrid() +
+  
+  theme(
+    axis.line.x = element_blank(),
+    strip.text = element_text(size = 14, margin = margin(0, 0, 0.2, 0, "cm")),
+    legend.position = "bottom",
+    legend.justification = "right",
+    legend.margin = margin(4.5, 0, 1.5, 0, "pt"),
+    legend.spacing.x = grid::unit(4.5, "pt"),
+    legend.spacing.y = grid::unit(0, "pt"),
+    legend.box.spacing = grid::unit(0, "cm"), 
+    # facet_wrap으로 생기는 박스 색깔 조정
+    # https://stackoverflow.com/questions/19440069/ggplot2-facet-wrap-strip-color-based-on-variable-in-data-set
+    strip.background = element_rect(fill="white") 
+  )
 ```
 
 
