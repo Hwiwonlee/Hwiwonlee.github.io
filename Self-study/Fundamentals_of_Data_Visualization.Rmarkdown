@@ -39,9 +39,14 @@ library(readr) # To read csv file
 library(lubridate)
 library(operators)
 library(magrittr)
-# install.packages("remotes")
-# remotes::install_github("SimonCoulombe/pkgsimon")
-library(pkgsimon)
+library(ggridges) # geom_density_line()을 위한 패키지 로드
+library(tinter) # darken()을 위한 패키지 로드
+library(pkgsimon) # theme_dviz_hgrid()를 위함
+library(showtext)
+font_add_google('Noto Sans KR', 'notosanskr')
+font_add_google('Noto Sans', 'notosans')
+font_add_google('Nanum Gothic', 'nanumgothic')
+font_add_google('Nanum Brush Script', 'test')
 ```
 
 
@@ -298,6 +303,7 @@ library(vcdExtra)
 vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra", "tidyr"))
 ```
 
+
 ## ch 7. 데이터 분포의 시각화 : 히스토그램(histogram)과 밀도 도표(density plot)
 
 - 사실, 히스토그램을 사용하는 것이 부적절한 경우가 많다. bin 개수마다 모양이 달라져서 최적의 bin을 알아내는 것도 번거로운 일이다. 만약 분포를 표현해야하는 변수가 여러 개라면 히스토그램은 더욱 사용하기 어려워진다. 
@@ -306,7 +312,8 @@ vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra", "tidyr"))
 
 - 이번 파트의 핵심은 `facet_`을 이용해 분할하는 것을 넘어서 전체 그룹에 대한 분포까지 보여주는 density plot을 그리는 것이라 생각한다. 코드를 참조해서 수정해보았다. 
 
-```{r 타이타닉-탑승자의-생존여부에-따른-나이-분포-분할-그래프, fig.cap="타이타닉 탑승자의 생존여부에 따른 나이 분포 분할 그래프"}
+
+```{r 타이타닉-탑승자의-생존여부에-따른-나이-분포-그래프, fig.cap="타이타닉 탑승자의 생존여부에 따른 나이 분포 그래프"}
 # geom_density_line()을 위한 패키지 로드
 library(ggridges)
 # darken()을 위한 패키지 로드
@@ -356,8 +363,13 @@ Titanicp %>%
     plot.margin = margin(10, 10, 10, 10) # 상, 우, 하, 좌
   )
 ```
-```{r}
+
+
+```{r 타이타닉-탑승자의-생존여부에-따른-나이-분포-분할-그래프, fig.cap="타이타닉 탑승자의 생존여부에 따른 나이 분포 분할 그래프"}
+# showtext_auto()
+
 Titanicp %>% 
+  tidyr::drop_na(age) %>% 
   mutate(survived = factor(survived, levels = c("survived", "died"), labels = c("생존", "사망"))) %>% 
   
 # ggplot part
@@ -394,7 +406,9 @@ Titanicp %>%
   
   theme(
     axis.line.x = element_blank(),
-    strip.text = element_text(size = 14, margin = margin(0, 0, 0.2, 0, "cm")),
+    strip.text = element_text(margin = margin(0, 0, 0.2, 0, "cm"),
+                              family = "notosanskr",
+                              size = 14),
     legend.position = "bottom",
     legend.justification = "right",
     legend.margin = margin(4.5, 0, 1.5, 0, "pt"),
@@ -403,16 +417,15 @@ Titanicp %>%
     legend.box.spacing = grid::unit(0, "cm"), 
     # facet_wrap으로 생기는 박스 색깔 조정
     # https://stackoverflow.com/questions/19440069/ggplot2-facet-wrap-strip-color-based-on-variable-in-data-set
-    strip.background = element_rect(fill="white") 
+    strip.background = element_rect(fill="white"),
+    
+    # # ggplot 내에서 글꼴 변경
+    # https://blog.itpaper.co.kr/rdata-graph1-%EC%A0%9C%EB%AA%A9,%EC%B6%95%EC%84%A4%EC%A0%95/
+    # https://danbi-ncsoft.github.io/etc/2018/07/24/use-your-font-in-r.html
+    # https://statisticsglobe.com/change-font-size-of-ggplot2-plot-in-r-axis-text-main-title-legend
+    # text = element_text(family = "notosanskr") # 한번에 변경하기
+    axis.title.x = element_text(family = "notosanskr", size = 16),
+    axis.title.y = element_text(family = "notosanskr", size = 16),
+    legend.text = element_text(family = "notosanskr", size = 12)
   )
 ```
-
-
-
-
-
-
-
-
-
-
