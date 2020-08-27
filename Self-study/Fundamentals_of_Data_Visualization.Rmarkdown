@@ -48,6 +48,7 @@ font_add_google('Noto Sans', 'notosans')
 font_add_google('Nanum Gothic', 'nanumgothic')
 library(ggforce) # sina plot을 위한 패키지 
 # library(dviz.supp) # colorblindr가 4.0.2에서 사용 불가해서 설치가 안됨 
+library(foreign)
 ```
 
 
@@ -101,7 +102,6 @@ rbind(seoul, busan, deajeon, incheon, gwangju, ulsan, deagu, jeju) %>%
         axis.text.y = element_text(size = 12),
         legend.title = element_text(size = 12)
         )
-
 
 ```
 
@@ -438,7 +438,9 @@ jitter + violin ploting을 이용한 방법으로, 관측치가 충분하지 않
 ```{r}
 library(ggforce) # geom_sina를 지원한다. 
 library(sinaplot) # dataset, blood를 위한 로드
+```
 
+```{r Sina-plot-실습-혈액-속-각-클래스에-대한-유전자-농도-분포, fig.cap="혈액 속 각 클래스에 대한 유전자 농도 분포"}
 blood %>% 
   
   ggplot(aes(x = Class, y = Gene)) +
@@ -515,6 +517,9 @@ ROK_70_20 %>%
   )
   
 ```
+
+
+
 ```{r, eval=FALSE, include=FASLE}
 # KGSS 데이터 로드 후 data.frame으로 변환
 # KGSS는 spss 파일로 제공됨
@@ -635,5 +640,75 @@ KGSS_2018_edit %>%
     
     axis.title.x = element_text(family = "notosanskr", size = 16),
     axis.title.y = element_text(family = "notosanskr", size = 16)
+  )
+```
+
+
+```{r}
+KGSS_2018_edit <- read_csv("KGSS_2018_edit.csv", locale=locale('ko',encoding='euc-kr'))
+
+KGSS_2018_edit %>% 
+  filter(!MARITAL %in% c("DK", "동거", "별거")) %>% 
+  mutate(MARITAL = factor(MARITAL, 
+                          levels = c("미혼", "기혼", "이혼", "사별"))) %>% 
+  select(AGE, MARITAL) -> KGSS_2018_edit
+  
+rbind(
+  mutate(KGSS_2018_edit,
+         MARITAL = as.character(fct_collapse(MARITAL, `미혼` = "미혼", aother = c("기혼", "이혼", "사별"))),
+         highlight = "미혼"
+  ),
+  mutate(KGSS_2018_edit,
+         MARITAL = as.character(fct_collapse(MARITAL, `기혼` = "기혼", aother = c("미혼", "이혼", "사별"))),
+         highlight = "기혼"
+  ),
+  mutate(KGSS_2018_edit,
+         MARITAL = as.character(fct_collapse(MARITAL, `이혼` = "이혼", aother = c("미혼", "기혼", "사별"))),
+         highlight = "이혼"
+  ),
+  mutate(KGSS_2018_edit,
+         MARITAL = as.character(fct_collapse(MARITAL, `사별` = "사별", aother = c("미혼", "기혼", "이혼"))),
+         highlight = "사별"
+  )
+) %>%
+  mutate(
+    highlight = factor(highlight, levels = c("미혼", "기혼", "이혼", "사별"))
+  ) -> KGSS_2018_edit
+
+
+ggplot(KGSS_2018_edit, aes(AGE)) +
+  annotate(geom = "rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, fill = "#b3b3b3a0", color = NA) +
+  geom_density_line(
+    aes(y = stat(count), fill = MARITAL), color = "transparent", position = "fill"
+  ) +
+  facet_wrap(~highlight, nrow = 1) +
+  scale_x_continuous(
+    name = "나이(세)",
+    #limits = c(15, 98), 
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(name = "상대 비율", expand = c(0, 0), labels = scales::percent) +
+  scale_fill_manual(
+    values = c("transparent", "#2b8cbed0", "#2b8cbed0", "#2b8cbed0", "#2b8cbed0"),
+    name = NULL,
+    breaks = c("aother", "이혼"),
+    labels = c("응답 인원 전체  ", "강조 그룹"),
+    guide = guide_legend(
+      direction = "horizontal",
+      override.aes = list(fill = c("#bebebe", "#3590c0"))
+    )
+  ) +
+  coord_cartesian(clip = "off") +
+  theme_dviz_hgrid() +
+  theme(
+    axis.line.x = element_blank(),
+    strip.text = element_text(size = 14, margin = margin(0, 0, 0.2, 0, "cm")),
+    strip.background = element_rect("white"),
+    legend.position = "bottom",
+    legend.justification = "right",
+    legend.margin = margin(4.5, 0, 1.5, 0, "pt"),
+    legend.spacing.x = grid::unit(4.5, "pt"),
+    legend.spacing.y = grid::unit(0, "pt"),
+    legend.box.spacing = grid::unit(0, "cm")
   )
 ```
