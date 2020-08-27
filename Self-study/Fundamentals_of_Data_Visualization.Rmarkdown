@@ -515,3 +515,125 @@ ROK_70_20 %>%
   )
   
 ```
+```{r, eval=FALSE, include=FASLE}
+# KGSS 데이터 로드 후 data.frame으로 변환
+# KGSS는 spss 파일로 제공됨
+df <- as.data.frame(read.spss("2003-2018_KGSS_public_v3.sav", reencode='utf-8'))
+head(df)
+
+
+df %>% 
+  as.tibble() %>% 
+  filter(YEAR == 2018) %>% 
+  select(YEAR, AGE, MARITAL, HEALTHY) %>% 
+  mutate(AGE = 
+           as.numeric(
+             str_remove(
+               as.character(AGE), "세"
+             )
+           )
+  ) -> df
+
+write.csv(df, file = "KGSS_2018_edit.csv", row.names = TRUE)
+```
+
+```{r, include=FALSE}
+data_in_drive <- drive_find(type = "csv", pattern = "KGSS")
+
+for(i in 1:1){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r KGSS-HEALTHY-density-plot, fig.cap="2018년 KGSS 데이터를 바탕으로 연령별 건강 상태 분포"}
+KGSS_2018_edit <- read_csv("KGSS_2018_edit.csv", locale=locale('ko',encoding='euc-kr'))
+
+KGSS_2018_edit %>% 
+  filter(HEALTHY != "DK")  %>% 
+  mutate(HEALTHY = factor(HEALTHY, 
+                          levels = c("매우 좋다", "다소 좋다", "좋지도 나쁘지도 않다", "다소 나쁘다", "매우 나쁘다"))) %>% 
+  
+  # ggplot 파트 시작
+  ggplot(aes(x = AGE, y = ..count..)) +
+  geom_density_line(data = select(KGSS_2018_edit, -HEALTHY), aes(fill = "응답 인원 전체"), color = "transparent") +
+  
+  geom_density_line(aes(fill = "강조 그룹"), color = "transparent") +
+  
+  facet_wrap(~HEALTHY, nrow = 1) +
+  
+  scale_x_continuous(name = "나이(세)", limits = c(18, 97), expand = c(0, 0)) +
+  scale_y_continuous(name = "빈도 수", expand = c(0, 0)) +
+  scale_fill_manual(
+    values = c("#2b8cbed0", "#b3b3b3a0"),
+    name = NULL,
+    guide = guide_legend(direction = "horizontal", reverse = TRUE)
+  ) +
+  
+  coord_cartesian(clip = "off") +
+  theme_dviz_hgrid() +
+  
+  theme(
+    axis.line.x = element_blank(),
+    
+    strip.text = element_text(size = 14, margin = margin(0, 0, 0.2, 0, "cm"), family = "notosanskr"),
+    strip.background = element_rect(fill="white"), 
+    
+    legend.position = "bottom",
+    legend.justification = "right",
+    legend.margin = margin(4.5, 0, 1.5, 0, "pt"),
+    legend.spacing.x = grid::unit(4.5, "pt"),
+    legend.spacing.y = grid::unit(0, "pt"),
+    legend.box.spacing = grid::unit(0, "cm"), 
+    legend.text = element_text(family = "notosanskr", size = 12), 
+    
+    axis.title.x = element_text(family = "notosanskr", size = 16),
+    axis.title.y = element_text(family = "notosanskr", size = 16)
+  )
+```
+굉장히 소박한 빈도수를 가진 density plot이 나왔다. 전체 천 명 가량되는 집단을 5개로 나누고, 연령대가 아닌 각 연령으로 구분해서 그런 것으로 보인다. 
+
+```{r KGSS-MARITAL-density-plot, fig.cap="2018년 KGSS 데이터를 바탕으로 연령별 결혼 상태 분포"}
+KGSS_2018_edit <- read_csv("KGSS_2018_edit.csv", locale=locale('ko',encoding='euc-kr'))
+
+KGSS_2018_edit %>% 
+  filter(!MARITAL %in% c("DK", "동거", "별거")) %>% 
+  mutate(MARITAL = factor(MARITAL, 
+                          levels = c("미혼", "기혼", "이혼", "사별"))) %>% 
+  
+  # ggplot 파트 시작
+  ggplot(aes(x = AGE, y = ..count..)) +
+  geom_density_line(data = select(KGSS_2018_edit, -MARITAL), aes(fill = "응답 인원 전체"), color = "transparent") +
+  
+  geom_density_line(aes(fill = "강조 그룹"), color = "transparent") +
+  
+  facet_wrap(~MARITAL, nrow = 1) +
+  
+  scale_x_continuous(name = "나이(세)", limits = c(18, 97), expand = c(0, 0)) +
+  scale_y_continuous(name = "빈도 수", expand = c(0, 0)) +
+  scale_fill_manual(
+    values = c("#2b8cbed0", "#b3b3b3a0"),
+    name = NULL,
+    guide = guide_legend(direction = "horizontal", reverse = TRUE)
+  ) +
+  
+  coord_cartesian(clip = "off") +
+  theme_dviz_hgrid() +
+  
+  theme(
+    axis.line.x = element_blank(),
+    
+    strip.text = element_text(size = 14, margin = margin(0, 0, 0.2, 0, "cm"), family = "notosanskr"),
+    strip.background = element_rect(fill="white"), 
+    
+    legend.position = "bottom",
+    legend.justification = "right",
+    legend.margin = margin(4.5, 0, 1.5, 0, "pt"),
+    legend.spacing.x = grid::unit(4.5, "pt"),
+    legend.spacing.y = grid::unit(0, "pt"),
+    legend.box.spacing = grid::unit(0, "cm"), 
+    legend.text = element_text(family = "notosanskr", size = 12), 
+    
+    axis.title.x = element_text(family = "notosanskr", size = 16),
+    axis.title.y = element_text(family = "notosanskr", size = 16)
+  )
+```
