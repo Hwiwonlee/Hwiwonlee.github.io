@@ -450,3 +450,68 @@ blood %>%
         axis.title.x = element_text(family = "notosanskr", size = 16),
         axis.title.y = element_text(family = "notosanskr", size = 16))
 ```
+
+
+### 세로축에 기준을 둔 분포 상태의 시각화 : ridgeline plot 
+
+```{r, include=FALSE}
+data_in_drive <- drive_find(type = "csv", pattern = "70_20")
+
+for(i in 1:1){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r ridgeline-plot-실습, fig.cap="70년부터 19년까지 한국 전체 월별 평균 기온과 서울과 부산의 월별 평균기온의 차이에 대한 분포"}
+# 70년부텨 20년 7월까지, 서울과 광역시, 제주시의 월별 평균 기온 데이터 불러오기
+# https://data.kma.go.kr/cmmn/main.do 참고 
+# http://drtagkim.blogspot.com/2019/02/r-csv.html : 한글 꺠져서 나오는 문제 
+ROK_70_20 <- read_csv("한국_주요시_평균기온_70_20까지.csv", locale=locale('ko',encoding='euc-kr'))
+
+ROK_70_20 %>% 
+  select(-`지점`) %>% 
+  mutate(`일시` = parse_date(`일시`, format = "%Y-%m")) %>% 
+  mutate(`연도` = year(`일시`)) %>% 
+  filter(`연도` < 2020) %>% 
+  
+  dplyr::group_by(`일시`) %>% 
+  dplyr::mutate(`월 별 전체 평균` = mean(`평균기온(°C)`)) %>% 
+  ungroup() %>% 
+  
+  mutate(`기온 차이(°C)` = `평균기온(°C)` - `월 별 전체 평균`) %>% 
+  filter(`지점명` == "서울" | `지점명` == "부산") %>% 
+  
+  
+  ggplot(aes(x = `기온 차이(°C)`, y = `연도`, 
+             group = interaction(`지점명`, factor(`연도`)),
+             fill = interaction(`지점명`, factor(`연도`))
+             )) + 
+  geom_density_ridges(scale = 5, size = 0.25, rel_min_height = 0.01, alpha=0.9, color = "white") + 
+  scale_x_continuous(
+    name = "지역 평균 기온 - 전체 평균 기온",
+    limits = c(-6, 6),
+    breaks = seq(-6, 6, 1)
+  ) +
+  scale_y_reverse(
+    name = "연도",
+    expand = c(0, 0), breaks=c(seq(2019, 1970, -10))
+  ) +
+  scale_fill_cyclical(
+    breaks = c("서울.1970", "부산.1970"),
+    labels = c(`서울.1970` = "서울특별시", `부산.1970` = "부산광역시"),
+    values = c("#ff8000", "#0080ff", "#ff9933", "#3399ff"),
+    name = NULL,
+    guide = "legend"
+  ) + 
+  theme_dviz_grid() +
+  theme(
+    axis.text.y = element_text(vjust = 0),
+    legend.position = c(1, 1),
+    legend.justification = c(1, 1),
+    legend.direction = "horizontal",
+    legend.background = element_rect(fill = "white"),
+    axis.title.x = element_text(family = "notosanskr", size = 16),
+    axis.title.y = element_text(family = "notosanskr", size = 16)
+  )
+  
+```
