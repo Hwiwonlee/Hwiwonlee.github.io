@@ -46,7 +46,8 @@ library(showtext)
 font_add_google('Noto Sans KR', 'notosanskr')
 font_add_google('Noto Sans', 'notosans')
 font_add_google('Nanum Gothic', 'nanumgothic')
-font_add_google('Nanum Brush Script', 'test')
+library(ggforce) # sina plot을 위한 패키지 
+# library(dviz.supp) # colorblindr가 4.0.2에서 사용 불가해서 설치가 안됨 
 ```
 
 
@@ -59,7 +60,7 @@ for(i in 1:8){
 }
 ```
 
-## ch 2, P.35
+## ch 2
 여러 지역의 월 별 온도 대비를 tile로 보여준다는 것이 심미적으로도 차이를 드러내는 것에도 큰 장점으로 보인다. 우리나라 주요도시의 19년 월 별 온도 데이터를 이용해 같은 방식으로 해보자.  
 
 ```{r 19년도 대한민국 주요 도시의 월 별 평균 온도, fig.cap="19년도 대한민국 주요 도시의 월 별 평균 온도", fig.height=6}
@@ -300,7 +301,7 @@ Sys.setlocale("LC_TIME", "Korean_Korea.949")
 
 ```{r, include=FALSE}
 library(vcdExtra)
-vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra", "tidyr"))
+vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra", "tidyr", "sinaplot"))
 ```
 
 
@@ -428,4 +429,24 @@ Titanicp %>%
     axis.title.y = element_text(family = "notosanskr", size = 16),
     legend.text = element_text(family = "notosanskr", size = 12)
   )
+```
+
+## ch 9. 여러 분포 상태의 결합 시각화
+
+### 가로축에 기준을 둔 분포 상태의 시각화 : Sinaplot
+jitter + violin ploting을 이용한 방법으로, 관측치가 충분하지 않은 상황에서 사용하기 껄끄럽다는 violin plot의 단점을 개선한 방법이다. 
+```{r}
+library(ggforce) # geom_sina를 지원한다. 
+library(sinaplot) # dataset, blood를 위한 로드
+
+blood %>% 
+  
+  ggplot(aes(x = Class, y = Gene)) +
+  geom_violin(color = "transparent", fill = "#A0A0A0") + 
+  geom_sina(size = 1) + 
+
+  theme(plot.margin = margin(3, 7, 3, 1.5), 
+        axis.text.x = element_text(angle = 45, hjust = 1), 
+        axis.title.x = element_text(family = "notosanskr", size = 16),
+        axis.title.y = element_text(family = "notosanskr", size = 16))
 ```
