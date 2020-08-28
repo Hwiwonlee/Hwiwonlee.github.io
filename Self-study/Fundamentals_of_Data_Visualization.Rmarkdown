@@ -49,6 +49,7 @@ font_add_google('Nanum Gothic', 'nanumgothic')
 library(ggforce) # sina plot을 위한 패키지 
 # library(dviz.supp) # colorblindr가 4.0.2에서 사용 불가해서 설치가 안됨 
 library(foreign)
+library(treemapify) # geom_treemap
 ```
 
 
@@ -550,7 +551,7 @@ for(i in 1:1){
 }
 ```
 
-```{r KGSS-HEALTHY-density-plot, fig.cap="2018년 KGSS 데이터를 바탕으로 연령별 건강 상태 분포"}
+```{r KGSS-HEALTHY-density-plot, fig.cap="2018년 KGSS 데이터를 바탕으로 그린 연령별 건강 상태 분포 플롯"}
 KGSS_2018_edit <- read_csv("KGSS_2018_edit.csv", locale=locale('ko',encoding='euc-kr'))
 
 KGSS_2018_edit %>% 
@@ -597,7 +598,7 @@ KGSS_2018_edit %>%
 ```
 굉장히 소박한 빈도수를 가진 density plot이 나왔다. 전체 천 명 가량되는 집단을 5개로 나누고, 연령대가 아닌 각 연령으로 구분해서 그런 것으로 보인다. 
 
-```{r KGSS-MARITAL-density-plot, fig.cap="2018년 KGSS 데이터를 바탕으로 연령별 결혼 상태 분포"}
+```{r KGSS-MARITAL-density-plot, fig.cap="2018년 KGSS 데이터를 바탕으로 그린 연령별 결혼 상태 분포 플롯"}
 KGSS_2018_edit <- read_csv("KGSS_2018_edit.csv", locale=locale('ko',encoding='euc-kr'))
 
 KGSS_2018_edit %>% 
@@ -644,7 +645,7 @@ KGSS_2018_edit %>%
 ```
 
 
-```{r}
+```{r relative ratio densitiy plot, fig.cap="2018년 KGSS 데이터의 상대 비율을 바탕으로 그린 연령별 결혼 상태 분포 플롯"}
 KGSS_2018_edit <- read_csv("KGSS_2018_edit.csv", locale=locale('ko',encoding='euc-kr'))
 
 KGSS_2018_edit %>% 
@@ -652,7 +653,9 @@ KGSS_2018_edit %>%
   mutate(MARITAL = factor(MARITAL, 
                           levels = c("미혼", "기혼", "이혼", "사별"))) %>% 
   select(AGE, MARITAL) -> KGSS_2018_edit
-  
+
+
+# 5번의 mutate의 결과를 rbind로 쌓아서 4개의 플롯 + 배경 플롯을 그림.  
 rbind(
   mutate(KGSS_2018_edit,
          MARITAL = as.character(fct_collapse(MARITAL, `미혼` = "미혼", aother = c("기혼", "이혼", "사별"))),
@@ -676,18 +679,27 @@ rbind(
   ) -> KGSS_2018_edit
 
 
+# ggplot 시작
 ggplot(KGSS_2018_edit, aes(AGE)) +
+  
+  # 배경 구획 및 색깔 지정
   annotate(geom = "rect", xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, fill = "#b3b3b3a0", color = NA) +
+  
+  # geom_density_line
   geom_density_line(
     aes(y = stat(count), fill = MARITAL), color = "transparent", position = "fill"
   ) +
+  
+  # highlight 기준으로 펼치기
   facet_wrap(~highlight, nrow = 1) +
+  
   scale_x_continuous(
     name = "나이(세)",
-    #limits = c(15, 98), 
+    limits = c(18, 98),
     expand = c(0, 0)
   ) +
   scale_y_continuous(name = "상대 비율", expand = c(0, 0), labels = scales::percent) +
+  
   scale_fill_manual(
     values = c("transparent", "#2b8cbed0", "#2b8cbed0", "#2b8cbed0", "#2b8cbed0"),
     name = NULL,
@@ -709,6 +721,120 @@ ggplot(KGSS_2018_edit, aes(AGE)) +
     legend.margin = margin(4.5, 0, 1.5, 0, "pt"),
     legend.spacing.x = grid::unit(4.5, "pt"),
     legend.spacing.y = grid::unit(0, "pt"),
-    legend.box.spacing = grid::unit(0, "cm")
+    legend.box.spacing = grid::unit(0, "cm"), 
+    legend.text = element_text(family = "notosanskr", size = 12), 
+    
+    axis.title.x = element_text(family = "notosanskr", size = 16),
+    axis.title.y = element_text(family = "notosanskr", size = 16)
   )
+```
+
+
+## ch 11 비율 데이터를 내포 형태로 시각화
+
+
+```{r, include=FALSE}
+data_in_drive <- drive_find(type = "csv", pattern = "행정구역")
+
+for(i in 1:1){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r, include=FALSE}
+data_in_drive <- drive_find(type = "csv", pattern = "도시지역면적")
+
+for(i in 1:1){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+
+```{r}
+pop_si_kr <- read_csv("행정구역_시군구_별__성별_인구수_20200828223639.csv", locale=locale('ko',encoding='euc-kr'), skip = 1)
+area_si_kr <- read_csv("도시지역면적_시도_시_군_구__20200829004719.csv", locale=locale('ko',encoding='euc-kr'))
+names(area_si_kr) <- c("행정구역(시군구)별", "면적")
+
+left_join(pop_si_kr, area_si_kr, by = "행정구역(시군구)별") %>% 
+  drop_na() %>% 
+  select(`행정구역(시군구)별`, `총인구수 (명)`, 면적) %>% 
+    mutate(대분류 = row_number()) %>% 
+  mutate(
+    across(
+      c(대분류), 
+      function(`행정구역(시군구)별`) {
+        c <- 0
+        
+        a <- which(grepl("도$", .$`행정구역(시군구)별`))
+        for(i in 1:length(a)) { 
+          c[i] <- a[i+1]-a[i]
+          if(i == length(a)) { 
+            c[i] <- nrow(.) - a[i] + 1
+          }
+        }
+        
+        result <- rep(.$`행정구역(시군구)별`[a], c)
+        return(result)
+        }
+      
+    )
+  ) %>% 
+  group_by(대분류, `행정구역(시군구)별`) %>% 
+  summarise(`총인구수 (명)` = sum(`총인구수 (명)`), 
+            면적 = sum(면적)) %>% 
+  ungroup() %>% 
+  dplyr::filter(!str_detect(`행정구역(시군구)별`, "도$")) %>% 
+  mutate(across(where(is.character), as.factor)) -> pop_area_kr
+
+
+```
+
+```{r}
+## manually add colors
+# hues
+hues <- c(300, 50, 250, 100) # purple, brown, blue, green
+hues <- seq(50, 400, 50) # brown, green, blue, purple
+
+# minimum and maximum population density
+minpop <- min(pop_area_kr$`총인구수 (명)`)
+maxpop <- max(pop_area_kr$`총인구수 (명)`)
+
+# turn pop density into color
+pop_area_kr_color <- pop_area_kr %>%
+  mutate(index = as.numeric(factor(대분류))) %>%
+  group_by(index) %>%
+  mutate(
+    value = (`총인구수 (명)`-minpop)/(maxpop-minpop),
+    fill = scales::gradient_n_pal(
+      colorspace::sequential_hcl(
+        6,
+        h = hues[index[1]],
+        c = c(45, 20),
+        l = c(30, 80),
+        power = .5
+      )
+    )(1-value)
+  )
+```
+
+```{r}
+ggplot(pop_area_kr_color, aes(area = 면적, subgroup = 대분류, fill = fill)) +
+  geom_treemap(color = "white", size = 0.5*.pt, alpha = NA) + 
+  geom_treemap_subgroup_text(
+    # family = dviz_font_family,
+    colour = "white",
+    place = "centre", alpha = 0.7,
+    grow = TRUE
+  ) +
+  geom_treemap_subgroup_border(color = "white") +
+  geom_treemap_text(
+    aes(label = `행정구역(시군구)별`),
+    color = "black",
+    # family = dviz_font_family,
+    place = "centre",
+    grow = FALSE
+  ) +
+  scale_fill_identity() +
+  coord_cartesian(clip = "off") +
+  guides(colour = "none", fill = "none")
 ```
