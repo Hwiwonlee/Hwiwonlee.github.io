@@ -205,8 +205,91 @@ parse_date_time(c("2101, Jan 10", "10/01/2101"), orders = c("%Y, %b %d", "%d/%m/
 
 `parse_data_time()`에 대한 더 많은 정보는 [`parse_data_time()`](https://lubridate.tidyverse.org/reference/parse_date_time.html)를 참고하시면 됩니다.
 
- 
+### **쪼개진 날짜 데이터를 합치는 방법 : `make_datetime()`과 `make_date()`** 
+
+라이브러리 `nycflight13`의 `flights`는 2013년, 뉴욕에 있는 공항에서 출발하는 모든 비행기의 정보를 담고 있는 데이터셋입니다. 이 데이터셋을 이용해서 날짜 데이터의 각각의 요소를 열로 쪼개 저장한 경우 하나의 날짜형 데이터열로 저장하는 방법을 소개해드리겠습니다. [R for data science](https://r4ds.had.co.nz/dates-and-times.html#from-individual-components)에서도 볼 수 있습니다. 
+
+```{r}
+library(nycflights13)
+
+flights %>% 
+  select(year, month, day, hour, minute) %>% 
+  mutate(departure = make_datetime(year, month, day, hour, minute)) %>% 
+  select(departure, everything(), -year) -> df_flights
+
+df_flights
+```
+
+
+
 ## **날짜형 데이터를 이루는 요소 다루기(component handling)**
+
+**lubridate**에는 날짜형 데이터의 기본 요소(component)인 연월일-시분초를 각각 다루는 기본 함수부터 목적에 맞게 요소들을 편집할 수 있는 함수들까지 지원하고 있습니다. 
+
+그럼 기본 함수와 응용 함수로 구분해서 알아보도록 하겠습니다. 
+
+### **연월일-시분초를 다루는 기본 함수**
+연월일-시분초를 다루는 기본 함수를 각각의 요소를 불러오는 것으로 정의해보았습니다. 
+
+```{r}
+
+# 연월일
+df_flights %>% 
+  mutate(departure = date(departure)) %>% 
+  head(3)
+
+# 연
+df_flights %>% 
+  mutate(departure = year(departure)) %>% 
+  head(3)
+
+# 월
+df_flights %>% 
+  mutate(departure = month(departure)) %>% 
+  head(3)
+
+# 날짜
+df_flights %>% 
+  mutate(departure = day(departure)) %>% 
+  head(3)
+
+# 요일을 return 
+df_flights %>% 
+  mutate(departure = wday(departure, label = TRUE)) %>% 
+  head(3)
+
+# 시간
+df_flights %>% 
+  mutate(departure = hour(departure)) %>% 
+  head(3)
+
+# 분
+df_flights %>% 
+  mutate(departure = minute(departure)) %>% 
+  head(3)
+
+# 초 
+df_flights %>% 
+  mutate(departure = second(departure)) %>% 
+  head(3)
+```
+
+굉장히 직관적인 이름과 결과를 보실 수 있습니다. [R for data science](https://r4ds.had.co.nz/dates-and-times.html#getting-components)의 코드를 보면 이를 이용해 간단한 플롯을 그려볼 수도 있습니다. 
+
+
+```{r flight-wday-barplot, fig.cap="flights 데이터로 그린 요일 별 비행기 출발 횟수"}
+# https://r4ds.had.co.nz/dates-and-times.html#getting-components
+df_flights %>% 
+  mutate(wday = wday(departure, label = TRUE)) %>% 
+  ggplot(aes(x = wday)) +
+  geom_bar(fill = "#0080FF") + 
+  theme_minimal() %>% 
+  labs(x = "요일", y = "빈도 수") +
+  theme(
+    axis.title = element_text(size = 16)
+  )
+  
+```
 
 
 
