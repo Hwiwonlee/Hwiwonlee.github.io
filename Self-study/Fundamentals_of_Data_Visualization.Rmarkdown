@@ -939,6 +939,83 @@ PCA_iris %>%
   scale_x_continuous(name = "1st Principal component", breaks=c(seq(-3, 3, 1)))
 ```
 
+### Paired data
+짝 지어진 데이터는 "비교"를 위한 데이터형태로 "주가"와 같은 시계열 자료(time series)나 같은 환자를 여러 번 진찰하는 등의 경시적 자료(longitudinal data)을 예로 들 수 있으며 반복측정된 값을 가지는 것이 일반적이다. 
 
+책에서는 적절한 규모의 집단을 비교하기 위해 slopegraph를 사용했다. 그 형태가 굉장히 깔끔하고 전달하고자 하는 의미를 분명하게 전달할 수 있는 도구라 판단해서 연습해보았다. 
+
+
+```{r gapminder를-이용한-slopegraph-연습, fig.cap="gapminder를 이용한 slopegraph 연습"}
+library(gapminder)
+
+gapminder %>% 
+  filter(continent == "Asia") %>% 
+  filter(year %in% c(seq(1957, 2007, 10))) %>% 
+  select(country, year, gdpPercap) %>% 
+  pivot_wider(names_from = year, values_from = gdpPercap) %>% 
+  mutate(diff = abs(`2007` - `1957`)) %>% 
+  arrange(desc(diff)) %>% 
+  mutate(rank = seq(1, nrow(.), 1)) %>% 
+  filter(rank <= 10) %>% 
+  select(-c(diff, rank)) %>% 
+  pivot_longer(!country, names_to = "year", values_to = "gdpPercap") %>% 
+  mutate(year = as.numeric(year)) %>% 
+  mutate(country = as.character(country)) %>% 
+  mutate(gdpPercap = log(gdpPercap))  -> df_gapminder
+
+df_gapminder %>% 
+  filter(year == 1977) %>% 
+  mutate(nudge_y = c(0, -0.09, -0.01, 0, 0, 0, 0, 0, 0, 0))-> test
+
+
+df_gapminder %>% 
+  filter(year %in% c(1957, 1967, 1977)) %>% 
+  ggplot(aes(x = year, y = gdpPercap)) + 
+  geom_line(aes(group = country), color = "gray60") + 
+  geom_point(color = "white", size = 4) +
+  geom_point(color = "#0072B2", size = 2) + 
+  
+  geom_text(
+    data = test, 
+    aes(x = year + 0.5, y = gdpPercap + 0.01 + nudge_y, label = country),
+    # nudge_x = 0.5,
+    color = "gray30",
+    family = "Myriad Pro",
+    size = 10/.pt,
+    hjust = 0
+  ) +
+  
+  scale_x_continuous(
+    limits = c(1957, 1982), 
+    breaks = c(seq(1957, 1977, 10)),
+    labels = c(as.character(seq(1957, 1977, 10))),
+    name = NULL,
+    position = "top", 
+    expand = expand_scale(add = c(1, 5))
+  ) +
+  
+  scale_y_continuous(
+    expand = c(0.05, 0.05),
+    name = "GDP per capita (US$, inflation-adjusted)"
+  ) +
+  coord_cartesian(clip = "off") +
+  theme_minimal() + 
+  theme(
+    axis.line.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_text(color = "gray30"),
+    axis.text.y = element_text(color = "gray30"),
+    axis.line.y.left = element_line(color = "gray30"),
+    axis.text.y.right = element_text(
+      hjust = 0, vjust = .5,
+      margin = margin(0, 0, 0, 0),
+      color = "black",
+      lineheight = 0.8
+    ),
+    axis.line.y.right = element_blank(),
+    axis.ticks.y.right = element_blank(),
+    plot.margin = margin(3.5, 1.5, 7, 1.5)
+  )
+```
 
 
