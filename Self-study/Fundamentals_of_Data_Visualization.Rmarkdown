@@ -50,6 +50,8 @@ library(ggforce) # sina plot을 위한 패키지
 # library(dviz.supp) # colorblindr가 4.0.2에서 사용 불가해서 설치가 안됨 
 library(foreign)
 library(treemapify) # geom_treemap
+library(ggrepel) # geom_text_repel
+library(ggfortify) # auto_plot for PCA plot 
 ```
 
 
@@ -909,6 +911,32 @@ remains %>%
     axis.ticks = element_blank(),
     plot.margin = margin(14, 1.5, 2, 1.5)
   )
+```
+
+
+## ch 12 여러 정량 변수의 관계 시각화
+기초적인 산점도부터 짝 지어진 자료(paired data)의 시각화를 다루고 있다. 나는 차원 축소의 예로 나온 PCA plot과 다변량 정량 변수에서의 짝 자료에 대한 시각화를 연습해보았다. 
+
+
+### 차원 축소(Dimension reduction)
+저자는 차원 축소의 대표적인 방법, PCA plot을 소개했다. 사실 PCA plot 자체로는 극적인 결과를 제시할 수 없는 것이 보통이지만 EDA 단계에서 "어떠한 관계가 있을 것이다"라는 뉘앙스를 주기엔 충분한 방법이다. `iris`로 PCA plot을 그려보았다. 
+
+```{r}
+# PCA 
+iris %>% 
+  select(-Species) %>% 
+  princomp(., cor = TRUE) -> PCA_iris
+
+# PCA plot 
+PCA_iris %>% 
+  autoplot(data = iris, scale = 0, colour = 'Species', 
+           frame = TRUE, frame.type = 'norm', 
+           loadings = TRUE, loadings.colour = 'gray70',
+           loadings.label = TRUE, loadings.label.colour = 'gray40',
+           loadings.label.size = 4) +
+  theme_minimal() +
+  scale_y_continuous(name = "2nd Principal component", breaks=c(seq(-3, 3, 1))) + 
+  scale_x_continuous(name = "1st Principal component", breaks=c(seq(-3, 3, 1)))
 ```
 
 
