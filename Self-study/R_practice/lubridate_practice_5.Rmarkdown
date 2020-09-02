@@ -292,7 +292,45 @@ df_flights %>%
 ```
 
 ### **연월일-시분초를 이용한 응용 함수**
+연월일-시분초를 그대로 가져오는 것 외에 **몇 주차**인지 **몇 분기**인지 알아볼 수 있는, 조금 특별하지만 알아두면 쓸모있는 함수들을 지원합니다. 
 
+```{r}
+# n주차를 반환하는 week
+df_flights %>% 
+  mutate(weeks = week(departure)) %>% 
+  filter(weeks == 2) %>% head(3)
+
+# 분기를 반환하는 quarter
+df_flights %>% 
+  mutate(quarters = quarter(departure)) %>% 
+  filter(quarters == 3) %>% head(3)
+
+# 반기를 반환하는 semester
+df_flights %>% 
+  mutate(semesters = semester(departure)) %>% 
+  filter(semesters == 2) %>% head(3) # error
+
+# 시간을 am과 pm으로 구분할 수 있게 해주는 am, pm
+df_flights %>% 
+  mutate(am = am(departure)) %>% 
+  mutate(pm = pm(departure)) %>% 
+  filter(am == TRUE) %>% 
+  count() # am 시간대에 출발한 비행기는 모두 131,021대
+```
+위의 코드를 찬찬히 보시면 아시겠지만, `semester()`에서 10월이 먼저 등장한 것을 볼 수 있습니다. 이 문제는 데이터셋이 정렬되지 않은 상태에서 `semester()`가 실행되었고 `filter()`의 조건에 맞는 첫 번째 관측값이 10월이기 때문입니다. 그러므로 아래와 같이 `arrange()`를 먼저 사용하시길 추천드립니다. 
+
+```{r}
+df_flights %>% 
+  arrange(departure) %>% 
+  # with_year 파라메터를 이용하면 연도까지 표현할 수 있습니다. 
+  mutate(semesters = semester(departure, with_year = TRUE)) %>% 
+  filter(semesters == 2013.2) %>% head(3)
+```
+
+추가로, 해당 연도가 윤달이 있는 연도인지 확인할 수 있는 `leap_year()`, 서머 타임이 있는 날인지 확인할 수 있는 `dst()` 등이 지원됩니다. 
+
+
+## **날짜형 데이터 연산 : 기간(period), 지속(duration), 간격(interval)**
 
 
 
