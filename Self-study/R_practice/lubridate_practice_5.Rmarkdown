@@ -466,6 +466,148 @@ class(`1_10_days`)
 str(`1_10_days`)
 ```
 
+class **period**를 이용한 연산도 가능합니다. 
+
+```{r}
+years(5) + months(10) + hours(12)
+
+days(seq(1,10,1)) + hours(12)
+
+3*(minutes(seq(1, 30, 1)) + seconds(30))
+```
+앞서 서머타임에서 발생하는 duration을 이용한 연산의 문제점을 보셨습니다. class period를 이용한 연산은 서머타임과 윤년을 감안한 계산을 지원합니다. 
+ 
+ 
+```{r}
+# 서머 타임
+`160312` + days(1)
+`160312` + ddays(1)
+
+# 윤년
+`191231`<- ymd("2019-12-31")
+`191231` + years(1) 
+`191231` + dyears(1) # 2020년은 윤년이 포함된 해라 dyear(1)로 계산하면 20년 12월 30일이 나온다. 
+```
+
+### **intervals : 시작과 끝으로 정의되는 간격**
+
+마지막으로 class **interval**입니다. **interval**은 고유한 연산자, `%--%`로도, `interval()`로도 구할 수 있는데 그 형태가 신기합니다. 
+
+```{r}
+interval(ymd("2020-01-01"), ymd("2020-12-31"))
+ymd("2020-01-01") %--% ymd("2020-12-31")
+```
+class interval은 **간격의 시간**을 의미하는 것이 아니라 **간격 그 자체**를 저장한 것입니다. 즉, 시작과 끝의 정보를 가지고 있는 것이죠. 간격의 시간을 구하기 위해서는 또 다른 작업이 필요합니다. 
+
+```{r}
+interval <- ymd("2020-01-01") %--% (ymd("2020-01-01")+years(1))
+
+# days와 ddays는 같은 결과
+# 윤달이 포함되어 있기 때문에 366일이다. 
+interval / days(1) 
+interval / ddays(1)
+
+# seconds와 dseconds는 같은 결과
+# 366일 * 60초
+interval / seconds(1) 
+interval / dseconds(1)
+
+# weeks와 dweeks는 같은 결과
+# 366일 / 7일
+interval / weeks(1) 
+interval / dweeks(1)
+
+# months와 dmonths는 다른 결과
+interval / months(1) # 12
+interval / dmonths(1) # 12.02464
+```
+```{r}
+# 윤년이 아닌 경우
+interval <- ymd("2021-01-01") %--% (ymd("2021-01-01")+years(1))
+interval / months(1) # 12
+interval / dmonths(1) # 11.99179
+```
+간격을 구하기 위해선 위의 예시처럼 기준이 되는 시간으로 interval을 나눠 주어야 합니다. `months()`와 `dmonths()`의 결과에 차이가 나는 이유는 duration이 초 단위의 시간을 기준으로 하기 때문으로 보입니다만 정확한 것은 아닙니다. 
+
+class inverval을 이용한 여러 함수들을 소개해드립니다. 
+
+```{r}
+dt <- ymd("2020-01-01")
+interval_a <- ymd("2020-01-01") %--% (ymd("2020-01-01")+years(1))
+interval_b <- ymd("2020-06-01") %--% (ymd("2020-06-01")+years(1))
+
+# interval의 시작과 끝을 반환하는 int_start, end
+int_start(interval_a)
+int_end(interval_a)
+
+# 해당 날짜형 데이터가 interval 안에 속하는지 여부를 판단하는 %with%
+ymd("2020-05-05") %within% interval_a
+
+# 두 interval의 시작이나 끝이 중복되는지 알아보는 int_aligns
+int_aligns(interval_a, ymd("2020-01-01") %--% (ymd("2020-01-01")+months(6)))
+
+# 두 interval의 간격이 겹치는지 여부를 알아보는 in_overlaps
+int_overlaps(interval_a, interval_b)
+
+dt_vector <- c(dt, dt + 1, dt + 10, dt + 100)
+# 날짜형 데이터로 이뤄진 벡터를 interval로 연결하는 함수, int_diff
+int_diff(dt_vector)
+
+# interval의 시작과 끝 시점을 서로 바꾸는 int_flip
+int_flip(interval_a)
+
+# interval의 시작과 끝 시점을 다시 바꾸는 int_standardize 
+int_standardize(int_flip(interval_a))
+
+# interval의 길이를 초 단위로 반환하는 int_lenght
+int_length(interval_a)
+
+# interval의 시작과 끝에서 일정 시간을 조정할 수 있는 int_shift
+int_shift(interval_a, days(+10)) # 10일을 더하기
+int_shift(interval_a, months(-1)) # 1개월을 빼기
+```
+
+### **duration, period, interval의 요약**
+[**lubridate** 치트 시트](https://rawgit.com/rstudio/cheatsheets/master/lubridate.pdf)를 토대로 3개의 class를 비교 및 요약해보겠습니다. 
+
+```{r}
+# 비교를 위한 예제 데이터
+normal_date <- ymd_hms("2020-05-05 06:30:00", tz = "Asia/Seoul")
+start_st <- ymd_hms("2018-03-11 01:30:00",tz="US/Eastern")
+end_st <- ymd_hms("2018-11-04 00:30:00",tz="US/Eastern")
+leap <- ymd("2019-03-01")
+```
+class **period**는 마치 시계처럼 설정된 그대로의 값을 적용합니다. 서머타임이나 윤년과 같은 불규칙적인 시간 변동을 무시합니다. 
+
+```{r, collapse=FALSE}
+normal_date + minutes(90)
+start_st + minutes(90)
+end_st + minutes(90)
+leap + years(1)
+```
+class **duration**은 물리적인 시간을 나타내므로 서머타임이나 윤년과 같은 불규칙적인 시간 변동에 취약한 모습을 보입니다. 
+
+```{r, collapse=FALSE}
+normal_date + dminutes(90)
+start_st + dminutes(90)
+end_st + dminutes(90)
+leap + dyears(1)
+```
+class **interval**은 시작과 끝을 갖는 간격을 의미하며 시작과 끝에 period나 duration의 사용 여부에 따라 각 class의 장단점을 그대로 갖습니다.
+```{r}
+interval(normal_date, normal_date + minutes(90))
+interval(start_st, start_st + minutes(90))
+interval(end_st, end_st + minutes(90))
+interval(leap, leap + years(1))
+interval(leap, leap + dyears(1))
+```
+period와 duration에 대한 첨언을 하자면, 일상생활에서 20년 3월 1일 이후 **1년**이라고 하면 21년 3월 1일을 생각하지 "20년은 윤년이니까 365일을 더한 21년 2월 28일을 말하는 건가?"라고 생각하지 않는게 보통일겁니다. 여기서 21년 2월 28일이라고 답하는 것이 duration이고 21년 3월 1일이라고 답하는 것이 period입니다. 
+
+따라서 많은 경우, period를 사용하시는 것을 권장드리며 정밀한 시간 index가 필요한 경우에 duration 사용을 권해드립니다. 
+
+
+## **조금 더 알아보기 : 날짜형 데이터의 반올림과 타임 존**
+
 
 
 # **Summary** 
@@ -487,3 +629,4 @@ str(`1_10_days`)
 - [데이터 과학 : 시간 데이터 기초](https://statkclee.github.io/data-science/ds-date-basics.html)
 
 - [R에서 lubridate package 에 대해](https://lovetoken.github.io/r/2016/09/18/lubridate_package.html)
+
