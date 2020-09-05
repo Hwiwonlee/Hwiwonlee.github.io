@@ -176,3 +176,39 @@ test_st[, -1] %>%
     - [Feature Scaling and Normalisation in a nutshell](https://medium.com/analytics-vidhya/feature-scaling-and-normalisation-in-a-nutshell-5319af86f89b)
     
 
+
+## 3.3 training
+
+
+```{r, collapse=TRUE, fig.cap="k에 대한 accuracy 추세"}
+
+# repeated cv를 진행
+# fold는 10개, 반복 수는 5번으로 설정
+traincontrol <- trainControl(method = "repeatedcv", 
+                             number = 10, 
+                             repeats = 5)
+
+# Reproducibility를 위한 set.seed
+set.seed(1234)
+knn_model <- train(diagnosis ~ ., data = train_st, method = "knn",
+                   trControl = traincontrol,
+                   tuneLength = 15, 
+                   metric = "Accuracy")
+# 결과
+knn_model
+
+# 최적의 k값
+knn_model$bestTune
+
+# k값에 따른 accuracy의 추세
+plot(knn_model)
+```
+
+## 3.4 Evaluate the model with test set
+```{r}
+pred_test <- predict(knn_model, newdata = test_st)
+
+confusionMatrix(pred_test, as.factor(test_st$diagnosis))
+mean(pred_test == test_st$diagnosis) # Accuracy와 같음
+```
+
