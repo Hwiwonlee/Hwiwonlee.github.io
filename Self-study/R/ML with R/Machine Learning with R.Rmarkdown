@@ -224,4 +224,50 @@ pred_test <- predict(knn_model, newdata = test_st)
 confusionMatrix(pred_test, as.factor(test_st$diagnosis))
 mean(pred_test == test_st$diagnosis) # Accuracy와 같음
 ```
-평가 결과, training에서보다 더 높은 수준의 Accuracy를 갖는 것으로 보인다. 
+평가 결과, training에서보다 더 높은 수준의 Accuracy를 갖는 것으로 보여 해당 예제에서 KNN 알고리즘은 상당히 좋은 성능을 갖다고 할 수 있다. 결과에서 보이는 몇 가지 metric에 대해 좀 더 알아보자. 
+
+- No Information Rate : class에서 다수를 차지하는 factor의 비율을 의미한다. 이 경우, `diagnosis`에서 다수를 차지하는 `B`의 비율이다. 
+
+- [P-Value [Acc > NIR]](https://cran.r-project.org/web/packages/caret/caret.pdf) : Acc > NIR에 대한 P-value로 class의 비율에 따른 Acc의 유효성 평가를 해볼 수 있다. 이 값은 단측 binomial test로 구한 P-value와 같다. 귀무가설은 `Acc <= NIR`이며 위의 예제는 `P-value < 0.05`의 상황이므로 Accuracy가 NIR보다 더 높다고 주장할 수 있다.
+
+- Kappa : [Cohen's kappa](https://en.wikipedia.org/wiki/Cohen%27s_kappa)로 [confusion matrix에서 prediction과 reference가 같은 결론을 내릴 확률을 의미](https://thebook.io/006723/ch09/03/01/)한다. 높을수록 좋다. 
+
+- [Mcnemar's Test P-Value](https://en.wikipedia.org/wiki/McNemar%27s_test) : [Mcnemar's Test](https://stats.stackexchange.com/questions/76875/what-is-the-difference-between-mcnemars-test-and-the-chi-squared-test-and-how/89415#89415)의 P-value로 `P-value >= 0.05` 이므로 예제의 경우, 비대각 요소의 확률이 같다고 말할 수 있다. 
+    - [추가 링크](http://rasbt.github.io/mlxtend/user_guide/evaluate/mcnemar/)
+
+- Sensitivity : Reference의 `B` 중 Prediction `B`와 일치하는 비율, 즉 Reference의 `B` class를 옳게 예측한 비율
+- Specificity : Reference의 `M` 중 Prediction `M`와 일치하는 비율, 즉 Reference의 `M` class를 옳게 예측한 비율
+- Positive Predictive Value(PPV) : Prediction의 `B` 중 Reference `B`와 일치하는 비율
+- Negative Predictive Value(NPV) : Prediction의 `M` 중 Reference `M`와 일치하는 비율
+    - 민감도와 특이도 그리고 PPV와 NPV를 한 세트처럼 이해하면 좋다. 
+    - 민감도와 특이도는 Reference 기준으로 각 class의 예측 정확도를 평가하는 지표다. 
+    - PPV와 NPV는 Prediction 기준으로 각 class를 얼마나 잘 예측했는지 평가하는 지표다. 
+    - 추가 설명은 [링크 1](http://www.incodom.kr/Positive_Predictive_Value)과 [링크 2](https://3months.tistory.com/318)를 참고하길 바란다. 
+
+- Prevalence : 전체에 대해서 Reference의 `B`와 일치하는 비율
+- Detection Rate : 전체에 대해서 Reference과 Prediction의 `B`가 일치하는 비율
+- Detection Prevalence : 전체에 대해서 Prediction의 `B`와 일치하는 비율
+- Balanced Accuracy : Sensitivity와 Specificity의 평균
+
+[수식](https://topepo.github.io/caret/measuring-performance.html#measures-for-predicted-classes)으로 이해하는 것이 빠를 수 있다. 구글링을 통해 검색해보면 의학 쪽의 예제가 많이 등장하는데 그런 예제로 이해하는 것 또한 하나의 방법이다. 
+
+
+```{r, include=FALSE}
+#  Mcnemar's Test P-Value 구해보기 
+mat = as.table(rbind(c(88, 3), 
+                     c(1, 50)))
+
+result <- mcnemar.test(mat, correct=TRUE)
+
+result$p.value # 0.6170751
+# same as
+1 - pchisq(0.25, 1)
+```
+## 3.5 시각화로 표현해보기 
+
+```{r}
+cbind(pred_test,test_st) %>% 
+  mutate(diagnosis = as.factor(diagnosis))
+```
+
+
