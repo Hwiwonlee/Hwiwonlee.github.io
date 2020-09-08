@@ -52,6 +52,9 @@ library(foreign)
 library(treemapify) # geom_treemap
 library(ggrepel) # geom_text_repel
 library(ggfortify) # auto_plot for PCA plot 
+
+
+library(gapminder)
 ```
 
 
@@ -921,13 +924,15 @@ remains %>%
 ### 차원 축소(Dimension reduction)
 저자는 차원 축소의 대표적인 방법, PCA plot을 소개했다. 사실 PCA plot 자체로는 극적인 결과를 제시할 수 없는 것이 보통이지만 EDA 단계에서 "어떠한 관계가 있을 것이다"라는 뉘앙스를 주기엔 충분한 방법이다. `iris`로 PCA plot을 그려보았다. 
 
-```{r}
+```{r autoplot-을-이용한-pca-plot, fig.cap="iris 데이터를 이용한 PCA plot 실습"}
 # PCA 
 iris %>% 
   select(-Species) %>% 
   princomp(., cor = TRUE) -> PCA_iris
 
 # PCA plot 
+# https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html
+# https://katdevlin.github.io/PCA_cars/#principal_component_analysis_on_the_mtcars_dataset
 PCA_iris %>% 
   autoplot(data = iris, scale = 0, colour = 'Species', 
            frame = TRUE, frame.type = 'norm', 
@@ -938,6 +943,10 @@ PCA_iris %>%
   scale_y_continuous(name = "2nd Principal component", breaks=c(seq(-3, 3, 1))) + 
   scale_x_continuous(name = "1st Principal component", breaks=c(seq(-3, 3, 1)))
 ```
+
+`ggplot2`로 PCA plot의 loading과 ellipse를 깔끔하게 구현하기 쉽지 않기 때문에 `ggfortify`의 `autoplot()`을 함께 사용해보았다. 몇 개의 plot 형태는 `autoplot()`으로 그리는 것이 훨씬 효율적인 경우가 있는데 PCA plot이 그 중 하나이다. 자세한 내용은 [ggfortify](https://cran.r-project.org/web/packages/ggfortify/)의 **Vignettes**을 확인해보자. 
+
+
 
 ### Paired data
 짝 지어진 데이터는 "비교"를 위한 데이터형태로 "주가"와 같은 시계열 자료(time series)나 같은 환자를 여러 번 진찰하는 등의 경시적 자료(longitudinal data)을 예로 들 수 있으며 반복측정된 값을 가지는 것이 일반적이다. 
@@ -1018,4 +1027,97 @@ df_gapminder %>%
   )
 ```
 
+## ch 14 독립 변수의 시계열 데이터와 함수 시각화
 
+
+### 2개 이상의 반응 변수를 포함한 시계열 데이터
+연결 산점도(connected scatterplot) 혹은 위상도(phase portrait)라 불리는 plot을 그려보려고 했...는데 예제와 같은 모양은 안나온다. 데이터의 문제인지, 처리가 덜 되어서 그런지 좀 더 알아봐야겠다. 
+
+```{r, include=FALSE}
+drive_auth()
+data_in_drive <- drive_find(type = "csv", pattern = "집값실업률")
+
+for(i in 1:2){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r}
+job_fail <- read_csv("집값실업률_성별_경제활동인구_총괄.csv", locale=locale('ko',encoding='euc-kr'))
+house_price <- read_csv("집값실업률_주택매매가격변동률_시도_시_군_구.csv", locale=locale('ko',encoding='euc-kr'))
+```
+
+```{r}
+job_fail %>% 
+  select(-1) %>% 
+  pivot_longer(everything()) %>% 
+  filter(!(value %in% "실업률 (%)")) %>% 
+  mutate(value = as.numeric(value)) -> job_fail
+
+house_price %>% 
+  select(-1) %>% 
+    pivot_longer(everything()) -> house_price
+
+
+left_join(house_price, job_fail, "name") %>% 
+  dplyr::rename(`실업률` = `value.x`) %>% 
+  dplyr::rename(`전월 대비 집값 변동(%)` = `value.y`) -> hp_jf
+```
+
+
+```{r hp-jf-trend-with-facet-grid,fig.cap="03년 12월부터 20년 7월까지의 집 값과 실업률의 추세"}
+hp_jf %>% 
+  dplyr::rename(date = name) %>% 
+  mutate(date = ymd(paste0(date, ".01"))) %>%
+  pivot_longer(!date) %>% 
+  ggplot(aes(x = date, y = value)) +
+  geom_line(color = "#0072B2", 
+            size = 1) + 
+  # https://stackoverflow.com/questions/3261597/can-i-change-the-position-of-the-strip-label-in-ggplot-from-the-top-to-the-botto
+  facet_grid(name ~. , 
+             scales = "free_y", 
+             switch = "y", 
+             # https://stackoverflow.com/questions/37573155/showing-different-axis-labels-using-ggplot2-with-facet-wrap
+             labeller = as_labeller(c(`실업률` = "실업률(%)", `전월 대비 집값 변동(%)` = "전월 대비 집값 변동(%)"))) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1,
+                                                     scale = 1)) +
+  theme_minimal() + 
+  xlab("연도") + 
+  ylab(NULL) +
+  theme(strip.background = element_blank(),
+        strip.placement = "outside", 
+        strip.text = element_text(size = 13), 
+        
+        axis.title = element_text(size = 13))
+```
+
+
+
+```{r phase-portrait, fig.cap="실업률과 집값 변동에 대한 위상도...인데 상태가?"}
+hp_jf %>% 
+  mutate(name = ymd(paste0(name, ".01"))) %>% 
+  filter(name > ymd("2015-12-01")) %>% 
+  mutate(name = as.factor(name)) %>% 
+  ggplot(aes(x = 실업률, y = `전월 대비 집값 변동(%)`)) +
+  geom_path(size = 1, lineend = "round", color = "#0072b2") +
+  scale_x_continuous(
+    limits = c(-0.5, 1.3),
+    name = "실업률 (%)",
+    expand = c(0, 0), 
+    labels = scales::percent_format(accuracy = 0.01,
+                                    scale = 1)
+  ) +
+  scale_y_continuous(
+    limits = c(2.8, 5), expand = c(0, 0),
+    # breaks = c(-.3, -.15, 0, .15, .3),
+    name = "전월 대비 집값 변동 (%)", 
+    labels = scales::percent_format(accuracy = 0.1,
+                                    scale = 1)
+  ) + 
+  coord_cartesian(clip = "off") +
+  theme_minimal() + 
+  theme(axis.ticks.length = unit(0, "pt"),
+        axis.title = element_text(size = 13),
+        plot.margin = margin(21, 14, 3.5, 1.5)) 
+
+```
