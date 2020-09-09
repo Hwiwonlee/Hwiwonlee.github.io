@@ -1132,7 +1132,7 @@ hp_jf %>%
 ## 추세 제거와 시계열 데이터 분해
 
 
-```{r}
+```{r, include=FALSE}
 drive_auth()
 data_in_drive <- drive_find(type = "txt", pattern = "주택가격지수")
 
@@ -1196,3 +1196,58 @@ df_b %>%
 # ch 15 지리공간 데이터의 시각화
 지리 데이터를 이용한 시각화 챕터다. 레이어를 구성하거나 명목형 변수를 사용해 지도를 나누거나 하는 등의 방법을 소개하고 있다. 그 중 카토그램이나 카토그램 히트맵이 신기했지만...미국의 경우 주가 많아서 그럴까? 한 눈에 들어오는 그림이 아니라 이걸 쓸 일이 있을까 싶다. 국내 지도로 그려보면 어떨까? 
 
+...그려보면서 알게 됐는데 `statebins()`이 미국 주에 해당되어 있는 것 같다. 어떻게 서울에 맞게 배열할 수는 없을까? 
+
+```{r, include=FALSE}
+drive_auth()
+data_in_drive <- drive_find(type = "txt", pattern = "주민등록인구")
+
+for(i in 1:1){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r}
+seoul_pop <- read_delim("서울시 주민등록인구 (연령별구별) 통계.txt", 
+                        delim = "\t")
+str(seoul_pop)
+```
+```{r}
+seoul_pop %>% 
+  select(행정구역별, 구분, 계) %>% 
+  filter(구분 == "등록외국인", 행정구역별 != "합계") %>% 
+  mutate(index = 
+           factor(
+             case_when(
+               계 < 10000 ~ "< 10000",
+                계 < 20000 ~ "< 20000",
+                계 < 30000 ~ "< 30000",
+                계 >= 30000 ~ ">= 30000"
+             )
+           )
+  ) -> a
+  
+a$state <- state_facts$state[1:25]
+
+
+ggplot(a, aes(state = `state`, fill = `index`)) +
+  geom_statebins() +
+  theme_statebins() 
+```
+
+
+
+```{r}
+library(statebins)
+data(state)
+
+state_facts <- as.data.frame(state.x77) %>%
+  mutate(state = rownames(.))
+
+state_facts %>%
+  statebins(value_col = "Illiteracy", round = TRUE, name = "% of Pop.") +
+  labs(title = "Illiteracy Rate (1970)",
+       caption = "Source: U.S. Department of Commerce, Bureau of the Census (1977)") +
+  theme_statebins(legend_position = "right")
+
+```
