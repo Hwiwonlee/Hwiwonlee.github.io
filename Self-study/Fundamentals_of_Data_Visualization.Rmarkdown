@@ -1027,7 +1027,7 @@ df_gapminder %>%
   )
 ```
 
-## ch 14 독립 변수의 시계열 데이터와 함수 시각화
+## ch 13 독립 변수의 시계열 데이터와 함수 시각화
 
 
 ### 2개 이상의 반응 변수를 포함한 시계열 데이터
@@ -1121,3 +1121,78 @@ hp_jf %>%
         plot.margin = margin(21, 14, 3.5, 1.5)) 
 
 ```
+
+
+# ch 14 추세의 시각화
+
+시계열 자료를 이용한 그래프를 그리면 "추세"라는 것을 쉽게 볼 수 있다. 이 챕터의 초반은 평활화나 모델 피팅으로 "추세"를 보여주는 시각화 방법을 소개했다. 
+
+재밌는 건 추세의 제거와 시계열 데이터 분해 파트였다. 시계열 자료에 지배적인 추세가 있을 때, 그 추세를 제거하면 편차를 알아보기 쉽다는 것이었는데 예제 데이터와 비슷한 `서울시 주택가격지수` 데이터를 사용해 연습해보았다. 
+
+## 추세 제거와 시계열 데이터 분해
+
+
+```{r}
+drive_auth()
+data_in_drive <- drive_find(type = "txt", pattern = "주택가격지수")
+
+for(i in 1:2){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
+
+```{r, collapse=TRUE}
+# https://data.seoul.go.kr/dataList/801/S/2/datasetView.do#none
+df_a <- read_delim("서울시 주택가격지수 (매매) 통계(서울,강남,강북).txt",
+                delim = "\t", skip = 1)
+df_b <- read_delim("서울시 주택가격지수 (매매) 통계(각 구별).txt", 
+                delim = "\t", skip = 1)
+str(df_a)
+str(df_b)
+```
+```{r trend-detrend, fig.cap="강북과 강남으로 나눠서 본 서울시 주택매매지수 추세"}
+df_b %>% 
+  mutate(`강북강남_index` = 
+               rep(rep(c("서울시", "강북", "강남"), c(1,14,11)), nrow(.)/26)
+        ) %>% 
+  group_by(강북강남_index, 기간) %>% 
+  dplyr::summarise(across(where(is.numeric), mean)) %>% 
+  dplyr::rename(지역 = 강북강남_index) %>% 
+  select(기간, 지역, 종합, 아파트) %>% 
+  rbind(df_a, .) %>% 
+  mutate(지역 = factor(지역, levels = c("서울시", "강북", "강남"))) %>% 
+  mutate(기간 = parse_date(as.character(기간), format = "%Y.%m")) %>% 
+  mutate(
+    기간_numeric = as.numeric(기간),
+    log_종합 = log(종합)
+  ) %>% 
+  mutate(
+    trend = {
+      coef <- coef(lm(log_종합 ~ 기간_numeric))
+      exp(coef[1] + coef[2]*기간_numeric) # trend에 들어가는 값, 선형모델의 추정값. 
+    },
+    종합_detrend = 종합/trend
+  ) %>% 
+  
+  ggplot(aes(x = 기간, y = 종합_detrend)) + # 추세 제거
+  # ggplot(aes(x = 기간, y = 종합)) + # 추세 
+  # geom_line(aes(y = trend), color = "grey50", size = 0.4) + # 추세 
+  geom_line(color = "#0072B2", 
+            size = 1) + 
+  scale_y_log10() + 
+  facet_grid(지역 ~. , 
+             scales = "free_y", 
+             switch = "y") +
+  theme_bw() + 
+  xlab("연도") + 
+  ylab(NULL) +
+  theme(strip.background = element_blank(),
+        strip.placement = "outside", 
+        strip.text = element_text(size = 13), 
+        axis.title = element_text(size = 13))
+```
+
+
+# ch 15 지리공간 데이터의 시각화
+지리 데이터를 이용한 시각화 챕터다. 레이어를 구성하거나 명목형 변수를 사용해 지도를 나누거나 하는 등의 방법을 소개하고 있다. 그 중 카토그램이나 카토그램 히트맵이 신기했지만...미국의 경우 주가 많아서 그럴까? 한 눈에 들어오는 그림이 아니라 이걸 쓸 일이 있을까 싶다. 국내 지도로 그려보면 어떨까? 
+
