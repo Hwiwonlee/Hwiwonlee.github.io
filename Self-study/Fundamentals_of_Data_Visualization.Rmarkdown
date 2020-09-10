@@ -1,5 +1,5 @@
 ---
-title: "데이터 시각화 교과서(Fundamentals of Data Visualization)"
+title: "데이터 시각화 교과서(Fundamentals of Data Visualization) 1부"
 author: "Hwiwon Lee"
 date: "`r format(Sys.Date())`"
 categories:
@@ -1251,3 +1251,10 @@ state_facts %>%
   theme_statebins(legend_position = "right")
 
 ```
+
+
+# ch 16 불확실성의 시각화
+
+확률분포를 이용한 여러 시각화를 다루는 챕터로 히스토그램부터 신뢰구간을 활용한 시각화 방법을 다룬다. [분위수 점 도표](https://observablehq.com/@ale0xb/quantile-dotplots)을 제외하고는 특별할 것이 없지만 확률분포나 통계적 가설검정, 신뢰구간에 대해 간략히 설명하고 있어 **통계 방법의 시각화**라는 의미가 있는 챕터였다. 특별히 기억에 남는 글귀가 있어 남기고자 한다. 
+
+>  However, it is often worthwhile to trade some mathematical precision for more accurate human perception of the resulting visualization, in particular when communicating to a lay audience. A visualization that is mathematically correct but not properly perceived is not that useful in practice. (그러나 비전문가에게 정보를 전달할 땐 수학적 정확성을 어느 정도 포기하고 인간의 지각에 더 정확하게 다가가는 것도 좋다. 수학적으로는 정확하더라도 인간의 눈에 제대로 인식되지 않는 시각화 도표는 실무에서 유용하지 않다).
