@@ -1150,7 +1150,7 @@ df_b <- read_delim("서울시 주택가격지수 (매매) 통계(각 구별).txt
 str(df_a)
 str(df_b)
 ```
-```{r trend-detrend, fig.cap="강북과 강남으로 나눠서 본 서울시 주택매매지수 추세"}
+```{r}
 df_b %>% 
   mutate(`강북강남_index` = 
                rep(rep(c("서울시", "강북", "강남"), c(1,14,11)), nrow(.)/26)
@@ -1172,17 +1172,44 @@ df_b %>%
       exp(coef[1] + coef[2]*기간_numeric) # trend에 들어가는 값, 선형모델의 추정값. 
     },
     종합_detrend = 종합/trend
-  ) %>% 
+  ) -> df_seoul_hp
+```  
+
+
+```{r trend-detrend-1, fig.cap="강북과 강남으로 나눠서 본 서울시 주택매매지수 추세"}
+df_seoul_hp %>% 
   
-  ggplot(aes(x = 기간, y = 종합_detrend)) + # 추세 제거
-  # ggplot(aes(x = 기간, y = 종합)) + # 추세 
-  # geom_line(aes(y = trend), color = "grey50", size = 0.4) + # 추세 
+  ggplot(aes(x = 기간, y = 종합)) + 
+  geom_line(aes(y = trend), color = "grey50", size = 0.4) + 
   geom_line(color = "#0072B2", 
             size = 1) + 
-  scale_y_log10() + 
-  facet_grid(지역 ~. , 
-             scales = "free_y", 
-             switch = "y") +
+  facet_grid(지역 ~., 
+               scales = "free_x",
+               switch = "y") +
+  theme_bw() + 
+  xlab("연도") + 
+  ylab("주택가격매매지수") +
+  theme(strip.background = element_blank(),
+        strip.placement = "outside", 
+        strip.text = element_text(size = 13), 
+        axis.title = element_text(size = 13))
+```
+
+```{r trend-detrend-2, fig.cap="강북과 강남으로 나눠서 본 서울시 주택매매지수 추세"}
+df_seoul_hp %>% 
+  
+  ggplot(aes(x = 기간, y = 종합_detrend)) + 
+  geom_hline(yintercept = 1, color = "grey50", size = 0.4) +
+  geom_line(color = "#0072B2", size = 0.75) +
+  coord_cartesian(ylim=c(0.6, 1.8)) + 
+  facet_grid(지역 ~ ., 
+               scales = "free_x",
+               switch = "y") +
+  scale_y_continuous(
+    name = "주택가격매매지수",
+    breaks = c(0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8),
+    labels = c("0.6", "0.8", "1", "1.2", "1.4", "1.6", "1.8")
+  ) +
   theme_bw() + 
   xlab("연도") + 
   ylab(NULL) +
@@ -1191,6 +1218,9 @@ df_b %>%
         strip.text = element_text(size = 13), 
         axis.title = element_text(size = 13))
 ```
+시각화에 사용한 데이터 중 서울시 주택매매지수의 기준은 2017년 11월로, 해당 년월의 주택가격매매지수를 **100**으로 잡고 나머지 년월의 주택가격매매지수를 계산한 것이다. 
+
+추세를 본다면 대한민국 사람 누구나 알다시피 증가하는 추세를 보인다. 추세를 제거한 plot을 보면 주택가격매매지수의 변동이 좀 더 도드라지는데, 90년대 후반부터 00년대 초반 즉 IMF 시기의 매매지수 하락이 이전 plot보다 좀 더 눈에 띈다. 
 
 
 # ch 15 지리공간 데이터의 시각화
@@ -1212,7 +1242,8 @@ seoul_pop <- read_delim("서울시 주민등록인구 (연령별구별) 통계.t
                         delim = "\t")
 str(seoul_pop)
 ```
-```{r}
+
+```{r, eval=FALSE}
 seoul_pop %>% 
   select(행정구역별, 구분, 계) %>% 
   filter(구분 == "등록외국인", 행정구역별 != "합계") %>% 
@@ -1235,6 +1266,29 @@ ggplot(a, aes(state = `state`, fill = `index`)) +
   theme_statebins() 
 ```
 
+```{r, eval = FALSE}
+library(statebins)
+data(state)
+
+state_facts <- as.data.frame(state.x77) %>%
+  mutate(state = rownames(.))
+
+state_facts %>%
+  statebins(value_col = "Illiteracy", round = TRUE, name = "% of Pop.") +
+  labs(title = "Illiteracy Rate (1970)",
+       caption = "Source: U.S. Department of Commerce, Bureau of the Census (1977)") +
+  theme_statebins(legend_position = "right")
+
+```
+
+
+
+
+# ch 16 불확실성의 시각화
+
+확률분포를 이용한 여러 시각화를 다루는 챕터로 히스토그램부터 신뢰구간을 활용한 시각화 방법을 다룬다. [분위수 점 도표](https://observablehq.com/@ale0xb/quantile-dotplots)을 제외하고는 특별할 것이 없지만 확률분포나 통계적 가설검정, 신뢰구간에 대해 간략히 설명하고 있어 **통계 방법의 시각화**라는 의미가 있는 챕터였다. 특별히 기억에 남는 글귀가 있어 남기고자 한다. 
+
+>  However, it is often worthwhile to trade some mathematical precision for more accurate human perception of the resulting visualization, in particular when communicating to a lay audience. A visualization that is mathematically correct but not properly perceived is not that useful in practice. (그러나 비전문가에게 정보를 전달할 땐 수학적 정확성을 어느 정도 포기하고 인간의 지각에 더 정확하게 다가가는 것도 좋다. 수학적으로는 정확하더라도 인간의 눈에 제대로 인식되지 않는 시각화 도표는 실무에서 유용하지 않다).
 
 
 ```{r}
