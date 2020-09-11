@@ -74,17 +74,17 @@ True Positive Rate(TPR), False Positive Rate(FPR)는 **confusion matrix**에서 
 
 | 검진 결과 | 감염됨 | 감염되지 않음 | 합계 | 
 |---|:---:|---:|---:|
-| **양성** | a (True Positive) | c (False Negative) | a + c |
-| **음성** | b (False Positve) | d (True Negative) | b + d | 
-| 합계 | a + b |  d + d | a + b + c + d |
+| **양성** | True Positive(TP) | False Positive(FP) | TP + FP |
+| **음성** | False Negative(FN) | True Negative(TN) | FN + TN | 
+| 합계 | TP + FN |  FP + TN | TP + FP + FN + TN |
 
 질병 검진 결과 위와 같은 confusion matrix를 얻었다고 했을 때, 기본적으로 사용할 수 있는 성능 지표에 대해 알아보겠습니다. 
 
 - Accuracy : 전체 집단에서 실제로 감염된 대상을 양성으로, 비감염된 대상을 음성으로 제대로 판단한 비율
-$$\frac{a+d}{a + b + c + d} = \frac{True Positive + True Negative}{Total}$$
+$$\frac{True\,Positive + True\,Negative}{Total}$$
 
 - Error rate : 전체 집단에서 실제로 감염된 대상을 음성으로, 비 감염된 대상을 양성으로 잘못 판단한 비율
-$$\frac{b+c}{a + b + c + d} = \frac{False Positive + False Negative}{Total} = 1 - Accuracy$$
+$$\frac{False\,Positive + False\,Negative}{Total} = 1 - Accuracy$$
 
 Accuracy와 Error rate는 직관적으로 이해할 수 있는 개념들이며 옳게 보이기도 합니다. 그러나 **그룹간 불균형**이 심각한 상황, 가령, 희귀병에 대한 감염과 검진 결과로 만든 confusion matrix을 생각해봅시다. 
 
@@ -101,18 +101,16 @@ Accuracy는 `r round((99987+4)/100000, 2)`로 매우 높은 수준의 Accuracy�
 
 이 모델이 제대로 작동하고 있다고 할 수 있을까요? Accuracy만 본다면 놀라운 수준의 모델이지만 이 포스트를 읽고 계신 여러분은 뭔가 잘 못 됐다는 느낌을 강하게 받고 계실겁니다. 이 문제를 해결하기 위해 고안해낸 것이 바로 True Positive Rate와 False Positive Rate입니다. 
 
-- True Positive Rate(TPR, Sensitivity) : 실제로 감염인 집단을 대상으로 양성(Positive)으로 제대로(True) 판단한 비율
-$$\frac{a}{a + b} = \frac{True Positive}{True Positive + False Positive}$$
-- False Positive Rate(FPR) : 실제로 비 감염인 집단을 음성(Negative)으로 제대로(True) 판단한 비율
-$$\frac{d}{c + d} = \frac{True Negative}{True Negative + False Negative}$$
 
+- True Positive Rate(TPR, Sensitivity) : 실제로 감염인 집단을 대상으로 제대로(True) 양성(Positive)이라 판단한 비율
+$$\frac{True\,Positive}{True\,Positive + False\,Negative}$$
+- False Positive Rate(FPR) : 실제로 비 감염인 집단을 대상으로 잘못(False) 양성(Positive)으로 판단한 비율
+$$\frac{False\,Positive}{False\,Positive + True\,Negative}$$
+True Positive Rate, 그러니까 **TPR**는 쉽게 이해할 수 있습니다. 감염 상태인 집단을 대상으로 제대로 양성 진단을 내린 비율이므로 앞서 본 **Accuracy**와 비슷한 측면도 있습니다. 
 
+문제는 False Positive Rate, **FPR**입니다. FPR의 개념을 이해하기 어려운 것은 아닙니다. 잘못 양성으로 진단한 비율이라면 FPR이 낮을수록 정확도가 높다는 말일태니까요. 
 
-꼬인다 꼬여. 개념정리 한 번 더 ㄱㄱ
+근데 TPR과 FRP, 이 두 값으로는 모델의 성능을 판단하기엔 뭔가 부족한 느낌이 듭니다. 이 개념을 잘 가지고 **임계값(threshold)**에 대해 알아봅시다. 
 
+## 임계값과 TPR, FRP
 
-
-
-```{r}
-
-```
