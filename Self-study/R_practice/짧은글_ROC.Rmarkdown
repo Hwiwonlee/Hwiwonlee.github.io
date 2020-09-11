@@ -1,31 +1,29 @@
 ---
-title: "[짧은 글]ROC curve란?"
+title: "ROC에 대한 짧은 글"
 author: "Hwiwon Lee"
 date: "`r format(Sys.Date())`"
-summary : "ROC curve의 정의와 개념에 대한 짧은 글"
 categories:
-  - statistic
+  - Machine Learning
+  - Book
 tags:
   - R
-  - concept
-output:
+  - Machine Learning
+output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
-  bookdown::html_document2:
-    number_sections: FALSE
-    fig_caption: TRUE
-    fig_height: 6
-    fig_width: 10
-    highlight: textmate
-    theme: cosmo
-    toc: yes
-    toc_depth: 4
-    toc_float: yes
-    css: "post_style.css"
-  # https://stackoverflow.com/questions/535616/can-css-choose-a-different-default-font-and-size-depending-on-language
+    bookdown::html_document2:
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+      css: "post_style.css"
 ---
-  
-  
-  
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
                       comment = "#>")
@@ -39,9 +37,20 @@ library(knitr) # for include_graphics()
 library(tidyverse) # as you known, core package
 library(googledrive) # Import dataset from the google drive
 library(readr) # To read csv file
-library(lubridate)
+library(foreign)
+library(caret)
+library(showtext)
+font_add_google('Noto Sans KR', 'notosanskr')
+font_add_google('Noto Sans', 'notosans')
+font_add_google('Nanum Gothic', 'nanumgothic')
 ```
 
+# 여는 글
+머신러닝을 하다보면 여러 모델의 성능을 비교하는 것이 일반적입니다. 오늘은 그 중에서도 이진 분류 문제(binary classification)에서 정말 많이 사용하는 ROC(Receiver Operating Characteristics) curve에 대해 얘기해보려 합니다.
+
+ROC curve는 개념 상으로 크게 어려운 것이 없습니다만... 그 애매한 용어들과 비슷한 수식 때문에 한 번에 이해하기 쉽지 않습니다. 사실 ROC curve에 대한 완벽한 이해 없이 "ROC curve의 면적인 AUC(Area Under Curve)가 중요한 metric이고 이게 크면 좋다!"고 덮어놓고 가셔도 큰 문제는 없겠지만 누군가 "ROC curve가 뭐야?"라고 물었을 때, 데이터 분석가로서 있어보이는 한 마디는 해줘야 하지 않겠습니까? 
+
+이 글의 목적이 바로 그렇습니다. "ROC curve가 뭐야?"에 대한 답변을 위한 짧은 글을 시작해보겠습니다. 
 
 # ROC curve의 정의
 Google에서 제공하는 machine learning crash course의 정의를 이용해 다음과 같이 ROC curve와 AUC를 정의할 수 있습니다. 
@@ -100,3 +109,10 @@ $$\frac{d}{c + d} = \frac{True Negative}{True Negative + False Negative}$$
 
 
 꼬인다 꼬여. 개념정리 한 번 더 ㄱㄱ
+
+
+
+
+```{r}
+
+```
