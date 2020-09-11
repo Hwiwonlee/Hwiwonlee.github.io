@@ -1,0 +1,138 @@
+---
+title: "데이터 시각화 교과서(Fundamentals of Data Visualization) 2부"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+categories:
+  - visualization
+tags:
+  - R
+  - visualization
+output: 
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+    bookdown::html_document2:
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+      css: "post_style.css"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 5)
+# options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(googledrive) # Import dataset from the google drive
+library(readr) # To read csv file
+library(lubridate)
+library(operators)
+library(magrittr)
+library(ggridges) # geom_density_line()을 위한 패키지 로드
+library(tinter) # darken()을 위한 패키지 로드
+library(pkgsimon) # theme_dviz_hgrid()를 위함
+library(showtext)
+font_add_google('Noto Sans KR', 'notosanskr')
+font_add_google('Noto Sans', 'notosans')
+font_add_google('Nanum Gothic', 'nanumgothic')
+library(ggforce) # sina plot을 위한 패키지 
+# library(dviz.supp) # colorblindr가 4.0.2에서 사용 불가해서 설치가 안됨 
+library(foreign)
+library(treemapify) # geom_treemap
+library(ggrepel) # geom_text_repel
+library(ggfortify) # auto_plot for PCA plot 
+
+
+library(gapminder)
+```
+
+
+
+
+ch 17 잉크 양 비례의 원칙
+
+**잉크 양 비례의 원칙**(principle of proportinal ink)라는 다소 낯선 개념이 등장한다. 정의는 아래와 같다. 
+
+> The principle of proportional ink: The sizes of shaded areas in a visualization need to be proportional to the data values they represent(색조를 넣은 영역이 수치 값을 나타낼 때, 색조가 들어간 영역의 면적은 해당 값과 정비례해야 한다).
+
+번역본의 주석에 따르면 원래의 정의는 이렇다고 한다. 
+
+> The representation of numbers, as physically measured on the surface of the graphic itself, should be directly proportional to the numerical quantities represented(그래픽 자체의 표면에 숫자를 물리적으로 표현하는 경우, 수치의 크기와 표면적의 넓이는 정비례해야 한다). 
+
+
+잉크 양 비례의 원칙이라는 말이 와닿지 않아서 그렇지 의미를 보면 그래프를 그리는 사람들 모두가 알고 있는 사실이다. **숫자와 면적이 정비례하게 그릴 것.** 잉크 양 비례의 원칙을 위배한 유명한 예시가 있다.
+
+```{r wrong-pie-chart, echo = FALSE, fig.cap = "JTBC의 유명한 파이차트. 숫자와 해당 카테고리를 의미하는 면적이 일치하지 않으며 심지어 비례하지도 않는다."}
+include_graphics("https://www.mediawatch.kr/data/photos/20170312/art_14899947314124_cfb2da.jpg")
+```
+
+JTBC 뉴스룸에서 방송된 파이차트([출처](https://www.mediawatch.kr/news/article.html?no=251671))로 대단히 놀라운 수준의 시각화를 보여준다. `잘했다`, `모르겠다`, `잘못했다` 세 범주로 나눠진 설문조사 응답은 차례대로 `64.0%`, `28.7%`, `7.3%`이지만 그래프의 면적은 `잘했다 >= 잘못했다 > 모르겠다`로 보인다. 이 파이차트에서 정확한 것은 설문조사의 응답 범주 뿐이고 나머지는 모두 틀렸다고 봐도 무방하다. 
+
+이렇게 그리지 말라는 것이다. 
+
+책에서는 대부분의 사람들이 한 번 정도는 실수했던 부분에 대해서도 얘기한다. **그래프 축의 시작은 반드시 0이어야 한다.**가 바로 그것이다. 물론, 목적이나 분야에 따라 시작점이 **반드시** 0이 되지 않아도 되는 경우가 있긴 하다. 가령 주가를 다룬 시계열 그래프나 대중 매체에서 사용되는 그래프들이 그렇다. 
+
+하지만 그래프의 축이 0부터 시작하지 않는다면 시각화의 왜곡은 반드시 일어난다. 책에 나온 경우를 표현하기 위해 `gapminder` 데이터셋의 인구 수
+를 사용해보았다. 
+
+```{r wrong-bar-plot, fig.cap="2007년 기준 인구 수(백만 명 단위)"}
+gapminder %>% 
+  filter(continent == "Asia", 
+         year == "2007") %>% 
+  mutate(pop_million = pop / 1000000) %>% 
+  filter(between(pop_million, 20, 60)) %>% 
+  
+  ggplot(aes(x = country, y = pop_million)) + 
+  geom_col(fill = "#FF9436") + 
+  coord_cartesian(ylim = c(20, 55), expand = FALSE) + 
+  scale_y_continuous(
+    name = "Population per million", 
+    breaks = c(20, 10*(3:5))
+  ) + 
+  scale_x_discrete(
+    name = "Country"
+  ) + 
+  theme_minimal() + 
+  theme(
+    text = element_text(family = "notosanskr", size = 12), 
+    plot.margin = margin(14, 7, 3, 1.5)
+  )
+```
+```{r right-bar-plot, fig.cap="2007년 기준 인구 수(백만 명 단위)"}
+gapminder %>% 
+  filter(continent == "Asia", 
+         year == "2007") %>% 
+  mutate(pop_million = pop / 1000000) %>% 
+  filter(between(pop_million, 20, 60)) %>% 
+  
+  ggplot(aes(x = country, y = pop_million)) + 
+  geom_col(fill = "#FF9436") + 
+  coord_cartesian(ylim = c(0, 55), expand = FALSE) + 
+  scale_y_continuous(
+    name = "Population per million", 
+    breaks = c(0, 10*(1:5))
+  ) + 
+  scale_x_discrete(
+    name = "Country"
+  ) + 
+  theme_minimal() + 
+  theme(
+    text = element_text(family = "notosanskr", size = 12), 
+    plot.margin = margin(14, 7, 3, 1.5)
+  )
+```
+
+2007년 기준 11 개 국가의 인구 수를 bar plot으로 나타냈다. y축의 시작이 20부터 시작이냐 0부터 시작이냐에 따라 인구 수를 의미하는 bar의 너비가 크게 차이 남을 볼 수 있다. 
+
+시각화는 사실을 간결하지만 분명하게 전달해야 할 필요가 있으므로 위와 같은 왜곡이 발생하지 않도록, 다시 말해 잉크 양 비례 원칙이 지켜질 수 있도록 주의해야 함을 기억하자. 
