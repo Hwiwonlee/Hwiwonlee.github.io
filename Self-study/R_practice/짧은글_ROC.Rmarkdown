@@ -1,0 +1,102 @@
+---
+title: "[짧은 글]ROC curve란?"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+summary : "ROC curve의 정의와 개념에 대한 짧은 글"
+categories:
+  - statistic
+tags:
+  - R
+  - concept
+output:
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+  bookdown::html_document2:
+    number_sections: FALSE
+    fig_caption: TRUE
+    fig_height: 6
+    fig_width: 10
+    highlight: textmate
+    theme: cosmo
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    css: "post_style.css"
+  # https://stackoverflow.com/questions/535616/can-css-choose-a-different-default-font-and-size-depending-on-language
+---
+  
+  
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 5)
+# options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(googledrive) # Import dataset from the google drive
+library(readr) # To read csv file
+library(lubridate)
+```
+
+
+# ROC curve의 정의
+Google에서 제공하는 machine learning crash course의 정의를 이용해 다음과 같이 ROC curve와 AUC를 정의할 수 있습니다. 
+
+> ROC curve은 True Positive Rate(TPR), False Positive Rate(FPR)를 이용해 모든 분류 임계값에서 분류 모델의 성능을 보여주는 그래프이다. 이 때, 그려진 ROC curve 아래의 면적을 AUC(Area Under Curve)라 정의하며 분류 모델의 정확도를 보여주는 지표로 사용한다. 
+
+위에서 보시다시피 ROC curve와 AUC는 분류 모델의 성능을 보여주는 지표 중 하나로 사용됩니다. 보통 **ROC curve를 그린다** 혹은 **ROC curve를 보자**는 말은 ROC curve와 AUC를 함께 검토하자는 의미로 사용되기도 합니다. 
+
+ROC curve가 어떻게 분류 모델의 성능을 평가하는 지표로써 사용되는지 설명하기에 앞서 ROC curve를 이루는 중요한 개념들, **TPR**, **FPR**, **분류 임계값**에 대해 먼저 살펴보겠습니다. 
+
+
+
+
+## True Positive Rate(TPR), False Positive Rate(FPR)
+True Positive Rate(TPR), False Positive Rate(FPR)는 **confusion matrix**에서 구할 수 있는 값들로 분류 모델의 성능에 대한 지표로 사용할 수 있습니다. 
+
+쉬운 설명을 위해 ROC curve가 실제로 많이 사용되는 이진 분류 모델을 사용한 질병 검진의 예시를 사용해서 설명해보겠습니다. 
+
+|           |  질병 감염 여부 | |
+|---|:---:|---:|
+
+| 검진 결과 | 감염됨 | 감염되지 않음 | 합계 | 
+|---|:---:|---:|---:|
+| **양성** | a (True Positive) | c (False Negative) | a + c |
+| **음성** | b (False Positve) | d (True Negative) | b + d | 
+| 합계 | a + b |  d + d | a + b + c + d |
+
+질병 검진 결과 위와 같은 confusion matrix를 얻었다고 했을 때, 기본적으로 사용할 수 있는 성능 지표에 대해 알아보겠습니다. 
+
+- Accuracy : 전체 집단에서 실제로 감염된 대상을 양성으로, 비감염된 대상을 음성으로 제대로 판단한 비율
+$$\frac{a+d}{a + b + c + d} = \frac{True Positive + True Negative}{Total}$$
+
+- Error rate : 전체 집단에서 실제로 감염된 대상을 음성으로, 비 감염된 대상을 양성으로 잘못 판단한 비율
+$$\frac{b+c}{a + b + c + d} = \frac{False Positive + False Negative}{Total} = 1 - Accuracy$$
+
+Accuracy와 Error rate는 직관적으로 이해할 수 있는 개념들이며 옳게 보이기도 합니다. 그러나 **그룹간 불균형**이 심각한 상황, 가령, 희귀병에 대한 감염과 검진 결과로 만든 confusion matrix을 생각해봅시다. 
+
+|           |  질병 감염 여부 | |
+|---|:---:|---:|
+
+| 검진 결과 | 감염됨 | 감염되지 않음 | 합계 | 
+|---|:---:|---:|---:|
+| **양성** | 4 | 3 | 7 |
+| **음성** | 6 | 99,987 | 99,993 | 
+| 합계 | 10 |  99,990 | 100,000 |
+
+Accuracy는 `r round((99987+4)/100000, 2)`로 매우 높은 수준의 Accuracy를 갖지만 양성 집단의 분류 결과만 따로 보면 `r 4/10`으로 사용할 수 없는 수준입니다. 
+
+이 모델이 제대로 작동하고 있다고 할 수 있을까요? Accuracy만 본다면 놀라운 수준의 모델이지만 이 포스트를 읽고 계신 여러분은 뭔가 잘 못 됐다는 느낌을 강하게 받고 계실겁니다. 이 문제를 해결하기 위해 고안해낸 것이 바로 True Positive Rate와 False Positive Rate입니다. 
+
+- True Positive Rate(TPR, Sensitivity) : 실제로 감염인 집단을 대상으로 양성(Positive)으로 제대로(True) 판단한 비율
+$$\frac{a}{a + b} = \frac{True Positive}{True Positive + False Positive}$$
+- False Positive Rate(FPR) : 실제로 비 감염인 집단을 음성(Negative)으로 제대로(True) 판단한 비율
+$$\frac{d}{c + d} = \frac{True Negative}{True Negative + False Negative}$$
+
+
+
+꼬인다 꼬여. 개념정리 한 번 더 ㄱㄱ
