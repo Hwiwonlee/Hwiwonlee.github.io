@@ -56,6 +56,7 @@ library(ggfortify) # auto_plot for PCA plot
 
 library(gapminder)
 library(colorspace)
+library(gridExtra)
 ```
 
 
@@ -204,11 +205,150 @@ bins의 모양을 사각형으로 하느냐, 육각형으로 하느냐는 사실
 색칠된 육각형이 직사각형에 비해 데이터를 조금 더 정확하게 나타내주는 측면이 있다는 사실이 굉장히 인상깊다. 꼭 기억하자. 
 
 
+# ch 19 효과적인 색 사용을 위한 조언
+
+여러 색깔을 사용한 그래프는 언뜻 보면 뭔가 있어 보이지만 명확한 의미전달이 힘든 경우가 보통이다. 따라서 지나치게 많은 색깔을 사용하는 것은 지양되어야 하는 것이 마땅하다. 
+
+책에서는 특별히 색맹/색약의 불편함을 가진 사람들을 위한 색 사용을 조언한다. 대부분의 색맹/색약이 녹색, 적색, 청색 인식에 대한 불편을 가져오므로 해당 색깔들은 한 번씩만 사용하길 권장하고 있으며 특별히 정성적 색상(Qualitative color)의 경우, 색맹/색약에 영향을 받지 않는 다음의 색깔을 사용하는 것을 추천했다. 
+
+```{r}
+# `colorblindr`이 4.0.2에서 아직 사용할 수 없으므로 새로운 패키지를 사용해서 표현
+# https://cran.r-project.org/web/packages/unikn/vignettes/colors.html
+library(unikn)
+forcolorblind <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000")
+names(forcolorblind) <- c("주황색", "하늘색", "초록색", "노란색", "파란색", "주홍색", "분홍색", "검은색")
+
+seecol(forcolorblind, grid = FALSE, title = " ")
+```
+# ch 20 Redundant coding(담백한 디자인의 그래프)
+
+**Redundant coding**는 보통 중복된 코드 디자인을 말하는데...이걸 번역본에서는 **불필요한 기호화**...라고 해놓았다. 원본이랑 번역본을 같이 보는데 종종 **어?**하는 번역이 있었지만 이건 좀...
+
+이번 장에서는 의미 전달을 위한 최적화를 소개한다. 이전 장에서 보았던 색맹/색약의 경우를 대처하기 위한 **색각 이상 시뮬레이션**(Color-vision-deficiency simulation)과 효과적인 범례 표시 및 범례 없는 그래프 등을 보여준다. 
+
+범례 없는 그래프는 무작정 범례를 지우는 것이 아니라 범례에서 전달하는 정보를 그래프에서 전달해 전체적인 통일감과 명확한 표현, 두 마리 토끼를 모두 잡을 수 있는 방법이다. 
+
+그렇긴 한데...사실 실무에서는 그렇게 선호되는 방법은 아닌 것 같다는 게 내 의견이다. 보기엔 좋은데 결정권자의 손을 넘기 힘들다고 해야할까. 내 맘에 드는 그래프보다는 모두가 읽고 이해하기 좋은 그래프를 만드는 것이 더 옳은 일이므로 유연한 사고를 가지는 게 좋은 것 같다. 
+
+```{r}
+label_df <- data.frame(
+  Species = c("setosa", "virginica", "versicolor"),
+  label = c("Iris setosa", "Iris virginica", "Iris versicolor"),
+  Sepal.Length = c(5, 7, 6),
+  Pepal.Length = c(0.7, 6.8, 3.5),
+  hjust = c(0, 0.5, 0),
+  vjust = c(0, 0.5, 1))
+
+iris %>% 
+  ggplot(aes(x = Sepal.Length,y = Petal.Length,
+             color = Species)
+  ) + 
+  geom_point(
+    aes(shape = Species, fill = Species),
+    size = 2.5,
+    position = position_jitter(
+      width = 0.05,
+      height = 0.05,
+      seed = 1234)
+  ) +
+  stat_ellipse(size = 0.5) +
+  scale_shape_manual(
+    values = c(21, 22, 23),
+    breaks = c("setosa", "virginica", "versicolor"),
+    name = NULL
+  ) +
+  scale_fill_manual(
+    values = c("#D55E0080", "#0072B280", "#009E7380"),
+    breaks = c("setosa", "virginica", "versicolor"),
+    name = NULL
+  ) +
+  scale_color_manual(
+    values = darken(c("#D55E00", "#0072B2", "#009E73"), 0.3),
+    breaks = c("setosa", "virginica", "versicolor"),
+    name = NULL
+  ) +
+  scale_x_continuous(
+    limits = c(4, 8.2), expand = c(0, 0),
+    breaks = seq(4, 8, 2),
+    labels = as.character(seq(4, 8, 2)),
+    name = "Sepal Length"
+  ) +
+  scale_y_continuous(
+    limits = c(0, 7.5), expand = c(0, 0),
+    breaks = seq(0, 7, 1),
+    labels = as.character(seq(0, 7, 1)),
+    name = "Petal Length"
+  ) +
+  guides(fill = "none", color = "none", shape = "none") +
+  geom_text(
+    data = label_df,
+    aes(
+      x = Sepal.Length, y = Pepal.Length, label = label, color = Species,
+      hjust = hjust, vjust = vjust
+    ),
+    size = 14/.pt,
+    fontface = "italic",
+    inherit.aes = FALSE
+  ) +
+  theme_minimal() -> no_legend_SL_PL
+
+iris %>% 
+  ggplot(aes(x = Sepal.Length,y = Petal.Length,
+             color = Species)
+  ) + 
+  geom_point(
+    aes(shape = Species, fill = Species),
+    size = 2.5,
+    position = position_jitter(
+      width = 0.05,
+      height = 0.05,
+      seed = 1234)
+  ) +
+  stat_ellipse(size = 0.5) +
+  scale_shape_manual(
+    values = c(21, 22, 23),
+    breaks = c("setosa", "virginica", "versicolor"),
+    name = NULL
+  ) +
+  scale_fill_manual(
+    values = c("#D55E0080", "#0072B280", "#009E7380"),
+    breaks = c("setosa", "virginica", "versicolor"),
+    name = NULL
+  ) +
+  scale_color_manual(
+    values = darken(c("#D55E00", "#0072B2", "#009E73"), 0.3),
+    breaks = c("setosa", "virginica", "versicolor"),
+    name = NULL
+  ) +
+  scale_x_continuous(
+    limits = c(4, 8.2), expand = c(0, 0),
+    breaks = seq(4, 8, 2),
+    labels = as.character(seq(4, 8, 2)),
+    name = "Sepal Length"
+  ) +
+  scale_y_continuous(
+    limits = c(0, 7.5), expand = c(0, 0),
+    breaks = seq(0, 7, 1),
+    labels = as.character(seq(0, 7, 1)),
+    name = "Petal Length"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom"
+  ) -> yes_legend_SL_PL
+
+
+grid.arrange(yes_legend_SL_PL, no_legend_SL_PL, nrow = 2)
+```
 
 
 
 
 
+```{r}
+install.packages("remotes")
+remotes::install_github("clauswilke/dviz.supp")
+```
 
 
 
