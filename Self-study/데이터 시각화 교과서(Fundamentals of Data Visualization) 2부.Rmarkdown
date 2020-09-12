@@ -55,6 +55,7 @@ library(ggfortify) # auto_plot for PCA plot
 
 
 library(gapminder)
+library(colorspace)
 ```
 
 
@@ -109,6 +110,7 @@ gapminder %>%
     plot.margin = margin(14, 7, 3, 1.5)
   )
 ```
+
 ```{r right-bar-plot, fig.cap="2007년 기준 인구 수(백만 명 단위)"}
 gapminder %>% 
   filter(continent == "Asia", 
@@ -135,4 +137,101 @@ gapminder %>%
 
 2007년 기준 11 개 국가의 인구 수를 bar plot으로 나타냈다. y축의 시작이 20부터 시작이냐 0부터 시작이냐에 따라 인구 수를 의미하는 bar의 너비가 크게 차이 남을 볼 수 있다. 
 
-시각화는 사실을 간결하지만 분명하게 전달해야 할 필요가 있으므로 위와 같은 왜곡이 발생하지 않도록, 다시 말해 잉크 양 비례 원칙이 지켜질 수 있도록 주의해야 함을 기억하자. 
+시각화는 사실을 간결하지만 분명하게 전달해야 할 필요가 있으므로 위와 같은 왜곡이 발생하지 않도록, 다시 말해 잉크 양 비례 원칙이 지켜질 수 있도록 주의해야 함을 기억하자.  
+
+# ch 18 오버플로팅 : 겹치는 점을 처리하는 방법
+
+x축이나 y축에 명목형 변수를 두고 산점도를 그리면 많은 경우 관측치를 표현하는 점들이 겹치게 되어 오해를 불러올 수 있다. `ggplot2` 패키지나 `base`에서 볼 수 있는 `jitter()`를 이용하면 겹쳐진 점을 살짝 비껴 표현할 수 있어 plot의 왜곡을 방지할 수 있다. 
+
+책에서 소개하고 있는 방법 중 인상깊었던 것은 **2차원 히스토그램**으로 산점과 점들의 분포를 동시에 표현할 수 있는 방법이라는 생각이 들었다. 
+
+
+
+```{r nycfilghts13-2d-hist, fig.cap="2차원 히스토그램을 이용한 분 단위 도착 시간 지연과 실제 도착 시간의 비교"}
+library(nycflights13)
+
+nycflights13::flights %>%
+  filter(!is.na(arr_time)) %>% 
+  mutate(arr_time = as.character(arr_time)) %>% 
+  mutate(arr_time = 
+           ifelse(
+             arr_time == "2400",
+             "0000",
+             arr_time
+           )
+  ) %>% 
+  mutate(arrive_time = 
+           case_when(
+             str_length(arr_time) == 1 ~ paste0("000", arr_time), 
+             str_length(arr_time) == 2 ~ paste0("00", arr_time), 
+             str_length(arr_time) == 3 ~ paste0("0", arr_time), 
+             str_length(arr_time) == 4 ~ arr_time
+           )
+  ) %>% 
+  
+  mutate(arrive_time = parse_time(arrive_time, format = "%H%M")) %>% 
+
+  ggplot(aes(x = arrive_time, y = arr_delay)) +
+  geom_abline(slope = 0, intercept = 0, color="grey70") + 
+  scale_x_time(
+    name = "실제 도착 시각",
+    breaks = hm(c("0:00", "6:00", "12:00", "18:00", "24:00")),
+    labels = c("0:00", "6:00", "12:00", "18:00", "24:00")
+  ) +
+  scale_y_continuous(
+    name = "도착 지연 시간(분)"
+  ) + 
+  geom_hex(aes(colour = stat(count)), bins = 100) + 
+  scale_fill_continuous_sequential(
+    aesthetics = c("colour", "fill"),
+    h1 = -83, h2 = 20, c1 = 30, cmax = 40, c2 = 0, l1 = 20, l2 = 94, p1 = 1, p2 = 1.2, 
+    rev = TRUE,
+    begin = 0.2,
+    name = "실제 도착시간의 빈도"
+  ) +
+  theme_minimal() + 
+  theme(
+    legend.position = c(0.85, .85), 
+    legend.background = element_rect(color="white"),
+    text = element_text(family = "notosanskr", size = 12)
+    )
+```
+
+bins의 모양을 사각형으로 하느냐, 육각형으로 하느냐는 사실 aesthetic의 의미만 있는 줄 알았는데, 책에 다음과 같은 사실이 나온다. 
+
+> This approach, first proposed by Carr et al. ([1987](https://www.jstor.org/stable/2289444)), has the advantage that the points in a hexagon are, on average, closer to the hexagon center than the points in an equal-area square are to the center of the square. Therefore, the colored hexagon represents the data slightly more accurately than the colored rectangle does.
+
+색칠된 육각형이 직사각형에 비해 데이터를 조금 더 정확하게 나타내주는 측면이 있다는 사실이 굉장히 인상깊다. 꼭 기억하자. 
+
+
+
+
+
+
+
+
+
+
+```{r, eval=FALSE, echo=FALSE, include=FALSE}
+# 데이터셋 찾아보기 
+# https://stackoverflow.com/questions/27709936/get-a-list-of-the-data-sets-in-a-particular-package
+library(vcdExtra)
+vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra", "ggplot2"))
+
+storms %>% 
+  ggplot(aes(x = day, y = wind)) +
+  geom_point() + 
+   geom_jitter()
+
+?AirCrash # Data on all fatal commercial airplane crashes from 1993–2015. Excludes small planes (less than 6 passengers) and non-commercial (cargo, military, private) aircraft.
+# AirCrash로 결정
+```
+
+```{r, echo=FALSE, eval=FALSE}
+drive_auth()
+data_in_drive <- drive_find(type = "csv", pattern = "19_temp")
+
+for(i in 1:8){ 
+  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
+}
+```
