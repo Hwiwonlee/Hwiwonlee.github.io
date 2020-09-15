@@ -43,6 +43,7 @@ library(showtext)
 font_add_google('Noto Sans KR', 'notosanskr')
 font_add_google('Noto Sans', 'notosans')
 font_add_google('Nanum Gothic', 'nanumgothic')
+font_add_google('Lora', 'test')
 ```
 
 # 여는 글
@@ -113,4 +114,63 @@ True Positive Rate, 그러니까 **TPR**는 쉽게 이해할 수 있습니다. �
 근데 TPR과 FRP, 이 두 값으로는 모델의 성능을 판단하기엔 뭔가 부족한 느낌이 듭니다. 이 개념을 잘 가지고 **임계값(threshold)**에 대해 알아봅시다. 
 
 ## 임계값과 TPR, FRP
+임계값과 TPR, FRP를 쉽게 설명하기 위해 예제와 여러 플롯을 사용해보겠습니다. 먼저 다음과 같은 상황을 가정해봅시다. 
+
+- 임의의 질병 "X"의 감염 여부를 판단하는 모델을 만들었다. 
+
+- 질병 감염 여부를 판단하기 위해 2천 명의 대상자들을 모집했다. 
+
+- 이 가운데, 1천 명은 "X에 감염된 상태이고 1천 명은 "X"에 감염되지 않은 상태이다. 
+
+위의 상황에서 이상적인 모델은 감염 여부를 정확히 밝혀내 감염자 1천 명, 비 감염자 1천 명으로 구분해내는 모델일 것입니다.
+
+```{r, fig.showtext=TRUE, fig.cap="모델이 감염자와 비 감염자를 완벽히 구분할 수 있는 경우의 density plot. 임계값(threshold)를 0.5로 설정한다면 감염자와 비 감염자를 정확하게 구분할 수 있다."}
+
+showtext_auto()
+windows()
+
+set.seed(1234)
+normal <- rnorm(1000, mean = 0.3, sd = 0.05)
+disease <- rnorm(1000, mean = 0.7, sd = 0.05)
+
+dt <- as.data.frame(cbind(normal, disease, index = seq(1, 1000, 1)))
+
+dt %>% 
+  pivot_longer(cols = -index, 
+               names_to = "Status") %>% 
+  mutate(Status = factor(Status, levels = c("normal", "disease"), labels = c("Normal", "Disease"))) %>% 
+  ggplot(aes(x = value, 
+             fill = Status, colour = Status)) +
+  # density가 갑자기 헷갈린다. 
+  # densisy면 0부터 1이어야 하는 거 아닌가? kernal density라 아님. 
+  # https://stackoverflow.com/questions/51385455/geom-density-y-axis-goes-above-1
+  # https://stats.stackexchange.com/questions/172311/r-geom-density-values-in-y-axis
+  # https://stackoverflow.com/questions/15664202/how-to-interpret-the-different-ggplot2-densities
+  geom_density(alpha = 0.1) + 
+  scale_x_continuous(name = "Threshold", 
+                     limits = c(0, 1),
+                     breaks = c(0, seq(0.1, 0.9, 0.2), 1), 
+                     labels = as.character(c(0, seq(0.1, 0.9, 0.2), 1)), 
+                     expand = c(0.01, 0.01)
+  ) + 
+  scale_y_continuous(name = "Density", 
+                     expand = c(0.01, 0.01)
+  ) + 
+  geom_vline(xintercept = 0.5, 
+             color = "red", 
+             size = 1.5, 
+             alpha = 0.5) + 
+  annotate("text", x=0.3, y=6, label="True Negative", size=8, family = "notosans") + 
+  annotate("text", x=0.7, y=6, label="True Positive", size=8, family = "notosans") + 
+  theme_minimal() + 
+  theme(text = element_text(family = "notosans"))
+```
+
+
+
+```{r}
+# https://datascienceschool.net/view-notebook/d0df94cf8dd74e8daec7983531f68dfc/
+```
+
+
 
