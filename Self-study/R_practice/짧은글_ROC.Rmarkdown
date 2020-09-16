@@ -11,6 +11,9 @@ tags:
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
     bookdown::html_document2:
+      # solution of weird plot with fig.showtext
+      # https://cran.rstudio.com/web/packages/showtext/vignettes/introduction.html#working-with-r-markdown
+      fig_retina : 1
       number_sections: FALSE
       fig_caption: TRUE
       fig_height: 6
@@ -124,7 +127,7 @@ True Positive Rate, 그러니까 **TPR**는 쉽게 이해할 수 있습니다. �
 
 위의 상황에서 이상적인 모델은 감염 여부를 정확히 밝혀내 감염자 1천 명, 비 감염자 1천 명으로 구분해내는 모델일 것입니다.
 
-```{r, fig.showtext=TRUE, fig.cap="모델이 감염자와 비 감염자를 완벽히 구분할 수 있는 경우의 density plot. 임계값(threshold)를 0.5로 설정한다면 감염자와 비 감염자를 정확하게 구분할 수 있다."}
+```{r, fig.showtext = TRUE, fig.cap="모델이 감염자와 비 감염자를 완벽히 구분할 수 있는 경우의 density plot. 임계값(threshold)를 0.5로 설정한다면 감염자와 비 감염자를 정확하게 구분할 수 있다."}
 
 showtext_auto()
 windows()
@@ -163,7 +166,11 @@ dt %>%
   annotate("text", x=0.3, y=6, label="True Negative", size=8, family = "notosans") + 
   annotate("text", x=0.7, y=6, label="True Positive", size=8, family = "notosans") + 
   theme_minimal() + 
-  theme(text = element_text(family = "notosans"))
+  theme(
+    text = element_text(family = "notosans", 
+                        size = 10), 
+    legend.position = c(0.95, 0.7)
+  )
 ```
 
 
@@ -171,6 +178,5 @@ dt %>%
 ```{r}
 # https://datascienceschool.net/view-notebook/d0df94cf8dd74e8daec7983531f68dfc/
 ```
-
 
 
