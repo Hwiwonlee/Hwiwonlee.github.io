@@ -10,6 +10,7 @@ tags:
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
     bookdown::html_document2:
+      fig_retina : 1
       number_sections: FALSE
       fig_caption: TRUE
       fig_height: 6
