@@ -221,6 +221,7 @@ names(forcolorblind) <- c("주황색", "하늘색", "초록색", "노란색", "�
 
 seecol(forcolorblind, grid = FALSE, title = " ")
 ```
+
 # ch 20 Redundant coding(담백한 디자인의 그래프)
 
 **Redundant coding**는 보통 중복된 코드 디자인을 말하는데...이걸 번역본에서는 **불필요한 기호화**...라고 해놓았다. 원본이랑 번역본을 같이 보는데 종종 **어?**하는 번역이 있었지만 이건 좀...
@@ -234,7 +235,7 @@ seecol(forcolorblind, grid = FALSE, title = " ")
 ```{r}
 label_df <- data.frame(
   Species = c("setosa", "virginica", "versicolor"),
-  label = c("Iris setosa", "Iris virginica", "Iris versicolor"),
+  label = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
   Sepal.Length = c(5, 7, 6),
   Pepal.Length = c(0.7, 6.8, 3.5),
   hjust = c(0, 0.5, 0),
@@ -272,13 +273,13 @@ iris %>%
     limits = c(4, 8.2), expand = c(0, 0),
     breaks = seq(4, 8, 2),
     labels = as.character(seq(4, 8, 2)),
-    name = "Sepal Length"
+    name = "꽃받침 길이"
   ) +
   scale_y_continuous(
     limits = c(0, 7.5), expand = c(0, 0),
     breaks = seq(0, 7, 1),
     labels = as.character(seq(0, 7, 1)),
-    name = "Petal Length"
+    name = "꽃잎 길이"
   ) +
   guides(fill = "none", color = "none", shape = "none") +
   geom_text(
@@ -291,7 +292,11 @@ iris %>%
     fontface = "italic",
     inherit.aes = FALSE
   ) +
-  theme_minimal() -> no_legend_SL_PL
+  theme_minimal() + 
+  theme(
+    text = element_text(family = "notosanskr",
+                        size = 12)
+  ) -> no_legend_SL_PL
 
 iris %>% 
   ggplot(aes(x = Sepal.Length,y = Petal.Length,
@@ -309,70 +314,67 @@ iris %>%
   scale_shape_manual(
     values = c(21, 22, 23),
     breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
     name = NULL
   ) +
   scale_fill_manual(
     values = c("#D55E0080", "#0072B280", "#009E7380"),
     breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
     name = NULL
   ) +
   scale_color_manual(
     values = darken(c("#D55E00", "#0072B2", "#009E73"), 0.3),
     breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
     name = NULL
   ) +
   scale_x_continuous(
     limits = c(4, 8.2), expand = c(0, 0),
     breaks = seq(4, 8, 2),
     labels = as.character(seq(4, 8, 2)),
-    name = "Sepal Length"
+    name = "꽃받침 길이"
   ) +
   scale_y_continuous(
     limits = c(0, 7.5), expand = c(0, 0),
     breaks = seq(0, 7, 1),
     labels = as.character(seq(0, 7, 1)),
-    name = "Petal Length"
+    name = "꽃잎 길이"
   ) +
   theme_minimal() +
   theme(
-    legend.position = "bottom"
+    legend.position = "bottom", 
+    text = element_text(family = "notosanskr",
+                        size = 12)
   ) -> yes_legend_SL_PL
 
 
 grid.arrange(yes_legend_SL_PL, no_legend_SL_PL, nrow = 2)
+
 ```
-
-
-
-
-
 ```{r}
-install.packages("remotes")
-remotes::install_github("clauswilke/dviz.supp")
-```
-
-
-
-```{r, eval=FALSE, echo=FALSE, include=FALSE}
-# 데이터셋 찾아보기 
-# https://stackoverflow.com/questions/27709936/get-a-list-of-the-data-sets-in-a-particular-package
-library(vcdExtra)
-vcdExtra::datasets(c("plyr", "dplyr", "vcdExtra", "ggplot2"))
-
-storms %>% 
-  ggplot(aes(x = day, y = wind)) +
-  geom_point() + 
-   geom_jitter()
-
-?AirCrash # Data on all fatal commercial airplane crashes from 1993–2015. Excludes small planes (less than 6 passengers) and non-commercial (cargo, military, private) aircraft.
-# AirCrash로 결정
-```
-
-```{r, echo=FALSE, eval=FALSE}
-drive_auth()
-data_in_drive <- drive_find(type = "csv", pattern = "19_temp")
-
-for(i in 1:8){ 
-  drive_download(file = data_in_drive$name[i], path = data_in_drive$name[i], overwrite = TRUE)
-}
+iris %>% 
+  ggplot(aes(x = Petal.Length, 
+             color = Species, 
+             fill = Species)) +
+  geom_density(alpha = 0.3) + 
+  scale_fill_manual(
+    values = c("#D55E0080", "#0072B280", "#009E7380"),
+    breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
+    name = NULL
+  ) + 
+  scale_color_manual(
+    values = darken(c("#D55E00", "#0072B2", "#009E73"), 0.3),
+    breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
+    name = NULL
+  ) + 
+  labs(x = "꽃잎 길이", y = "밀도") + 
+  theme_minimal() +
+  theme(
+    legend.position = "bottom", 
+    text = element_text(family = "notosanskr",
+                        size = 12)
+  )
 ```
