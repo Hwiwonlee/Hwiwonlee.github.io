@@ -58,6 +58,7 @@ library(ggfortify) # auto_plot for PCA plot
 library(gapminder)
 library(colorspace)
 library(gridExtra)
+library(cowplot) # for axis_canvas
 ```
 
 
@@ -378,3 +379,105 @@ iris %>%
                         size = 12)
   )
 ```
+
+
+```{r}
+# Sepal Length에 해당하는 x축의 분포를 density로 정리
+group_by(iris, Species) %>%
+  do(ggplot2:::compute_density(.$Sepal.Length, NULL)) %>%
+  rename(Sepal.Length = x) -> iris_SL_dens
+
+# Petal Length에 해당하는 y축의 분포를 density로 정리
+group_by(iris, Species) %>%
+  do(ggplot2:::compute_density(.$Petal.Length, NULL)) %>%
+  rename(Petal.Length = x) -> iris_PL_dens
+
+# 각 density의 limit를 저장
+dens_limit <- max(iris_SL_dens$density, iris_PL_dens$density) * 1.05 # upper limit of density curves
+
+# density plot 안에 붓꽃 종류를 적기 위한 iris_max 생성
+iris_max <- 
+  filter(iris_SL_dens, density == max(density)) %>%
+  ungroup() %>%
+  mutate(
+    hjust = c(1, 1, 1),
+    vjust = c(-0.8, -0.8, -0.8),
+    nudge_x = c(0.11, 0, 0.24),
+    nudge_y = c(-0.02, 0.02, -0.02),
+    label = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃")
+  )
+```
+
+```{r}
+xdens <- axis_canvas(yes_legend_SL_PL, axis = "x") +
+  geom_density_line(
+    data=iris_SL_dens,
+    aes(x = Sepal.Length, y = density, fill = Species, color = Species),
+    stat = "identity", size = .2
+  ) +
+  geom_text(
+    data = iris_max,
+    aes(
+      label = label, hjust = hjust, vjust = vjust, color = Species,
+      x = Sepal.Length + nudge_x, 
+      y = density + nudge_y
+    ),
+    ize = 12/.pt, 
+    #color = "black", inherit.aes = FALSE,
+    fontface = "italic"
+  ) +
+  scale_color_manual(
+    values = darken(c("#D55E00", "#0072B2", "#009E73"), 0.3),
+    breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
+    guide = "none"
+  ) +
+  scale_fill_manual(
+    values = darken(c("#D55E0080", "#0072B280", "#009E7380")),
+    breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
+    guide = "none"
+  ) +
+  scale_y_continuous(limits = c(0, dens_limit), expand = c(0, 0))
+
+
+ydens <- axis_canvas(yes_legend_SL_PL, axis = "y", coord_flip = TRUE) +
+  geom_density_line(
+    data = iris_PL_dens,
+    aes(x = Petal.Length, y = density, fill = Species, color = Species),
+    stat = "identity", size = .2
+  )  +
+  scale_color_manual(
+    values = darken(c("#D55E00", "#0072B2", "#009E73"), 0.3),
+    breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
+    guide = "none"
+  ) +
+  scale_fill_manual(
+    values = darken(c("#D55E0080", "#0072B280", "#009E7380")),
+    breaks = c("setosa", "virginica", "versicolor"),
+    labels = c("세토사 붓꽃", "버지니카 붓꽃", "버시컬러 붓꽃"),
+    guide = "none"
+  ) +
+  scale_y_continuous(limits = c(0, dens_limit), expand = c(0, 0)) +
+  coord_flip()
+```
+
+```{r}
+
+p1 <- insert_xaxis_grob(
+  yes_legend_SL_PL + theme(legend.position = "none"),
+  xdens,
+  # desity plot의 크기 설정 
+  grid::unit(2*45, "pt"), position = "top"
+)
+
+p2 <- insert_yaxis_grob(p1, 
+                        ydens, 
+                        grid::unit(3*35, "pt"), # desity plot의 크기 설정 
+                        position = "right")
+
+ggdraw(p2)
+```
+
+
