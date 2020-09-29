@@ -484,19 +484,63 @@ ggdraw(p2)
 다중 패널의 도표에서 가장 중요한 것은 통일성이다. 보통 `factor`로 선언된 명목형 변수를 사용해서 패널을 나누는데, 나눠진 패널의 x축과 y축의 범위, 색깔이나 모양의 aesthetic 요소가 모두 통일성이 있어야 한다. 
 
 
-
 ```{r}
+set.seed(1234)
+index_sample <- sample(seq(1, 46, 1),9)
+
 txhousing %>% 
   # dplyr::count(city) # 46개의 도시
   # distinct(year) # 00년부터 15년까지
   # dplyr::count(month) # 00년 1월부터 15년 7월까지
   # group_by(city) %>% dplyr::count(city) # 46개의 도시 각각 187개의 row
+  mutate(across(everything(), ~replace_na(.x, 0))) %>% # NA value를 0으로 대체
   mutate(ym = parse_date(paste0(year, "-" ,month), format = "%Y-%m")) %>% 
-  mutate(index = rep(seq(1, 46), each = 187)) %>% select(city, year, month, ym, index, everything())
   
-  filter(str_detect(city, "^A")) %>% 
+  # 같은 시기의 volume을 percent로 환산
+  group_by(ym) %>% 
+  mutate(per_volume = volume/sum(volume)) %>% ungroup() %>%
+  
+  mutate(index = rep(seq(1, 46), each = 187)) %>% select(index, city, year, month, ym, per_volume, everything()) %>% 
+  filter(index %in% index_sample) %>% 
   group_by(city) %>% 
-  ggplot(aes(x = ym, y = volume, color = city)) +
-  geom_line()
+  ggplot(aes(x = ym, y = per_volume)) +
+  geom_line(color = "#FF8000") + 
+  labs(x = " ",
+       y = "전체 주택 거래 가격의 비율") + 
+  facet_wrap(~city, labeller = label_wrap_gen(width = 25), scales = "free") + 
+  theme_minimal() -> dif_y_scale
 
+
+txhousing %>% 
+  mutate(across(everything(), ~replace_na(.x, 0))) %>%
+  mutate(ym = parse_date(paste0(year, "-" ,month), format = "%Y-%m")) %>% 
+  group_by(ym) %>% 
+  mutate(per_volume = volume/sum(volume)) %>% ungroup() %>%
+  mutate(index = rep(seq(1, 46), each = 187)) %>% select(index, city, year, month, ym, per_volume, everything()) %>% 
+  filter(index %in% index_sample) %>% 
+  group_by(city) %>% 
+  ggplot(aes(x = ym, y = per_volume)) +
+  geom_line(color = "#FF8000") + 
+  facet_wrap(~city, labeller = label_wrap_gen(width = 25)) +
+  scale_y_continuous(
+    expand = c(0, 0),
+    breaks = seq(0, 0.3, 0.05),
+    name = "전체 주택 거래 가격의 비율",
+    labels = scales::percent_format(accuracy = 1)
+  ) + 
+  xlab(" ") +
+  theme_minimal() -> same_y_scale
+
+grid.arrange(dif_y_scale, same_y_scale, nrow = 1)
 ```
+`ggplot2`패키지에 있는 `txhousing` dataset을 이용한 플롯이다. x축은 연월, y축은 전체 주택 거래 가격에서 각 도시가 차지하는 비율을 의미한다. y축의 값이 `0`인 경우는 결측치를 0으로 대체했기 때문이다. 두 플롯의 차이는 **y축이 통일되어 있느냐**에 있다. 왼쪽 플롯이 드라마틱한 변화를 보이고 있지만 y축의 라벨을 보면 대부분의 도시가 갖는 전체 주택 거래 가격의 비율은 매우 작은 수준인 것을 알 수 있다. 오른쪽 플롯은 y축에 대한 큰 값을 갖는 도시 기준으로 y축이 통일되어 있기 때문에 다소 밋밋한 플롯처럼 보인다. 
+
+앞서 축의 단위에 통일성이 있어야 한다고 했는데 그렇다면 반드시 오른쪽의 플롯처럼 그려야 할까? 
+
+대부분의 경우, **반드시**혹은 **무조건**이란 말이 붙으면 틀린 말이 되듯 이 경우에도 목적에 따라 다르므로 왼쪽 플롯이 의미가 없는 플롯은 아니다. 
+
+왼쪽 플롯의 의미는 subplot의 factor인 도시 내(within) 전체 주택 가격 비율의 변화를 볼 수 있다는 점이고 오른쪽 플롯의 의미는 도시 간(between) 전체 주택 가격 비율의 변화를 볼 수 있다는 점이다. 즉, 도시 내 변화를 보이고 싶다면 왼쪽 플롯을 그릴 수 있다. 
+
+그러나 원론적으로 축의 단위를 통일하는 것이 더 좋으므로 subplot의 factor들 사이의 값이 크게 차이나는 경우에, 그러니까 위와 같은 경우는 x축이나 y축에 대한 일정 기준을 두고 먼저 도시를 범주화(categorization)해 **통일할 수 있는 환경**을 먼저 만들어두고 나눠 그리는 것이 더 좋다. 
+
+예를 들어, 주택 거래 총 가격의 비율의 중간값을 기준으로 5%미만, 15% 미만, 30% 미만 정도로만 나눈다면 y축을 통일해도 어느 정도의 변화량이 플롯에 표시될 것이다. 
