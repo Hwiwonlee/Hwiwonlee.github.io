@@ -489,7 +489,11 @@ ggdraw(p2)
 txhousing %>% 
   # dplyr::count(city) # 46개의 도시
   # distinct(year) # 00년부터 15년까지
+  # dplyr::count(month) # 00년 1월부터 15년 7월까지
+  # group_by(city) %>% dplyr::count(city) # 46개의 도시 각각 187개의 row
   mutate(ym = parse_date(paste0(year, "-" ,month), format = "%Y-%m")) %>% 
+  mutate(index = rep(seq(1, 46), each = 187)) %>% select(city, year, month, ym, index, everything())
+  
   filter(str_detect(city, "^A")) %>% 
   group_by(city) %>% 
   ggplot(aes(x = ym, y = volume, color = city)) +
