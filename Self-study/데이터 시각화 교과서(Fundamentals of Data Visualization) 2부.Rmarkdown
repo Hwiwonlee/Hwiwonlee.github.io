@@ -692,3 +692,11 @@ grid.arrange(less_1, less_5, less_15, less_30,
                                    c(2,2,2,2,4,4,4))
              )
 ```
+
+# ch 22 제목, 캡션, 표의 효과적 활용
+
+
+
+```{r}
+diamonds
+```
