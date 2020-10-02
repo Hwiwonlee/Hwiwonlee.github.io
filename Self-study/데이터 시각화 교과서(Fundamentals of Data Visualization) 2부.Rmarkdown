@@ -579,7 +579,9 @@ txhousing %>%
     labels = scales::percent_format(accuracy = 0.1)
   ) + 
   xlab(" ") +
-  theme_minimal() -> less_1
+  theme_minimal() + 
+  ggtitle("a) 전체 주택 거래 가격의 비율의 중간값이 1% 미만인 도시들") + 
+  theme(title = element_text(size = 14))-> less_1
 
 txhousing %>% 
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
@@ -613,7 +615,9 @@ txhousing %>%
     labels = scales::percent_format(accuracy = 0.1)
   ) + 
   xlab(" ") +
-  theme_minimal() -> less_5
+  theme_minimal() + 
+  ggtitle("b) 전체 주택 거래 가격의 비율의 중간값이 5% 미만인 도시들") + 
+  theme(title = element_text(size = 14))-> less_5
 
 txhousing %>% 
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
@@ -647,7 +651,9 @@ txhousing %>%
     labels = scales::percent_format(accuracy = 0.1)
   ) + 
   xlab(" ") +
-  theme_minimal() -> less_15
+  theme_minimal() + 
+  ggtitle("c) 전체 주택 거래 가격의 비율의 중간값이 15% 미만인 도시들") + 
+  theme(title = element_text(size = 14))-> less_15
 
 txhousing %>% 
   mutate(across(everything(), ~replace_na(.x, 0))) %>%
@@ -681,22 +687,36 @@ txhousing %>%
     labels = scales::percent_format(accuracy = 0.1)
   ) + 
   xlab(" ") +
-  theme_minimal() -> less_30
+  theme_minimal() + 
+  ggtitle("d) 전체 주택 거래 가격의 비율의 중간값이 30%미만인 도시들") + 
+  theme(title = element_text(size = 14)) -> less_30
 ```
 
-```{r, fig.width=16, fig.height=12}
+```{r, fig.width=16, fig.height=12, fig.cap="전체 주택 거래 가격의 비율과 시기에 따른 추세"}
 grid.arrange(less_1, less_5, less_15, less_30, 
-             layout_matrix = rbind(c(1,1,1,1,3,3,3),
-                                   c(1,1,1,1,3,3,3),
-                                   c(2,2,2,2,4,4,4),
-                                   c(2,2,2,2,4,4,4))
-             )
+                      layout_matrix = rbind(c(1,1,1,1,3,3,3),
+                                            c(1,1,1,1,3,3,3),
+                                            c(2,2,2,2,4,4,4),
+                                            c(2,2,2,2,4,4,4)),
+             top = textGrob("Daily QC: Blue",gp=gpar(fontsize=20,font=3))
+)
+
 ```
 
 # ch 22 제목, 캡션, 표의 효과적 활용
+# ch 23 데이터 이해를 돕는 시각화의 주변 요소(그리드)
+# ch 24 축 레이블의 글자는 큼직하게
+
+플롯을 그릴 때 쉽게 등한시 되는 요소들을 다룬 파트를 묶어보았다. 이전의 플롯들을 보면 알겠지만 나도 제목이나 그리드, 축 레이블 보단 데이터의 표현에 중점을 두고 그리는 경우가 훨씬 많고 실제로도 위 요소들의 중요성이 낮다고 생각한다. 그러나 **완전한 플롯**을 추구한다면 제목, 그리드, 축 레이블 역시 빼놓을 수 없는 요소들이다. 
+
+**제목**은 R로 플롯을 그릴 때 의외로 쉽게 생략되는 요소 중 하나다. R을 활용해 문서 작성을 하지 않는 경우, 플롯은 어차피 그림파일로 변환되어 문서작성 프로그램을 통해 추가될 것이고 그림인 플롯에 타이틀을 따로 추가하는 것이 작업상 더 쉬울 수 있기 때문이다. 즉, 추가를 못하는 게 아니라 안하는 것이다. 그러나 모두가 알고 있듯, 플롯에는 제목이 반드시 필요하다. 
+
+캡션은 문서의 목적이나 양식에 따라 생략할 수 있는 요소이다. `labs()`의 `captions` arg로 넣을 수 있다. 
+
+대부분의 플롯에는 그물 격자가 기본 설정되어 있지만 간혹 이 무늬가 지저분하다고 지우는 경우를 보았다. 요소를 지웠으니 플롯은 당연히 깔끔해보이겠지만 점이나 선의 위치를 파악하기 어렵다는 단점이 있으니 왠만하면 지우지 않는 것이 더 좋다. 더하여 플롯이나 범례 테두리는 지우는 것이 좀 더 좋아보이니 격자 대신 테두리를 지우자. 
+
+**쌍 데이터** 파트에서 x와 y가 짝 지은 데이터(paired data)인 경우, 저자는 x와 y의 관계를 나타내기 위한 대각선을 남기고 그물 격자무늬를 지우는 게 더 좋다고 하는데 난 관계성과 플롯 내의 위치를 동시에 볼 수 있도록 대각선과 격자 무늬 둘 다 있어야 한다고 생각한다. 
+
+**축 레이블** 또한 반드시 들어가야 하는 요소 중 하나이다. 특히, 축의 데이터가 로그 변환과 같은 특정한 변환을 한 상태라면 이를 반드시 명시해주어야 하며 비슷한 맥락으로 단위 또한 써주어야 한다. **큼직하게**라는 말이 모호하다면 제목보다 2포인트 낮은 수준이라고 생각하면 얼추 맞는다. 
 
 
-
-```{r}
-diamonds
-```
