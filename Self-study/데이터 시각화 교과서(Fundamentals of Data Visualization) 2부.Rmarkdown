@@ -697,8 +697,7 @@ grid.arrange(less_1, less_5, less_15, less_30,
                       layout_matrix = rbind(c(1,1,1,1,3,3,3),
                                             c(1,1,1,1,3,3,3),
                                             c(2,2,2,2,4,4,4),
-                                            c(2,2,2,2,4,4,4)),
-             top = textGrob("Daily QC: Blue",gp=gpar(fontsize=20,font=3))
+                                            c(2,2,2,2,4,4,4))
 )
 
 ```
@@ -720,3 +719,17 @@ grid.arrange(less_1, less_5, less_15, less_30,
 **축 레이블** 또한 반드시 들어가야 하는 요소 중 하나이다. 특히, 축의 데이터가 로그 변환과 같은 특정한 변환을 한 상태라면 이를 반드시 명시해주어야 하며 비슷한 맥락으로 단위 또한 써주어야 한다. **큼직하게**라는 말이 모호하다면 제목보다 2포인트 낮은 수준이라고 생각하면 얼추 맞는다. 
 
 
+# ch 25 선만 이용해 그린 플롯은 피해라
+# ch 26 3D 플롯은 제발...
+
+25장의 제목을 번역본에서는 *선 그림은 피하자* 라고 했던데... **line plot**과 혼돈될 여지가 있으므로 선만 이용해 그린 그림이라고 표현했다. 읽어보니 선 그림이 아닌 다른 aesthetic 요소를 배제한 선만 이용해 그린 그림을 피하자라고 한 내용이었고 원서에도 *Avoid line drawings* 이었으니 아마 내가 생각한 의미가 맞을 것이다. 
+
+25장과 26장은 특별히 피해야할 플롯 스타일에 대해 설명하고 있다. *선만 이용해 그린 그림* 이란 색깔이나 모양 등의 다른 꾸밈 요소 없이 오로지 선만 이용해 그린 그림으로 누구나 보게 된다면 "이건 좀...."이라고 생각할 수 있는 그림이다. 성의도 없을 뿐더러 선만 이용한다면 충분한 정보를 표현하기도 부족하다. 
+
+3D 플롯은 있어보이지만 실속은 없는 경우가 많기 때문에 오히려 그리지 않는 편이 좋을 수도 있는 플롯이다. 2차원 공간에 표현된 3차원 플롯은 제대로 이해하기 어렵기 대문에 게시물이나 인쇄물에 포함될 플롯이라면 정말로 3D 플롯을 그리지 않는 것이 더 낫다. 
+
+3D 플롯이 의미있는 경우라면 높이가 필요한 **지형도**나 **반응표면분석**([Response surface methodology](https://en.wikipedia.org/wiki/Response_surface_methodology), RSM)의 플롯 등이다. 물론 이것들도 2D 플롯으로 충분히 그릴 수 있는 방법들이 이미 존재한다. 
+
+```{r 경사하강법, echo = FALSE, fig.cap = "경사하강법의 플롯. 보통, 러닝의 학습에서 최적값을 찾기 위해 사용하는 방법. 출처 : https://towardsdatascience.com/coding-deep-learning-for-beginners-linear-regression-gradient-descent-fcd5e0fc077d"}
+include_graphics("https://miro.medium.com/max/699/1*mElyetzsTIJrNnKI8kTkCw.jpeg")
+```
