@@ -733,3 +733,9 @@ grid.arrange(less_1, less_5, less_15, less_30,
 ```{r 경사하강법, echo = FALSE, fig.cap = "경사하강법의 플롯. 보통, 러닝의 학습에서 최적값을 찾기 위해 사용하는 방법. 출처 : https://towardsdatascience.com/coding-deep-learning-for-beginners-linear-regression-gradient-descent-fcd5e0fc077d"}
 include_graphics("https://miro.medium.com/max/699/1*mElyetzsTIJrNnKI8kTkCw.jpeg")
 ```
+
+
+ch 27 가장 흔히 쓰는 이미지 파일 형식
+ch 28 올바른 시각화 소프트웨어 선택법
+
+ch 29 스토리텔링과 요점 전달
