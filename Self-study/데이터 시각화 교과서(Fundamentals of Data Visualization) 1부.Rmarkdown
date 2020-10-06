@@ -1124,7 +1124,7 @@ hp_jf %>%
 ```
 
 
-# ch 14 추세의 시각화
+## ch 14 추세의 시각화
 
 시계열 자료를 이용한 그래프를 그리면 "추세"라는 것을 쉽게 볼 수 있다. 이 챕터의 초반은 평활화나 모델 피팅으로 "추세"를 보여주는 시각화 방법을 소개했다. 
 
@@ -1224,7 +1224,7 @@ df_seoul_hp %>%
 추세를 본다면 대한민국 사람 누구나 알다시피 증가하는 추세를 보인다. 추세를 제거한 plot을 보면 주택가격매매지수의 변동이 좀 더 도드라지는데, 90년대 후반부터 00년대 초반 즉 IMF 시기의 매매지수 하락이 이전 plot보다 좀 더 눈에 띈다. 
 
 
-# ch 15 지리공간 데이터의 시각화
+## ch 15 지리공간 데이터의 시각화
 지리 데이터를 이용한 시각화 챕터다. 레이어를 구성하거나 명목형 변수를 사용해 지도를 나누거나 하는 등의 방법을 소개하고 있다. 그 중 카토그램이나 카토그램 히트맵이 신기했지만...미국의 경우 주가 많아서 그럴까? 한 눈에 들어오는 그림이 아니라 이걸 쓸 일이 있을까 싶다. 국내 지도로 그려보면 어떨까? 
 
 ...그려보면서 알게 됐는데 `statebins()`이 미국 주에 해당되어 있는 것 같다. 어떻게 서울에 맞게 배열할 수는 없을까? 
@@ -1285,31 +1285,12 @@ state_facts %>%
 
 
 
-# ch 16 불확실성의 시각화
+## ch 16 불확실성의 시각화
 
 확률분포를 이용한 여러 시각화를 다루는 챕터로 히스토그램부터 신뢰구간을 활용한 시각화 방법을 다룬다. [분위수 점 도표](https://observablehq.com/@ale0xb/quantile-dotplots)을 제외하고는 특별할 것이 없지만 확률분포나 통계적 가설검정, 신뢰구간에 대해 간략히 설명하고 있어 **통계 방법의 시각화**라는 의미가 있는 챕터였다. 특별히 기억에 남는 글귀가 있어 남기고자 한다. 
 
 >  However, it is often worthwhile to trade some mathematical precision for more accurate human perception of the resulting visualization, in particular when communicating to a lay audience. A visualization that is mathematically correct but not properly perceived is not that useful in practice. (그러나 비전문가에게 정보를 전달할 땐 수학적 정확성을 어느 정도 포기하고 인간의 지각에 더 정확하게 다가가는 것도 좋다. 수학적으로는 정확하더라도 인간의 눈에 제대로 인식되지 않는 시각화 도표는 실무에서 유용하지 않다).
 
 
-```{r}
-library(statebins)
-data(state)
-
-state_facts <- as.data.frame(state.x77) %>%
-  mutate(state = rownames(.))
-
-state_facts %>%
-  statebins(value_col = "Illiteracy", round = TRUE, name = "% of Pop.") +
-  labs(title = "Illiteracy Rate (1970)",
-       caption = "Source: U.S. Department of Commerce, Bureau of the Census (1977)") +
-  theme_statebins(legend_position = "right")
-
-```
 
 
-# ch 16 불확실성의 시각화
-
-확률분포를 이용한 여러 시각화를 다루는 챕터로 히스토그램부터 신뢰구간을 활용한 시각화 방법을 다룬다. [분위수 점 도표](https://observablehq.com/@ale0xb/quantile-dotplots)을 제외하고는 특별할 것이 없지만 확률분포나 통계적 가설검정, 신뢰구간에 대해 간략히 설명하고 있어 **통계 방법의 시각화**라는 의미가 있는 챕터였다. 특별히 기억에 남는 글귀가 있어 남기고자 한다. 
-
->  However, it is often worthwhile to trade some mathematical precision for more accurate human perception of the resulting visualization, in particular when communicating to a lay audience. A visualization that is mathematically correct but not properly perceived is not that useful in practice. (그러나 비전문가에게 정보를 전달할 땐 수학적 정확성을 어느 정도 포기하고 인간의 지각에 더 정확하게 다가가는 것도 좋다. 수학적으로는 정확하더라도 인간의 눈에 제대로 인식되지 않는 시각화 도표는 실무에서 유용하지 않다).
