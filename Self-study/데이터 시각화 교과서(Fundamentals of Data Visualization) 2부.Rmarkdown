@@ -62,9 +62,9 @@ library(cowplot) # for axis_canvas
 ```
 
 
+# Principle of figure design
 
-
-ch 17 잉크 양 비례의 원칙
+## ch 17 잉크 양 비례의 원칙
 
 **잉크 양 비례의 원칙**(principle of proportinal ink)라는 다소 낯선 개념이 등장한다. 정의는 아래와 같다. 
 
@@ -737,10 +737,35 @@ include_graphics("https://miro.medium.com/max/699/1*mElyetzsTIJrNnKI8kTkCw.jpeg"
 # Miscellaneous topic
 Miscellaneous topic의 3개의 파트를 정리해보고자 한다. 번역서는 Miscellaneous topic...을 *시각화 레벨업을 위한 꿀팁* 으로 번역했던데...이게 꿀...팁인가? 잘 모르겠다. 원서 제목을 사용하는 것이 의미 전달에 더 좋을 것 같아 그대로 사용했다. 
 
-## ch 27 가장 흔히 쓰는 이미지 파일 형식
+## ch 27 Understanding the most commonly used image file formats(가장 흔히 쓰는 이미지 파일 형식)
+앞선 챕터에서 언급한 것처럼, 대부분의 경우 R을 활용한 문서 작성을 하지 않으므로 R에서 그린 플롯을 그림파일로 저장하게 되며 특별한 경우가 아닌 이상 열에 여덟은 **png** 파일로 저장하는 것이 보통이다. 나는 학부생 때 jpeg로 저장한 파일의 해상도가 크게 상하는 것을 경험한 이후로 png파일로 저장하기 시작했다. 
+
+저자는 **vector** 타입과 **bitmap** 타입의 구분부터 시작해 자주 사용되는 그림 파일의 형식을 설명하는 것을 시작으로 *왜 png 파일이 자주 사용되는지* 그 이유를 설명한다. 
+
+```{r 그림파일의비교, echo = FALSE, fig.cap = "책의 Figure 27.1. a는 저장된 그림이고 b는 bitmap형식, c는 vector형식의 그림파일을 확대한  경우이다. <br />해상도 면에서 vector형식이 훨씬 좋은 것을 볼 수 있다."}
+include_graphics("https://clauswilke.com/dataviz/image_file_formats_files/figure-html/bitmap-zoom-1.png")
+```
+
+vector형식의 그림파일로 저장해 사용하는 것이 매우 타당해보이지만 **용량이 매우 크다**는 vector형식 그림파일의 단점과 **저렇게 확대할 일이 없다**는 효율의 관점에서 잘 사용되지 않는다. 군대에서 전지 지도 뽑을 때, vector형식의 그림파일(pdf)이 사용되는 것을 딱 한 번 본 적 있다. 
+
+즉, 극히 높은 수준의 해상도가 요구되는 일이 아니면 bitmap형식의 그림파일로 충분히 커버할 수 있으므로 bitmap형식의 그림파일이 선호된다. 
+
+bitmap형식의 그림파일 중 자주 사용되는 것은 위에서 언급한대로 **png**나 **jpeg**이다. 두 그림파일 형식을 용도에 따라 구분한다면 다음과 같다. 
+
+- **png** : 선이나 텍스트로 이뤄진 그림
+
+- **jpeg**(jpg) : 사진
+
+데이터 시각화로 만든 플롯은 보통 선이나 텍스트로 이뤄져 있으므로 **png**로 저장하는 것이 좋다. 사진이나 그림(정말 말 그대로의 그림!)은 **jpeg**로 저장하는 것이 좋다. 그렇다면 다양한 색깔이 들어간 플롯은 어떤 파일 형식으로 저장해야 할까? 
+
+답은 **png**이다. R로 사진 수준의 그림을 그린 것이 아니라면 [**png**파일을 사용하는 것이 파일의 용량이나 품질 면에서 **jpeg**보다 좋기 때문이다.](https://blogchannel.tistory.com/269)
+
+그림파일을 어떤 형태로 저장하느냐는 문제는 정말 사소한 문제처럼 보일 수 있지만 이런 디테일을 따지는 것이 취향에 맞기 때문에 재밌게 읽었던 파트라 내용이 길어졌다. 
+
+
 ## ch 28 올바른 시각화 소프트웨어 선택법
 
+
+
+
 ## ch 29 스토리텔링과 요점 전달
-
-
-
