@@ -1,0 +1,69 @@
+---
+title: "심리 성향 예측 AI 경진대회-월간 데이콘 8"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+categories:
+  - competetion
+tags:
+  - AI
+  - Prediction
+  - Machine Learning
+output: 
+    bookdown::html_document2:
+      fig_retina : 1
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+      css: "post_style.css"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 5)
+# options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(googledrive) # Import dataset from the google drive
+library(readr) # To read csv file
+library(lubridate)
+library(operators)
+library(magrittr)
+library(ggridges) # geom_density_line()을 위한 패키지 로드
+library(tinter) # darken()을 위한 패키지 로드
+library(pkgsimon) # theme_dviz_hgrid()를 위함
+library(showtext)
+font_add_google('Noto Sans KR', 'notosanskr')
+font_add_google('Noto Sans', 'notosans')
+font_add_google('Nanum Gothic', 'nanumgothic')
+library(ggforce) # sina plot을 위한 패키지 
+# library(dviz.supp) # colorblindr가 4.0.2에서 사용 불가해서 설치가 안됨 
+library(foreign)
+library(treemapify) # geom_treemap
+library(ggrepel) # geom_text_repel
+library(ggfortify) # auto_plot for PCA plot 
+
+
+library(gapminder)
+library(colorspace)
+library(gridExtra)
+library(cowplot) # for axis_canvas
+```
+
+```{r}
+train <- read_csv(file = "open data/train.csv")
+test <- read_csv(file = "open data/test_x.csv")
+
+glimpse(train)
+glimpse(test)
+```
