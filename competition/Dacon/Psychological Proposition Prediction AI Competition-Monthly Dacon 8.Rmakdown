@@ -46,12 +46,6 @@ library(showtext)
 font_add_google('Noto Sans KR', 'notosanskr')
 font_add_google('Noto Sans', 'notosans')
 font_add_google('Nanum Gothic', 'nanumgothic')
-library(ggforce) # sina plot을 위한 패키지 
-# library(dviz.supp) # colorblindr가 4.0.2에서 사용 불가해서 설치가 안됨 
-library(foreign)
-library(treemapify) # geom_treemap
-library(ggrepel) # geom_text_repel
-library(ggfortify) # auto_plot for PCA plot 
 
 
 library(gapminder)
