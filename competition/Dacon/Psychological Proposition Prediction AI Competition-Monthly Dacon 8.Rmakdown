@@ -47,11 +47,8 @@ font_add_google('Noto Sans KR', 'notosanskr')
 font_add_google('Noto Sans', 'notosans')
 font_add_google('Nanum Gothic', 'nanumgothic')
 
-
-library(gapminder)
 library(colorspace)
 library(gridExtra)
-library(cowplot) # for axis_canvas
 ```
 
 ```{r}
