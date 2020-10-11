@@ -33,6 +33,12 @@ options(tibble.max_extra_cols = 5)
 # options(max.print = 300)
 
 library(knitr) # for include_graphics()
+
+# Here are some package for autoML in r
+library(h2o) # AutoML in R
+library(automl) # AutoML in R
+library(RemixAutoML) # AutoML in R
+
 library(tidyverse) # as you known, core package
 library(googledrive) # Import dataset from the google drive
 library(readr) # To read csv file
@@ -49,6 +55,7 @@ font_add_google('Nanum Gothic', 'nanumgothic')
 
 library(colorspace)
 library(gridExtra)
+
 ```
 
 ```{r}
