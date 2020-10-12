@@ -58,10 +58,54 @@ library(gridExtra)
 
 ```
 
+
 ```{r}
 train <- read_csv(file = "open data/train.csv")
 test <- read_csv(file = "open data/test_x.csv")
 
 glimpse(train)
 glimpse(test)
+```
+
+```{r}
+# Load library
+library(h2o)
+
+# start h2o cluster
+h2o.init()
+
+# Import a sample binary outcome train/test set into H2O
+train <- h2o.importFile("https://s3.amazonaws.com/erin-data/higgs/higgs_train_10k.csv")
+test <- h2o.importFile("https://s3.amazonaws.com/erin-data/higgs/higgs_test_5k.csv")
+
+train_csv <- read_csv("https://s3.amazonaws.com/erin-data/higgs/higgs_train_10k.csv")
+
+# class의 차이가 존재
+# h2oframe을 위한 함수가 h2o library에 존재함
+# https://docs.h2o.ai/h2o/latest-stable/h2o-docs/index.html
+class(train)
+class(train_csv)
+
+# Identify predictors and response
+y <- "response"
+x <- setdiff(names(train), y)
+
+# For binary classification, response should be a factor
+train[, y] <- as.factor(train[, y])
+test[, y] <- as.factor(test[, y])
+
+# Run AutoML for 20 base models (limited to 1 hour max runtime by default)
+aml <- h2o.automl(x = x, y = y,
+                  training_frame = train,
+                  max_models = 20,
+                  seed = 1)
+
+# View the AutoML Leaderboard
+lb <- aml@leaderboard
+print(lb, n = nrow(lb))  # Print all rows instead of default (6 rows)
+
+# To generate predictions on a test set, you can make predictions
+# directly on the `"H2OAutoML"` object or on the leader model
+# object directly
+pred <- h2o.predict(aml, test)  # predict(aml, test) also works
 ```
