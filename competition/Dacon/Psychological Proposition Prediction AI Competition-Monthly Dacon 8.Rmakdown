@@ -60,11 +60,20 @@ library(gridExtra)
 
 
 ```{r}
-train <- read_csv(file = "open data/train.csv")
-test <- read_csv(file = "open data/test_x.csv")
+train_con <- read_csv(file = "open data/train.csv")
+test_con <- read_csv(file = "open data/test_x.csv")
 
-glimpse(train)
-glimpse(test)
+glimpse(train_con)
+glimpse(test_con)
+
+# Hmisc 패키지를 이용한 description
+Hmisc::html(contents(train_con), maxlevels=10, levelType='table')
+
+train_con %>% 
+  mutate(across(where(is.character), as.factor)) -> train_con
+
+# 신기한 Hmisc의 세계
+Hmisc::html(contents(train_con), maxlevels=10, levelType='table')
 ```
 
 ```{r}
