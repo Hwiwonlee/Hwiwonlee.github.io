@@ -39,11 +39,6 @@ library(googledrive) # Import dataset from the google drive
 library(readr) # To read csv file
 library(foreign)
 library(caret)
-library(showtext)
-font_add_google('Noto Sans KR', 'notosanskr')
-font_add_google('Noto Sans', 'notosans')
-font_add_google('Nanum Gothic', 'nanumgothic')
-
 ```
 
 # 3장 게으른 학습 : 최근접 이웃을 사용한 분류(Lazy Learning : Classification with KNN Method)
@@ -266,12 +261,22 @@ result$p.value # 0.6170751
 1 - pchisq(0.25, 1)
 ```
 
-# Summary 
+## Summary 
 
 지금까지 분류 문제를 해결하기 위한 knn 알고리즘 사용 방법을 알아보았다. 책과는 좀 다르게 caret 패키지를 사용해서 효율성을 높히는데 집중했으며 결과에서 볼 수 있는 값들에 대한 설명 또한 간단하게 했다. 
 
 예제의 결과로 보았듯이 knn 알고리즘은 비교적 간단하지만 나쁘지 않은 성능을 보인다. 따라서 유클리디안 거리가 아닌 다른 거리 metric을 이용한 방법이나 가중치를 이용한 knn 알고리즘 또한 알아두길 추천하며 기회가 되면 다른 포스트에서 다루도록 하겠다. 
 
 
+# 4장 확률적 학습 : 나이브 베이즈 분류(Naive Bayes Classification)
 
+**사전확률**(prior)과 데이터로 얻은 확률의 조건부 확률을 **사후확률**(posterior)로 정의하는 **베이지안 확률론**(Bayesian probability)를 기반으로 분류문제를 해결하는 방법인 **나이브 베이즈 분류**(Naive Bayes Classification)는 비교적 간편한 사용법에 비해 뛰어난 효율로 여전히 많이 사용되고 있는 대표적인 **지도 학습**(Supervised learning) 방법입니다. 
 
+책에서는 적당한 수준에서 베이즈 확률을 간단하게 설명하며 베이지안 기법에 대해 서술하고 있으며 **나이브 베이즈 알고리즘을 이용한 휴대폰 스팸 필터링**의 예제를 활용해 나이브 베이즈 분류 모형을 실습하도록 도와줍니다. 
+
+책의 내용을 요약, 때로는 보충하며 나이브 베이즈 분류에 대해 정리해보도록 하겠습니다. 
+
+## 4.1 베이지안 확률론에 대한 기초적인 설명
+
+### 4.1.1 베이즈 정리(Bayes' theorem)
+베이지안 확률론의 시작은 베이즈 정리로부터 시작한다고해도 크게 틀린 말은 아닐 것입니다. 실제로 베이즈 정리는 베이지안 확률의 핵심 개념인 **사전확률**과 **사후확률**을 사용하기 때문에 반드시 알아두어야 할 이론입니다. 
