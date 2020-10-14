@@ -39,6 +39,8 @@ library(googledrive) # Import dataset from the google drive
 library(readr) # To read csv file
 library(foreign)
 library(caret)
+library(VennDiagram)
+library(venneuler)
 ```
 
 # 3장 게으른 학습 : 최근접 이웃을 사용한 분류(Lazy Learning : Classification with KNN Method)
@@ -281,32 +283,45 @@ result$p.value # 0.6170751
 ### 4.1.1 베이즈 정리(Bayes' theorem)
 베이지안 확률론의 시작은 베이즈 정리로부터 시작한다고해도 크게 틀린 말은 아닐 것입니다. 실제로 베이즈 정리는 베이지안 확률의 핵심 개념인 **사전확률**과 **사후확률**을 사용하기 때문에 반드시 알아두어야 할 정리입니다. 
 
-이해를 위해 간단한 상황을 가정해보겠습니다. 
+이해를 위해 [간단한 상황](https://www.mathsisfun.com/data/bayes-theorem.html)을 가정해보겠습니다. 
 
-> 생산라인에서 생산된 부품을 조립라인에서 조립해 완제품으로 만드는 공정을 거치는 공장에서 구형 생산라인 X, 신형 생산라인 Y, 조립라인 Z를 통해 생산한다고 합니다. 두 생산라인에서는 완제품을 이루는 모든 종류의 부품이 생산되며 생산 컨트롤은 알고리즘(Job shop scheduling)에 의해 통제됩니다. 만 개의 제품을 생산한 후, **임의로 뽑은 제품이 불량품이고 불량의 원인이 신형 생산라인 Y에서 생산한 제품 때문일 확률은 얼마나 될까요?**      
-1) 완제품을 구성하는 부품이 어디서 생산되었는지 해체해보기 전까지는 모른다고 가정합니다.  
-2) X, Y의 공정시간은 동일하며 조립라인의 불량률은 0%로 가정합니다.  
-3) 공정시간이 동일하므로 만 개의 완제품은 50 대 50으로 X와 Y에서 생산되었다고 가정합니다.  
-4) X에서 생산된 부품의 불량률이 3%, Y에서 생산된 부품의 불량률이 1%라고 가정합니다. 
+아침에 소풍을 가려고 준비했는데 구름이 잔뜩 끼어있습니다. 
 
-...간...단한 상황이 아닌 것처럼 보이지만 현실의 경우보다는 간단하니 간단하다는 말이 틀린 것은 아니라고 생각해봅시다. 
+- 모든 비 온 날의 50%는 아침에 구름부터 보였습니다.
+
+- 그러나 구름이 끼는 날은 매우 평범한 날입니다. (40%의 아침에서 구름을 볼 수 있습니다.)
+
+- 그리고 이번 달은 꽤 건조한 달입니다. (30일 중 3일, 그러니까 10%의 강우확률을 갖고 있습니다.)
+
+**그렇다면 오늘, 피크닉에서 비를 맞을 확률은 얼마나 될까요?**
 
 
 **확률**에 대해 공부할 때 각 사건이 일어날 확률을 명확히 정리하는 것은 매우 중요한 일입니다. 이 말이 저 말 같고 저 말이 이 말 같아서 헷갈리기 십상이기 때문입니다.  
 
-- P(Y) = 임의의 제품이 신형 생산라인 Y에서 생산되었을 확률
+- P(Rain) = 비가 올 확률
 
-- P(F) = 불량품이 생산될 확률
+- P(Cloud) = 구름이 낄 확률
 
-- P(Y∩F) = 신형 생산라인 Y에서 불량품이 생산되었을 확률
+- P(Rain ∩ Cloud) = 구름이 끼고 비가 올 확률
 
-- P(Y|F) = 불량품 발생했을 때, 신형 생산라인 Y에서 생산되었을 확률
+- P(Rain|Cloud) = 아침에 구름이 낀 후, 비가 올 확률
 
-- P(F|Y) = 신형 생산라인 Y에서 생산된 제품일 때, 그 상품이 불량품일 확률 
+- P(Cloud|Rain) = 아침에 비가 온 후, 구름이 낄 확률
+
+```{r}
+grid.newpage()
+draw.pairwise.venn(area1 = 30, area2 = 10, cross.area = 5, 
+                   category = c("bigger", "smaller"), 
+                   lty = rep("blank", 2), 
+                   fill = c("light blue", "pink"), 
+                   alpha = rep(0.5, 2),
+                   cat.pos = c(0, 0),
+                   scaled = FALSE)
+```
 
 
 $$\begin{eqnarray} 
-P(Y|F) &=& \frac{P(Y \cap F)}{P(F)} 
-\\ &=& \frac{P(F|Y) P(Y)}{P(F)} 
+P(Rain|Cloud) &=& \frac{P(Rain \cap Cloud)}{P(Cloud)} 
+\\ &=& \frac{P(Cloud|Rain) P(Rain)}{P(Cloud)} 
 \\ &=& \frac{likelihood \times prior}{evidence} = posterior
 \end{eqnarray}$$
