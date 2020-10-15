@@ -366,7 +366,9 @@ $$\begin{eqnarray}
 
 
 
-
+```{r, eval = FALSE}
+# https://stackoverflow.com/questions/21126776/multi-line-equation-in-rmarkdown
+```
 $$\begin{eqnarray} 
 P(Rain|Cloud) &=& \frac{P(Rain \cap Cloud)}{P(Cloud)} 
 \\ &=& \frac{P(Cloud|Rain) P(Rain)}{P(Cloud)} 
@@ -407,6 +409,7 @@ hsbdemo dataset(데이터셋 링크 : https://stats.idre.ucla.edu/stat/data/hsbd
 dt <- read.dta("https://stats.idre.ucla.edu/stat/data/hsbdemo.dta")
 glimpse(dt)
 ```
+
 ```{r}
 set.seed(1234)
 library(caret)
@@ -418,15 +421,12 @@ test <- dt[-trainIndex, ]
 print(table(dt$prog))
 print(table(train$prog))
 ```
+
 ```{r}
-NBclassfier <- naiveBayes(prog ~ science + socst, data=train)
-print(NBclassfier)
-
-  
-trainPred <- predict(NBclassfier, newdata = train, type = "class")
-trainTable <- table(train$prog, trainPred)
-
+NBclassifier <- naiveBayes(prog ~ science + socst, data=train)
+print(NBclassifier)
 ```
+
 ```{r}
 # https://rstudio-pubs-static.s3.amazonaws.com/347013_371e59e8867549ddb922ea7b530e5c6a.html#fn2
 
@@ -436,7 +436,7 @@ printALL_edit <- function(model, Y){
   # https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
   trainTable <- table(train[[Y]], trainPred)
   
-  testPred <- predict(NBclassfier, newdata=test, type="class")
+  testPred <- predict(model, newdata=test, type="class")
   # https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
   testTable <- table(test[[Y]], testPred)
   
@@ -453,5 +453,18 @@ printALL_edit <- function(model, Y){
               , 3))
 }
 
-printALL_edit(NBclassfier, Y = "prog")
+printALL_edit(NBclassifier, Y = "prog")
+```
+
+```{r}
+library(naivebayes)
+New_NBclassifier <- naive_bayes(prog ~ science + socst, 
+                                # usekernel = F면 naivebayes와 같은 결과
+                                usekernel=F, laplace = 1,
+                                data=train)
+print(New_NBclassifier)
+```
+
+```{r}
+printALL_edit(New_NBclassifier, Y = "prog")
 ```
