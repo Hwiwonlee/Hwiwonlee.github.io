@@ -41,6 +41,10 @@ library(foreign)
 library(caret)
 library(VennDiagram)
 library(venneuler)
+library(showtext)
+font_add_google('Noto Sans KR', 'notosanskr')
+font_add_google('Noto Sans', 'notosans')
+font_add_google('Nanum Gothic', 'nanumgothic')
 ```
 
 # 3장 게으른 학습 : 최근접 이웃을 사용한 분류(Lazy Learning : Classification with KNN Method)
@@ -302,23 +306,32 @@ result$p.value # 0.6170751
 
 - P(Cloud) = 구름이 낄 확률
 
-- P(Rain ∩ Cloud) = 구름이 끼고 비가 올 확률
+- **P(Rain ∩ Cloud) = 구름이 끼고 비가 올 확률**
 
-- P(Rain|Cloud) = 아침에 구름이 낀 후, 비가 올 확률
+- **P(Rain|Cloud) = 아침에 구름이 낀 후, 비가 올 확률**
 
-- P(Cloud|Rain) = 아침에 비가 온 후, 구름이 낄 확률
+- **P(Cloud|Rain) = 아침에 비가 온 후, 구름이 낄 확률**
 
 ```{r}
-grid.newpage()
-draw.pairwise.venn(area1 = 30, area2 = 10, cross.area = 5, 
-                   category = c("bigger", "smaller"), 
-                   lty = rep("blank", 2), 
-                   fill = c("light blue", "pink"), 
-                   alpha = rep(0.5, 2),
-                   cat.pos = c(0, 0),
-                   scaled = FALSE)
-```
+# https://stackoverflow.com/questions/35457611/optimized-venndiagram-with-internal-labels-r
+x <- list()
+x$`P(Rain)` <- as.character(c("P(Rain) - P(Rain ∩ Cloud)", "P(Rain ∩ Cloud)"))
+x$`P(Cloud)` <- as.character(c("P(Cloud) - P(Rain ∩ Cloud)", "P(Rain ∩ Cloud)"))
 
+
+v0 <- venn.diagram(x, fontfamily = "notosans", cex = 1.4, 
+                   cat.fontfamily = "notosans", cat.cex = 1.8, cat.pos = 0,
+                   fill = c("#6666FF", "#A0A0A0"), alpha = 0.5, filename = NULL)
+overlaps <- calculate.overlap(x)
+# overlaps <- rev(overlaps)
+
+for (i in 1:length(overlaps)){
+  v0[[i + 4]]$label <- paste(overlaps[[i]][[1]])
+}
+
+grid.newpage()
+grid.draw(v0)
+```
 
 $$\begin{eqnarray} 
 P(Rain|Cloud) &=& \frac{P(Rain \cap Cloud)}{P(Cloud)} 
