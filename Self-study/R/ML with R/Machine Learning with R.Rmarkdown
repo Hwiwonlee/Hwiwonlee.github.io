@@ -302,18 +302,19 @@ result$p.value # 0.6170751
 
 **확률**에 대해 공부할 때 각 사건이 일어날 확률을 명확히 정리하는 것은 매우 중요한 일입니다. 이 말이 저 말 같고 저 말이 이 말 같아서 헷갈리기 십상이기 때문입니다.  
 
-- P(Rain) = 비가 올 확률
+- P(Rain) : 비가 올 확률
 
-- P(Cloud) = 구름이 낄 확률
+- P(Cloud) : 구름이 낄 확률
 
-- **P(Rain ∩ Cloud) = 구름이 끼고 비가 올 확률**
+- **P(Rain ∩ Cloud)** : 구름이 끼고 비가 올 확률
 
-- **P(Rain|Cloud) = 아침에 구름이 낀 후, 비가 올 확률**
+- **P(Rain|Cloud)** : 아침에 구름이 낀 후, 비가 올 확률
 
-- **P(Cloud|Rain) = 아침에 비가 온 후, 구름이 낄 확률**
+- **P(Cloud|Rain)** : 아침에 비가 온 후, 구름이 낄 확률
 
-```{r}
+```{r 벤다이어그램, fig.cap = "비와 구름에 대한 벤다이어 그램"}
 # https://stackoverflow.com/questions/35457611/optimized-venndiagram-with-internal-labels-r
+# https://www.r-graph-gallery.com/14-venn-diagramm.html
 x <- list()
 x$`P(Rain)` <- as.character(c("P(Rain) - P(Rain ∩ Cloud)", "P(Rain ∩ Cloud)"))
 x$`P(Cloud)` <- as.character(c("P(Cloud) - P(Rain ∩ Cloud)", "P(Rain ∩ Cloud)"))
@@ -332,6 +333,36 @@ for (i in 1:length(overlaps)){
 grid.newpage()
 grid.draw(v0)
 ```
+P(Rain)와 P(Cloud)는 직관적으로 이해할 수 있지만 **조건부 확률**과 **결합 확률**에 대해 설명하기 위해 나머지 확률을 짚고 넘어갈 필요가 있을 것 같습니다. 
+
+[**조건부 확률**](https://ko.wikipedia.org/wiki/%EC%A1%B0%EA%B1%B4%EB%B6%80_%ED%99%95%EB%A5%A0)이란 임의의 사건(들)이 **일어났다는 가정 하**에 다른 사건(들)이 일어날 확률을 의미하며 **사건 B가 일어났다는 가정 하에 사건 A가 일어날 확률 **은 다음과 같이 계산할 수 있습니다. 
+
+$$\begin{eqnarray} 
+    P(A | B) &=& \frac{P(A \cap B)}{P(B)}
+    \end{eqnarray}$$
+
+[**결합 확률**](https://ko.wikipedia.org/wiki/%EA%B2%B0%ED%95%A9%EB%B6%84%ED%8F%AC)이란 여러 변수를 **동시에** 고려하는 확률을 의미하며 여러 변수를 동시에 고려하는 확률 분포에 대한 함수이므로 **결합 확률 분포**라고 하기도 합니다. 
+
+아래와 같이 계산할 수 있으며 고려되는 변수 사이의 독립여부에 따라 계산식이 달라집니다. 
+    
+- A와 B가 독립이 아닌 경우
+$$\begin{eqnarray} 
+    P(A \cap B) &=& P(A|B) \times P(B)
+    \\ &=& P(B|A) \times P(A)
+    \end{eqnarray}$$
+    
+- A와 B가 독립인 경우 
+$$\begin{eqnarray} 
+    P(A \cap B) &=& P(A|B) \times P(B)
+    \\ &=& P(A) \times P(B)
+    \end{eqnarray}$$
+
+    - 독립사건의 정의, **사건 B의 발생과 사건 A의 발생이 서로 영향을 미치지 않는다**에 의해 $P(A|B) = P(A)$ 가 성립합니다. [자세한 설명에 대한 링크](https://www.toppr.com/guides/maths/probability/independent-events/)를 참조하시길 바랍니다. 
+    
+
+
+
+
 
 $$\begin{eqnarray} 
 P(Rain|Cloud) &=& \frac{P(Rain \cap Cloud)}{P(Cloud)} 
