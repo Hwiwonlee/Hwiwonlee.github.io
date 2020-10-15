@@ -45,6 +45,9 @@ library(showtext)
 font_add_google('Noto Sans KR', 'notosanskr')
 font_add_google('Noto Sans', 'notosans')
 font_add_google('Nanum Gothic', 'nanumgothic')
+
+library(e1071) # Naive Bayes Classifier
+library(naivebayes) # Naive Bayes Classifier
 ```
 
 # 3장 게으른 학습 : 최근접 이웃을 사용한 분류(Lazy Learning : Classification with KNN Method)
@@ -369,3 +372,86 @@ P(Rain|Cloud) &=& \frac{P(Rain \cap Cloud)}{P(Cloud)}
 \\ &=& \frac{P(Cloud|Rain) P(Rain)}{P(Cloud)} 
 \\ &=& \frac{likelihood \times prior}{evidence} = posterior
 \end{eqnarray}$$
+
+
+# 4.n 베이지안 분류 예제
+
+```{r}
+library(e1071) # Naive Bayes Classifier
+library(naivebayes) # Naive Bayes Classifier
+```
+
+## 4.nn hsbdemo dataset 
+hsbdemo dataset(데이터셋 링크 : https://stats.idre.ucla.edu/stat/data/hsbdemo.dta)은 200명의 학생을 대상으로 13개의 변수를 조사해 저장한 데이터셋입니다. 
+
+- [변수목록](https://rpubs.com/rami_alloush/599092) 
+    - id : index 
+    
+    - female : 성별...인데 이름이 female로 저장되어 있습니다.
+    
+    - ses : 사회 경제적 지위 혹은 상태(socio economic status)를 의미하며 3개의 수준을 갖습니다.
+    
+    - schtyp : School type을 의미하며 공립 혹은 사립의 2개 수준을 갖습니다. 
+    
+    - prog : 대상자가 educational choice를 의미하며 3개의 수준을 갖습니다.
+    
+    - read, write, math, science, socst : 각 과목에 대한 점수를 의미합니다. 
+    
+    - honors : 고급 영어 코스를 수강하는지에 대한 여부를 의미합니다.
+    
+    - awards : 대상자가 수상한 상(award)의 개수를 의미합니다. 
+    
+    - cid : categorical index
+
+```{r}
+dt <- read.dta("https://stats.idre.ucla.edu/stat/data/hsbdemo.dta")
+glimpse(dt)
+```
+```{r}
+set.seed(1234)
+library(caret)
+trainIndex <- createDataPartition(dt$prog, p = 0.7)$Resample1
+train <- dt[trainIndex, ]
+test <- dt[-trainIndex, ]
+
+## check the balance
+print(table(dt$prog))
+print(table(train$prog))
+```
+```{r}
+NBclassfier <- naiveBayes(prog ~ science + socst, data=train)
+print(NBclassfier)
+
+  
+trainPred <- predict(NBclassfier, newdata = train, type = "class")
+trainTable <- table(train$prog, trainPred)
+
+```
+```{r}
+# https://rstudio-pubs-static.s3.amazonaws.com/347013_371e59e8867549ddb922ea7b530e5c6a.html#fn2
+
+printALL_edit <- function(model, Y){
+  
+  trainPred <- predict(model, newdata = train, type = "class")
+  # https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
+  trainTable <- table(train[[Y]], trainPred)
+  
+  testPred <- predict(NBclassfier, newdata=test, type="class")
+  # https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
+  testTable <- table(test[[Y]], testPred)
+  
+  trainAcc <- sum(diag(trainTable))/sum(trainTable)
+  testAcc <- sum(diag(testTable))/sum(testTable)
+  
+  message("Contingency Table for Training Data")
+  print(trainTable)
+  message("Contingency Table for Test Data")
+  print(testTable)
+  message("Accuracy")
+  print(round(cbind(trainAccuracy = trainAcc, 
+                    testAccuracy = testAcc)
+              , 3))
+}
+
+printALL_edit(NBclassfier, Y = "prog")
+```
