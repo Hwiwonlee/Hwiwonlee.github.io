@@ -1,0 +1,58 @@
+---
+title: "R에서 하는 EDA"
+author: "Hwiwon Lee"
+date: "`r format(Sys.Date())`"
+categories:
+  - EDA
+tags:
+  - R
+  - EDA
+  - reviews
+output: 
+  # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
+    bookdown::html_document2:
+      number_sections: FALSE
+      fig_caption: TRUE
+      fig_height: 6
+      fig_width: 10
+      highlight: textmate
+      theme: cosmo
+      toc: yes
+      toc_depth: 4
+      toc_float: yes
+      css: "post_style.css"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height = 8, fig.align = "center", cache=T, dpi = 300, dev = "png",
+                      comment = "#>")
+
+# https://tibble.tidyverse.org/reference/formatting.html
+options(tibble.print_max = 10)
+options(tibble.max_extra_cols = 5)
+# options(max.print = 300)
+
+library(knitr) # for include_graphics()
+library(tidyverse) # as you known, core package
+library(googledrive) # Import dataset from the google drive
+library(readr) # To read csv file
+library(foreign)
+library(caret)
+library(VennDiagram)
+library(venneuler)
+library(showtext)
+font_add_google('Noto Sans KR', 'notosanskr')
+font_add_google('Noto Sans', 'notosans')
+font_add_google('Nanum Gothic', 'nanumgothic')
+
+library(e1071) # Naive Bayes Classifier
+library(naivebayes) # Naive Bayes Classifier
+```
+
+
+```{r}
+# https://karimlahrichi.com/2020/05/02/auto-eda-exploring-the-options/
+# https://arxiv.org/pdf/1904.02101.pdf
+# https://boxuancui.github.io/DataExplorer/articles/dataexplorer-intro.html#feature-engineering
+```
