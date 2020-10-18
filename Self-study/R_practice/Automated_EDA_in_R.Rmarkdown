@@ -21,6 +21,7 @@ output:
       toc_depth: 4
       toc_float: yes
       css: "post_style.css"
+# runtime: shiny
 ---
 
 
@@ -42,11 +43,13 @@ library(caret)
 library(VennDiagram)
 library(venneuler)
 library(showtext)
+library(lubridate)
 font_add_google('Noto Sans KR', 'notosanskr')
 font_add_google('Noto Sans', 'notosans')
 font_add_google('Nanum Gothic', 'nanumgothic')
 
 library(summarytools)
+library(explore)
 ```
 
 
@@ -123,20 +126,26 @@ library(summarytools)
 
 Rmarkdown에 결과물을 표시하기 위해 다음과 같은 코드로 실행하겠습니다. default형태인 `dfSummary(mpg)`로 실행하면 html로 결과물이 출력되어 markdown에 사용할 수 없습니다. 
 
+
 ```{r, eval = FALSE}
+# date 형식도 dfSummary()에 적용 가능함을 보여주기 위해 date column 추가
+mpg %>% 
+  mutate(date = lubridate::ymd(20200101) + days(row_number()-1)) -> mpg
+
+# Markdown form으로 결과 생성
 dfSummary(mpg, plain.ascii = FALSE, style = "grid", 
           graph.magnif = 0.75, valid.col = FALSE, tmp.img.dir = "/tmp")
 ```
 
-Data Frame Summary  
-mpg  
-**Dimensions:** 234 x 11  
-**Duplicates:** 9  
+**Data Frame Summary**
+**mpg**
+**Dimensions:** 234 x 12  
+**Duplicates:** 0  
 
 +----+---------------+--------------------------+---------------------+----------------------+---------+
 | No | Variable      | Stats / Values           | Freqs (% of Valid)  | Graph                | Missing |
 +====+===============+==========================+=====================+======================+=========+
-| 1  | manufacturer\ | 1\. dodge\               | 37 (15.8%)\         | ![](/tmp/ds0001.png) | 0\      |
+| 1  | manufacturer\ | 1\. dodge\               | 37 (15.8%)\         | ![](/tmp/ds0034.png) | 0\      |
 |    | [character]   | 2\. toyota\              | 34 (14.5%)\         |                      | (0%)    |
 |    |               | 3\. volkswagen\          | 27 (11.5%)\         |                      |         |
 |    |               | 4\. ford\                | 25 (10.7%)\         |                      |         |
@@ -148,7 +157,7 @@ mpg
 |    |               | 10\. honda\              | 9 ( 3.8%)\          |                      |         |
 |    |               | [ 5 others ]             | 24 (10.3%)          |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 2  | model\        | 1\. caravan 2wd\         | 11 ( 4.7%)\         | ![](/tmp/ds0002.png) | 0\      |
+| 2  | model\        | 1\. caravan 2wd\         | 11 ( 4.7%)\         | ![](/tmp/ds0035.png) | 0\      |
 |    | [character]   | 2\. ram 1500 pickup 4wd\ | 10 ( 4.3%)\         |                      | (0%)    |
 |    |               | 3\. civic\               | 9 ( 3.8%)\          |                      |         |
 |    |               | 4\. dakota pickup 4wd\   | 9 ( 3.8%)\          |                      |         |
@@ -160,21 +169,21 @@ mpg
 |    |               | 10\. a4\                 | 7 ( 3.0%)\          |                      |         |
 |    |               | [ 28 others ]            | 146 (62.4%)         |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 3  | displ\        | Mean (sd) : 3.5 (1.3)\   | 35 distinct values  | ![](/tmp/ds0003.png) | 0\      |
+| 3  | displ\        | Mean (sd) : 3.5 (1.3)\   | 35 distinct values  | ![](/tmp/ds0036.png) | 0\      |
 |    | [numeric]     | min < med < max:\        |                     |                      | (0%)    |
 |    |               | 1.6 < 3.3 < 7\           |                     |                      |         |
 |    |               | IQR (CV) : 2.2 (0.4)     |                     |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 4  | year\         | Min  : 1999\             | 1999 : 117 (50.0%)\ | ![](/tmp/ds0004.png) | 0\      |
+| 4  | year\         | Min  : 1999\             | 1999 : 117 (50.0%)\ | ![](/tmp/ds0037.png) | 0\      |
 |    | [integer]     | Mean : 2003.5\           | 2008 : 117 (50.0%)  |                      | (0%)    |
 |    |               | Max  : 2008              |                     |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 5  | cyl\          | Mean (sd) : 5.9 (1.6)\   | 4 : 81 (34.6%)\     | ![](/tmp/ds0005.png) | 0\      |
+| 5  | cyl\          | Mean (sd) : 5.9 (1.6)\   | 4 : 81 (34.6%)\     | ![](/tmp/ds0038.png) | 0\      |
 |    | [integer]     | min < med < max:\        | 5 :  4 ( 1.7%)\     |                      | (0%)    |
 |    |               | 4 < 6 < 8\               | 6 : 79 (33.8%)\     |                      |         |
 |    |               | IQR (CV) : 4 (0.3)       | 8 : 70 (29.9%)      |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 6  | trans\        | 1\. auto(av)\            | 5 ( 2.1%)\          | ![](/tmp/ds0006.png) | 0\      |
+| 6  | trans\        | 1\. auto(av)\            | 5 ( 2.1%)\          | ![](/tmp/ds0039.png) | 0\      |
 |    | [character]   | 2\. auto(l3)\            | 2 ( 0.8%)\          |                      | (0%)    |
 |    |               | 3\. auto(l4)\            | 83 (35.5%)\         |                      |         |
 |    |               | 4\. auto(l5)\            | 39 (16.7%)\         |                      |         |
@@ -185,27 +194,27 @@ mpg
 |    |               | 9\. manual(m5)\          | 58 (24.8%)\         |                      |         |
 |    |               | 10\. manual(m6)          | 19 ( 8.1%)          |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 7  | drv\          | 1\. 4\                   | 103 (44.0%)\        | ![](/tmp/ds0007.png) | 0\      |
+| 7  | drv\          | 1\. 4\                   | 103 (44.0%)\        | ![](/tmp/ds0040.png) | 0\      |
 |    | [character]   | 2\. f\                   | 106 (45.3%)\        |                      | (0%)    |
 |    |               | 3\. r                    | 25 (10.7%)          |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 8  | cty\          | Mean (sd) : 16.9 (4.3)\  | 21 distinct values  | ![](/tmp/ds0008.png) | 0\      |
+| 8  | cty\          | Mean (sd) : 16.9 (4.3)\  | 21 distinct values  | ![](/tmp/ds0041.png) | 0\      |
 |    | [integer]     | min < med < max:\        |                     |                      | (0%)    |
 |    |               | 9 < 17 < 35\             |                     |                      |         |
 |    |               | IQR (CV) : 5 (0.3)       |                     |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 9  | hwy\          | Mean (sd) : 23.4 (6)\    | 27 distinct values  | ![](/tmp/ds0009.png) | 0\      |
+| 9  | hwy\          | Mean (sd) : 23.4 (6)\    | 27 distinct values  | ![](/tmp/ds0042.png) | 0\      |
 |    | [integer]     | min < med < max:\        |                     |                      | (0%)    |
 |    |               | 12 < 24 < 44\            |                     |                      |         |
 |    |               | IQR (CV) : 9 (0.3)       |                     |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 10 | fl\           | 1\. c\                   | 1 ( 0.4%)\          | ![](/tmp/ds0010.png) | 0\      |
+| 10 | fl\           | 1\. c\                   | 1 ( 0.4%)\          | ![](/tmp/ds0043.png) | 0\      |
 |    | [character]   | 2\. d\                   | 5 ( 2.1%)\          |                      | (0%)    |
 |    |               | 3\. e\                   | 8 ( 3.4%)\          |                      |         |
 |    |               | 4\. p\                   | 52 (22.2%)\         |                      |         |
 |    |               | 5\. r                    | 168 (71.8%)         |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
-| 11 | class\        | 1\. 2seater\             | 5 ( 2.1%)\          | ![](/tmp/ds0011.png) | 0\      |
+| 11 | class\        | 1\. 2seater\             | 5 ( 2.1%)\          | ![](/tmp/ds0044.png) | 0\      |
 |    | [character]   | 2\. compact\             | 47 (20.1%)\         |                      | (0%)    |
 |    |               | 3\. midsize\             | 41 (17.5%)\         |                      |         |
 |    |               | 4\. minivan\             | 11 ( 4.7%)\         |                      |         |
@@ -213,3 +222,29 @@ mpg
 |    |               | 6\. subcompact\          | 35 (15.0%)\         |                      |         |
 |    |               | 7\. suv                  | 62 (26.5%)          |                      |         |
 +----+---------------+--------------------------+---------------------+----------------------+---------+
+| 12 | date\         | min : 2020-01-01\        | 234 distinct values | ![](/tmp/ds0045.png) | 0\      |
+|    | [Date]        | med : 2020-04-26\        |                     |                      | (0%)    |
+|    |               | max : 2020-08-21\        |                     |                      |         |
+|    |               | range : 7m 20d           |                     |                      |         |
++----+---------------+--------------------------+---------------------+----------------------+---------+
+
+`mpg`가 가진 11개의 feature에 대한 간단한 정보들을 table형태로 보여줍니다. feature의 타입에 따라, factor(혹은 character) feature는 value의 level과 count, bar chart의, integer feature는 요약 통계량과 histogram의 형태로 표현됩니다. `dfSummary()`에 `date`형태의 feature도 적용 가능함을 보여주기 위해 `date` column을 추가했고 date feature의 출력도 확인할 수 있습니다. 
+
+feature에 대한 대략적인 정보를 알려준다는 측면에서 `dfSummary()`는 `base::summary()`나 `tibble::glimpse()`의 확장 형태라고 볼 수 있습니다. feature 사이의 관계는 알 수 없다는 점에서 아쉬울 수 있으나 결과물이 꽤 괜찮게 나오므로 저는 만족하고 사용하고 있습니다. 
+
+# [**explore**](https://cran.r-project.org/web/packages/explore/vignettes/explore.html)
+
+
+
+```{r}
+library(explore)
+```
+
+```{r, echo=FALSE}
+explore(mpg)
+?explore
+# mpg %>% report(output_file = "report.html", output_dir = tempdir())
+
+
+# iris %>% explore_all(target = Species)
+```
