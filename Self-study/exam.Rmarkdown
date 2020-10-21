@@ -1,0 +1,58 @@
+---
+title: "Test"
+author: "Hwi Won Lee"
+date: "`r format(Sys.Date())`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## summary table using `tidyverse`
+
+```{r data_handling}
+data <- nycflights13::flights
+
+# index, date column 생성
+data %>% 
+  mutate(date = paste0(year, "-", month, "-", day, " ", hour, ":", minute)) %>% 
+  mutate(date = parse_date_time(date, orders = "YmdHM", tz = "EST")) %>% 
+  mutate(index = row_number()) %>% 
+  select(index, date, year, month, day, hour, minute, everything()) -> data
+
+glimpse(data)
+
+
+set.seed(1000)
+duplicate_index_a <- sample(seq(1, nrow(data), 1), nrow(data)*0.3)
+duplicate_index_b <- sample(seq(1, nrow(data), 1), nrow(data)*0.2)
+
+data %>% 
+  filter(index %in% duplicate_index_a) -> duplicate_data_a # nrow : 101032
+data %>% 
+  filter(index %in% duplicate_index_b) -> duplicate_data_b # nrow : 67355
+
+duplicate_data_a %>% 
+  rbind(duplicate_data_b) %>% 
+  arrange(index) %>% 
+  
+  # 중복되는 행 지우기
+  distinct(index, .keep_all = TRUE) -> duplicate_data # nrow : 148092
+```
+
+
+```{r summary_table}
+duplicate_data %>% 
+  # drop_na() %>%  # nrow : 143960
+  summarise(across(c("dep_delay", "arr_delay", "air_time"), 
+                   list(Mean = mean, SD = sd, Median = median, Min = min, Max = max, 
+                        Q1 = ~quantile(., 0.25, na.rm = TRUE), 
+                        Q3 = ~quantile(., 0.75, na.rm = TRUE)), na.rm = TRUE)) %>% 
+  pivot_longer(
+    everything(), 
+    names_to = c("variable", ".value"),
+    names_pattern = "(.*)_([:upper:].*)"
+  )
+```
