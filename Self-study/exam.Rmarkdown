@@ -8,6 +8,9 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(caret)
+library(titanic)
+library(lubridate)
 ```
 
 ## summary table using `tidyverse`
@@ -39,20 +42,70 @@ duplicate_data_a %>%
   arrange(index) %>% 
   
   # 중복되는 행 지우기
-  distinct(index, .keep_all = TRUE) -> duplicate_data # nrow : 148092
+  distinct(index, .keep_all = TRUE) -> duplicate_data # nrow : 148077
 ```
 
 
 ```{r summary_table}
 duplicate_data %>% 
-  # drop_na() %>%  # nrow : 143960
-  summarise(across(c("dep_delay", "arr_delay", "air_time"), 
+  # drop_na() %>%  # nrow : 143918
+  dplyr::summarise(across(c("dep_delay", "arr_delay", "air_time"), 
                    list(Mean = mean, SD = sd, Median = median, Min = min, Max = max, 
                         Q1 = ~quantile(., 0.25, na.rm = TRUE), 
                         Q3 = ~quantile(., 0.75, na.rm = TRUE)), na.rm = TRUE)) %>% 
-  pivot_longer(
+  tidyr::pivot_longer(
     everything(), 
-    names_to = c("variable", ".value"),
-    names_pattern = "(.*)_([:upper:].*)"
+    names_to = c("Variable", ".value"),
+    names_pattern = "(.*)_([[:upper:]].*)"
   )
+```
+
+
+```{r}
+duplicate_data %>% 
+  mutate(delay_or_not = as.factor(ifelse(arr_delay > 0, "delay", "no"))) %>% 
+  mutate(across(is.character, as.factor)) %>% 
+  drop_na() -> duplicate_data
+  
+target_x <- c("dep_time", "sched_dep_time", "dep_delay", "arr_time", 
+              "sched_arr_time", "carrier", "flight", "origin", "dest", "air_time", "distance")
+  
+
+# setdiff(colnames(duplicate_data), list('class'))
+formula <- as.formula(paste("delay_or_not", paste(target_x, collapse=' + '), sep=' ~ '))
+
+
+train_index <- caret::createDataPartition(duplicate_data$delay_or_not, p = 0.7)
+
+train <- duplicate_data[train_index$Resample1, ]
+test <- duplicate_data[-train_index$Resample1, ]
+
+cv_folds <- createMultiFolds(train$delay_or_not, k = 10, times = 5)
+
+cv_ctrl <- trainControl(method = "cv", number = 3,
+                        repeats = 5, 
+                        index = cv_folds, 
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE,
+                        verboseIter = FALSE)
+
+tune_grid <- expand.grid(
+  alpha = 0:1,
+  lambda = seq(0.0001, 1, length=10)
+)
+
+
+gc_model <- caret::train(delay_or_not ~ dep_time + sched_dep_time + dep_delay + arr_time + 
+    sched_arr_time + carrier + flight + air_time + distance, train,
+                         method = "glmnet",
+                         metric = "Sens",
+                         tuneGrid = tune_grid,
+                         trControl = cv_ctrl)
+
+
+gc_model
+
+gc_pred_class <- predict(gc_model, newdata=test, type = "raw")
+
+confusionMatrix(gc_pred_class, test$delay_or_not)
 ```
