@@ -422,8 +422,15 @@ print(table(dt$prog))
 print(table(train$prog))
 ```
 
+```{r set_xvars_and_formula}
+xvars <- dplyr::setdiff(names(dt), class(`list`))[-c(1, 5, 13)]
+
+# 신기하게 모든 변수를 사용했을 때 accuracy가 더 떨어진다. 
+formulas <- as.formula(paste("prog", paste(xvars, collapse = "+"), sep = " ~ "))
+```
+
 ```{r}
-NBclassifier <- naiveBayes(prog ~ science + socst, data=train)
+NBclassifier <- naiveBayes(formulas, data=train)
 print(NBclassifier)
 ```
 
@@ -458,9 +465,9 @@ printALL_edit(NBclassifier, Y = "prog")
 
 ```{r}
 library(naivebayes)
-New_NBclassifier <- naive_bayes(prog ~ science + socst, 
+New_NBclassifier <- naive_bayes(formulas,
                                 # usekernel = F면 naivebayes와 같은 결과
-                                usekernel=F, laplace = 1,
+                                usekernel=T, laplace = 0,
                                 data=train)
 print(New_NBclassifier)
 ```
