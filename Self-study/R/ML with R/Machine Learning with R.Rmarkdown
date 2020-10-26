@@ -249,22 +249,20 @@ feature에 대한 대략적인 정보를 알려준다는 측면에서 `dfSummary
     
     - `report()` : 결과물을 손쉽게 문서화해주는 함수 
 
-    
+저는 **explore**의 장점으로 다음의 2개를 생각해봤습니다. 
 
+- shiny app을 이용해 web report에 장점을 갖는 interactive report를 지원한다. 
 
+- 설정된 feature(target)와 다른 feature들 사이의 관계를 알아보기 편하다.  
 
+두 번째 장점은 호불호가 없겠지만 첫 번째 장점은 쓰임에 따른 호불호가 있을 수 있습니다. 손에 잡히는 문서화를 할 땐 shiny app은 무용지물이나 다름없기 때문입니다. 그럼에도 불구하고 손쉽게 shiny app을 이용한 반응형 페이지를 만들 수 있다는 점의 이점이 크므로 **explore**의 장점으로 꼽아보았습니다. 
 
+**explore**의 주요 함수에 대한 예제를 간단히 살펴보며 **explore** 사용법을 소개해보겠습니다. 
 
-**explore**는 모든 feature를 대상으로 한 description보다는 설정된 feature 사이의 관계를 알아보는데 좀 더 적합한 패키지라고 생각합니다.
 ```{r load_explore}
 library(explore)
 ```
 
 ```{r explore_exercise}
-# explore(mpg)
-# ?explore
-# mpg %>% report(output_file = "report.html", output_dir = tempdir())
-
-
 iris %>% explore_all(target = Species)
 ```
