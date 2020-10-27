@@ -80,10 +80,24 @@ train_index <- caret::createDataPartition(duplicate_data$delay_or_not, p = 0.7)
 train <- duplicate_data[train_index$Resample1, ]
 test <- duplicate_data[-train_index$Resample1, ]
 
+
+# 5repeated, 10 folds
 cv_folds <- createMultiFolds(train$delay_or_not, k = 10, times = 5)
 
-cv_ctrl <- trainControl(method = "cv", number = 3,
+# 3 folds
+cv_fold <- createFolds(train$delay_or_not, k = 3)
+```
+
+```{r}
+# repeated CV(5 repeated, 10 folds)
+cv_ctrl <- trainControl(method = "repeatedcv", number = 10,
                         repeats = 5, 
+                        index = cv_folds, 
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE,
+                        verboseIter = FALSE)
+# CV(3folds)
+cv_ctrl <- trainControl(method = "cv", number = 3,
                         index = cv_folds, 
                         summaryFunction = twoClassSummary,
                         classProbs = TRUE,
@@ -95,20 +109,26 @@ tune_grid <- expand.grid(
 )
 
 
-gc_model <- caret::train(delay_or_not ~ dep_time + sched_dep_time + dep_delay + arr_time + 
-    sched_arr_time + carrier + flight + air_time + distance, train,
+gc_model <- caret::train(delay_or_not ~ sched_dep_time + dep_delay + arr_time + carrier + flight + air_time + distance, 
+                         train,
                          method = "glmnet",
                          metric = "Sens",
                          tuneGrid = tune_grid,
                          trControl = cv_ctrl)
 
-
+### 예측모형 살펴보기
 gc_model
 
 gc_pred_class <- predict(gc_model, newdata=test, type = "raw")
 
 confusionMatrix(gc_pred_class, test$delay_or_not)
 ```
+
+
+```{r}
+
+```
+
 
 ```{r}
 duplicate_data %>% 
