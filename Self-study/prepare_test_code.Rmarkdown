@@ -124,9 +124,31 @@ gc_pred_class <- predict(gc_model, newdata=test, type = "raw")
 confusionMatrix(gc_pred_class, test$delay_or_not)
 ```
 
+```{r knn}
+# https://leedakyeong.tistory.com/entry/R-caret-%ED%8C%A8%ED%82%A4%EC%A7%80%EB%A1%9C-modeling-model-tuning-iris-classification
+iris %>% 
+  mutate(Species = as.character(Species)) %>% 
+  filter(Species != "setosa") -> iris_data
 
-```{r}
+set.seed(1234)
 
+index <- caret::createDataPartition(iris_data$Species, p = 0.7)
+train <- iris_data[index$Resample1, ]
+test <- iris_data[-index$Resample1, ]
+
+cv_fold <- caret::createFolds(train$Species, k = 3)
+
+cv_ctrl <- caret::trainControl(method = "cv", number = 3,
+                               index = cv_fold)
+
+model <- caret::train(Species ~ ., data = train,
+                      method = "knn", 
+                      trControl = cv_ctrl, 
+                      tuneGrid = expand.grid(k = 7:13))
+
+predict1 <- predict(model, newdata = test)
+
+confusionMatrix(predict1, as.factor(test$Species))
 ```
 
 
