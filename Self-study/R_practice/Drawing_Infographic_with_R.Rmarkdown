@@ -48,7 +48,7 @@ font_add_google('Nanum Gothic', 'nanumgothic')
 
 [link](https://www.listendata.com/2019/06/create-infographics-with-r.html)
 
-```{r install_packages}
+```{r install_packages, eval=FALSE}
 install.packages("echarts4r", dependencies = c("Depends", "Imports")) # echarts4r
 devtools::install_github("JohnCoene/echarts4r.assets") # echarts4r.assets
 install.packages("waffle") # waffle plot
@@ -60,4 +60,31 @@ library(echarts4r)
 library(echarts4r.assets)
 library(waffle)
 library(ggwaffle)
+library(extrafont)
+```
+
+
+```{r}
+waffle(
+  c('남성=75%' = 75, '여성=25%' = 25), rows = 10, colors = c("#0080FF", "#FD6F6F"),
+  legend_pos="bottom"
+)
+```
+```{r}
+data.frame(Index = seq(1, 100, 1), 
+           Gender = rep(c("남성", "남성", "남성", "여성"), 25)) %>% 
+  waffle_iron(aes_d(group = Gender), rows = 10) %>% 
+  ggplot(aes(x, y, fill = group)) + 
+  geom_waffle() + 
+  coord_equal() + 
+  scale_fill_manual(name = NULL,
+                    values = c("#0080FF", "#FD6F6F"),
+                    labels = c("남성=75%", "여성=25%")
+                    ) +
+  labs(x = " ", y = " ") + 
+  theme_waffle() + 
+  theme(
+    legend.position = "bottom"
+  )
+
 ```
