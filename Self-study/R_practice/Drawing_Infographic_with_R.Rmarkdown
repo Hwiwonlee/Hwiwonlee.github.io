@@ -46,7 +46,10 @@ font_add_google('Nanum Gothic', 'nanumgothic')
 
 
 
-[link](https://www.listendata.com/2019/06/create-infographics-with-r.html)
+[CREATE INFOGRAPHICS WITH R](https://www.listendata.com/2019/06/create-infographics-with-r.html)
+[waffle](https://github.com/hrbrmstr/waffle)
+[echarts4r](https://echarts4r.john-coene.com/)
+[ggwaffle](https://github.com/liamgilbey/ggwaffle)
 
 ```{r install_packages, eval=FALSE}
 install.packages("echarts4r", dependencies = c("Depends", "Imports")) # echarts4r
