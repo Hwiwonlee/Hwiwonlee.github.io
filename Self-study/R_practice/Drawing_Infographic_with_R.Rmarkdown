@@ -3,9 +3,9 @@ title: "R을 활용해 인포그래픽 그리기"
 author: "Hwiwon Lee"
 date: "`r format(Sys.Date())`"
 categories:
+  - R
   - Visualization
 tags:
-  - R
   - Visualization
 output: 
   # https://blog.zarathu.com/posts/2019-01-03-rmarkdown/
