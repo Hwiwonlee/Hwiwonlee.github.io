@@ -51,7 +51,7 @@ font_add_google('Nanum Gothic', 'nanumgothic')
 [echarts4r](https://echarts4r.john-coene.com/)
 [ggwaffle](https://github.com/liamgilbey/ggwaffle)
 
-```{r install_packages, eval=FALSE}
+```{r install_packages, eval=FALSE, include=FALSE}
 install.packages("echarts4r", dependencies = c("Depends", "Imports")) # echarts4r
 devtools::install_github("JohnCoene/echarts4r.assets") # echarts4r.assets
 install.packages("waffle") # waffle plot
@@ -71,8 +71,12 @@ library(extrafont)
 waffle(
   c('남성=75%' = 75, '여성=25%' = 25), rows = 10, colors = c("#0080FF", "#FD6F6F"),
   legend_pos="bottom"
-)
+) + 
+  theme(legend.text = element_text(size = 16, 
+                               family = "notosanskr")
+        ) # ggplot 기반이라 사용 가능함. 
 ```
+
 ```{r}
 data.frame(Index = seq(1, 100, 1), 
            Gender = rep(c("남성", "남성", "남성", "여성"), 25)) %>% 
@@ -87,7 +91,9 @@ data.frame(Index = seq(1, 100, 1),
   labs(x = " ", y = " ") + 
   theme_waffle() + 
   theme(
-    legend.position = "bottom"
+    legend.position = "bottom",
+    legend.text = element_text(size = 16, 
+                               family = "notosanskr")
   )
 
 ```
