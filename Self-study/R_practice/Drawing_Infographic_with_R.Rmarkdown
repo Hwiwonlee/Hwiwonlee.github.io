@@ -52,11 +52,9 @@ font_add_google('Nanum Gothic', 'nanumgothic')
 
 데이터 분석과 결과물을 생산하는 것은 다른 측면의 일이라고 생각할 수 있지만 보-통은 (사실 거의 대부분) 데이터를 분석한 사람이 문서화를 하게 되므로 이러한 역량을 갖추는 것은 분석가의 역량을 더하는 것으로 생각할 수 있습니다(일단 그렇게 생각해봅시다...).
 
-데이터 분석 결과를 픽토그램과 같은 디자인 요소를 사용해 정리할 수 있지만 plot을 그리듯 바로 만들어낼 수 있으면 이 과정이 덜 힘들겁니다. 다행히, (혹은 늘 그렇듯) 패키지를 활용해 간단한 수준의 인포그래픽을 그릴 수 있습니다. 
+데이터 분석 결과를 [픽토그램](https://en.wikipedia.org/wiki/Pictogram)과 같은 디자인 요소를 사용해 정리할 수 있지만 plot을 그리듯 바로 만들어낼 수 있으면 이 과정이 덜 힘들겁니다. 다행히, (혹은 늘 그렇듯) 패키지를 활용해 간단한 수준의 인포그래픽을 그릴 수 있습니다. 
 
 어떤 패키지를 어떻게 활용해 R에서 인포그래픽을 그릴 수 있는지 알아보겠습니다. 
-
-
 
 
 [CREATE INFOGRAPHICS WITH R](https://www.listendata.com/2019/06/create-infographics-with-r.html)
@@ -110,3 +108,4 @@ data.frame(Index = seq(1, 100, 1),
   )
 
 ```
+[pictogram](https://rud.is/rpubs/building-pictograms.html)
