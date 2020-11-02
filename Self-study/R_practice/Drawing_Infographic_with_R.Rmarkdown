@@ -72,9 +72,10 @@ devtools::install_github("liamgilbey/ggwaffle") # ggwaffle
 ```{r}
 library(echarts4r)
 library(echarts4r.assets)
-library(waffle)
-library(ggwaffle)
-library(extrafont)
+library(waffle) # for waffle chart 
+library(ggwaffle) # some kind of short cut in the waffle chart
+library(extrafont) # for using AwesomeFont
+library(emojifont) # for using AWesomeFont
 ```
 
 
@@ -108,4 +109,43 @@ data.frame(Index = seq(1, 100, 1),
   )
 
 ```
+
+```{r}
+load.emojifont('EmojiOne.ttf')
+emoji(search_emoji("smile_cat"))
+
+wink_emoji <- "\U0001f609"
+utf8::utf8_print(wink_emoji)
+
+
+set.seed(123)
+x <- rnorm(10)
+set.seed(321)
+y <- rnorm(10)
+plot(x, y, cex=0)
+# text(x, y, labels=emoji('cow'), cex=1.5, col='steelblue', family='EmojiOne')
+
+ggplot() + geom_emoji("rose", color='steelblue') + theme_void()
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(purrr)
+# remotes::install_github("hadley/emo")
+library(emo)
+
+# tibble(names = c("smile","school","office","blush","smirk","heart_eyes"),
+#        emoji = map_chr(names, emo::ji)) %>% 
+# tibble::rowid_to_column("n") -> dat
+# 
+# dat %>% ggplot(aes(n, emoji)) + 
+#   geom_col(orientation="y") +
+#   theme(axis.text.y = element_text(size = 18))
+```
+
+
+
+[fontawesome in R](https://stackoverflow.com/questions/51311536/font-awesome-in-r-loaded-but-not-found-by-waffle)
+
 [pictogram](https://rud.is/rpubs/building-pictograms.html)
