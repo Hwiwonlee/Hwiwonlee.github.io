@@ -1,1 +1,151 @@
 # 첫 번째 프로젝트 : 
+
+
+```{r clustering_functions}
+clustering <- function(df, origin, min, max){
+  
+  # gower distance, PAM, tSNE를 활용한 clustering test
+  # df : target df
+  # orgin : original df
+  # min : minimum number of clusters 
+  # max : maximum number of clusters 
+  
+  ## calculate distance : gower distance using log-transformation
+  
+  log_trans_target <- as.numeric(which("numeric" == sapply(df, class)))
+  
+  gower_dist <- daisy(df,
+                      metric = "gower",
+                      type = list(logratio = log_trans_target))
+  
+  
+  gower_mat <- as.matrix(gower_dist)
+  
+  
+  similar_pair <- origin[
+    which(gower_mat == min(gower_mat[gower_mat != min(gower_mat)]),
+          arr.ind = TRUE)[1, ], ]
+  
+  disimilar_pair <- origin[
+    which(gower_mat == max(gower_mat[gower_mat != max(gower_mat)]),
+          arr.ind = TRUE)[1, ], ]
+  
+  ## find the optimal number of clusters : average width of silhouette
+  sil_width <- c(NA)
+  
+  print("최적 클러스터 개수 탐색 시작")
+  for(i in min:max){
+    print(paste0(i,"가 최적 클러스터 개수인지 탐색 중"))
+    pam_fit <- pam(gower_dist,
+                   diss = TRUE,
+                   k = i)
+    
+    sil_width[i] <- pam_fit$silinfo$avg.width
+    
+  }
+  
+  ## Plot silhouette width (higher is better)
+  silhouette_plot <- plot((min-1):max, sil_width,
+                          xlab = "Number of clusters",
+                          ylab = "Silhouette Width")
+  
+  ### k is best number of clusters = maximum average width of silhouette
+  k <- which.max(sil_width)
+  print(paste0(k,"를 최적 클러스터 개수로 판단"))
+  
+  
+  pam_fit <- pam(gower_dist, diss = TRUE, k = k)
+
+  pam_results <- origin %>%
+    mutate(cluster = pam_fit$clustering) %>%
+    group_by(cluster) %>%
+    do(the_summary = summary(.))
+
+  # pam_results$the_summary
+  # oringin[pam_fit$medoids, ]
+  
+  result <- list(
+    gower_dist = gower_dist,
+    sim_dissim_pair = c(similar_pair, disimilar_pair),
+    avg_sil_width = sil_width,
+    silhouette_plot = silhouette_plot,
+    optimal_number = k,
+    PAM_fit = pam_fit,
+    PAM_results = pam_results
+  )
+  
+  return(result)
+}
+
+tSNE <- function(dist, perplexity_min, perplexity_max,
+                 perplexity_interval) { 
+  
+  ## perplexity의 범위
+  perplexity_vec <- seq(perplexity_min, perplexity_max, perplexity_interval)
+  
+  ## perplexity별 itercosts 값
+  cost_list <- vector(mode="list", length = length(perplexity_vec))
+  
+  ## perplexity별 반복횟수
+  iter_vec <- vector(mode="integer", length = length(perplexity_vec))
+  
+  
+  for(i in seq_along(perplexity_vec)) {
+    cat("작업중: ", i, "\n")
+    tsne_tmp <- Rtsne(dist, 
+                      perplexity = perplexity_vec[i], 
+                      max_iter = 1000, 
+                      is_distance = TRUE)
+    iter_vec[i] <- which.min(tsne_tmp$itercosts)
+    cost_list[[i]] <- tsne_tmp$itercosts
+  }
+  
+  tsne_perp_dat <- tibble(
+    perplexity = as.factor(perplexity_vec),
+    max_iter = iter_vec,
+    cost = cost_list)
+  
+  tsne_perp_dat %>%
+    select(-max_iter) %>% 
+    unnest(cost) %>% 
+    mutate(iter_seq = rep(1:length(tsne_perp_dat$cost[[1]]), 
+                          length(perplexity_vec))) -> tsne_perp_result 
+  
+  a_tSNE$tSNE_perp_result %>% 
+  group_by(perplexity) %>% summarise(min(cost)) -> tsne_perp_mincost
+  
+
+  ggplot(data = tsne_perp_result, 
+         aes(x=iter_seq, y= cost, color = perplexity)) +
+    geom_point() + 
+    geom_line() + 
+    theme_minimal() + 
+    theme(
+      legend.position = "bottom"
+    ) -> perplex_plot
+  
+  result <- list(
+    tSNE_perp_result = tsne_perp_result, 
+    tSNE_perp_mincost = tsne_perp_mincost,
+    Perplex_plot = perplex_plot
+  )
+}
+
+RtSNE <- function(cluster_dist, perplexity, cluster_PAM_fit) { 
+  
+  tsne_obj <- Rtsne(cluster_dist, is_distance = TRUE, dims = 2,
+                    max_iter = 1000, perplexity = perplexity)
+  
+  tsne_data <- tsne_obj$Y %>%
+    data.frame() %>%
+    setNames(c("X", "Y")) %>%
+    mutate(cluster = factor(cluster_PAM_fit$clustering))
+  
+  result <- list(
+    tSNE_object = tsne_obj, 
+    tsne_DF = tsne_data
+  )
+  
+  return(tsne_obj)
+}
+```
