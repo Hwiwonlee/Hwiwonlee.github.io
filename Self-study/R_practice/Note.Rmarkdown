@@ -1,0 +1,8 @@
+# quantile을 이용해서 쉽게 categorizing하기
+https://stackoverflow.com/questions/40380112/categorize-continuous-variable-with-dplyr
+
+# Rmarkdown에서 global object 쉽게 knit하기
+https://stackoverflow.com/questions/34029611/how-to-use-objects-from-global-environment-in-rstudio-markdown
+
+# user-define function에서 열 이름 쉽게 넣기
+https://stackoverflow.com/questions/29678435/how-to-pass-dynamic-column-names-in-dplyr-into-custom-function
