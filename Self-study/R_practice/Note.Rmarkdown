@@ -6,3 +6,6 @@ https://stackoverflow.com/questions/34029611/how-to-use-objects-from-global-envi
 
 # user-define function에서 열 이름 쉽게 넣기
 https://stackoverflow.com/questions/29678435/how-to-pass-dynamic-column-names-in-dplyr-into-custom-function
+
+# read_function에서 모든 column의 type을 통일하기
+https://github.com/tidyverse/readr/issues/148
