@@ -12,6 +12,24 @@ https://github.com/tidyverse/readr/issues/148
 
 
 # summarise table에 N 추가하기
+```{r}
+summary_table <- function(df, group_colum){
+  df %>% 
+  group_by(!!as.name(group_colum)) %>% 
+  dplyr::summarise(across(where(is.numeric), 
+                          list(Mean = mean, SD = sd, Median = median, Min = min, Max = max, 
+                               Q1 = ~quantile(., 0.25, na.rm = TRUE), 
+                               Q3 = ~quantile(., 0.75, na.rm = TRUE)), na.rm = TRUE)) -> sub_result 
+
+  df %>% 
+    count(!!as.name(group_colum)) %>% 
+    right_join(sub_result, by = group_colum) -> result
+  
+  return(result)
+}
+```
+
+
 
 # 더 볼 블로그
 ## 팔레트
@@ -19,4 +37,5 @@ http://ds.sumeun.org/?p=1259
 
 # 파이프연산자 (%>%, %<>%, %T>%
 https://gomguard.tistory.com/243
+
 
