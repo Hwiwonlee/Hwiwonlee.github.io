@@ -3,6 +3,10 @@ https://stackoverflow.com/questions/40380112/categorize-continuous-variable-with
 
 # Rmarkdown에서 global object 쉽게 knit하기
 https://stackoverflow.com/questions/34029611/how-to-use-objects-from-global-environment-in-rstudio-markdown
+knit와 render로 할 수 있음
+**주의** : 반드시 다른 R 파일이나 Rmarkdown에서 실행할 것!
+knit의 대상이 되는 Rmarkdown chunk나 console에서 knit나 render를 시행하면 루프로 돌아버리기 때문에 실행이 안됨 
+주요 에러는 duplicate chunk label 혹은 sink stack
 
 # user-define function에서 열 이름 쉽게 넣기
 https://stackoverflow.com/questions/29678435/how-to-pass-dynamic-column-names-in-dplyr-into-custom-function
