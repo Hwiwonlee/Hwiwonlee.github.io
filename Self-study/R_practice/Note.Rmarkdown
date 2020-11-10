@@ -11,8 +11,18 @@ knit의 대상이 되는 Rmarkdown chunk나 console에서 knit나 render를 시�
 # user-define function에서 열 이름 쉽게 넣기
 https://stackoverflow.com/questions/29678435/how-to-pass-dynamic-column-names-in-dplyr-into-custom-function
 
+# user-define function에서 열 이름을 사용해 df 혹은 tibble을 벡터 type으로 호출하는 방법
+df[[target_column]] or tibble[[target_column]]
+https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
+
+
+
 # read_function에서 모든 column의 type을 통일하기
 https://github.com/tidyverse/readr/issues/148
+
+
+
+
 
 
 # summarise table에 N 추가하기
