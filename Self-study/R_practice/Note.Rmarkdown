@@ -33,13 +33,19 @@ summary_table <- function(df, group_colum){
 }
 ```
 
-
-
 # 더 볼 블로그
 ## 팔레트
 http://ds.sumeun.org/?p=1259
 
 # 파이프연산자 (%>%, %<>%, %T>%
 https://gomguard.tistory.com/243
+
+# Association Rule
+
+https://rdrr.io/cran/arules/man/interestMeasure.html
+https://michael.hahsler.net/research/association_rules/measures.html#hyperConf
+Rule을 판단하는 여러 지표, Rule이 어떤 조건에서 형성됐느냐에 따라 criteria가 달라짐
+  - The following measures are implemented for rules of the form X -> Y:
+  - The following measures are implemented for itemsets X:
 
 
