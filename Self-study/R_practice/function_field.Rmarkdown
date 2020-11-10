@@ -1,0 +1,179 @@
+```{r fn_Apriori}
+# Apriori 알고리즘을 사용해 AR을 수행하는 함수
+fn_Apriori <- function(df, target_column, target_value, select_cols,
+                       minlen, supp, conf){
+  
+  # Aprioir 알고리즘을 이용한 Association Rule 찾기
+  
+  
+  ## set Y(rhs) 만들기
+  df %>% 
+  mutate(category = 
+           paste0("category=", target_value, ", ", category)) %>% 
+  distinct(category) %>% .$category -> category_apriori
+
+  ## Apriori 시작 
+  df %>% 
+    mutate(category = 
+             paste0(target_value, ", ", category)) %>% 
+    
+    # target_column에서 target_value만 가진 row를 select 
+    filter(!!as.name(target_column) %in% target_value) %>% 
+    # select_cols로 지정된 column만 선택
+    select(select_cols) %>% 
+    mutate(across(everything(), as.factor)) %>% 
+    
+    # Apriori 실행
+    apriori(.,
+            parameter = list(minlen=minlen, supp = supp, conf = conf), 
+            appearance = list(rhs = category_apriori, default = "lhs"), 
+            control = list(verbose=F)
+    ) -> AR_result
+  
+  return(AR_result)
+}
+
+
+# AR결과를 정리해주는 함수
+fn_AR_table <- function(AR_result, sort_by, interestMeasure){
+  
+  # measure 추가
+  interestMeasure(sort(AR_result, by = sort_by), 
+                  measure = interestMeasure) %>% 
+    arrange(desc(support)) %>% 
+    mutate(index = seq(1, nrow(.), 1)) %>% 
+    select(-support) -> join_table
+  
+  # right join을 이용한 합병
+  DATAFRAME(AR_result) %>% 
+    select(c("LHS", "RHS", "support", "confidence", "lift", "count")) %>% 
+    arrange(desc(support)) %>% 
+    mutate(index = seq(1, nrow(.), 1)) %>% 
+    right_join(join_table, by = "index") %>% 
+    select(index, everything()) -> AR_table
+  
+  return(AR_table)
+}
+
+# AR결과로 scater plot을 그려주는 함수
+fn_AR_plot <- function(AR_table, col_low, col_high,
+                       select_cols) { 
+  
+  AR_table %>% 
+  arrange(desc(support)) %>% 
+  filter(hyperConfidence >= 0.95) %>% 
+  mutate(hyperConfidence = round(hyperConfidence, 6)) %>% 
+  
+  ggplot(aes(x = support, y = confidence)) + 
+  geom_point(aes(color = lift)) +
+  scale_colour_gradient(low = col_low, high = col_high) + 
+  ggtitle(paste0("Scatter plot for ", 
+                 eval(nrow(AR_table %>% 
+                             arrange(desc(support)) %>% 
+                             filter(hyperConfidence >= 0.95))),
+                 " rules"), 
+          subtitle = paste0("X = {", paste(select_cols, collapse = ", "), "}, ", "Y = {", target_value , "}")) +
+  theme_minimal() -> AR_plot
+  
+  return(AR_plot)
+}
+
+# 합본
+fn_AR <- function(df, target_column, target_value, select_cols,
+                  minlen, supp, conf, sort_by, interestMeasure, 
+                  col_low, col_high) { 
+  
+  # Apriori 알고리즘을 사용해 AR을 수행하는 함수
+  fn_Apriori <- function(df, target_column, target_value, select_cols,
+                         minlen, supp, conf){
+    
+    # Aprioir 알고리즘을 이용한 Association Rule 찾기
+    
+    
+    ## set Y(rhs) 만들기
+    df %>% 
+      mutate(category = 
+               paste0("category=", target_value, ", ", category)) %>% 
+      distinct(category) %>% .$category -> category_apriori
+    
+    ## Apriori 시작 
+    df %>% 
+      mutate(category = 
+               paste0(target_value, ", ", category)) %>% 
+      
+      # target_column에서 target_value만 가진 row를 select 
+      filter(!!as.name(target_column) %in% target_value) %>% 
+      # select_cols로 지정된 column만 선택
+      select(select_cols) %>% 
+      mutate(across(everything(), as.factor)) %>% 
+      
+      # Apriori 실행
+      apriori(.,
+              parameter = list(minlen=minlen, supp = supp, conf = conf), 
+              appearance = list(rhs = category_apriori, default = "lhs"), 
+              control = list(verbose=F)
+      ) -> AR_result
+    
+    return(AR_result)
+  }
+  
+  
+  # AR결과를 정리해주는 함수
+  fn_AR_table <- function(AR_result, sort_by, interestMeasure){
+    
+    # measure 추가
+    interestMeasure(sort(AR_result, by = sort_by), 
+                    measure = interestMeasure) %>% 
+      arrange(desc(support)) %>% 
+      mutate(index = seq(1, nrow(.), 1)) %>% 
+      select(-support) -> join_table
+    
+    # right join을 이용한 합병
+    DATAFRAME(AR_result) %>% 
+      select(c("LHS", "RHS", "support", "confidence", "lift", "count")) %>% 
+      arrange(desc(support)) %>% 
+      mutate(index = seq(1, nrow(.), 1)) %>% 
+      right_join(join_table, by = "index") %>% 
+      select(index, everything()) -> AR_table
+    
+    return(AR_table)
+  }
+  
+  # AR결과로 scater plot을 그려주는 함수
+  fn_AR_plot <- function(AR_table, col_low, col_high,
+                         select_cols) { 
+    
+    AR_table %>% 
+      arrange(desc(support)) %>% 
+      filter(hyperConfidence >= 0.95) %>% 
+      mutate(hyperConfidence = round(hyperConfidence, 6)) %>% 
+      
+      ggplot(aes(x = support, y = confidence)) + 
+      geom_point(aes(color = lift)) +
+      scale_colour_gradient(low = col_low, high = col_high) + 
+      ggtitle(paste0("Scatter plot for ", 
+                     eval(nrow(AR_table %>% 
+                                 arrange(desc(support)) %>% 
+                                 filter(hyperConfidence >= 0.95))),
+                     " rules"), 
+              subtitle = paste0("X = {", paste(select_cols, collapse = ", "), "}, ", "Y = {", target_value, "}")) +
+      theme_minimal() -> AR_plot
+    
+    return(AR_plot)
+  }
+  
+  
+  fn_Apriori(df, target_column, target_value, select_cols,
+             minlen, supp, conf) -> AR_result
+  
+  fn_AR_table(AR_result, sort_by, interestMeasure) -> AR_table
+  
+  fn_AR_plot(AR_table, col_low, col_high, select_cols) -> AR_plot
+  
+  result <- list(AR_result = AR_result, 
+                 AR_table = AR_table, 
+                 AR_plot = AR_plot)
+  
+  return(result)
+}
+```
