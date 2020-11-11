@@ -16,7 +16,6 @@ df[[target_column]] or tibble[[target_column]]
 https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
 
 
-
 # read_function에서 모든 column의 type을 통일하기
 https://github.com/tidyverse/readr/issues/148
 
@@ -63,3 +62,5 @@ https://www.r-graph-gallery.com/142-basic-radar-chart.html
 https://www.r-graph-gallery.com/143-spider-chart-with-saveral-individuals.html
 https://ourednik.info/maps/2020/04/29/radar-charts-with-r/
 
+# data.frame에 있는 column들의 경우의 수와 개수 세기
+group_by로 묶고 tally()로 하기
