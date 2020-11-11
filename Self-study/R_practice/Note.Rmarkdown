@@ -19,7 +19,10 @@ https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-f
 # read_function에서 모든 column의 type을 통일하기
 https://github.com/tidyverse/readr/issues/148
 
-
+# grepl()에서 "AND" 조건 걸기
+grepl("A.*B|B.*A")
+https://stackoverflow.com/questions/51498644/how-to-do-grepl-or-statements-with-an-and-in-r
+https://stackoverflow.com/questions/45374799/is-it-possible-to-use-an-and-operator-in-grepl
 
 
 
