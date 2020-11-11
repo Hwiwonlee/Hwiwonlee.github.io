@@ -58,4 +58,8 @@ Rule을 판단하는 여러 지표, Rule이 어떤 조건에서 형성됐느냐�
   - The following measures are implemented for rules of the form X -> Y:
   - The following measures are implemented for itemsets X:
 
+# Radar plot
+https://www.r-graph-gallery.com/142-basic-radar-chart.html
+https://www.r-graph-gallery.com/143-spider-chart-with-saveral-individuals.html
+https://ourednik.info/maps/2020/04/29/radar-charts-with-r/
 
