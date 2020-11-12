@@ -21,8 +21,10 @@ https://github.com/tidyverse/readr/issues/148
 
 # grepl()에서 "AND" 조건 걸기
 grepl("A.*B|B.*A")
+filter(grepl("A", column) & grepl("B", column))
 https://stackoverflow.com/questions/51498644/how-to-do-grepl-or-statements-with-an-and-in-r
 https://stackoverflow.com/questions/45374799/is-it-possible-to-use-an-and-operator-in-grepl
+https://stackoverflow.com/questions/56451745/conditional-if-to-filter-with-multiple-conditions-by-group-in-dplyr
 
 
 
