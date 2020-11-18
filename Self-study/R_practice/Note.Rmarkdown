@@ -26,6 +26,9 @@ https://stackoverflow.com/questions/51498644/how-to-do-grepl-or-statements-with-
 https://stackoverflow.com/questions/45374799/is-it-possible-to-use-an-and-operator-in-grepl
 https://stackoverflow.com/questions/56451745/conditional-if-to-filter-with-multiple-conditions-by-group-in-dplyr
 
+# Association Rule : 메모리 부족 문제 : apriori의 control에 적절한 arg를 준다. 
+## load = FALSE로 해결
+https://stackoverflow.com/questions/37784328/association-rules-in-r-not-enough-ram
 
 
 
