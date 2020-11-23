@@ -72,3 +72,7 @@ https://ourednik.info/maps/2020/04/29/radar-charts-with-r/
 
 # data.frame에 있는 column들의 경우의 수와 개수 세기
 group_by로 묶고 tally()로 하기
+
+
+# DT package
+https://rstudio.github.io/DT/
